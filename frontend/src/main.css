@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: Aeonik;
+    src: url('./assets/Aeonik-Regular.otf');
+  }
+
+  @font-face {
+    font-family: Aeonik;
+    src: url('./assets/Aeonik-Bold.otf');
+    font-weight: bold;
+  }
+
+  @font-face {
+    font-family: Aeonik;
+    src: url('./assets/Aeonik-Medium.otf');
+    font-weight: 500;
+  }
+
+  :root {
+    --app-bg: #fff;
+    --border-darker: #c6c5cd;
+    --border-default: #d9d8de;
+    --border-disabled: #f9f5ff;
+    --errors-darker: #782a2a;
+    --errors-default: #f15454;
+    --errors-lighter: #f8a9a9;
+    --errors-subtle: #fce2e2;
+    --primary-darker: #5749a6;
+    --primary-default: #836ef9;
+    --primary-lighter: #c1b6fc;
+    --primary-subtle: #eae6fe;
+    --success-darker: #377c3a;
+    --success-default: #49a64d;
+    --success-lighter: #b6fcb9;
+    --success-subtle: #e6fee7;
+    --surface-default: #d9d8de;
+    --surface-disabled: #c6c5cd;
+    --surface-subtle: #f9f5ff;
+    --text-body: #28282e;
+    --text-caption: #8e8c9c;
+    --text-disabled: #a09fac;
+    --text-subtitle: #47464e;
+    --text-title: #17171a;
+  }
+
+  body.dark {
+    --app-bg: #17171a;
+    --border-darker: #a09fac;
+    --border-default: #767482;
+    --border-disabled: #28282e;
+    --surface-disabled: #47464e;
+    --surface-default: #767482;
+    --surface-subtle: #28282e;
+    --text-body: #d9d8de;
+    --text-disabled: #767482;
+    --text-subtitle: #c6c5cd;
+    --text-title: #f9f5ff;
+  }
+
+  html {
+    font-family: Aeonik, Inter, sans-serif;
+  }
+}
+
+body {
+  background-color: var(--app-bg);
+  color: var(--text-body);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 64px;
+}
+
+@media (min-width: 512px) {
+  #root {
+    padding-top: 80px;
+  }
+}
+
+@media (max-width: 512px) {
+  #root {
+    padding-bottom: 64px;
+  }
+}
+
+.p-ink {
+  background-color: var(--border-darker);
+}
+
+[id^='tradingview_'] {
+  border: 1px solid var(--border-default);
+  border-radius: 32px;
+  height: min(60vh, 384px) !important;
+}
+
+body.dark [id^='tradingview_'] {
+  border-color: var(--surface-subtle);
+}
+
+input {
+  background-color: unset;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type='number'] {
+  -mox-appearance: textfield;
+  appearance: textfield;
+}

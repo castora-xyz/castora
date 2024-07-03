@@ -1,0 +1,11 @@
+name: complete-1h
+on:
+  schedule:
+    - cron: '0 */1 * * *'
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Complete Hourly Pools
+        run: |
+          curl --url https://us-central1-castora-xyz.cloudfunctions.net/server/pools/complete

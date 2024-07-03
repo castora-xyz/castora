@@ -1,0 +1,11 @@
+name: sync-3h
+on:
+  schedule:
+    - cron: '20 2,5,8,11,14,17,20,23 * * *'
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync 3-Hourly Pools
+        run: |
+          curl --url https://us-central1-castora-xyz.cloudfunctions.net/server/pools/sync
