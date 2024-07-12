@@ -1,8 +1,12 @@
-import BottomNav from '@/components/BottomNav';
-import Header from '@/components/Header';
+import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
-import LivePoolsPage from '@/pages/LivePoolsPage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import {
+  LandingPage,
+  LivePoolsPage,
+  MyActivityPage,
+  NotFoundPage,
+  PoolDetailPage
+} from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
   Outlet,
@@ -34,11 +38,17 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   return (
     <>
       <Header />
-      <main className="p-8 pb-16 grow flex flex-col items-stretch">
+      <main
+        className={
+          'grow flex flex-col items-stretch' +
+          (location.pathname === '/' ? '' : ' p-8 pb-16')
+        }
+      >
         {outlet}
       </main>
       <BottomNav />
-      <ScrollRestoration getKey={(location) => location.pathname} />
+      <ScrollRestoration />
+      <Footer />
     </>
   );
 };
@@ -51,24 +61,16 @@ const router = createBrowserRouter(
       errorElement={<Layout outlet={<NotFoundPage />} />}
     >
       <Route errorElement={<NotFoundPage />}>
-        <Route index element={<LivePoolsPage />}></Route>
-        <Route path="pools" element={<LivePoolsPage />}></Route>
-        <Route
-          path="pool/:poolId"
-          lazy={() => import('@/pages/PoolDetailPage')}
-        ></Route>
-        <Route
-          path="predictions"
-          lazy={() => import('@/pages/MyActivityPage')}
-        ></Route>
-        <Route
-          path="activity"
-          lazy={() => import('@/pages/MyActivityPage')}
-        ></Route>
+        <Route index element={<LandingPage />} />
+        <Route path="pools" element={<LivePoolsPage />} />
+        <Route path="pool/:poolId" element={<PoolDetailPage />} />
+        <Route path="predictions" element={<MyActivityPage />} />
+        <Route path="activity" element={<MyActivityPage />} />
       </Route>
     </Route>
   )
 );
-export default function App() {
+
+export const App = () => {
   return <RouterProvider router={router} />;
-}
+};

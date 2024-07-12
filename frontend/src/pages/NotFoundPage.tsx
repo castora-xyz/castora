@@ -2,7 +2,7 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function NotFoundPage() {
+export const NotFoundPage = () => {
   useEffect(() => {
     document.title = 'Castora';
   }, []);
@@ -16,11 +16,11 @@ export default function NotFoundPage() {
       </p>
       <Link
         className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-        to="/"
+        to="/pools"
       >
-        Predict Now!
+        Predict Now
         <Ripple />
       </Link>
     </div>
   );
-}
+};

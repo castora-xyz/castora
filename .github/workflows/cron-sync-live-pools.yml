@@ -1,0 +1,11 @@
+name: sync-live-pools
+on:
+  schedule:
+    - cron: '30 */1 * * *'
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Live Pools
+        run: |
+          curl --url https://us-central1-castora-xyz.cloudfunctions.net/server/pools/sync

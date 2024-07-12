@@ -1,8 +1,9 @@
-import App from '@/App.tsx';
+import { App } from '@/App.tsx';
 import {
   AuthProvider,
   ContractProvider,
   FirebaseProvider,
+  MyActivityProvider,
   PoolsProvider,
   ServerProvider,
   ThemeProvider,
@@ -25,7 +26,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <FirebaseProvider>
                   <ContractProvider>
                     <PoolsProvider>
-                      <App />
+                      <MyActivityProvider>
+                        <App />
+                      </MyActivityProvider>
                     </PoolsProvider>
                   </ContractProvider>
                 </FirebaseProvider>

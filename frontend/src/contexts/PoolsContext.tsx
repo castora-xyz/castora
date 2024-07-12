@@ -5,7 +5,8 @@ import {
   useServer,
   useToast
 } from '@/contexts';
-import { Pool } from '@/models';
+import { Pool } from '@/schemas';
+import { doc, onSnapshot } from 'firebase/firestore';
 import {
   ReactNode,
   createContext,
@@ -16,12 +17,14 @@ import {
 import { Observable } from 'rxjs';
 import { useChains } from 'wagmi';
 
+export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
+
 interface PoolsContextProps {
   claimWinnings: (
     poolId: number,
     predictionId: number,
     onSuccessCallback?: (explorerUrl: string) => void
-  ) => Observable<WriteContractStatus>;
+  ) => Observable<WriteContractPoolStatus>;
   isFetching: boolean;
   isValidPoolId: (poolId: any) => Promise<boolean>;
   fetchOne: (poolId: number) => Promise<Pool | null>;
@@ -30,7 +33,7 @@ interface PoolsContextProps {
     poolId: number,
     price: number,
     onSuccessCallback?: (explorerUrl: string) => void
-  ) => Observable<WriteContractStatus>;
+  ) => Observable<WriteContractPoolStatus>;
 }
 
 const PoolsContext = createContext<PoolsContextProps>({
@@ -47,29 +50,13 @@ export const usePools = () => useContext(PoolsContext);
 export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [currentChain] = useChains();
   const { readContract, writeContract } = useContract();
-  const { ensureNotifications, recordEvent } = useFirebase();
+  const { ensureNotifications, firestore, recordEvent } = useFirebase();
   const server = useServer();
   const { toastError, toastSuccess } = useToast();
 
-  const [completedPoolsCount, setCompletedPoolsCount] = useState(0);
   const [isFetching, setIsFetching] = useState(true);
   const [livePools, setLivePools] = useState<Pool[]>([]);
-  const [openPoolsCount, setOpenPoolsCount] = useState(0);
-  const [secs, setSecs] = useState(0);
-
-  const checkPoolCounts = () => {
-    let openCount = 0;
-    let completedCount = 0;
-    for (const {
-      seeds: { windowCloseTime, snapshotTime }
-    } of livePools) {
-      const now = Math.trunc(Date.now() / 1000);
-      if (now < windowCloseTime) openCount++;
-      else if (now >= snapshotTime) completedCount++;
-    }
-    setOpenPoolsCount(openCount);
-    setCompletedPoolsCount(completedCount);
-  };
+  const [livePoolIds, setLivePoolIds] = useState<number[]>([]);
 
   /**
    * Claims the winnings of a winner from a pool.
@@ -82,7 +69,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     predictionId: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => {
-    return new Observable<WriteContractStatus>((subscriber) => {
+    return new Observable<WriteContractPoolStatus>((subscriber) => {
       let txHash: string;
       writeContract(
         'claimWinnings',
@@ -97,6 +84,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
 
+          subscriber.next('finalizing');
           await server.get(`/record/${txHash}`);
           recordEvent('claimed_winnings', { poolId, predictionId });
           const explorerUrl = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
@@ -126,13 +114,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const fetchLivePools = async () => {
     setIsFetching(true);
     const fetched = [];
-    let poolIds = await server.get('/pools/live');
-    if (poolIds && Array.isArray(poolIds)) {
-      poolIds = poolIds.sort((a, b) => b - a);
-      for (const poolId of poolIds) {
-        const pool = await fetchOne(poolId);
-        if (pool) fetched.push(pool);
-      }
+    const sorted = livePoolIds.sort((a, b) => b - a);
+    for (const poolId of sorted) {
+      const pool = await fetchOne(poolId);
+      if (pool) fetched.push(pool);
     }
     setLivePools(fetched);
     setIsFetching(false);
@@ -158,12 +143,16 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     price: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => {
-    return new Observable<WriteContractStatus>((subscriber) => {
+    return new Observable<WriteContractPoolStatus>((subscriber) => {
+      let predictionId: number;
       let txHash: string;
       writeContract(
         'predict',
         [BigInt(poolId), BigInt(price)],
-        (hash) => (txHash = hash)
+        (hash, result) => {
+          txHash = hash;
+          predictionId = Number(result);
+        }
       ).subscribe({
         next: subscriber.next.bind(subscriber),
         error: subscriber.error.bind(subscriber),
@@ -173,9 +162,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
 
+          subscriber.next('finalizing');
           await ensureNotifications();
           await server.get(`/record/${txHash}`);
-          recordEvent('predicted', { poolId });
+          recordEvent('predicted', { poolId, predictionId });
           const explorerUrl = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess(
             'Prediction Successful',
@@ -191,13 +181,20 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchLivePools();
-  }, [openPoolsCount, completedPoolsCount]);
+  }, [livePoolIds]);
 
   useEffect(() => {
-    checkPoolCounts();
-    const interval = setInterval(() => setSecs(secs + 1), 10000); // 10 secs
-    return () => clearInterval(interval);
-  }, [secs]);
+    onSnapshot(doc(firestore, '/live/live'), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if ('poolIds' in data && Array.isArray(data.poolIds)) {
+          setLivePoolIds(data.poolIds);
+        }
+      } else {
+        setLivePoolIds([]);
+      }
+    });
+  }, []);
 
   return (
     <PoolsContext.Provider

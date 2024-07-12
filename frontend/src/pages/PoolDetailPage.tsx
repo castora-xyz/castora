@@ -1,10 +1,12 @@
-import CompletedPoolDisplay from '@/components/CompletedPoolDisplay';
-import JoinPoolForm from '@/components/JoinPoolForm';
-import MyInPoolPredictions from '@/components/MyInPoolPredictions';
-import PoolDetailIntroBadge from '@/components/PoolDetailIntroBadge';
-import PoolDetailPageShimmer from '@/components/PoolDetailPageShimmer';
-import PoolDetailsInCards from '@/components/PoolDetailsInCards';
-import Predictions from '@/components/Predictions';
+import {
+  CompletedPoolDisplay,
+  JoinPoolForm,
+  MyInPoolPredictions,
+  PoolDetailIntroBadge,
+  PoolDetailPageShimmer,
+  PoolDetailsInCards,
+  PredictionsDisplay
+} from '@/components';
 import {
   CASTORA_ADDRESS,
   abi,
@@ -12,8 +14,8 @@ import {
   useServer,
   useTheme
 } from '@/contexts';
-import { Pool } from '@/models';
-import NotFoundPage from '@/pages/NotFoundPage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
+import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
@@ -21,7 +23,7 @@ import { useParams } from 'react-router-dom';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { useWatchContractEvent } from 'wagmi';
 
-export function Component() {
+export const PoolDetailPage = () => {
   const { poolId } = useParams();
   const { isValidPoolId, fetchOne } = usePools();
   const server = useServer();
@@ -29,6 +31,7 @@ export function Component() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [pool, setPool] = useState<Pool | null>(null);
 
   useWatchContractEvent({
@@ -36,15 +39,15 @@ export function Component() {
     abi,
     eventName: 'Predicted',
     args: {
-      poolId: BigInt(+poolId!)
+      poolId: BigInt(isNaN(+poolId!) ? 0 : poolId!)
     },
     onLogs: async (logs) => {
-      console.log('PoolDetailPage.tsx Predicted');
-      console.log(logs);
-      if (pool) {
+      if (!pool) return await load();
+      const maxLatestPredictionId = Math.max(
+        ...logs.map(({ args }) => Number(args.predictionId))
+      );
+      if (pool.noOfPredictions < maxLatestPredictionId) {
         const newPool = await fetchOne(pool.poolId);
-        console.log(pool);
-        console.log(newPool);
         if (newPool) setPool(newPool);
       }
     }
@@ -55,13 +58,10 @@ export function Component() {
     abi,
     eventName: 'CompletedPool',
     args: {
-      poolId: BigInt(+poolId!)
+      poolId: BigInt(isNaN(+poolId!) ? 0 : poolId!)
     },
     onLogs: async () => {
-      if (pool) {
-        const newPool = await fetchOne(pool.poolId);
-        if (newPool) setPool(newPool);
-      }
+      if (!pool || !pool.completionTime) load();
     }
   });
 
@@ -88,13 +88,14 @@ export function Component() {
                 pool.snapshotPrice = parseFloat(
                   (+price * 10 ** expo).toFixed(Math.abs(expo))
                 );
+                pool.completionTime = Math.trunc(Date.now() / 1000);
               } catch (e) {
                 console.log(e);
               }
               setPool(pool);
             } else if (pool.completionTime === 0) {
-              if (!!(await server.get(`/pools/${poolId}/complete`))) {
-                setPool(pool);
+              if (!!(await server.get(`/pool/${poolId}/complete`))) {
+                setPool(await fetchOne(+poolId!)); // refetching for update
               } else setHasError(true);
             } else setPool(pool);
           } else setPool(pool);
@@ -109,11 +110,23 @@ export function Component() {
   };
 
   useEffect(() => {
+    if (pool && now >= pool.seeds.snapshotTime && !pool.completionTime) {
+      load();
+    }
+  }, [now]);
+
+  useEffect(() => {
     if (!!pool) document.title = `Pool ${pool.poolId} - Castora`;
   }, [pool]);
 
   useEffect(() => {
     load();
+
+    const interval = setInterval(
+      () => setNow(Math.trunc(Date.now() / 1000)),
+      1000
+    );
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <PoolDetailPageShimmer />;
@@ -137,62 +150,64 @@ export function Component() {
   if (!pool) return <NotFoundPage />;
 
   return (
-    <>
-      <PoolDetailIntroBadge pool={pool} />
+    now && ( // "now &&" is to always re-render the UI every second
+      // This will be re-calling the seeds.methods() to get the control-flow.
+      <>
+        <PoolDetailIntroBadge pool={pool} />
 
-      <div className="sm:hidden">
-        {Math.trunc(Date.now() / 1000) > pool.seeds.windowCloseTime &&
-          pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
-      </div>
-
-      <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex">
-        <div
-          className={
-            'lg:relative lg:grow ' +
-            (pool.seeds.status() === 'Completed' ? ' lg:basis-1/2' : '')
-          }
-        >
-          <div className="mb-8 lg:mb-px lg:mr-8 lg:sticky lg:top-0">
-            {pool.seeds.status() !== 'Completed' ? (
-              <AdvancedRealTimeChart
-                allow_symbol_change={false}
-                autosize
-                enable_publishing={false}
-                interval="180"
-                style="1"
-                symbol={pool.seeds.chartPairName()}
-                withdateranges={true}
-                theme={isDarkDisplay ? 'dark' : 'light'}
-              />
-            ) : (
-              <CompletedPoolDisplay pool={pool} />
-            )}
-
-            <PoolDetailsInCards pool={pool} />
-          </div>
+        <div className="sm:hidden">
+          {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && (
+            <MyInPoolPredictions pool={pool} />
+          )}
         </div>
 
-        <div
-          className={
-            'max-lg:max-w-lg max-lg:mx-auto lg:grow lg:basis-1/' +
-            (pool.seeds.status() !== 'Completed' ? '3' : '2')
-          }
-        >
+        <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex">
           <div
             className={
-              Math.trunc(Date.now() / 1000) > pool.seeds.windowCloseTime
-                ? 'max-sm:hidden'
-                : ''
+              'lg:relative lg:grow ' +
+              (pool.seeds.status() === 'Completed' ? ' lg:basis-1/2' : '')
             }
           >
-            {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
+            <div className="mb-8 lg:mb-px lg:mr-8 lg:sticky lg:top-0">
+              {pool.seeds.status() !== 'Completed' ? (
+                <AdvancedRealTimeChart
+                  allow_symbol_change={false}
+                  autosize
+                  enable_publishing={false}
+                  interval="180"
+                  style="1"
+                  symbol={pool.seeds.chartPairName()}
+                  withdateranges={true}
+                  theme={isDarkDisplay ? 'dark' : 'light'}
+                />
+              ) : (
+                <CompletedPoolDisplay pool={pool} />
+              )}
+
+              <PoolDetailsInCards pool={pool} />
+            </div>
           </div>
 
-          {pool.seeds.status() === 'Open' && <JoinPoolForm pool={pool} />}
+          <div
+            className={
+              'max-lg:max-w-2xl max-lg:mx-auto lg:grow lg:basis-1/' +
+              (pool.seeds.status() !== 'Completed' ? '3' : '2')
+            }
+          >
+            <div
+              className={
+                now > pool.seeds.windowCloseTime ? 'max-sm:hidden' : ''
+              }
+            >
+              {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
+            </div>
 
-          <Predictions pool={pool} />
+            {pool.seeds.status() === 'Open' && <JoinPoolForm pool={pool} />}
+
+            <PredictionsDisplay pool={pool} />
+          </div>
         </div>
-      </div>
-    </>
+      </>
+    )
   );
 }

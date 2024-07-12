@@ -3,27 +3,54 @@ import {
   abi,
   useContract,
   usePools,
-  usePredictions
+  usePredictions,
+  useServer
 } from '@/contexts';
-import { Pool, Prediction } from '@/models';
-import { useEffect, useState } from 'react';
-import { useAccount, useWatchContractEvent } from 'wagmi';
+import { Pool, Prediction } from '@/schemas';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
+import { zeroAddress } from 'viem';
+import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
 
 export interface Activity {
   pool: Pool;
   prediction: Prediction;
 }
 
-export const useMyActivity = () => {
+interface MyActivityContextProps {
+  fetchMyActivity: () => void;
+  isFetching: boolean;
+  hasError: boolean;
+  myActivities: Activity[];
+}
+
+const MyActivityContext = createContext<MyActivityContextProps>({
+  fetchMyActivity: () => {},
+  isFetching: false,
+  hasError: false,
+  myActivities: []
+});
+
+export const useMyActivity = () => useContext(MyActivityContext);
+
+export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
   const { address } = useAccount();
+  const [currentChain] = useChains();
   const { readContract } = useContract();
   const { fetchOne: fetchPool } = usePools();
   const retrieve = usePredictions();
+  const server = useServer();
+
   const [myActivities, setMyActivities] = useState<Activity[]>([]);
   const [hasError, setHasError] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  const load = async () => {
+  const fetchMyActivity = async () => {
     if (!address) {
       setIsFetching(false);
       setHasError(false);
@@ -72,6 +99,17 @@ export const useMyActivity = () => {
       poolInfos.push({ poolId: joinedPoolIds[i], predictionIds });
     }
 
+    const explorerUrls: {[key: string]: string} = {};
+    const offchained = await server.get(`/user/${address}/activities`);
+    if (offchained && Array.isArray(offchained) && offchained.length > 0) {
+      for (const item of offchained) {
+        const { poolId, predictionId, txHash } = item;
+        if (!poolId || !predictionId || !txHash) continue;
+        const url = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
+        explorerUrls[`pl${poolId}-pr${predictionId}`] = url;
+      }
+    }
+
     const activities: Activity[] = [];
     for (const { poolId, predictionIds } of poolInfos) {
       const pool = await fetchPool(poolId);
@@ -81,7 +119,7 @@ export const useMyActivity = () => {
         return;
       }
 
-      const predictions = await retrieve(poolId, predictionIds);
+      const predictions = await retrieve(poolId, predictionIds, false);
       if (!predictions) {
         setIsFetching(false);
         setHasError(true);
@@ -89,6 +127,8 @@ export const useMyActivity = () => {
       }
 
       for (const prediction of predictions) {
+        const url = explorerUrls[`pl${poolId}-pr${prediction.id}`];
+        if (url) prediction.explorerUrl = url;
         activities.push({ pool, prediction });
       }
     }
@@ -105,29 +145,48 @@ export const useMyActivity = () => {
     address: CASTORA_ADDRESS,
     abi,
     eventName: 'Predicted',
-    args: { predicter: address },
+    args: { predicter: address ?? zeroAddress },
     onLogs: async (logs) => {
-      console.log('MyActivityContext.tsx Predicted');
-      console.log(logs);
-      await load();
+      let hasChanges = false;
+      const flattened: { [key: number]: number[] } = {};
+      for (const { pool, prediction } of myActivities) {
+        flattened[pool.poolId] = [
+          ...(flattened[pool.poolId] ?? []),
+          prediction.id
+        ];
+      }
+      for (const { args } of logs) {
+        if (!Object.keys(flattened).includes(`${Number(args.poolId)}`)) {
+          hasChanges = true;
+        } else {
+          for (const [poolId, predictionIds] of Object.entries(flattened)) {
+            hasChanges =
+              +poolId == Number(args.poolId) &&
+              !predictionIds.includes(Number(args.predictionId));
+            if (hasChanges) break;
+          }
+        }
+        if (hasChanges) break;
+      }
+      if (hasChanges) await fetchMyActivity();
     }
   });
 
-  useWatchContractEvent({
-    address: CASTORA_ADDRESS,
-    abi,
-    eventName: 'ClaimedWinnings',
-    args: { winner: address },
-    onLogs: async (logs) => {
-      console.log('MyActivityContext.tsx ClaimedWinnings');
-      console.log(logs);
-      await load();
-    }
-  });
+  /*
+   * Not Watching ClaimWinnings Event here so that the ClaimButton's Modal
+   * will not be destroyed after successful Claiming. The onSuccess callback
+   * from ClaimButton will trigger a reload.
+   */
 
   useEffect(() => {
-    load();
+    fetchMyActivity();
   }, [address]);
 
-  return { fetchMyActivity: load, isFetching, myActivities, hasError };
+  return (
+    <MyActivityContext.Provider
+      value={{ fetchMyActivity, isFetching, myActivities, hasError }}
+    >
+      {children}
+    </MyActivityContext.Provider>
+  );
 };

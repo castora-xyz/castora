@@ -1,4 +1,4 @@
-import { Pool } from '../models';
+import { Pool } from '../schemas';
 import { readContract } from './contract';
 
 /**

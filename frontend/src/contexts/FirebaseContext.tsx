@@ -6,6 +6,7 @@ import {
   setUserId
 } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
+import { Firestore, getFirestore } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
@@ -21,12 +22,14 @@ import { firebaseConfig } from './firebase';
 
 interface FirebaseContextProps {
   ensureNotifications: () => Promise<void>;
+  firestore: Firestore;
   recordEvent: (event: string, params?: any) => void;
   recordNavigation: (path: string, name: string) => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextProps>({
   ensureNotifications: async () => {},
+  firestore: {} as Firestore,
   recordEvent: () => {},
   recordNavigation: () => {}
 });
@@ -43,6 +46,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const { toastInfo } = useToast();
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
+  const firestore = getFirestore(app);
   const messaging = getMessaging(app);
 
   const closeModal = () => {
@@ -80,7 +84,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       vapidKey: import.meta.env.VITE_FCM_VAPID_KEY
     });
 
-    if (address && fcmToken) {
+    if (address && fcmToken && signature) {
       const success = await server.post('/user/register', {
         address,
         fcmToken
@@ -139,7 +143,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <FirebaseContext.Provider
-      value={{ ensureNotifications, recordEvent, recordNavigation }}
+      value={{ ensureNotifications, firestore, recordEvent, recordNavigation }}
     >
       {children}
 

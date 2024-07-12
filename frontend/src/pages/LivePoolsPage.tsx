@@ -1,7 +1,6 @@
 import ChevronDown from '@/assets/chevron-down.svg?react';
 import Wallet from '@/assets/wallet.svg?react';
-import PoolCard from '@/components/PoolCard';
-import PoolCardShimmer from '@/components/PoolCardShimmer';
+import { PoolCard, PoolCardShimmer } from '@/components';
 import { useFirebase, useMyActivity, usePools } from '@/contexts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
@@ -9,7 +8,7 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export default function LivePoolsPage() {
+export const LivePoolsPage = () => {
   const { isConnected } = useAccount();
   const { recordEvent } = useFirebase();
   const { isFetching: isFetchingPools, livePools } = usePools();
@@ -125,33 +124,35 @@ export default function LivePoolsPage() {
       !myActivities.some(({ pool: { poolId: myPoolId } }) =>
         livePools.some(({ poolId }) => poolId === myPoolId)
       ) ? (
-        <div className="flex flex-col justify-center items-center grow text-center py-12">
-          <p className="text-lg mb-8">
-            {isConnected
-              ? 'You have no predictions in currently Open Pools. Join a pool by making a prediction.'
-              : 'Here, you will find the open pools you have made predictions in. Kindly sign in to continue.'}
-          </p>
-          {isConnected ? (
-            <button
-              onClick={() => {
-                setSelectedCategory('All');
-                recordEvent('selected_pools_category', 'All');
-              }}
-              className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-            >
-              Predict Now!
-              <Ripple />
-            </button>
-          ) : (
-            <button
-              className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple flex justify-center items-center"
-              onClick={() => connectWallet()}
-            >
-              <Wallet className="mr-2 w-5 h-5 stroke-white" />
-              <span>Connect Wallet</span>
-              <Ripple />
-            </button>
-          )}
+        <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12  w-full max-w-screen-xl mx-auto">
+          <div className="md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-16 md:px-20 md:gap-4 md:max-w-2xl md:text-center">
+            <p className="text-lg xs:text-xl mb-8 max-md:max-w-sm">
+              {isConnected
+                ? 'You have no predictions in currently Open Pools. Join a pool by making a prediction.'
+                : 'Here, you will find the open pools you have made predictions in. Kindly sign in to continue.'}
+            </p>
+            {isConnected ? (
+              <button
+                onClick={() => {
+                  setSelectedCategory('All');
+                  recordEvent('selected_pools_category', 'All');
+                }}
+                className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+              >
+                Predict Now
+                <Ripple />
+              </button>
+            ) : (
+              <button
+                className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple flex justify-center items-center"
+                onClick={() => connectWallet()}
+              >
+                <Wallet className="mr-2 w-5 h-5 stroke-white" />
+                <span>Connect Wallet</span>
+                <Ripple />
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">

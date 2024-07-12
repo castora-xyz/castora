@@ -23,7 +23,7 @@ interface ContractContextProps {
   writeContract: (
     functionName: string,
     args?: any[],
-    onSuccessCallback?: (txHash: string) => void
+    onSuccessCallback?: (txHash: string, result: any) => void
   ) => Observable<WriteContractStatus>;
 }
 
@@ -83,7 +83,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     abi: any,
     functionName: string,
     args: any[] = [],
-    onSuccessCallBack?: (txHash: string) => void
+    onSuccessCallBack?: (txHash: string, result: any) => void
   ) => {
     const bs = new BehaviorSubject<WriteContractStatus>('initializing');
     (async () => {
@@ -108,10 +108,9 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
           account
         });
         const hash = await walletClient.writeContract(request);
-        console.log({ result });
         bs.next('waiting');
         await publicClient().waitForTransactionReceipt({ hash });
-        onSuccessCallBack && onSuccessCallBack(hash);
+        onSuccessCallBack && onSuccessCallBack(hash, result);
         bs.complete();
       } catch (e: any) {
         if (`${e}`.toLowerCase().includes('rejected')) {
@@ -174,7 +173,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const writeContract = (
     functionName: string,
     args: any[] = [],
-    onSuccessCallBack?: (txHash: string) => void
+    onSuccessCallBack?: (txHash: string, result: any) => void
   ) => write(CASTORA_ADDRESS, abi, functionName, args, onSuccessCallBack);
 
   return (

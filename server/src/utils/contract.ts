@@ -46,7 +46,7 @@ export const writeContract = async (functionName: any, args: any) => {
       account
     });
     const walletClient = createWalletClient({ account, ...config });
-    const hash = await walletClient.writeContract(request as any);
+    const hash = await walletClient.writeContract(request);
     console.log('Transaction Hash: ', hash);
     console.log('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -59,7 +59,7 @@ export const writeContract = async (functionName: any, args: any) => {
   } catch (e) {
     if (`${e}`.toLowerCase().includes('request timed out')) {
       // occasionally the wait for transaction receipt times out.
-      // in such case, do nothing so that the call simply returns 
+      // in such case, do nothing so that the call simply returns
       // after all the writeContract logic is done and submitted to on-chain.
     } else throw e;
   }

@@ -1,4 +1,4 @@
-import { PoolSeeds } from '../models';
+import { PoolSeeds } from '../schemas';
 import { ETH, USDC } from './tokens';
 
 const nextNthHour = (current: number, n: number) =>

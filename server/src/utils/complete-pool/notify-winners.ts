@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { firestore, messaging } from '..';
-import { Pool } from '../../models/pool';
+import { Pool } from '../../schemas/pool';
 
 /**
  * Notify winners of the pool
@@ -28,7 +28,8 @@ export const notifyWinners = async (
 
   const uniqued: { [key: string]: number } = {};
   for (const address of winnerAddresses) {
-    uniqued[address] = (uniqued[address] ?? 0) + winAmount;
+    uniqued[address] = (uniqued[address] ?? 0) + winAmount / 0.95;
+    // the division by 0.95 above is to display the amount without fees applied
   }
 
   for (const winner of Object.keys(uniqued)) {

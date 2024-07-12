@@ -1,4 +1,4 @@
-import { Prediction } from '../../models';
+import { Prediction } from '../../schemas';
 import { getNoOfWinners } from './get-no-of-winners';
 
 /**

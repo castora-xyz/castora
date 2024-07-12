@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import fetch from 'node-fetch';
 
-import { Pool } from '../../models';
+import { Pool } from '../../schemas';
 import { tokens } from '../tokens';
 
 /**

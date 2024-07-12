@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { Pool } from '../../models';
+import { Pool } from '../../schemas';
 import { writeContract } from '../contract';
 import { fetchPredictions } from './fetch-predictions';
 import { getNoOfWinners } from './get-no-of-winners';

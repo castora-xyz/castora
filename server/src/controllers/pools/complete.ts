@@ -14,6 +14,12 @@ export const completePools = async () => {
     const poolId = await getPoolId(seed);
     try {
       if (poolId) await completePool(poolId);
+    } catch (e: any) {
+      if (['Not yet snapshotTime', 'Nobody joined this pool'].includes(e)) {
+        console.log(e);
+      } else {
+        throw e;
+      }
     } finally {
       console.log('\n\n');
     }
@@ -26,7 +32,7 @@ export const completePools = async () => {
  * @param poolId The poolId in which to compute its winners
  */
 export const completePool = async (poolId: any): Promise<void> => {
-  const pool = await fetchPool(poolId);
+  let pool = await fetchPool(poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
 
   console.log('pool.seeds.snapshotTime: ', seeds.snapshotTime);
@@ -35,13 +41,12 @@ export const completePool = async (poolId: any): Promise<void> => {
     new Date(seeds.snapshotTime * 1000)
   );
   if (Math.round(Date.now() / 1000) < seeds.snapshotTime) {
-    throw 'Not yet snapshotTime.';
+    throw 'Not yet snapshotTime';
   }
 
   console.log('\npool.noOfPredictions: ', noOfPredictions);
   if (noOfPredictions === 0) {
-    console.log('Nobody joined this pool');
-    return;
+    throw 'Nobody joined this pool';
   }
 
   if (completionTime !== 0) {
@@ -58,6 +63,8 @@ export const completePool = async (poolId: any): Promise<void> => {
 
     const winnerAddresses = await setWinners(pool, snapshotPrice);
 
+    // refetching the pool here so that the winAmount will now be valid
+    pool = await fetchPool(poolId);
     await notifyWinners(winnerAddresses, pool);
   }
 };

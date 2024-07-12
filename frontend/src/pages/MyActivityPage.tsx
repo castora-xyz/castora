@@ -1,8 +1,5 @@
-import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
-import Trophy from '@/assets/trophy.svg?react';
 import Wallet from '@/assets/wallet.svg?react';
-import ClaimButton from '@/components/ClaimButton';
-import CountdownNumbers from '@/components/CountdownNumbers';
+import { ActivityCard, CountdownNumbers } from '@/components/general';
 import { useMyActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
@@ -12,7 +9,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import { useAccount } from 'wagmi';
 
-export function Component() {
+export const MyActivityPage = () => {
   const { isConnected } = useAccount();
   const location = useLocation();
   const { fetchMyActivity, isFetching, myActivities, hasError } =
@@ -50,20 +47,22 @@ export function Component() {
   }, []);
 
   return (
-    <div className="w-full max-md:max-w-[600px] max-w-screen-lg mx-auto flex flex-col grow">
+    <div className="w-full max-md:max-w-[600px] max-w-screen-xl mx-auto flex flex-col grow">
       {(!isConnected ||
         isFetching ||
         hasError ||
         myActivities.length === 0) && (
         <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
           <span>
-            {isMobile && isPredictionsRoute ? 'Open Predictions' : 'Activity'}
+            {isMobile && isPredictionsRoute
+              ? 'Open Predictions'
+              : 'My Activity'}
           </span>
         </p>
       )}
 
       {!isConnected ? (
-        <div className="flex flex-col justify-center items-center grow text-center py-16">
+        <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
           <p className="text-lg mb-8">
             Here, you will find all your
             {isPredictionsRoute && isMobile
@@ -101,7 +100,7 @@ export function Component() {
           </button>
         </div>
       ) : myActivities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center grow text-center py-16">
+        <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
           <h1 className="text-2xl font-bold mb-4">Welcome!</h1>
           <p className="text-lg mb-8">
             Predict Prizes. Win Prizes.
@@ -112,7 +111,7 @@ export function Component() {
             to="/pools"
             className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
-            Predict Now!
+            Predict Now
             <Ripple />
           </Link>
         </div>
@@ -125,22 +124,8 @@ export function Component() {
                   Open Predictions
                 </p>
 
-                {openActivities.length === 0 && isMobile ? (
-                  <div className="flex flex-col justify-center items-center grow text-center py-12">
-                    <p className="text-lg mb-8">
-                      You have no predictions in currently Open Pools. Join a
-                      pool by making a prediction.
-                    </p>
-                    <Link
-                      to="/pools"
-                      className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-                    >
-                      Predict Now!
-                      <Ripple />
-                    </Link>
-                  </div>
-                ) : openActivities.length === 0 && !isMobile ? (
-                  <div className="border-2 border-surface-subtle rounded-2xl py-16 px-4 max-md:px-16 lg:px-8 gap-4 text-center">
+                {openActivities.length === 0 ? (
+                  <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border-2 sm:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-2xl ">
                     <p className="max-md:text-lg mb-8">
                       You have no predictions in currently Open Pools. Join a
                       pool by making a prediction.
@@ -149,7 +134,7 @@ export function Component() {
                       to="/pools"
                       className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                     >
-                      Predict Now!
+                      Predict Now
                       <Ripple />
                     </Link>
                   </div>
@@ -213,7 +198,7 @@ export function Component() {
                         to="/pools"
                         className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                       >
-                        Predict Now!
+                        Predict Now
                         <Ripple />
                       </Link>
                     </div>
@@ -226,118 +211,17 @@ export function Component() {
           {(!isMobile || (isMobile && !isPredictionsRoute)) && (
             <div className="md:basis-2/3">
               <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-                Activity
+                My Activity
               </p>
 
-              {myActivities.map(
-                ({
-                  pool,
-                  pool: { poolId, seeds, snapshotPrice, completionTime },
-                  prediction,
-                  prediction: {
-                    id: predictionId,
-                    isAWinner,
-                    price: predictionPrice,
-                    time
-                  }
-                }) => (
-                  <div
-                    key={`${poolId} ${predictionId}`}
-                    className="border-2 border-surface-subtle rounded-2xl pt-3 sm:pt-4 pb-5 px-4 sm:px-6 mb-5 gap-4"
-                  >
-                    <div className="flex flex-wrap justify-between gap-4 mb-4">
-                      <div className="flex flex-wrap justify-start items-center gap-3">
-                        <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-block">
-                          {seeds.pairName()}
-                        </p>
-
-                        <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-block">
-                          Stake: {seeds.displayStake()}
-                        </p>
-
-                        {!!completionTime && isAWinner && !!pool.winAmount && (
-                          <p className="text-white font-medium flex items-center bg-success-default py-1 px-3 rounded-full w-fit">
-                            <Trophy className="fill-white w-4 h-4 mr-1" />
-                            Won {pool.winAmount} {seeds.stakeTokenDetails.name}
-                          </p>
-                        )}
-                      </div>
-
-                      <p className="text-text-caption inline-block">
-                        {ms((now - time) * 1000)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <Link
-                        to={`/pool/${poolId}`}
-                        className="p-ripple rounded-full"
-                      >
-                        <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs hover:underline">
-                          Pool ID: {poolId}
-                        </p>
-                        <Ripple />
-                      </Link>
-
-                      <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
-                        Prediction ID: {predictionId}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap justify-between items-center gap-3">
-                      <div className="flex flex-wrap justify-start items-center gap-3">
-                        {!completionTime ? (
-                          <>
-                            <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-                              Awaiting Snapshot
-                            </p>
-
-                            {now <= seeds.snapshotTime && (
-                              <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-                                <CountdownNumbers
-                                  timestamp={seeds.snapshotTime}
-                                />
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-                              Snapshot Price: ${snapshotPrice}
-                            </p>
-
-                            <p
-                              className={
-                                'py-1 px-4 rounded-full text-sm w-fit ' +
-                                `${
-                                  isAWinner
-                                    ? 'text-success-darker bg-success-subtle'
-                                    : 'text-errors-darker bg-errors-subtle'
-                                }`
-                              }
-                            >
-                              Mine: ${predictionPrice}
-                            </p>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap justify-end grow gap-3">
-                        {!!completionTime && !isAWinner ? (
-                          <p className="text-text-disabled font-medium items-center flex bg-surface-subtle py-1 px-3 rounded-full w-fit">
-                            <MoodSadFilled className="fill-text-disabled w-4 h-4 mr-1" />
-                            Unlucky
-                          </p>
-                        ) : !!completionTime && isAWinner ? (
-                          <ClaimButton pool={pool} prediction={prediction} />
-                        ) : (
-                          <></>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
+              {myActivities.map(({ pool, prediction }) => (
+                <ActivityCard
+                  key={pool.poolId + ' ' + prediction.id}
+                  pool={pool}
+                  prediction={prediction}
+                  refresh={fetchMyActivity}
+                />
+              ))}
             </div>
           )}
         </div>
