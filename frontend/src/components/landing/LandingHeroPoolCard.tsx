@@ -69,6 +69,9 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   return (
     <div className="border border-border-default dark:border-surface-disabled p-8 bg-app-bg w-full rounded-[24px]">
       <div className="mb-8">
+        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">
+          Building on Monad
+        </p>
         <p className="font-medium text-xs sm:text-base text-text-disabled text-right mb-2">
           Powered by PYTH
         </p>

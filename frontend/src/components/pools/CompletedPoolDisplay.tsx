@@ -8,6 +8,9 @@ export const CompletedPoolDisplay = ({
   return (
     <div className="border border-border-default dark:border-surface-subtle p-8 rounded-[24px] w-full max-lg:max-w-lg max-lg:mx-auto">
       <div className="mb-8">
+        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">
+          Building on Monad
+        </p>
         <p className="font-medium text-xs sm:text-base text-text-disabled text-right mb-2">
           Powered by PYTH
         </p>

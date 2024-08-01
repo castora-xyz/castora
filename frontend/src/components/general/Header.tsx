@@ -8,6 +8,7 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Ripple } from 'primereact/ripple';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAccount } from 'wagmi';
+import Castora from '/assets/castora.png';
 
 export const Header = () => {
   const { isConnected, address } = useAccount();
@@ -29,7 +30,9 @@ export const Header = () => {
     <header className="p-4 fixed xs:px-8 top-0 left-0 right-0 z-10 border-b border-border-default dark:border-surface-subtle bg-app-bg h-16 sm:h-[72px]">
       <div className="flex items-center max-w-screen-xl mx-auto">
         <h1 className="text-text-titles text-xl font-medium sm:text-2xl  md:font-bold grow mr-4">
-          <Link to="/">Castora</Link>
+          <Link to="/">
+            <img src={Castora} alt="Castora" className="w-8 xs:w-10 md:w-12" />
+          </Link>
         </h1>
 
         <nav className="max-sm:hidden grow flex items-center font-medium md:text-lg">
