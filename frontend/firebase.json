@@ -2,11 +2,18 @@
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
+    "redirects": [
       {
-        "source": "**",
-        "destination": "/index.html"
+        "source": "/demo88",
+        "destination": "https://youtu.be/BBLVegPas70",
+        "type": 302
+      },
+      {
+        "source": "/pitch88",
+        "destination": "https://drive.google.com/file/d/1Dl8L3q7Sac6naqQnlsx_6_zZMKJrb1l_/view?usp=sharing",
+        "type": 302
       }
-    ]
+    ],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
   }
 }
