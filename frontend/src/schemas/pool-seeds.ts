@@ -51,7 +51,8 @@ export class PoolSeeds {
    * The pair name given to the trading view widget for the chart
    */
   chartPairName() {
-    return `PYTH:${this.predictionTokenDetails.name}USD`;
+    const { name } = this.predictionTokenDetails
+    return `PYTH:${name == 'AAPL' ? 'AAPL' : `${name}USD`}`;
   }
 
   /**
