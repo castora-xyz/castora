@@ -45,8 +45,11 @@ export const setWinners = async (
   //
   // Remember that these are onchain numbers, so we can't have decimals.
   // and hence have to use 95 and 100.
-  const winAmount =
-    (pool.seeds.stakeAmount * pool.noOfPredictions * 95) / (noOfWinners * 100);
+  //
+  // Truncating is to ensure that the winAmount is a whole number.
+  const winAmount = Math.trunc(
+    (pool.seeds.stakeAmount * pool.noOfPredictions * 95) / (noOfWinners * 100)
+  );
   console.log('\nwinAmount: ', winAmount);
 
   console.log('\nCalling Complete Pool in Contract ... ');

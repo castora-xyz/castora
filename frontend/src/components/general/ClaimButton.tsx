@@ -169,7 +169,12 @@ export const ClaimButton = ({
             <p className="flex flex-wrap gap-4 text-sm p-1 pl-4 mb-8 rounded-full items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
               <span>Claimable</span>
               <span className="font-medium p-1 px-3 rounded-full text-primary-darker dark:text-primary-default border border-border-default dark:border-surface-subtle">
-                {winAmount * 0.95} {stakeTokenDetails.name}
+                {/*calling Math.floor is to avoid too many decimal places*/}
+                {Math.floor(
+                  winAmount * 0.95 * 10 ** stakeTokenDetails.decimals
+                ) /
+                  10 ** stakeTokenDetails.decimals}{' '}
+                {stakeTokenDetails.name}
               </span>
             </p>
 
