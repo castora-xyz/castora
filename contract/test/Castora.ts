@@ -6,24 +6,24 @@ import { expect } from 'chai';
 import { viem } from 'hardhat';
 import { getAddress, zeroAddress } from 'viem';
 
-type stake = 'ETH' | 'USDC';
+type stake = 'ETH' | 'cUSD';
 
 describe('Castora', () => {
   const now = BigInt(Math.trunc(Date.now() / 1000));
   const fifteenMinsAfter = now + 900n;
   const twentyMinsAfter = now + 1200n;
   const stakeAmountEth = 3000000000000000n;
-  const stakeAmountUsdc = 10000000n;
+  const stakeAmountCusd = 10000000n;
 
   const createPool = async (
     fixture: Awaited<ReturnType<typeof deployFixture>>,
     stake: stake
   ): Promise<bigint> => {
-    const { castora, validSeedsEthStake, validSeedsUsdcStake, publicClient } =
+    const { castora, validSeedsEthStake, validSeedsCusdStake, publicClient } =
       fixture;
     await publicClient.waitForTransactionReceipt({
       hash: await castora.write.createPool([
-        stake === 'ETH' ? validSeedsEthStake : validSeedsUsdcStake
+        stake === 'ETH' ? validSeedsEthStake : validSeedsCusdStake
       ])
     });
     return await castora.read.noOfPools();
@@ -65,8 +65,8 @@ describe('Castora', () => {
       feeCollector.account.address
     ]);
     const eth = getAddress(castora.address); // using the contract address as native token
-    const usdcContract = await deployContract('USDC');
-    const usdc = getAddress(usdcContract.address);
+    const cusdContract = await deployContract('cUSD');
+    const cusd = getAddress(cusdContract.address);
     const validSeedsEthStake = seeds(
       eth,
       eth,
@@ -74,10 +74,10 @@ describe('Castora', () => {
       fifteenMinsAfter,
       twentyMinsAfter
     );
-    const validSeedsUsdcStake = seeds(
+    const validSeedsCusdStake = seeds(
       eth,
-      usdc,
-      stakeAmountUsdc,
+      cusd,
+      stakeAmountCusd,
       fifteenMinsAfter,
       twentyMinsAfter
     );
@@ -89,10 +89,10 @@ describe('Castora', () => {
       otherAccount,
       owner,
       publicClient,
-      usdc,
-      usdcContract,
+      cusd,
+      cusdContract,
       validSeedsEthStake,
-      validSeedsUsdcStake
+      validSeedsCusdStake
     };
   };
 
@@ -135,11 +135,11 @@ describe('Castora', () => {
     return winners.map(({ predictionId }) => predictionId);
   };
 
-  const fundUsdc = async (
+  const fundCusd = async (
     fixture: Awaited<ReturnType<typeof deployFixture>>
   ) => {
-    await fixture.usdcContract.write.transfer(
-      [fixture.otherAccount.account.address, stakeAmountUsdc],
+    await fixture.cusdContract.write.transfer(
+      [fixture.otherAccount.account.address, stakeAmountCusd],
       { account: fixture.owner.account.address }
     );
   };
@@ -148,13 +148,13 @@ describe('Castora', () => {
     fixture: Awaited<ReturnType<typeof deployFixture>>,
     poolId: bigint
   ): Promise<bigint> => {
-    const { castora, eth, otherAccount, owner, publicClient, usdcContract } =
+    const { castora, eth, otherAccount, owner, publicClient, cusdContract } =
       fixture;
     const [, poolSeeds] = await castora.read.pools([poolId]);
     const { stakeToken, stakeAmount } = poolSeeds;
     const account = getAddress(otherAccount.account.address);
     if (stakeToken !== eth) {
-      await usdcContract.write.approve([castora.address, stakeAmount], {
+      await cusdContract.write.approve([castora.address, stakeAmount], {
         account
       });
     }
@@ -234,36 +234,36 @@ describe('Castora', () => {
       ).to.be.rejectedWith('InvalidAddress');
     });
 
-    it('Should revert if stakeAmountUsdc is zero', async () => {
-      const { castora, eth, usdc } = await loadFixture(deployFixture);
+    it('Should revert if stakeAmountCusd is zero', async () => {
+      const { castora, eth, cusd } = await loadFixture(deployFixture);
       await expect(
-        castora.write.createPool([seeds(eth, usdc, 0n, 0n, 0n)])
+        castora.write.createPool([seeds(eth, cusd, 0n, 0n, 0n)])
       ).to.be.rejectedWith('ZeroAmount');
     });
 
     it('Should revert if windowCloseTime is in the past', async () => {
-      const { castora, eth, usdc } = await loadFixture(deployFixture);
+      const { castora, eth, cusd } = await loadFixture(deployFixture);
       await expect(
-        castora.write.createPool([seeds(eth, usdc, stakeAmountUsdc, 0n, 0n)])
+        castora.write.createPool([seeds(eth, cusd, stakeAmountCusd, 0n, 0n)])
       ).to.be.rejectedWith('WindowHasClosed');
     });
 
     it('Should revert if windowCloseTime is after snapshotTime', async () => {
-      const { castora, eth, usdc } = await loadFixture(deployFixture);
+      const { castora, eth, cusd } = await loadFixture(deployFixture);
       await expect(
         castora.write.createPool([
-          seeds(eth, usdc, stakeAmountUsdc, fifteenMinsAfter, now)
+          seeds(eth, cusd, stakeAmountCusd, fifteenMinsAfter, now)
         ])
       ).to.be.rejectedWith('InvalidPoolTimes');
     });
 
     it('Should create with valid arguments and emit event', async () => {
-      const { castora, publicClient, validSeedsUsdcStake } = await loadFixture(
+      const { castora, publicClient, validSeedsCusdStake } = await loadFixture(
         deployFixture
       );
       const prevNoOfPools = await castora.read.noOfPools();
 
-      const hash = await castora.write.createPool([validSeedsUsdcStake]);
+      const hash = await castora.write.createPool([validSeedsCusdStake]);
       await publicClient.waitForTransactionReceipt({ hash });
 
       const newNoOfPools = await castora.read.noOfPools();
@@ -276,7 +276,7 @@ describe('Castora', () => {
         stakeAmount,
         windowCloseTime,
         snapshotTime
-      } = validSeedsUsdcStake;
+      } = validSeedsCusdStake;
       const createdPoolEvents = await castora.getEvents.CreatedPool();
 
       expect(newNoOfPools - prevNoOfPools).to.eq(1n);
@@ -292,10 +292,10 @@ describe('Castora', () => {
     });
 
     it('Should revert if a pool exists with the same PoolSeeds', async () => {
-      const { castora, validSeedsUsdcStake } = await loadFixture(deployFixture);
-      await castora.write.createPool([validSeedsUsdcStake]);
+      const { castora, validSeedsCusdStake } = await loadFixture(deployFixture);
+      await castora.write.createPool([validSeedsCusdStake]);
       await expect(
-        castora.write.createPool([validSeedsUsdcStake])
+        castora.write.createPool([validSeedsCusdStake])
       ).to.be.rejectedWith('PoolExists');
     });
   });
@@ -304,7 +304,7 @@ describe('Castora', () => {
     it('should revert if invalid poolIds are provided', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       await expect(castora.write.predict([0n, 0n])).to.be.rejectedWith(
         'InvalidPoolId'
       );
@@ -316,7 +316,7 @@ describe('Castora', () => {
     it('should revert if window has closed', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       await time.increaseTo(fifteenMinsAfter);
       await expect(castora.write.predict([poolId, 0n])).to.be.rejectedWith(
         'WindowHasClosed'
@@ -335,7 +335,7 @@ describe('Castora', () => {
     it('should revert if stakeToken (as ERC20) was not authorized', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       await expect(castora.write.predict([poolId, 0n])).to.be.rejected;
     });
 
@@ -412,10 +412,10 @@ describe('Castora', () => {
       const fixture = await loadFixture(deployFixture);
       const address = getAddress(fixture.otherAccount.account.address);
       const getBalance = async () =>
-        await fixture.usdcContract.read.balanceOf([address]);
-      await fundUsdc(fixture);
+        await fixture.cusdContract.read.balanceOf([address]);
+      await fundCusd(fixture);
       const prevBalance = await getBalance();
-      const stakeAmount = await testSuccessfulPrediction(fixture, 'USDC');
+      const stakeAmount = await testSuccessfulPrediction(fixture, 'cUSD');
       const newBalance = await getBalance();
       expect(prevBalance - newBalance).to.eq(stakeAmount);
     });
@@ -433,7 +433,7 @@ describe('Castora', () => {
     it('should revert if invalid poolIds are provided', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       await expect(
         castora.write.completePool([0n, 0n, 0n, 0n, []])
       ).to.be.rejectedWith('InvalidPoolId');
@@ -445,7 +445,7 @@ describe('Castora', () => {
     it('should revert if it is not yet snapshot time', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       await expect(
         castora.write.completePool([poolId, 0n, 0n, 0n, []])
       ).to.be.rejectedWith('NotYetSnapshotTime');
@@ -454,7 +454,7 @@ describe('Castora', () => {
     it('should revert if there are no predictions in the pool', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
       const [, poolSeeds] = await castora.read.pools([poolId]);
       await time.increaseTo(poolSeeds.snapshotTime);
       await expect(
@@ -465,8 +465,8 @@ describe('Castora', () => {
     it('should revert if provided noOfWinners is invalid', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       await time.increaseTo(poolSeeds.snapshotTime);
@@ -490,8 +490,8 @@ describe('Castora', () => {
     it('should revert if provided winAmount is zero', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       await time.increaseTo(poolSeeds.snapshotTime);
@@ -506,7 +506,7 @@ describe('Castora', () => {
     ) => {
       const { castora } = fixture;
       const poolId = await createPool(fixture, stake);
-      await fundUsdc(fixture);
+      await fundCusd(fixture);
       await predict(fixture, poolId);
       const [, poolSeeds, , , noOfPredictions] = await castora.read.pools([
         poolId
@@ -557,9 +557,9 @@ describe('Castora', () => {
       const fixture = await loadFixture(deployFixture);
       const address = getAddress(fixture.feeCollector.account.address);
       const getBalance = async () =>
-        await fixture.usdcContract.read.balanceOf([address]);
+        await fixture.cusdContract.read.balanceOf([address]);
       const prevFeeCollectorBalance = await getBalance();
-      const gainedFees = await testSuccessfulCompletePool(fixture, 'USDC');
+      const gainedFees = await testSuccessfulCompletePool(fixture, 'cUSD');
       const newFeeCollectorBalance = await getBalance();
       expect(newFeeCollectorBalance - prevFeeCollectorBalance).to.eq(
         gainedFees
@@ -569,8 +569,8 @@ describe('Castora', () => {
     it('Should revert if a pool has already been completed', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       const { snapshotTime, stakeAmount } = poolSeeds;
@@ -590,7 +590,7 @@ describe('Castora', () => {
     it('should revert if invalid poolIds are provided', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
 
       await expect(castora.write.claimWinnings([0n, 0n])).to.be.rejectedWith(
         'InvalidPoolId'
@@ -603,7 +603,7 @@ describe('Castora', () => {
     it('should revert if pool has not been completed', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const poolId = await createPool(fixture, 'cUSD');
 
       await expect(
         castora.write.claimWinnings([poolId, 0n])
@@ -613,8 +613,8 @@ describe('Castora', () => {
     it('should revert if invalid predictionIds are provided', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       const { snapshotTime } = poolSeeds;
@@ -632,8 +632,8 @@ describe('Castora', () => {
     it("should revert if caller doesn't own the prediction", async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       const { snapshotTime } = poolSeeds;
@@ -647,15 +647,15 @@ describe('Castora', () => {
 
     it('Should revert if prediction is not a winner', async () => {
       const fixture = await loadFixture(deployFixture);
-      const { castora, otherAccount, owner, usdcContract } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
+      const { castora, otherAccount, owner, cusdContract } = fixture;
+      const poolId = await createPool(fixture, 'cUSD');
 
       // predicting twice. the second prediction will lose since prediction
       // prices are both 0 and the first predicter wins in case of ties.
-      await fundUsdc(fixture);
+      await fundCusd(fixture);
       await predict(fixture, poolId);
 
-      await fundUsdc(fixture);
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
 
       const [, poolSeeds] = await castora.read.pools([poolId]);
@@ -673,9 +673,9 @@ describe('Castora', () => {
       fixture: Awaited<ReturnType<typeof deployFixture>>,
       stake: stake
     ) => {
-      const { castora, eth, publicClient, usdc } = fixture;
+      const { castora, eth, publicClient, cusd } = fixture;
       const poolId = await createPool(fixture, stake);
-      if (stake === 'USDC') await fundUsdc(fixture);
+      if (stake === 'cUSD') await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const oldPool = await castora.read.pools([poolId]);
       const [, poolSeeds] = oldPool;
@@ -688,7 +688,7 @@ describe('Castora', () => {
         await castora.read.totalNoOfClaimedWinningsPredictions();
       const prevTotalClaimedWinningsAmount =
         await castora.read.totalClaimedWinningsAmounts([
-          stake === 'ETH' ? eth : usdc
+          stake === 'ETH' ? eth : cusd
         ]);
       const prevPoolNoOfClaimedWinnings = oldPool.pop() as bigint;
 
@@ -703,7 +703,7 @@ describe('Castora', () => {
         await castora.read.totalNoOfClaimedWinningsPredictions();
       const newTotalClaimedWinningsAmount =
         await castora.read.totalClaimedWinningsAmounts([
-          stake === 'ETH' ? eth : usdc
+          stake === 'ETH' ? eth : cusd
         ]);
       const newPoolNoOfClaimedWinnings = pool.pop() as bigint;
       const claimedWinningsEvents = await castora.getEvents.ClaimedWinnings();
@@ -749,9 +749,9 @@ describe('Castora', () => {
       const fixture = await loadFixture(deployFixture);
       const address = getAddress(fixture.otherAccount.account.address);
       const getBalance = async () =>
-        await fixture.usdcContract.read.balanceOf([address]);
+        await fixture.cusdContract.read.balanceOf([address]);
       const prevBalance = await getBalance();
-      const winAmount = await testSuccessfulClaimWinnings(fixture, 'USDC');
+      const winAmount = await testSuccessfulClaimWinnings(fixture, 'cUSD');
       const newBalance = await getBalance();
       expect(newBalance - prevBalance).to.eq(winAmount);
     });
@@ -759,8 +759,8 @@ describe('Castora', () => {
     it('Should revert if winnings have been claimed', async () => {
       const fixture = await loadFixture(deployFixture);
       const { castora } = fixture;
-      const poolId = await createPool(fixture, 'USDC');
-      await fundUsdc(fixture);
+      const poolId = await createPool(fixture, 'cUSD');
+      await fundCusd(fixture);
       const predictionId = await predict(fixture, poolId);
       const [, poolSeeds] = await castora.read.pools([poolId]);
       const { snapshotTime, stakeAmount } = poolSeeds;
