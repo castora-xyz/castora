@@ -52,7 +52,9 @@ export class PoolSeeds {
    */
   chartPairName() {
     const { name } = this.predictionTokenDetails
-    return `PYTH:${name == 'AAPL' ? 'AAPL' : `${name}USD`}`;
+    if (name == 'AAPL') return 'PYTH:AAPL';
+    if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
+    return `PYTH:${name}USD`;
   }
 
   /**
