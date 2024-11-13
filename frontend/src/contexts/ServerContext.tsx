@@ -25,6 +25,8 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
           await fetch(`${import.meta.env.VITE_SERVER_URL}${path}`, {
             method: body ? 'POST' : 'GET',
             headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
               ...(path === '/user/register' && signature
                 ? { Authorization: `Bearer ${signature}` }
                 : {})
