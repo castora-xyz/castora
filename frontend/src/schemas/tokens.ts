@@ -3,6 +3,7 @@ import { CASTORA_ADDRESS } from '@/contexts';
 export const ETH = CASTORA_ADDRESS; // using contract address for native token
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
+export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
@@ -19,6 +20,8 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 // MOODENG is a token that is live on both Ethereum and Solana Mainnet.
 // However, since it is not live in Sepolia testnet, we are using its
 // Ethereum Mainnet address for representation.
+
+// SOL is the token address of Wormhole wrapped SOL on Ethereum Mainnet.
 
 export const tokens = [
   {
@@ -44,6 +47,14 @@ export const tokens = [
     decimals: 9,
     pythPriceId:
       '0xffff73128917a90950cd0473fd2551d7cd274fd5a6cc45641881bbcc6ee73417'
+  },
+  {
+    address: SOL,
+    name: 'SOL',
+    fullName: 'Solana',
+    decimals: 9,
+    pythPriceId:
+      '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
   },
   {
     address: cUSD,

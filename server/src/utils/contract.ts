@@ -54,7 +54,7 @@ export const writeContract = async (functionName: any, args: any) => {
     console.log(receipt);
     const newBalance = await showBalance();
     const balanceDiffs = +newBalance - +prevBalance;
-    console.log(`Owner Balance Change: ${`${balanceDiffs} ETH`}`);
+    console.log(`Admin Balance Change: ${`${balanceDiffs} ETH`}`);
     return result;
   } catch (e) {
     if (`${e}`.toLowerCase().includes('request timed out')) {
