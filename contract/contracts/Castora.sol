@@ -212,8 +212,8 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   function withdraw(address token, uint256 amount) public onlyOwner {
     if (token == address(0)) revert InvalidAddress();
     if (amount == 0) revert ZeroAmountSpecified();
-    if (token == address(this)) payable(owner()).transfer(amount);
-    IERC20(token).transfer(owner(), amount);
+    if (token == address(this)) payable(owner()).call{value: amount}('');
+    else IERC20(token).transfer(owner(), amount);
   }
 
   /// Returns the {Prediction} with the corresponding `predictionId` that was
