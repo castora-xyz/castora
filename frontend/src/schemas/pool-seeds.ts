@@ -54,6 +54,7 @@ export class PoolSeeds {
     const { name } = this.predictionTokenDetails
     if (name == 'AAPL') return 'PYTH:AAPL';
     if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
+    if (name == 'PENGU') return 'BITGET:PENGUUSDT';
     return `PYTH:${name}USD`;
   }
 
