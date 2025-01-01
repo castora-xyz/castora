@@ -1,0 +1,3 @@
+[submodule "castora/lib/forge-std"]
+	path = castora/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
