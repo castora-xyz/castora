@@ -2,9 +2,59 @@
 pragma solidity 0.8.25;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+
+error AlreadyClaimedWinnings();
+error InsufficientStakeValue();
+error InvalidAddress();
+error InvalidPoolId();
+error InvalidPoolTimes();
+error InvalidPredictionId();
+error InvalidWinnersCount();
+error NoPredictionsInPool();
+error NotAWinner();
+error NotYetSnapshotTime();
+error NotYourPrediction();
+error PoolAlreadyCompleted();
+error PoolExistsAlready();
+error PoolNotYetCompleted();
+error UnsuccessfulFeeCollection();
+error UnsuccessfulSendWinnings();
+error UnsuccessfulStaking();
+error WindowHasClosed();
+error ZeroAmountSpecified();
+
+/// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
+event CreatedPool(uint256 indexed poolId, bytes32 indexed seedsHash);
+
+/// Emitted when a participant (with `predicter` address) joins a {Pool}
+/// with matching `poolId` with the new `predictionId` for a
+/// `predictionPrice`.
+event Predicted(
+  uint256 indexed poolId, uint256 indexed predictionId, address indexed predicter, uint256 predictionPrice
+);
+
+/// Emitted when the {Pool} with `poolId` obtains what the price
+/// (`snapshotPrice`) of the `predictionToken` was at `snapshotTime`.
+event CompletedPool(
+  uint256 indexed poolId, uint256 snapshotTime, uint256 snapshotPrice, uint256 winAmount, uint256 noOfWinners
+);
+
+/// Emitted when the address of predicter (now a `winner`) that made the
+/// {Prediction} with `predictionId` in a {Pool} with `poolId` claims
+/// the `awardedAmount` of the `stakeToken` for their initial `stakeAmount`.
+event ClaimedWinnings(
+  uint256 indexed poolId,
+  uint256 indexed predictionId,
+  address indexed winner,
+  address stakeToken,
+  uint256 stakedAmount,
+  uint256 wonAmount
+);
 
 /// Holds information about a given prediction in a pool.
 struct Prediction {
@@ -53,13 +103,11 @@ struct PoolSeeds {
 /// seeds struct. At the point when a pool is created, the poolId
 /// corresponds to the current {noOfPools}.
 struct Pool {
+  /// A hash of the {seeds}. Helps with fetching a poolId.
+  bytes32 seedsHash;
   /// The numeric id of this pool. It matches the nth pool that was ever
   /// created.
   uint256 poolId;
-  /// Details about constants of this pool.
-  PoolSeeds seeds;
-  /// A hash of the {seeds}. Helps with fetching a poolId.
-  bytes32 seedsHash;
   /// When this pool was created.
   uint256 creationTime;
   /// Keeps track of the sum of predictions that were made in this pool.
@@ -85,7 +133,13 @@ struct Pool {
 /// After snapshotTime, those whose predictedPrices are closest to the token's
 /// price are the winners of the {Pool}. They go with all the pool's money or
 /// rather they each go with almost twice of what they initially staked.
-contract Castora is Ownable, AccessControl, ReentrancyGuard {
+contract Castora is
+  Initializable,
+  OwnableUpgradeable,
+  AccessControlUpgradeable,
+  ReentrancyGuardUpgradeable,
+  UUPSUpgradeable
+{
   /// An address to which all winner fees are sent to.
   address public feeCollector;
   /// Keeps tracks of the total number of pools that have ever been created.
@@ -103,6 +157,8 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   uint8 public constant WINNER_FEE_PERCENT = 5;
   /// All pools that were ever created against their poolIds.
   mapping(uint256 => Pool) public pools;
+  /// All poolseeds of created pools against their poolIds.
+  mapping(uint256 => PoolSeeds) public poolSeeds;
   /// All poolIds against the hash of their seeds. Helps when there is a
   /// need to fetch a poolId.
   mapping(bytes32 => uint256) public poolIdsBySeedsHashes;
@@ -122,72 +178,21 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   /// Keeps track of total ever claimed amount per token.
   mapping(address => uint256) public totalClaimedWinningsAmounts;
 
-  /// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
-  event CreatedPool(uint256 indexed poolId, bytes32 indexed seedsHash);
-
-  /// Emitted when a participant (with `predicter` address) joins a {Pool}
-  /// with matching `poolId` with the new `predictionId` for a
-  /// `predictionPrice`.
-  event Predicted(
-    uint256 indexed poolId,
-    uint256 indexed predictionId,
-    address indexed predicter,
-    uint256 predictionPrice
-  );
-
-  /// Emitted when the {Pool} with `poolId` obtains what the price
-  /// (`snapshotPrice`) of the `predictionToken` was at `snapshotTime`.
-  event CompletedPool(
-    uint256 indexed poolId,
-    uint256 snapshotTime,
-    uint256 snapshotPrice,
-    uint256 winAmount,
-    uint256 noOfWinners
-  );
-
-  /// Emitted when the address of predicter (now a `winner`) that made the
-  /// {Prediction} with `predictionId` in a {Pool} with `poolId` claims
-  /// the `awardedAmount` of the `stakeToken` for their initial `stakeAmount`.
-  event ClaimedWinnings(
-    uint256 indexed poolId,
-    uint256 indexed predictionId,
-    address indexed winner,
-    address stakeToken,
-    uint256 stakedAmount,
-    uint256 wonAmount
-  );
-
-  error AlreadyClaimedWinnings();
-  error InsufficientStakeValue();
-  error InvalidAddress();
-  error InvalidPoolId();
-  error InvalidPoolTimes();
-  error InvalidPredictionId();
-  error InvalidWinnersCount();
-  error NoPredictionsInPool();
-  error NotAWinner();
-  error NotYetSnapshotTime();
-  error NotYourPrediction();
-  error PoolAlreadyCompleted();
-  error PoolExistsAlready();
-  error PoolNotYetCompleted();
-  error UnsuccessfulFeeCollection();
-  error UnsuccessfulSendWinnings();
-  error UnsuccessfulStaking();
-  error WindowHasClosed();
-  error ZeroAmountSpecified();
-
   fallback() external payable {}
 
   receive() external payable {}
 
-  /// Sets up this smart contract when it is deployed.
-
-  constructor(address feeCollector_) Ownable(msg.sender) {
+  function initialize(address feeCollector_) public initializer {
     feeCollector = feeCollector_;
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(ADMIN_ROLE, msg.sender);
+    __Ownable_init(msg.sender);
+    __AccessControl_init();
+    __ReentrancyGuard_init();
+    __UUPSUpgradeable_init();
+    _grantRole(DEFAULT_ADMIN_ROLE, owner());
+    _grantRole(ADMIN_ROLE, owner());
   }
+
+  function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
 
   /// Sets the address of the `feeCollector` to the provided `newFeeCollector`.
   function setFeeCollector(address newFeeCollector) public onlyOwner {
@@ -212,18 +217,29 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   function withdraw(address token, uint256 amount) public onlyOwner {
     if (token == address(0)) revert InvalidAddress();
     if (amount == 0) revert ZeroAmountSpecified();
-    if (token == address(this)) payable(owner()).call{value: amount}('');
+    if (token == address(this)) (payable(owner()).call{value: amount}(''));
     else IERC20(token).transfer(owner(), amount);
+  }
+
+  /// Returns the {PoolSeeds} of the {Pool} with the provided `poolId`.
+  /// Fails if the provided `poolId` is invalid.
+  function getPoolSeeds(uint256 poolId) public view returns (PoolSeeds memory seeds) {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    seeds = poolSeeds[poolId];
+  }
+
+  /// Returns the {Pool} with the provided `poolId`. Fails if the provided
+  /// `poolId` is invalid.
+  function getPool(uint256 poolId) public view returns (Pool memory pool) {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    pool = pools[poolId];
   }
 
   /// Returns the {Prediction} with the corresponding `predictionId` that was
   /// made in the {Pool} with the provided `poolId`.
   ///
   /// Fails if either the provided `poolId` or `predictionId` are invalid.
-  function getPrediction(
-    uint256 poolId,
-    uint256 predictionId
-  ) public view returns (Prediction memory prediction) {
+  function getPrediction(uint256 poolId, uint256 predictionId) public view returns (Prediction memory prediction) {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (predictionId == 0 || predictionId > pool.noOfPredictions) {
@@ -234,28 +250,23 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
 
   /// Returns the predictionIds that made by the participant with address
   /// `predicter` in {Pool} with the provided `poolId`.
-  function getPredictionIdsForAddress(
-    uint256 poolId,
-    address predicter
-  ) public view returns (uint256[] memory predictionIds) {
+  function getPredictionIdsForAddress(uint256 poolId, address predicter)
+    public
+    view
+    returns (uint256[] memory predictionIds)
+  {
     if (predicter == address(0)) revert InvalidAddress();
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     predictionIds = predictionIdsByAddresses[poolId][predicter];
   }
 
   /// Returns a hash of the provided `seeds`.
-  function hashPoolSeeds(PoolSeeds memory seeds) public view returns (bytes32) {
-    return
-      keccak256(
-        abi.encodePacked(
-          seeds.predictionToken,
-          seeds.stakeToken,
-          seeds.stakeAmount,
-          seeds.windowCloseTime,
-          seeds.snapshotTime,
-          block.chainid
-        )
-      );
+  function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
+    return keccak256(
+      abi.encodePacked(
+        seeds.predictionToken, seeds.stakeToken, seeds.stakeAmount, seeds.windowCloseTime, seeds.snapshotTime
+      )
+    );
   }
 
   /// Creates a {Pool} with the provided `seeds`.
@@ -264,9 +275,7 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   /// is a pool with the same `seeds`.
   ///
   /// Emits a {CreatedPool} event.
-  function createPool(
-    PoolSeeds memory seeds
-  ) public onlyRole(ADMIN_ROLE) nonReentrant returns (uint256) {
+  function createPool(PoolSeeds memory seeds) public onlyRole(ADMIN_ROLE) nonReentrant returns (uint256) {
     if (seeds.predictionToken == address(0)) revert InvalidAddress();
     if (seeds.stakeToken == address(0)) revert InvalidAddress();
     if (seeds.stakeAmount == 0) revert ZeroAmountSpecified();
@@ -278,9 +287,9 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
 
     noOfPools += 1;
     poolIdsBySeedsHashes[seedsHash] = noOfPools;
+    poolSeeds[noOfPools] = seeds;
     Pool storage pool = pools[noOfPools];
     pool.poolId = noOfPools;
-    pool.seeds = seeds;
     pool.seedsHash = seedsHash;
 
     emit CreatedPool(noOfPools, seedsHash);
@@ -295,39 +304,25 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   /// {PoolSeeds-stakeToken} of the pool will be deducted from the predicter.
   ///
   /// Emits a {Predicted} event.
-  function predict(
-    uint256 poolId,
-    uint256 predictionPrice
-  ) public payable nonReentrant returns (uint256) {
+  function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant returns (uint256) {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
-    PoolSeeds memory seeds = pool.seeds;
+    PoolSeeds storage seeds = poolSeeds[poolId];
     if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount) revert InsufficientStakeValue();
     } else {
-      if (
-        !IERC20(seeds.stakeToken).transferFrom(
-          msg.sender,
-          address(this),
-          seeds.stakeAmount
-        )
-      ) revert UnsuccessfulStaking();
+      if (!IERC20(seeds.stakeToken).transferFrom(msg.sender, address(this), seeds.stakeAmount)) {
+        revert UnsuccessfulStaking();
+      }
     }
 
     totalNoOfPredictions += 1;
     totalStakedAmounts[seeds.stakeToken] += seeds.stakeAmount;
     pool.noOfPredictions += 1;
-    predictions[poolId][pool.noOfPredictions] = Prediction(
-      msg.sender,
-      poolId,
-      pool.noOfPredictions,
-      predictionPrice,
-      block.timestamp,
-      0,
-      false
-    );
+    predictions[poolId][pool.noOfPredictions] =
+      Prediction(msg.sender, poolId, pool.noOfPredictions, predictionPrice, block.timestamp, 0, false);
 
     predictionIdsByAddresses[poolId][msg.sender].push(pool.noOfPredictions);
     noOfJoinedPoolsByAddresses[msg.sender] += 1;
@@ -351,20 +346,20 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (pool.completionTime != 0) revert PoolAlreadyCompleted();
-    if (block.timestamp < pool.seeds.snapshotTime) revert NotYetSnapshotTime();
+    PoolSeeds storage seeds = poolSeeds[poolId];
+    if (block.timestamp < seeds.snapshotTime) revert NotYetSnapshotTime();
     if (pool.noOfPredictions == 0) revert NoPredictionsInPool();
     if (noOfWinners == 0) revert InvalidWinnersCount();
     if (noOfWinners > pool.noOfPredictions) revert InvalidWinnersCount();
     if (noOfWinners != winnerPredictions.length) revert InvalidWinnersCount();
     if (winAmount == 0) revert ZeroAmountSpecified();
 
-    uint256 fees = (pool.seeds.stakeAmount * pool.noOfPredictions) -
-      (winAmount * noOfWinners);
+    uint256 fees = (seeds.stakeAmount * pool.noOfPredictions) - (winAmount * noOfWinners);
     bool isSuccess = false;
-    if (pool.seeds.stakeToken == address(this)) {
-      (isSuccess, ) = payable(feeCollector).call{value: fees}('');
+    if (seeds.stakeToken == address(this)) {
+      (isSuccess,) = payable(feeCollector).call{value: fees}('');
     } else {
-      isSuccess = IERC20(pool.seeds.stakeToken).transfer(feeCollector, fees);
+      isSuccess = IERC20(seeds.stakeToken).transfer(feeCollector, fees);
     }
     if (!isSuccess) revert UnsuccessfulFeeCollection();
 
@@ -376,13 +371,7 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
       predictions[poolId][winnerPredictions[i]].isAWinner = true;
     }
 
-    emit CompletedPool(
-      poolId,
-      pool.seeds.snapshotTime,
-      snapshotPrice,
-      pool.winAmount,
-      noOfWinners
-    );
+    emit CompletedPool(poolId, seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
   }
 
   /// Awards the predicter who made the {Prediction} with `predictionId` in
@@ -394,10 +383,7 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
   /// already claimed their winnings.
   ///
   /// Emits an {ClaimedWinnings} event.
-  function claimWinnings(
-    uint256 poolId,
-    uint256 predictionId
-  ) public nonReentrant {
+  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
 
     Pool storage pool = pools[poolId];
@@ -412,30 +398,21 @@ contract Castora is Ownable, AccessControl, ReentrancyGuard {
     if (prediction.claimedWinningsTime != 0) revert AlreadyClaimedWinnings();
 
     bool isSuccess = false;
-    if (pool.seeds.stakeToken == address(this)) {
-      (isSuccess, ) = payable(prediction.predicter).call{value: pool.winAmount}(
-        ''
-      );
+    PoolSeeds storage seeds = poolSeeds[poolId];
+    if (seeds.stakeToken == address(this)) {
+      (isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
     } else {
-      isSuccess = IERC20(pool.seeds.stakeToken).transfer(
-        prediction.predicter,
-        pool.winAmount
-      );
+      isSuccess = IERC20(seeds.stakeToken).transfer(prediction.predicter, pool.winAmount);
     }
     if (!isSuccess) revert UnsuccessfulSendWinnings();
 
     totalNoOfClaimedWinningsPredictions += 1;
-    totalClaimedWinningsAmounts[pool.seeds.stakeToken] += pool.winAmount;
+    totalClaimedWinningsAmounts[seeds.stakeToken] += pool.winAmount;
     pool.noOfClaimedWinnings += 1;
     prediction.claimedWinningsTime = block.timestamp;
 
     emit ClaimedWinnings(
-      poolId,
-      predictionId,
-      prediction.predicter,
-      pool.seeds.stakeToken,
-      pool.seeds.stakeAmount,
-      pool.winAmount
+      poolId, predictionId, prediction.predicter, seeds.stakeToken, seeds.stakeAmount, pool.winAmount
     );
   }
 }
