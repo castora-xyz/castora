@@ -103,11 +103,13 @@ struct PoolSeeds {
 /// seeds struct. At the point when a pool is created, the poolId
 /// corresponds to the current {noOfPools}.
 struct Pool {
-  /// A hash of the {seeds}. Helps with fetching a poolId.
-  bytes32 seedsHash;
   /// The numeric id of this pool. It matches the nth pool that was ever
   /// created.
   uint256 poolId;
+  /// Details about constants of this pool.
+  PoolSeeds seeds;
+  /// A hash of the {seeds}. Helps with fetching a poolId.
+  bytes32 seedsHash;
   /// When this pool was created.
   uint256 creationTime;
   /// Keeps track of the sum of predictions that were made in this pool.
@@ -157,8 +159,6 @@ contract Castora is
   uint8 public constant WINNER_FEE_PERCENT = 5;
   /// All pools that were ever created against their poolIds.
   mapping(uint256 => Pool) public pools;
-  /// All poolseeds of created pools against their poolIds.
-  mapping(uint256 => PoolSeeds) public poolSeeds;
   /// All poolIds against the hash of their seeds. Helps when there is a
   /// need to fetch a poolId.
   mapping(bytes32 => uint256) public poolIdsBySeedsHashes;
@@ -221,13 +221,6 @@ contract Castora is
     else IERC20(token).transfer(owner(), amount);
   }
 
-  /// Returns the {PoolSeeds} of the {Pool} with the provided `poolId`.
-  /// Fails if the provided `poolId` is invalid.
-  function getPoolSeeds(uint256 poolId) public view returns (PoolSeeds memory seeds) {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-    seeds = poolSeeds[poolId];
-  }
-
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
   /// `poolId` is invalid.
   function getPool(uint256 poolId) public view returns (Pool memory pool) {
@@ -287,9 +280,9 @@ contract Castora is
 
     noOfPools += 1;
     poolIdsBySeedsHashes[seedsHash] = noOfPools;
-    poolSeeds[noOfPools] = seeds;
     Pool storage pool = pools[noOfPools];
     pool.poolId = noOfPools;
+    pool.seeds = seeds;
     pool.seedsHash = seedsHash;
 
     emit CreatedPool(noOfPools, seedsHash);
@@ -307,7 +300,7 @@ contract Castora is
   function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant returns (uint256) {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
-    PoolSeeds storage seeds = poolSeeds[poolId];
+    PoolSeeds memory seeds = pool.seeds;
     if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
 
     if (seeds.stakeToken == address(this)) {
@@ -346,20 +339,19 @@ contract Castora is
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (pool.completionTime != 0) revert PoolAlreadyCompleted();
-    PoolSeeds storage seeds = poolSeeds[poolId];
-    if (block.timestamp < seeds.snapshotTime) revert NotYetSnapshotTime();
+    if (block.timestamp < pool.seeds.snapshotTime) revert NotYetSnapshotTime();
     if (pool.noOfPredictions == 0) revert NoPredictionsInPool();
     if (noOfWinners == 0) revert InvalidWinnersCount();
     if (noOfWinners > pool.noOfPredictions) revert InvalidWinnersCount();
     if (noOfWinners != winnerPredictions.length) revert InvalidWinnersCount();
     if (winAmount == 0) revert ZeroAmountSpecified();
 
-    uint256 fees = (seeds.stakeAmount * pool.noOfPredictions) - (winAmount * noOfWinners);
+    uint256 fees = (pool.seeds.stakeAmount * pool.noOfPredictions) - (winAmount * noOfWinners);
     bool isSuccess = false;
-    if (seeds.stakeToken == address(this)) {
+    if (pool.seeds.stakeToken == address(this)) {
       (isSuccess,) = payable(feeCollector).call{value: fees}('');
     } else {
-      isSuccess = IERC20(seeds.stakeToken).transfer(feeCollector, fees);
+      isSuccess = IERC20(pool.seeds.stakeToken).transfer(feeCollector, fees);
     }
     if (!isSuccess) revert UnsuccessfulFeeCollection();
 
@@ -371,7 +363,7 @@ contract Castora is
       predictions[poolId][winnerPredictions[i]].isAWinner = true;
     }
 
-    emit CompletedPool(poolId, seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
+    emit CompletedPool(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
   }
 
   /// Awards the predicter who made the {Prediction} with `predictionId` in
@@ -398,21 +390,20 @@ contract Castora is
     if (prediction.claimedWinningsTime != 0) revert AlreadyClaimedWinnings();
 
     bool isSuccess = false;
-    PoolSeeds storage seeds = poolSeeds[poolId];
-    if (seeds.stakeToken == address(this)) {
+    if (pool.seeds.stakeToken == address(this)) {
       (isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
     } else {
-      isSuccess = IERC20(seeds.stakeToken).transfer(prediction.predicter, pool.winAmount);
+      isSuccess = IERC20(pool.seeds.stakeToken).transfer(prediction.predicter, pool.winAmount);
     }
     if (!isSuccess) revert UnsuccessfulSendWinnings();
 
     totalNoOfClaimedWinningsPredictions += 1;
-    totalClaimedWinningsAmounts[seeds.stakeToken] += pool.winAmount;
+    totalClaimedWinningsAmounts[pool.seeds.stakeToken] += pool.winAmount;
     pool.noOfClaimedWinnings += 1;
     prediction.claimedWinningsTime = block.timestamp;
 
     emit ClaimedWinnings(
-      poolId, predictionId, prediction.predicter, seeds.stakeToken, seeds.stakeAmount, pool.winAmount
+      poolId, predictionId, prediction.predicter, pool.seeds.stakeToken, pool.seeds.stakeAmount, pool.winAmount
     );
   }
 }

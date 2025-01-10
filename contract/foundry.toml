@@ -8,6 +8,7 @@ build_info = true
 extra_output = ["storageLayout"]
 
 [rpc_endpoints]
+monadtestnet = "${MONAD_TESTNET_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 
 [etherscan]

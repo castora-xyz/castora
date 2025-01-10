@@ -221,1143 +221,736 @@ export const erc20Abi = [
   }
 ] as const;
 export const abi = [
+  { type: 'fallback', stateMutability: 'payable' },
+  { type: 'receive', stateMutability: 'payable' },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'feeCollector_',
-        type: 'address'
-      }
-    ],
-    stateMutability: 'nonpayable',
-    type: 'constructor'
-  },
-  {
-    inputs: [],
-    name: 'AccessControlBadConfirmation',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      },
-      {
-        internalType: 'bytes32',
-        name: 'neededRole',
-        type: 'bytes32'
-      }
-    ],
-    name: 'AccessControlUnauthorizedAccount',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'AlreadyClaimedWinnings',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InsufficientStakeValue',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InvalidAddress',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InvalidPoolId',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InvalidPoolTimes',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InvalidPredictionId',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'InvalidWinnersCount',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'NoPredictionsInPool',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'NotAWinner',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'NotYetSnapshotTime',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'NotYourPrediction',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'owner',
-        type: 'address'
-      }
-    ],
-    name: 'OwnableInvalidOwner',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'OwnableUnauthorizedAccount',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'PoolAlreadyCompleted',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'PoolExistsAlready',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'PoolNotYetCompleted',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'ReentrancyGuardReentrantCall',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'UnsuccessfulFeeCollection',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'UnsuccessfulSendWinnings',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'UnsuccessfulStaking',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'WindowHasClosed',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'ZeroAmountSpecified',
-    type: 'error'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'predictionId',
-        type: 'uint256'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'winner',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'stakeToken',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'stakedAmount',
-        type: 'uint256'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'wonAmount',
-        type: 'uint256'
-      }
-    ],
-    name: 'ClaimedWinnings',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'snapshotTime',
-        type: 'uint256'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'snapshotPrice',
-        type: 'uint256'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'winAmount',
-        type: 'uint256'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'noOfWinners',
-        type: 'uint256'
-      }
-    ],
-    name: 'CompletedPool',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'seedsHash',
-        type: 'bytes32'
-      }
-    ],
-    name: 'CreatedPool',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'previousOwner',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address'
-      }
-    ],
-    name: 'OwnershipTransferred',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'predictionId',
-        type: 'uint256'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'predicter',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'predictionPrice',
-        type: 'uint256'
-      }
-    ],
-    name: 'Predicted',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'previousAdminRole',
-        type: 'bytes32'
-      },
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'newAdminRole',
-        type: 'bytes32'
-      }
-    ],
-    name: 'RoleAdminChanged',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'sender',
-        type: 'address'
-      }
-    ],
-    name: 'RoleGranted',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'sender',
-        type: 'address'
-      }
-    ],
-    name: 'RoleRevoked',
-    type: 'event'
-  },
-  {
-    stateMutability: 'payable',
-    type: 'fallback'
-  },
-  {
-    inputs: [],
+    type: 'function',
     name: 'ADMIN_ROLE',
-    outputs: [
-      {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [],
+    type: 'function',
     name: 'DEFAULT_ADMIN_ROLE',
-    outputs: [
-      {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [],
+    type: 'function',
     name: 'PREDICTION_DECIMALS',
-    outputs: [
-      {
-        internalType: 'uint8',
-        name: '',
-        type: 'uint8'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8', internalType: 'uint8' }],
+    stateMutability: 'view'
   },
   {
+    type: 'function',
+    name: 'UPGRADE_INTERFACE_VERSION',
     inputs: [],
+    outputs: [{ name: '', type: 'string', internalType: 'string' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'WINNER_FEE_PERCENT',
-    outputs: [
-      {
-        internalType: 'uint8',
-        name: '',
-        type: 'uint8'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8', internalType: 'uint8' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'predictionId',
-        type: 'uint256'
-      }
-    ],
+    type: 'function',
     name: 'claimWinnings',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+    ],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'snapshotPrice',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'noOfWinners',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'winAmount',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256[]',
-        name: 'winnerPredictions',
-        type: 'uint256[]'
-      }
-    ],
+    type: 'function',
     name: 'completePool',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
     inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+      { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
       {
-        components: [
-          {
-            internalType: 'address',
-            name: 'predictionToken',
-            type: 'address'
-          },
-          {
-            internalType: 'address',
-            name: 'stakeToken',
-            type: 'address'
-          },
-          {
-            internalType: 'uint256',
-            name: 'stakeAmount',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'snapshotTime',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'windowCloseTime',
-            type: 'uint256'
-          }
-        ],
-        internalType: 'struct PoolSeeds',
-        name: 'seeds',
-        type: 'tuple'
+        name: 'winnerPredictions',
+        type: 'uint256[]',
+        internalType: 'uint256[]'
       }
     ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
     name: 'createPool',
-    outputs: [
+    inputs: [
       {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
+        name: 'seeds',
+        type: 'tuple',
+        internalType: 'struct PoolSeeds',
+        components: [
+          { name: 'predictionToken', type: 'address', internalType: 'address' },
+          { name: 'stakeToken', type: 'address', internalType: 'address' },
+          { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+        ]
       }
     ],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [],
+    type: 'function',
     name: 'feeCollector',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
+    type: 'function',
+    name: 'getPool',
+    inputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
       {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'predictionId',
-        type: 'uint256'
+        name: 'pool',
+        type: 'tuple',
+        internalType: 'struct Pool',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct PoolSeeds',
+            components: [
+              {
+                name: 'predictionToken',
+                type: 'address',
+                internalType: 'address'
+              },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              {
+                name: 'snapshotTime',
+                type: 'uint256',
+                internalType: 'uint256'
+              },
+              {
+                name: 'windowCloseTime',
+                type: 'uint256',
+                internalType: 'uint256'
+              }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'noOfClaimedWinnings',
+            type: 'uint256',
+            internalType: 'uint256'
+          }
+        ]
       }
     ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'getPrediction',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+    ],
     outputs: [
       {
-        components: [
-          {
-            internalType: 'address',
-            name: 'predicter',
-            type: 'address'
-          },
-          {
-            internalType: 'uint256',
-            name: 'poolId',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'predictionId',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'predictionPrice',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'predictionTime',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'claimedWinningsTime',
-            type: 'uint256'
-          },
-          {
-            internalType: 'bool',
-            name: 'isAWinner',
-            type: 'bool'
-          }
-        ],
-        internalType: 'struct Prediction',
         name: 'prediction',
-        type: 'tuple'
+        type: 'tuple',
+        internalType: 'struct Prediction',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'claimedWinningsTime',
+            type: 'uint256',
+            internalType: 'uint256'
+          },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        internalType: 'address',
-        name: 'predicter',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'getPredictionIdsForAddress',
-    outputs: [
-      {
-        internalType: 'uint256[]',
-        name: 'predictionIds',
-        type: 'uint256[]'
-      }
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predicter', type: 'address', internalType: 'address' }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    outputs: [
+      { name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      }
-    ],
+    type: 'function',
     name: 'getRoleAdmin',
-    outputs: [
-      {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [{ name: 'role', type: 'bytes32', internalType: 'bytes32' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'admin',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'grantAdminRole',
+    inputs: [{ name: 'admin', type: 'address', internalType: 'address' }],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'grantRole',
+    inputs: [
+      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'account', type: 'address', internalType: 'address' }
+    ],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'hasRole',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
+    inputs: [
+      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'account', type: 'address', internalType: 'address' }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'predictionToken',
-            type: 'address'
-          },
-          {
-            internalType: 'address',
-            name: 'stakeToken',
-            type: 'address'
-          },
-          {
-            internalType: 'uint256',
-            name: 'stakeAmount',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'snapshotTime',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'windowCloseTime',
-            type: 'uint256'
-          }
-        ],
-        internalType: 'struct PoolSeeds',
-        name: 'seeds',
-        type: 'tuple'
-      }
-    ],
+    type: 'function',
     name: 'hashPoolSeeds',
-    outputs: [
-      {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
     inputs: [
       {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    name: 'joinedPoolIdsByAddresses',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      }
-    ],
-    name: 'noOfJoinedPoolsByAddresses',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'noOfPools',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'owner',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
-      }
-    ],
-    name: 'poolIdsBySeedsHashes',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    name: 'pools',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'predictionToken',
-            type: 'address'
-          },
-          {
-            internalType: 'address',
-            name: 'stakeToken',
-            type: 'address'
-          },
-          {
-            internalType: 'uint256',
-            name: 'stakeAmount',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'snapshotTime',
-            type: 'uint256'
-          },
-          {
-            internalType: 'uint256',
-            name: 'windowCloseTime',
-            type: 'uint256'
-          }
-        ],
-        internalType: 'struct PoolSeeds',
         name: 'seeds',
-        type: 'tuple'
-      },
-      {
-        internalType: 'bytes32',
-        name: 'seedsHash',
-        type: 'bytes32'
-      },
-      {
-        internalType: 'uint256',
-        name: 'creationTime',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'noOfPredictions',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'snapshotPrice',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'completionTime',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'winAmount',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'noOfWinners',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'noOfClaimedWinnings',
-        type: 'uint256'
+        type: 'tuple',
+        internalType: 'struct PoolSeeds',
+        components: [
+          { name: 'predictionToken', type: 'address', internalType: 'address' },
+          { name: 'stakeToken', type: 'address', internalType: 'address' },
+          { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+        ]
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'pure'
   },
   {
+    type: 'function',
+    name: 'initialize',
     inputs: [
-      {
-        internalType: 'uint256',
-        name: 'poolId',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'predictionPrice',
-        type: 'uint256'
-      }
+      { name: 'feeCollector_', type: 'address', internalType: 'address' }
     ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'joinedPoolIdsByAddresses',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'noOfJoinedPoolsByAddresses',
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'noOfPools',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'owner',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'poolIdsBySeedsHashes',
+    inputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'pools',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      {
+        name: 'seeds',
+        type: 'tuple',
+        internalType: 'struct PoolSeeds',
+        components: [
+          { name: 'predictionToken', type: 'address', internalType: 'address' },
+          { name: 'stakeToken', type: 'address', internalType: 'address' },
+          { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+        ]
+      },
+      { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+      { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'predict',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' }
     ],
-    stateMutability: 'payable',
-    type: 'function'
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'payable'
   },
   {
+    type: 'function',
+    name: 'proxiableUUID',
     inputs: [],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'renounceOwnership',
+    inputs: [],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        internalType: 'address',
-        name: 'callerConfirmation',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'renounceRole',
+    inputs: [
+      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'callerConfirmation', type: 'address', internalType: 'address' }
+    ],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'admin',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'revokeAdminRole',
+    inputs: [{ name: 'admin', type: 'address', internalType: 'address' }],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'role',
-        type: 'bytes32'
-      },
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'revokeRole',
+    inputs: [
+      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'account', type: 'address', internalType: 'address' }
+    ],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'newFeeCollector',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'setFeeCollector',
+    inputs: [
+      { name: 'newFeeCollector', type: 'address', internalType: 'address' }
+    ],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
-    inputs: [
-      {
-        internalType: 'bytes4',
-        name: 'interfaceId',
-        type: 'bytes4'
-      }
-    ],
+    type: 'function',
     name: 'supportsInterface',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [{ name: 'interfaceId', type: 'bytes4', internalType: 'bytes4' }],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'totalClaimedWinningsAmounts',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [],
+    type: 'function',
     name: 'totalNoOfClaimedWinningsPredictions',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
     inputs: [],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'totalNoOfPredictions',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'totalStakedAmounts',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address'
-      }
-    ],
+    type: 'function',
     name: 'transferOwnership',
+    inputs: [{ name: 'newOwner', type: 'address', internalType: 'address' }],
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    stateMutability: 'nonpayable'
   },
   {
+    type: 'function',
+    name: 'upgradeToAndCall',
+    inputs: [
+      { name: 'newImplementation', type: 'address', internalType: 'address' },
+      { name: 'data', type: 'bytes', internalType: 'bytes' }
+    ],
+    outputs: [],
+    stateMutability: 'payable'
+  },
+  {
+    type: 'function',
+    name: 'withdraw',
+    inputs: [
+      { name: 'token', type: 'address', internalType: 'address' },
+      { name: 'amount', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'event',
+    name: 'ClaimedWinnings',
     inputs: [
       {
-        internalType: 'address',
-        name: 'token',
-        type: 'address'
+        name: 'poolId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
       },
       {
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
+        name: 'predictionId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
+      },
+      {
+        name: 'winner',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      },
+      {
+        name: 'stakeToken',
+        type: 'address',
+        indexed: false,
+        internalType: 'address'
+      },
+      {
+        name: 'stakedAmount',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      },
+      {
+        name: 'wonAmount',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
       }
     ],
-    name: 'withdraw',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    anonymous: false
   },
   {
-    stateMutability: 'payable',
-    type: 'receive'
-  }
+    type: 'event',
+    name: 'CompletedPool',
+    inputs: [
+      {
+        name: 'poolId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
+      },
+      {
+        name: 'snapshotTime',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      },
+      {
+        name: 'snapshotPrice',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      },
+      {
+        name: 'winAmount',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      },
+      {
+        name: 'noOfWinners',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'CreatedPool',
+    inputs: [
+      {
+        name: 'poolId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
+      },
+      {
+        name: 'seedsHash',
+        type: 'bytes32',
+        indexed: true,
+        internalType: 'bytes32'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'Initialized',
+    inputs: [
+      {
+        name: 'version',
+        type: 'uint64',
+        indexed: false,
+        internalType: 'uint64'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'OwnershipTransferred',
+    inputs: [
+      {
+        name: 'previousOwner',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      },
+      {
+        name: 'newOwner',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'Predicted',
+    inputs: [
+      {
+        name: 'poolId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
+      },
+      {
+        name: 'predictionId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256'
+      },
+      {
+        name: 'predicter',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      },
+      {
+        name: 'predictionPrice',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'RoleAdminChanged',
+    inputs: [
+      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      {
+        name: 'previousAdminRole',
+        type: 'bytes32',
+        indexed: true,
+        internalType: 'bytes32'
+      },
+      {
+        name: 'newAdminRole',
+        type: 'bytes32',
+        indexed: true,
+        internalType: 'bytes32'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'RoleGranted',
+    inputs: [
+      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      {
+        name: 'account',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      },
+      {
+        name: 'sender',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'RoleRevoked',
+    inputs: [
+      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      {
+        name: 'account',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      },
+      {
+        name: 'sender',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'Upgraded',
+    inputs: [
+      {
+        name: 'implementation',
+        type: 'address',
+        indexed: true,
+        internalType: 'address'
+      }
+    ],
+    anonymous: false
+  },
+  { type: 'error', name: 'AccessControlBadConfirmation', inputs: [] },
+  {
+    type: 'error',
+    name: 'AccessControlUnauthorizedAccount',
+    inputs: [
+      { name: 'account', type: 'address', internalType: 'address' },
+      { name: 'neededRole', type: 'bytes32', internalType: 'bytes32' }
+    ]
+  },
+  {
+    type: 'error',
+    name: 'AddressEmptyCode',
+    inputs: [{ name: 'target', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
+  {
+    type: 'error',
+    name: 'ERC1967InvalidImplementation',
+    inputs: [
+      { name: 'implementation', type: 'address', internalType: 'address' }
+    ]
+  },
+  { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
+  { type: 'error', name: 'FailedCall', inputs: [] },
+  { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
+  { type: 'error', name: 'InvalidAddress', inputs: [] },
+  { type: 'error', name: 'InvalidInitialization', inputs: [] },
+  { type: 'error', name: 'InvalidPoolId', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
+  { type: 'error', name: 'InvalidPredictionId', inputs: [] },
+  { type: 'error', name: 'InvalidWinnersCount', inputs: [] },
+  { type: 'error', name: 'NoPredictionsInPool', inputs: [] },
+  { type: 'error', name: 'NotAWinner', inputs: [] },
+  { type: 'error', name: 'NotInitializing', inputs: [] },
+  { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
+  { type: 'error', name: 'NotYourPrediction', inputs: [] },
+  {
+    type: 'error',
+    name: 'OwnableInvalidOwner',
+    inputs: [{ name: 'owner', type: 'address', internalType: 'address' }]
+  },
+  {
+    type: 'error',
+    name: 'OwnableUnauthorizedAccount',
+    inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'PoolAlreadyCompleted', inputs: [] },
+  { type: 'error', name: 'PoolExistsAlready', inputs: [] },
+  { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
+  { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
+  { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
+  {
+    type: 'error',
+    name: 'UUPSUnsupportedProxiableUUID',
+    inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
+  },
+  { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulStaking', inputs: [] },
+  { type: 'error', name: 'WindowHasClosed', inputs: [] },
+  { type: 'error', name: 'ZeroAmountSpecified', inputs: [] }
 ] as const;

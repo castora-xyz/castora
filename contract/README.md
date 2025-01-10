@@ -51,8 +51,14 @@ $ anvil
 
 ```shell
 $ source .env
+
+# Deploying to Sepolia
 $ forge script --chain sepolia script/DeployCUSD.s.sol:DeployCUSD --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
 $ forge script --chain sepolia script/DeployCastora.s.sol:DeployCastora --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
+
+# Deploying to Monad Testnet
+$ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
+$ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
 ```
 
 ### Cast

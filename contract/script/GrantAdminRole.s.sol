@@ -6,8 +6,7 @@ import 'forge-std/Script.sol';
 
 contract GrantAdminRole is Script {
   function run() public {
-    // TODO: Change the following makeAddr to the appropriate deployed contract
-    Castora castora = Castora(payable(makeAddr('castora')));
+    Castora castora = Castora(payable(0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53));
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
     castora.grantAdminRole(vm.envAddress('ADMIN_ADDRESS'));
     vm.stopBroadcast();

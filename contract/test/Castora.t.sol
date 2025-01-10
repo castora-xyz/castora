@@ -135,7 +135,7 @@ contract CastoraTest is Test {
     emit CreatedPool(1, seedsHash);
     castora.createPool(seedsErc20Stake);
 
-    PoolSeeds memory seeds = castora.getPoolSeeds(1);
+    PoolSeeds memory seeds = castora.getPool(1).seeds;
     assertEq(prevNoOfPools + 1, castora.noOfPools());
     assertEq(castora.poolIdsBySeedsHashes(seedsHash), 1);
     assertEq(seeds.predictionToken, address(cusd));
