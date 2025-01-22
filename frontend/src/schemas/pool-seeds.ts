@@ -120,6 +120,7 @@ export class PoolSeeds {
       if (diff === 15 * 60) return this.windowCloseTime - 45 * 60;
       if (diff === 30 * 60) return this.windowCloseTime - 5 * 30 * 60;
       if (diff === 60 * 60) return this.windowCloseTime - 5 * 60 * 60;
+      if (diff === 12 * 60 * 60) return this.windowCloseTime - 12 * 60 * 60;
       return null;
     } else return null;
   }

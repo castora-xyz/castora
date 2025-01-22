@@ -1,11 +1,11 @@
 name: complete-pools
 on:
   schedule:
-    - cron: '0 */1 * * *'
+    - cron: '0 */12 * * *'
 jobs:
   cron:
     runs-on: ubuntu-latest
     steps:
       - name: Complete Pools
         run: |
-          curl -H "chain: sepolia" https://us-central1-castora-xyz.cloudfunctions.net/server/pools/complete
+          curl -H "chain: monaddevnet" https://us-central1-castora-xyz.cloudfunctions.net/server/pools/complete
