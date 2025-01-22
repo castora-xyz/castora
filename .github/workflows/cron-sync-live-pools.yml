@@ -8,4 +8,4 @@ jobs:
     steps:
       - name: Sync Live Pools
         run: |
-          curl --url https://us-central1-castora-xyz.cloudfunctions.net/server/pools/sync
+          curl -H "chain: sepolia" https://us-central1-castora-xyz.cloudfunctions.net/server/pools/sync

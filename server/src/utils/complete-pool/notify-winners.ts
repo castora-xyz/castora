@@ -33,7 +33,8 @@ export const notifyWinners = async (
   }
 
   for (const winner of Object.keys(uniqued)) {
-    const winnerRef = firestore.doc(`/users/${winner}`);
+    // using the default Firestore here as that's where fcmTokens are stored
+    const winnerRef = firestore().doc(`/users/${winner}`);
     const winnerSnap = await winnerRef.get();
 
     if (winnerSnap.exists) {

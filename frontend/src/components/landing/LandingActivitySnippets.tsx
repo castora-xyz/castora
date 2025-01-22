@@ -1,6 +1,6 @@
 import { ActivityCard } from '@/components';
-import { Activity, useMyActivity } from '@/contexts';
-import { ETH, Pool, PoolSeeds, Prediction, USDC } from '@/schemas';
+import { Activity, CASTORA_ADDRESS_SEPOLIA, useMyActivity } from '@/contexts';
+import { Pool, PoolSeeds, Prediction, USDC } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
@@ -25,7 +25,7 @@ export const LandingActivitySnippets = () => {
     pool: new Pool([
       0,
       new PoolSeeds({
-        predictionToken: ETH,
+        predictionToken: CASTORA_ADDRESS_SEPOLIA,
         stakeToken: USDC,
         stakeAmount: 10000000,
         windowCloseTime: next2HoursTimestamp() - 15 * 60,

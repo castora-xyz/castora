@@ -6,11 +6,16 @@ export * from './fetch-pool';
 export * from './generate-seeds';
 export * from './get-pool-id';
 export * from './tokens';
+export * from './validate-chain';
 
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { Chain } from './validate-chain';
 
 initializeApp();
-export const firestore = getFirestore();
+// To use default firestore, don't pass a chain. Otherwise
+// send in the chain of choice to use its own firestore database
+export const firestore = (chain?: Chain) =>
+  chain ? getFirestore(chain) : getFirestore();
 export const messaging = getMessaging();

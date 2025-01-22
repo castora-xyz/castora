@@ -1,5 +1,7 @@
 import { PoolSeeds } from '../schemas';
-import { ETH, USDC } from './tokens';
+import { getContractAddress } from './contract';
+import { USDC } from './tokens';
+import { Chain } from './validate-chain';
 
 const nextNthHour = (current: number, n: number) =>
   current % n == 0 ? current + n : Math.ceil(current / n) * n;
@@ -10,7 +12,7 @@ const next2NthHour = (current: number, n: number) =>
 const prevNthHour = (current: number, n: number) =>
   current % n == 0 ? current - n : Math.floor(current / n) * n;
 
-export const generateSeeds = () => {
+export const generateSeeds = (chain: Chain) => {
   const now = new Date();
   const yrs = now.getFullYear();
   const months = now.getMonth();
@@ -69,7 +71,8 @@ export const generateSeeds = () => {
   ].map(
     ({ windowCloseTime, snapshotTime }) =>
       new PoolSeeds({
-        predictionToken: ETH,
+        // using contract address as native token representative
+        predictionToken: getContractAddress(chain),
         stakeToken: USDC,
         stakeAmount: 10000000,
         snapshotTime,

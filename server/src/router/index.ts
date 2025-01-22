@@ -1,5 +1,6 @@
 import { Response, Router } from 'express';
 import { recordActivity } from '../controllers';
+import { validateChain } from '../utils';
 import poolRoutes from './pools';
 import userRoutes from './users';
 
@@ -29,9 +30,9 @@ export const wrapper = async (
 router.use('/', poolRoutes);
 router.use('/', userRoutes);
 
-router.get('/record/:txHash', async (req, res) => {
+router.get('/record/:txHash', validateChain, async (req, res) => {
   await wrapper(
-    async () => await recordActivity(req.params.txHash),
+    async () => await recordActivity(res.locals.chain, req.params.txHash),
     'recording activity',
     res
   );

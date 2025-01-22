@@ -2,7 +2,7 @@ import Cog from '@/assets/cog.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { CASTORA_ADDRESS, abi, usePredictions } from '@/contexts';
+import { abi, useContract, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
@@ -15,8 +15,9 @@ export const PredictionsDisplay = ({
 }: {
   pool: Pool;
 }) => {
-  const { address } = useAccount();
-  const [currentChain] = useChains();
+  const { address, chain: currentChain } = useAccount();
+  const [defaultChain] = useChains();
+  const { castoraAddress } = useContract();
   const retrieve = usePredictions();
 
   const [hasError, setHasError] = useState(false);
@@ -51,8 +52,10 @@ export const PredictionsDisplay = ({
     );
   };
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'Predicted',
     args: { poolId: BigInt(poolId) },
@@ -68,8 +71,10 @@ export const PredictionsDisplay = ({
     }
   });
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'ClaimedWinnings',
     args: { poolId: BigInt(poolId) },
@@ -147,7 +152,9 @@ export const PredictionsDisplay = ({
                 className="rounded-2xl bg-surface-subtle p-4 flex justify-between items-center flex-wrap gap-4 mb-4"
               >
                 <a
-                  href={`${currentChain.blockExplorers?.default.url}/address/${predicter}`}
+                  href={`${
+                    (currentChain ?? defaultChain).blockExplorers?.default.url
+                  }/address/${predicter}`}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="flex items-center text-xs text-text-caption hover:underline"

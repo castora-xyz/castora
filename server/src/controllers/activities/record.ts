@@ -1,19 +1,25 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { parseEventLogs, TransactionReceipt } from 'viem';
-import { abi, firestore, publicClient } from '../../utils';
+import { createPublicClient, parseEventLogs, TransactionReceipt } from 'viem';
+import { abi, Chain, firestore, getConfig } from '../../utils';
 
 /**
  * Looks up the chain for the activity of the provided transaction hash.
  *
  * @param txHash The transaction hash of the activity to be recorded.
+ * @param chain The chain to look up the activity on.
  */
-export const recordActivity = async (txHash: string): Promise<any> => {
+export const recordActivity = async (
+  chain: Chain,
+  txHash: string
+): Promise<any> => {
   console.log('Got Record Activity ... ');
   console.log('txHash: ', txHash);
 
   let receipt: TransactionReceipt;
   try {
-    const raw = await publicClient.getTransactionReceipt({
+    const raw = await createPublicClient({
+      ...getConfig(chain)
+    }).getTransactionReceipt({
       hash: txHash as `0x${string}`
     });
     if (raw) receipt = raw;
@@ -42,8 +48,10 @@ export const recordActivity = async (txHash: string): Promise<any> => {
   console.log('Parsed Activity ... ');
   console.log({ poolId, type, user, predictionId });
 
+  const db = firestore(chain);
+
   let isPoolActivityRecorded = false;
-  const poolRef = firestore.doc(`/pools/${poolId}`);
+  const poolRef = db.doc(`/pools/${poolId}`);
   const poolSnap = await poolRef.get();
   if (poolSnap.exists) {
     const { activities } = poolSnap.data()!;
@@ -52,7 +60,7 @@ export const recordActivity = async (txHash: string): Promise<any> => {
   }
 
   let isUserActivityRecorded = false;
-  const userRef = firestore.doc(`/users/${user}`);
+  const userRef = db.doc(`/users/${user}`);
   const userSnap = await userRef.get();
   if (userSnap.exists) {
     const { activities } = userSnap.data()!;
@@ -62,7 +70,7 @@ export const recordActivity = async (txHash: string): Promise<any> => {
 
   if (isPoolActivityRecorded) console.log('Pool Activity Already Recorded.');
   if (!isPoolActivityRecorded) {
-    await firestore.doc(`/pools/${poolId}`).set(
+    await db.doc(`/pools/${poolId}`).set(
       {
         poolId,
         activities: FieldValue.arrayUnion({ type, user, predictionId, txHash })
@@ -74,7 +82,7 @@ export const recordActivity = async (txHash: string): Promise<any> => {
 
   if (isUserActivityRecorded) console.log('User Activity Already Recorded.');
   if (!isUserActivityRecorded) {
-    await firestore.doc(`/users/${user}`).set(
+    await db.doc(`/users/${user}`).set(
       {
         address: user,
         activities: FieldValue.arrayUnion({

@@ -32,6 +32,8 @@ interface PoolsContextProps {
   predict: (
     poolId: number,
     price: number,
+    stakeToken: string,
+    stakeAmount: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => Observable<WriteContractPoolStatus>;
 }
@@ -49,7 +51,7 @@ export const usePools = () => useContext(PoolsContext);
 
 export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [currentChain] = useChains();
-  const { readContract, writeContract } = useContract();
+  const { castoraAddress, readContract, writeContract } = useContract();
   const { ensureNotifications, firestore, recordEvent } = useFirebase();
   const server = useServer();
   const { toastError, toastSuccess } = useToast();
@@ -74,6 +76,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       writeContract(
         'claimWinnings',
         [BigInt(poolId), BigInt(predictionId)],
+        undefined,
         (hash) => (txHash = hash)
       ).subscribe({
         next: subscriber.next.bind(subscriber),
@@ -141,6 +144,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const predict = (
     poolId: number,
     price: number,
+    stakeToken: string,
+    stakeAmount: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => {
     return new Observable<WriteContractPoolStatus>((subscriber) => {
@@ -149,6 +154,11 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       writeContract(
         'predict',
         [BigInt(poolId), BigInt(price)],
+        ...[
+          stakeToken.toLowerCase() == castoraAddress.toLowerCase()
+            ? stakeAmount
+            : undefined
+        ],
         (hash, result) => {
           txHash = hash;
           predictionId = Number(result);
@@ -184,7 +194,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [livePoolIds]);
 
   useEffect(() => {
-    onSnapshot(doc(firestore, '/live/live'), (doc) => {
+    return onSnapshot(doc(firestore, '/live/live'), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -194,7 +204,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         setLivePoolIds([]);
       }
     });
-  }, []);
+  }, [firestore]);
 
   return (
     <PoolsContext.Provider

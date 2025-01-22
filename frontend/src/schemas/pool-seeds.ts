@@ -55,6 +55,8 @@ export class PoolSeeds {
     if (name == 'AAPL') return 'PYTH:AAPL';
     if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
     if (name == 'PENGU') return 'BITGET:PENGUUSDT';
+    if (name == 'SUI') return 'COINBASE:SUIUSD';
+    if (name == 'TRUMP') return 'KCEX:TRUMPUSDT';
     return `PYTH:${name}USD`;
   }
 

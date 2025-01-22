@@ -7,13 +7,7 @@ import {
   PoolDetailsInCards,
   PredictionsDisplay
 } from '@/components';
-import {
-  CASTORA_ADDRESS,
-  abi,
-  usePools,
-  useServer,
-  useTheme
-} from '@/contexts';
+import { abi, useContract, usePools, useServer, useTheme } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
@@ -21,10 +15,12 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
-import { useWatchContractEvent } from 'wagmi';
+import { useAccount, useWatchContractEvent } from 'wagmi';
 
 export const PoolDetailPage = () => {
+  const { chain: currentChain } = useAccount();
   const { poolId } = useParams();
+  const { castoraAddress } = useContract();
   const { isValidPoolId, fetchOne } = usePools();
   const server = useServer();
   const { isDarkDisplay } = useTheme();
@@ -33,9 +29,12 @@ export const PoolDetailPage = () => {
   const [hasError, setHasError] = useState(false);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [pool, setPool] = useState<Pool | null>(null);
+  const [prevCurrentChain, setPrevCurrentChain] = useState(currentChain);
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'Predicted',
     args: {
@@ -53,8 +52,10 @@ export const PoolDetailPage = () => {
     }
   });
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'CompletedPool',
     args: {
@@ -108,6 +109,20 @@ export const PoolDetailPage = () => {
       }
     }
   };
+
+  useEffect(() => {
+    if (
+      prevCurrentChain &&
+      currentChain &&
+      prevCurrentChain.name != currentChain.name
+    ) {
+      // Full-reloading the page if the user proactively changed the active chain
+      // to something different as the poolId might be something else
+      window.location.reload();
+    } else {
+      setPrevCurrentChain(currentChain);
+    }
+  }, [currentChain]);
 
   useEffect(() => {
     if (pool && now >= pool.seeds.snapshotTime && !pool.completionTime) {
@@ -210,4 +225,4 @@ export const PoolDetailPage = () => {
       </>
     )
   );
-}
+};

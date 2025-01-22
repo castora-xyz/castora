@@ -1,13 +1,23 @@
 import { useToast } from '@/contexts/ToastContext';
+import { monadDevnet, monadTestnet } from '@/contexts/Web3Context';
 import { abi, erc20Abi } from '@/contexts/abi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-import { ReactNode, createContext, useContext } from 'react';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, createWalletClient, custom, http } from 'viem';
 import { sepolia } from 'viem/chains';
 import { useAccount, useChains } from 'wagmi';
 
-export const CASTORA_ADDRESS = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
+export const CASTORA_ADDRESS_MONAD: `0x${string}` =
+  '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` =
+  '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 
 export type WriteContractStatus = 'initializing' | 'submitted' | 'waiting';
 
@@ -18,11 +28,13 @@ interface ContractContextProps {
     onSuccessCallback?: (txHash: string) => void
   ) => Observable<WriteContractStatus>;
   balance: (token: any) => Promise<number | null>;
+  castoraAddress: `0x${string}`;
   hasAllowance: (token: any, amount: number) => Promise<boolean>;
   readContract: (functionName: string, args?: any[]) => Promise<any>;
   writeContract: (
     functionName: string,
     args?: any[],
+    value?: number | undefined,
     onSuccessCallback?: (txHash: string, result: any) => void
   ) => Observable<WriteContractStatus>;
 }
@@ -30,6 +42,7 @@ interface ContractContextProps {
 const ContractContext = createContext<ContractContextProps>({
   approve: () => new Observable(),
   balance: async () => null,
+  castoraAddress: '0x0',
   hasAllowance: async () => false,
   readContract: async () => null,
   writeContract: () => new Observable()
@@ -38,20 +51,30 @@ const ContractContext = createContext<ContractContextProps>({
 export const useContract = () => useContext(ContractContext);
 
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain: currentChain } = useAccount();
   const { open: connectWallet } = useWeb3Modal();
   const { toastError } = useToast();
 
-  const [currentChain] = useChains();
+  const [defaultChain] = useChains();
+  const getCastoraAddress = () =>
+    ({
+      [monadDevnet.name]: CASTORA_ADDRESS_MONAD,
+      [monadTestnet.name]: CASTORA_ADDRESS_MONAD,
+      [sepolia.name]: CASTORA_ADDRESS_SEPOLIA
+    }[(currentChain ?? defaultChain).name]!);
+  const [castoraAddress, setCastoraAddress] = useState(getCastoraAddress());
+
+  const getRpcUrl = () =>
+    ({
+      [monadDevnet.name]: undefined,
+      [monadTestnet.name]: undefined,
+      [sepolia.name]: 'https://sepolia.drpc.org'
+    }[(currentChain ?? defaultChain).name]!);
 
   const publicClient = () =>
     createPublicClient({
-      chain: currentChain,
-      transport: http(
-        currentChain.name === sepolia.name
-          ? 'https://sepolia.drpc.org'
-          : undefined
-      )
+      chain: currentChain ?? defaultChain,
+      transport: http(getRpcUrl())
     });
 
   const read = async (
@@ -83,6 +106,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     abi: any,
     functionName: string,
     args: any[] = [],
+    value?: number | undefined,
     onSuccessCallBack?: (txHash: string, result: any) => void
   ) => {
     const bs = new BehaviorSubject<WriteContractStatus>('initializing');
@@ -94,7 +118,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const walletClient = createWalletClient({
-        chain: currentChain,
+        chain: defaultChain,
         transport: custom((window as any).ethereum)
       });
       const [account] = await walletClient.getAddresses();
@@ -105,7 +129,9 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
           abi,
           functionName,
           args,
-          account
+          account,
+          ...(value ? { value: BigInt(value) } : {}),
+          chain: currentChain ?? defaultChain
         });
         const hash = await walletClient.writeContract(request);
         bs.next('waiting');
@@ -138,15 +164,20 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
       token,
       erc20Abi,
       'approve',
-      [CASTORA_ADDRESS, BigInt(amount)],
+      [getCastoraAddress(), BigInt(amount)],
+      undefined,
       onSuccessCallback
     );
   };
 
   const balance = async (token: any) => {
-    if (!isConnected) return null;
+    if (!address) return null;
     try {
-      return Number(await read(token, erc20Abi, 'balanceOf', [address]));
+      return Number(
+        token.toLowerCase() == getCastoraAddress().toLowerCase()
+          ? await publicClient().getBalance({ address })
+          : await read(token, erc20Abi, 'balanceOf', [address])
+      );
     } catch (e) {
       console.error(e);
       return null;
@@ -158,7 +189,10 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     try {
       return (
         Number(
-          await read(token, erc20Abi, 'allowance', [address, CASTORA_ADDRESS])
+          await read(token, erc20Abi, 'allowance', [
+            address,
+            getCastoraAddress()
+          ])
         ) >= amount
       );
     } catch (e) {
@@ -168,17 +202,37 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const readContract = async (functionName: string, args: any[] = []) =>
-    read(CASTORA_ADDRESS, abi, functionName, args);
+    read(getCastoraAddress(), abi, functionName, args);
 
   const writeContract = (
     functionName: string,
     args: any[] = [],
+    value?: number | undefined,
     onSuccessCallBack?: (txHash: string, result: any) => void
-  ) => write(CASTORA_ADDRESS, abi, functionName, args, onSuccessCallBack);
+  ) =>
+    write(
+      getCastoraAddress(),
+      abi,
+      functionName,
+      args,
+      value,
+      onSuccessCallBack
+    );
+
+  useEffect(() => {
+    setCastoraAddress(getCastoraAddress());
+  }, [currentChain]);
 
   return (
     <ContractContext.Provider
-      value={{ approve, balance, hasAllowance, readContract, writeContract }}
+      value={{
+        approve,
+        balance,
+        castoraAddress,
+        hasAllowance,
+        readContract,
+        writeContract
+      }}
     >
       {children}
     </ContractContext.Provider>

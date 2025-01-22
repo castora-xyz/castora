@@ -58,7 +58,8 @@ export const registerUser = async (
   if (!isVerified) 'Unauthorized Signature';
 
   console.log('\n Saving User to Firestore ... ');
-  await firestore
+  // Using the default Firestore here to save fcmTokens
+  await firestore()
     .doc(`/users/${address}`)
     .set(
       { address, fcmTokens: FieldValue.arrayUnion(fcmToken) },

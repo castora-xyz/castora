@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import {
+  Chain,
   fetchPool,
   generateSeeds,
   getPoolId,
@@ -8,12 +9,17 @@ import {
   setWinners
 } from '../../utils';
 
-export const completePools = async () => {
-  const prevs = generateSeeds();
+/**
+ * Completes all live pools on the provided chain.
+ *
+ * @param chain The chain to complete all live pools on.
+ */
+export const completePools = async (chain: Chain) => {
+  const prevs = generateSeeds(chain);
   for (const seed of prevs) {
-    const poolId = await getPoolId(seed);
+    const poolId = await getPoolId(chain, seed);
     try {
-      if (poolId) await completePool(poolId);
+      if (poolId) await completePool(chain, poolId);
     } catch (e: any) {
       if (['Not yet snapshotTime', 'Nobody joined this pool'].includes(e)) {
         console.log(e);
@@ -29,10 +35,14 @@ export const completePools = async () => {
 /**
  * Completes a pool by taking its snapshot and computing its winners.
  *
+ * @param chain The chain to complete the pool on.
  * @param poolId The poolId in which to compute its winners
  */
-export const completePool = async (poolId: any): Promise<void> => {
-  let pool = await fetchPool(poolId);
+export const completePool = async (
+  chain: Chain,
+  poolId: any
+): Promise<void> => {
+  let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
 
   console.log('pool.seeds.snapshotTime: ', seeds.snapshotTime);
@@ -61,10 +71,10 @@ export const completePool = async (poolId: any): Promise<void> => {
     const snapshotPrice = await getSnapshotPrice(pool);
     console.log('Got Snapshot Price: ', snapshotPrice);
 
-    const winnerAddresses = await setWinners(pool, snapshotPrice);
+    const winnerAddresses = await setWinners(chain, pool, snapshotPrice);
 
     // refetching the pool here so that the winAmount will now be valid
-    pool = await fetchPool(poolId);
+    pool = await fetchPool(chain, poolId);
     await notifyWinners(winnerAddresses, pool);
   }
 };

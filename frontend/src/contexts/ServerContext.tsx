@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { ReactNode, createContext, useContext } from 'react';
+import { useAccount, useChains } from 'wagmi';
 
 const ServerContext = createContext<ServerContextProps>({
   get: async () => {},
@@ -15,6 +16,8 @@ interface ServerContextProps {
 export const useServer = () => useContext(ServerContext);
 
 export const ServerProvider = ({ children }: { children: ReactNode }) => {
+  const { chain: currentChain } = useAccount();
+  const [defaultChain] = useChains();
   const { signature } = useAuth();
   const { toastError } = useToast();
 
@@ -29,7 +32,12 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
               'Content-Type': 'application/json',
               ...(path === '/user/register' && signature
                 ? { Authorization: `Bearer ${signature}` }
-                : {})
+                : {
+                    chain: (currentChain ?? defaultChain).name
+                      .toLowerCase()
+                      .split(' ')
+                      .join('')
+                  })
             },
             ...(body ? { body: JSON.stringify(body) } : {})
           })

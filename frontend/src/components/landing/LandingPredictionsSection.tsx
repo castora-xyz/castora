@@ -91,7 +91,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
       }
     );
     return () => connection.closeWebSocket();
-  }, []);
+  }, [pool]);
 
   return (
     <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32">

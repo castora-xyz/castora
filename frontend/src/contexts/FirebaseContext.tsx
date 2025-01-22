@@ -1,4 +1,10 @@
-import { useAuth, useServer, useToast } from '@/contexts';
+import {
+  monadDevnet,
+  monadTestnet,
+  useAuth,
+  useServer,
+  useToast
+} from '@/contexts';
 import {
   getAnalytics,
   logEvent,
@@ -17,7 +23,8 @@ import {
   useEffect,
   useState
 } from 'react';
-import { useAccount } from 'wagmi';
+import { sepolia } from 'viem/chains';
+import { useAccount, useChains } from 'wagmi';
 import { firebaseConfig } from './firebase';
 
 interface FirebaseContextProps {
@@ -39,15 +46,25 @@ export const useFirebase = () => useContext(FirebaseContext);
 export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const [requestCount, setRequestCount] = useState(0);
   const [acceptedAtModal, setAcceptedAtModal] = useState(false);
-  const { address, isConnected } = useAccount();
+  const { address, chain: currentChain, isConnected } = useAccount();
   const { signature } = useAuth();
+  const [defaultChain] = useChains();
   const server = useServer();
   const [isShowingModal, setIsShowingModal] = useState(false);
   const { toastInfo } = useToast();
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
-  const firestore = getFirestore(app);
+  const firestoreSepolia = getFirestore(app, 'sepolia');
+  const firestoreMonadDevnet = getFirestore(app, 'monaddevnet');
+  const firestoreMonadTestnet = getFirestore(app, 'monadtestnet');
   const messaging = getMessaging(app);
+  const getChainFirestore = () =>
+    ({
+      [monadDevnet.name]: firestoreMonadDevnet,
+      [monadTestnet.name]: firestoreMonadTestnet,
+      [sepolia.name]: firestoreSepolia
+    }[(currentChain ?? defaultChain).name]!);
+  const [firestore, setFirestore] = useState(getChainFirestore());
 
   const closeModal = () => {
     document.body.classList.remove('overflow-hidden');
@@ -114,6 +131,10 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       ensureNotifications().finally(() => setAcceptedAtModal(false));
     }
   }, [acceptedAtModal]);
+
+  useEffect(() => {
+    setFirestore(getChainFirestore);
+  }, [currentChain]);
 
   useEffect(() => {
     if (import.meta.env.DEV) setAnalyticsCollectionEnabled(analytics, false);

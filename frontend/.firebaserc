@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "castora-xyz"
-  }
+  },
+  "targets": {
+    "castora-xyz": {
+      "hosting": {
+        "main": [
+          "castora-xyz"
+        ],
+        "mxndevnet": [
+          "mxndevnet-castora-xyz"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

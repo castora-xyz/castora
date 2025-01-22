@@ -1,5 +1,4 @@
 import {
-  CASTORA_ADDRESS,
   abi,
   useContract,
   usePools,
@@ -15,7 +14,7 @@ import {
   useState
 } from 'react';
 import { zeroAddress } from 'viem';
-import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
+import { useAccount, useWatchContractEvent } from 'wagmi';
 
 export interface Activity {
   pool: Pool;
@@ -39,9 +38,8 @@ const MyActivityContext = createContext<MyActivityContextProps>({
 export const useMyActivity = () => useContext(MyActivityContext);
 
 export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
-  const { address } = useAccount();
-  const [currentChain] = useChains();
-  const { readContract } = useContract();
+  const { address, chain: currentChain } = useAccount();
+  const { castoraAddress, readContract } = useContract();
   const { fetchOne: fetchPool } = usePools();
   const retrieve = usePredictions();
   const server = useServer();
@@ -51,7 +49,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
   const [isFetching, setIsFetching] = useState(true);
 
   const fetchMyActivity = async () => {
-    if (!address) {
+    if (!address || !currentChain) {
       setIsFetching(false);
       setHasError(false);
       setMyActivities([]);
@@ -99,7 +97,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
       poolInfos.push({ poolId: joinedPoolIds[i], predictionIds });
     }
 
-    const explorerUrls: {[key: string]: string} = {};
+    const explorerUrls: { [key: string]: string } = {};
     const offchained = await server.get(`/user/${address}/activities`);
     if (offchained && Array.isArray(offchained) && offchained.length > 0) {
       for (const item of offchained) {
@@ -141,8 +139,10 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
     setHasError(false);
   };
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'Predicted',
     args: { predicter: address ?? zeroAddress },
@@ -179,8 +179,8 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
    */
 
   useEffect(() => {
-    fetchMyActivity();
-  }, [address]);
+    setTimeout(fetchMyActivity, 0);
+  }, [address, currentChain]);
 
   return (
     <MyActivityContext.Provider

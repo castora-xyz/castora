@@ -1,17 +1,10 @@
-import {
-  CASTORA_ADDRESS,
-  abi,
-  useContract,
-  usePools,
-  useServer,
-  useToast
-} from '@/contexts';
+import { abi, useContract, usePools, useServer, useToast } from '@/contexts';
 import { Prediction } from '@/schemas';
 import { useEffect, useState } from 'react';
-import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
+import { useAccount, useWatchContractEvent } from 'wagmi';
 
 export const usePredictions = () => {
-  const [currentChain] = useChains();
+  const { chain: currentChain } = useAccount();
   const { readContract } = useContract();
   const { isValidPoolId } = usePools();
   const { toastError } = useToast();
@@ -32,8 +25,10 @@ export const usePredictions = () => {
           for (const activity of activities) {
             const { predictionId, txHash } = activity;
             if (!predictionId || !txHash) continue;
-            const url = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
-            explorerUrls[predictionId] = url;
+            if (currentChain) {
+              const url = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
+              explorerUrls[predictionId] = url;
+            }
           }
         }
       }
@@ -60,8 +55,8 @@ export const usePredictions = () => {
 };
 
 export const useMyPredictions = (poolId: number) => {
-  const { address } = useAccount();
-  const { readContract } = useContract();
+  const { address, chain: currentChain } = useAccount();
+  const { castoraAddress, readContract } = useContract();
   const retrieve = usePredictions();
 
   const [myPredictions, setMyPredictions] = useState<Prediction[]>([]);
@@ -100,8 +95,10 @@ export const useMyPredictions = (poolId: number) => {
     setIsFetching(false);
   };
 
+  // TODO: Review if this watcher is updated for every chain (contract address)
+  // change
   useWatchContractEvent({
-    address: CASTORA_ADDRESS,
+    address: castoraAddress,
     abi,
     eventName: 'Predicted',
     args: { poolId: BigInt(poolId), predicter: address },
@@ -125,7 +122,7 @@ export const useMyPredictions = (poolId: number) => {
 
   useEffect(() => {
     load();
-  }, [address]);
+  }, [address, currentChain]);
 
   return { fetchMyPredictions: load, isFetching, hasError, myPredictions };
 };

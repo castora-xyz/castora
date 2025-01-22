@@ -19,7 +19,7 @@ export const MakePredictionModal = ({
   handleShowHeading: (isLoading: boolean) => void;
   handleClose: () => void;
 }) => {
-  const { approve, balance, hasAllowance } = useContract();
+  const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
 
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -49,7 +49,13 @@ export const MakePredictionModal = ({
     setLoadingTitle('Prediction Transaction');
     setLoadingBody('Submitting ...');
     let successUrl: string;
-    predict(poolId, price * 10 ** 8, (url) => (successUrl = url)).subscribe({
+    predict(
+      poolId,
+      price * 10 ** 8,
+      seeds.stakeToken,
+      seeds.stakeAmount,
+      (url) => (successUrl = url)
+    ).subscribe({
       next: (status) => {
         if (status === 'submitted') {
           setLoadingBody('Confirm Transaction in Wallet');
@@ -85,42 +91,48 @@ export const MakePredictionModal = ({
     }
 
     const { stakeToken, stakeAmount } = seeds;
-    const hadAllowee = await hasAllowance(stakeToken, stakeAmount);
-
-    setWalletSteps(hadAllowee ? 1 : 2);
-    if (!hadAllowee) {
-      setCurrentWalletStep(1);
-      setLoadingTitle('Token Spend Approval');
-      setLoadingBody('Submitting ...');
-      let approvalTxHash: string;
-      approve(
-        stakeToken,
-        stakeAmount,
-        (hash) => (approvalTxHash = hash)
-      ).subscribe({
-        next: (status) => {
-          if (status === 'submitted') {
-            setLoadingBody('Approve Token Spend in Wallet');
-          } else if (status === 'waiting') {
-            setLoadingBody('Waiting for On-Chain Confirmation ...');
-          }
-        },
-        error: () => {
-          setIsSuccess(false);
-          reset();
-        },
-        complete: () => {
-          if (approvalTxHash) {
-            setCurrentWalletStep(2);
-            uiPredict();
-          } else {
+    // When staking with Native token
+    if (stakeToken.toLowerCase() == castoraAddress.toLowerCase()) {
+      setWalletSteps(1);
+      uiPredict();
+    } else {
+      // When staking with ERC20 token
+      const hadAllowee = await hasAllowance(stakeToken, stakeAmount);
+      setWalletSteps(hadAllowee ? 1 : 2);
+      if (!hadAllowee) {
+        setCurrentWalletStep(1);
+        setLoadingTitle('Token Spend Approval');
+        setLoadingBody('Submitting ...');
+        let approvalTxHash: string;
+        approve(
+          stakeToken,
+          stakeAmount,
+          (hash) => (approvalTxHash = hash)
+        ).subscribe({
+          next: (status) => {
+            if (status === 'submitted') {
+              setLoadingBody('Approve Token Spend in Wallet');
+            } else if (status === 'waiting') {
+              setLoadingBody('Waiting for On-Chain Confirmation ...');
+            }
+          },
+          error: () => {
             setIsSuccess(false);
             reset();
+          },
+          complete: () => {
+            if (approvalTxHash) {
+              setCurrentWalletStep(2);
+              uiPredict();
+            } else {
+              setIsSuccess(false);
+              reset();
+            }
           }
-        }
-      });
-    } else {
-      uiPredict();
+        });
+      } else {
+        uiPredict();
+      }
     }
   };
 

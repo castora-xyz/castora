@@ -47,7 +47,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
     })();
     const interval = setInterval(() => setMins(mins + 1), 60000);
     return () => clearInterval(interval);
-  }, [mins]);
+  }, [mins, pool]);
 
   useEffect(() => {
     connection.subscribePriceFeedUpdates(
@@ -64,7 +64,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
       }
     );
     return () => connection.closeWebSocket();
-  }, []);
+  }, [pool]);
 
   return (
     <div className="border border-border-default dark:border-surface-disabled p-8 bg-app-bg w-full rounded-[24px]">

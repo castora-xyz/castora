@@ -5,6 +5,7 @@ import { writeContract } from '../contract';
 import { fetchPredictions } from './fetch-predictions';
 import { getNoOfWinners } from './get-no-of-winners';
 import { getWinnerPredictions } from './get-winner-predictions';
+import { Chain } from '../validate-chain';
 
 /**
  * Computes the winner predictions in the provided pool.
@@ -13,14 +14,16 @@ import { getWinnerPredictions } from './get-winner-predictions';
  *  * Calculates the winner predictions.
  *  * Sets the winners by calling completePool in the contract.
  *
+ * @param chain The chain to fetch the pool from.
  * @param pool The pool in which to compute its winners
  */
 export const setWinners = async (
+  chain: Chain,
   pool: Pool,
   snapshotPrice: number
 ): Promise<string[]> => {
   console.log('\nFetching Predictions ... ');
-  const predictions = await fetchPredictions(pool);
+  const predictions = await fetchPredictions(chain, pool);
   console.log(`Fetched all ${predictions.length} predictions.`);
 
   if (predictions.length != pool.noOfPredictions) {
@@ -53,7 +56,7 @@ export const setWinners = async (
   console.log('\nwinAmount: ', winAmount);
 
   console.log('\nCalling Complete Pool in Contract ... ');
-  await writeContract('completePool', [
+  await writeContract(chain, 'completePool', [
     BigInt(pool.poolId),
     BigInt(snapshotPrice),
     BigInt(noOfWinners),
