@@ -115,3 +115,13 @@ export const tokens = [
     pythPriceId: ''
   }
 ];
+
+export const landingPageDefaults = {
+  baseTimeDiff: 60 * 60,
+  pairName: 'TRUMP / USD',
+  pairNameFull: 'Official Trump / US Dollar',
+  pairToken: 'TRUMP',
+  pythPriceId:
+    '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a',
+  stake: '0.2 MON'
+};

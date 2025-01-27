@@ -1,6 +1,6 @@
 import { CountdownNumbers } from '@/components';
 import { useContract } from '@/contexts';
-import { Pool } from '@/schemas';
+import { Pool, landingPageDefaults } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Ripple } from 'primereact/ripple';
@@ -10,11 +10,6 @@ import { useAccount } from 'wagmi';
 
 export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
   const connection = new PriceServiceConnection('https://hermes.pyth.network');
-  const defaultPairName = 'ETH/USD';
-  const defaultPairToken = 'ETH';
-  const defaultPythPriceId =
-    '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
-  const defaultStake = '10 USDC';
 
   const { isConnected } = useAccount();
   const { balance } = useContract();
@@ -78,7 +73,10 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     connection.subscribePriceFeedUpdates(
-      [pool?.seeds.predictionTokenDetails.pythPriceId ?? defaultPythPriceId],
+      [
+        pool?.seeds.predictionTokenDetails.pythPriceId ??
+          landingPageDefaults.pythPriceId
+      ],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
         setCurrentPrice(
@@ -129,7 +127,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               <label>
                 <span className="font-medium text-text-subtitle block mb-2">
                   Predict{' '}
-                  {pool?.seeds.predictionTokenDetails.name ?? defaultPairToken}
+                  {pool?.seeds.predictionTokenDetails.name ??
+                    landingPageDefaults.pairToken}
                   's Price at Snapshot Time
                 </span>
                 <input
@@ -192,7 +191,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
             <p className="flex text-sm p-2 pl-4 mb-6 rounded-full items-center w-fit border border-border-default dark:border-surface-subtle">
               <span>Pool Pair</span>
               <span className="font-medium ml-4 p-2 px-4 rounded-full bg-primary-subtle text-primary-darker border border-surface-subtle">
-                {pool?.seeds.pairName() ?? defaultPairName}
+                {pool?.seeds.pairName() ?? landingPageDefaults.pairName}
               </span>
             </p>
 
@@ -215,7 +214,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled mt-auto"
               onClick={handleClick}
             >
-              Join Pool ({pool?.seeds.displayStake() ?? defaultStake})
+              Join Pool (
+              {pool?.seeds.displayStake() ?? landingPageDefaults.stake})
               {hasEnoughBalance && <Ripple />}
             </button>
 

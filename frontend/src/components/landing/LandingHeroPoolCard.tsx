@@ -1,6 +1,6 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownNumbers } from '@/components';
-import { Pool } from '@/schemas';
+import { landingPageDefaults, Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
@@ -9,11 +9,6 @@ import { Link } from 'react-router-dom';
 
 export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   const connection = new PriceServiceConnection('https://hermes.pyth.network');
-  const defaultBaseTimeDiff = 60 * 60;
-  const defaultPairName = 'ETH / USD';
-  const defaultPairNameFull = 'Ethereum / US Dollar';
-  const defaultPythPriceId =
-    '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
 
   const [basePrice, setBasePrice] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -31,9 +26,11 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   useEffect(() => {
     (async () => {
       try {
-        const baseTimeDiff = pool?.seeds.poolLife() ?? defaultBaseTimeDiff;
+        const baseTimeDiff =
+          pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff;
         const priceData = await connection.getPriceFeed(
-          pool?.seeds.predictionTokenDetails.pythPriceId ?? defaultPythPriceId,
+          pool?.seeds.predictionTokenDetails.pythPriceId ??
+            landingPageDefaults.pythPriceId,
           Math.trunc(Date.now() / 1000) - baseTimeDiff
         );
         const { price, expo } = priceData.getPriceUnchecked();
@@ -51,7 +48,10 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     connection.subscribePriceFeedUpdates(
-      [pool?.seeds.predictionTokenDetails.pythPriceId ?? defaultPythPriceId],
+      [
+        pool?.seeds.predictionTokenDetails.pythPriceId ??
+          landingPageDefaults.pythPriceId
+      ],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
         setCurrentPrice(
@@ -77,10 +77,10 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
         </p>
 
         <div className="font-bold text-lg sm:text-2xl text-text-title">
-          {pool?.seeds.pairNameSpaced() ?? defaultPairName}
+          {pool?.seeds.pairNameSpaced() ?? landingPageDefaults.pairName}
         </div>
         <div className="font-medium sm:text-lg text-text-caption">
-          {pool?.seeds.pairNameFull() ?? defaultPairNameFull}
+          {pool?.seeds.pairNameFull() ?? landingPageDefaults.pairNameFull}
         </div>
       </div>
 
@@ -100,7 +100,9 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
         >
           {priceDiffPercent > 0 ? '+' : ''}
           {priceDiffPercent}% in the last{' '}
-          {ms((pool?.seeds.poolLife() ?? defaultBaseTimeDiff) * 1000)}
+          {ms(
+            (pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff) * 1000
+          )}
         </p>
       )}
 
