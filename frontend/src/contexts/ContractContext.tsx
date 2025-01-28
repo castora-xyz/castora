@@ -10,9 +10,9 @@ import {
   useState
 } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { createPublicClient, createWalletClient, custom, http } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
-import { useAccount, useChains } from 'wagmi';
+import { useAccount, useChains, useWalletClient } from 'wagmi';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` =
   '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
@@ -54,6 +54,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const { address, isConnected, chain: currentChain } = useAccount();
   const { open: connectWallet } = useWeb3Modal();
   const { toastError } = useToast();
+  const walletClient = useWalletClient();
 
   const [defaultChain] = useChains();
   const getCastoraAddress = () =>
@@ -117,11 +118,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const walletClient = createWalletClient({
-        chain: defaultChain,
-        transport: custom((window as any).ethereum)
-      });
-      const [account] = await walletClient.getAddresses();
+      const [account] = await walletClient.data!.getAddresses();
       try {
         bs.next('submitted');
         const { result, request } = await publicClient().simulateContract({
@@ -133,7 +130,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
           ...(value ? { value: BigInt(value) } : {}),
           chain: currentChain ?? defaultChain
         });
-        const hash = await walletClient.writeContract(request);
+        const hash = await walletClient.data!.writeContract(request);
         bs.next('waiting');
         await publicClient().waitForTransactionReceipt({ hash });
         onSuccessCallBack && onSuccessCallBack(hash, result);
