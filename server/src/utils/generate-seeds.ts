@@ -87,8 +87,8 @@ export const generateSeeds = (chain: Chain) => {
     ({ windowCloseTime, snapshotTime }) =>
       new PoolSeeds({
         // using contract address as native token representative
-        predictionToken: getContractAddress(chain),
-        stakeToken: TRUMP,
+        predictionToken: TRUMP,
+        stakeToken: getContractAddress(chain),
         stakeAmount: 2e17,
         snapshotTime,
         windowCloseTime
