@@ -4,7 +4,7 @@ import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { ReactNode } from 'react';
 import { defineChain } from 'viem';
 import { WagmiProvider } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
+// import { sepolia } from 'wagmi/chains';
 
 export const queryClient = new QueryClient();
 const projectId = import.meta.env.VITE_WC_PROJECT_ID;
@@ -54,7 +54,7 @@ export const monadTestnet = defineChain({
 });
 
 const wagmiConfig = defaultWagmiConfig({
-  chains: [monadDevnet, /* monadTestnet, */ sepolia],
+  chains: [monadDevnet, /* monadTestnet, sepolia */],
   projectId,
   metadata: {
     name: 'Castora',
