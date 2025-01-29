@@ -77,7 +77,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const ensureNotifications = async () => {
     if (
       !isConnected ||
-      !Notification ||
+      !('Notification' in window) ||
       (Notification.permission == 'granted' && address && hasSet(address))
     ) {
       return;
