@@ -24,13 +24,13 @@ export class PoolSeeds {
     const foundP = tokens.find(
       (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
     );
-    if (!foundP) throw `Token not found in tokens.js: ${this.predictionToken}`;
+    if (!foundP) throw `Token not found in tokens list: ${this.predictionToken}`;
     this.predictionTokenDetails = foundP;
 
     const foundS = tokens.find(
       (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
     );
-    if (!foundS) throw `Token not found in tokens.js: ${this.stakeToken}`;
+    if (!foundS) throw `Token not found in tokens list: ${this.stakeToken}`;
     this.stakeTokenDetails = foundS;
   }
 

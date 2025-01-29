@@ -1,3 +1,5 @@
+import { tokens } from '../utils';
+
 /**
  * Holds information about the properties of a given pool.
  * Uniquely identifies a pool alongside the pool's unique numeric poolId.
@@ -35,8 +37,16 @@ export class PoolSeeds {
    * The display of winAmount with token name in notifications
    */
   formatWinAmount(amount: number) {
-    // TODO: Use the respective stake token  decimal and name when
-    // different stake tokens will be supported.
-    return `${amount / 10 ** 6} USDC`;
+    const stakeTokenDetails = tokens.find(
+      (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
+    );
+    if (stakeTokenDetails) {
+      const { decimals, name } = stakeTokenDetails;
+      return `${amount / 10 ** decimals} ${name}`;
+    } else {
+      console.error(`Token not found in tokens list: ${this.stakeToken}`);
+      // TODO: Alert Developers in some way
+      return '';
+    }
   }
 }
