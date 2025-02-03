@@ -1,6 +1,7 @@
 # Castora
 
-Castora rewards your predictions with the community. Castora is where you find the decentralized price prediction pools/markets where you can compete with others and get rewarded. 
+Castora lets you earn rewards for your price predictions.
+It’s a decentralized platform where you can compete in prediction pools and win based on your accuracy.
 
 ## Features
 
@@ -19,21 +20,23 @@ Pools are time-bound. You make predictions with a particular future timestamp in
 
 ### Predictions
 
-A prediction is your stake activity in a Pool. It is about you specifying a choice or price and paying an entry fee. Predictions make you eligible to claim winnings if the predictions turned out to be winner ones. You can place multiple predictions in the same pool.
+A prediction is your entry (stake) into a pool, where you choose a price or outcome and pay a specified fee. If your prediction wins, you can claim the specified rewards. 
+
+You can also make multiple predictions in the same pool.
 
 ### Stake
 
-The stake is the entry fee for a given pool. You pay it when you place a prediction. In fact, joining a pool is effectively paying the stake and also means placing a prediction. 
+The stake is the entry fee required to join a pool. When you place a prediction, you pay this stake, which officially enters you into the pool.
 
-The stake amount and stake token could vary or be the same per pool. Notwithstanding, depending on the prediction model, there could be fixed or variable stake amounts. Also, pool rewards are obtained from the stakes.
+Each pool may have different stake amounts and tokens. Depending on the prediction model, the stake can be fixed or variable. Pool rewards are distributed from the collected stakes.
 
 ### Rewards
 
-Each Prediction model specifies how predictions are made and how winners and rewards are computed. 
+Each prediction model defines how predictions work and how winners and rewards are determined.  
 
-Castora is decentralized. When you predict, you predict alongside other community members. This makes the rewards to be from the pool stakes. It also ensures that winners are always rewarded as the winners simply share all the pool's funds. 
+Castora is decentralized, all rewards come from the pool's stakes, and winners share the total pool funds.  
 
-After a pool is completed (or its winners have been computed), winner predictions can claim their winnings. During the claim process, Castora deducts 5% of the winnings for gas fees and maintenance.
+Once a pool is completed and winners are determined, they can claim their rewards. A 5% fee is deducted from winnings to cover gas fees and maintenance.
 
 ## Models
 
