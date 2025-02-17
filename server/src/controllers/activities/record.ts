@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { createPublicClient, parseEventLogs, TransactionReceipt } from 'viem';
 import { ActivityType, PoolActivity, UserActivity } from '../../schemas';
 import { abi, Chain, firestore, getConfig } from '../../utils';
@@ -16,11 +16,10 @@ export const recordActivity = async (
   console.log('Got Record Activity ... ');
   console.log('txHash: ', txHash);
 
+  const publicClient = createPublicClient({ ...getConfig(chain) });
   let receipt: TransactionReceipt;
   try {
-    const raw = await createPublicClient({
-      ...getConfig(chain)
-    }).getTransactionReceipt({
+    const raw = await publicClient.getTransactionReceipt({
       hash: txHash as `0x${string}`
     });
     if (raw) receipt = raw;
@@ -36,7 +35,9 @@ export const recordActivity = async (
   });
 
   if (events.length === 0) throw 'Invalid txHash';
-  const { args, eventName } = events[0];
+  const { args, eventName, blockNumber } = events[0];
+  const block = await publicClient.getBlock({ blockNumber });
+  const timestamp = Timestamp.fromMillis(Number(block.timestamp) * 1000);
 
   let type: ActivityType;
   if (eventName == 'Predicted') type = 'predict';
@@ -47,7 +48,7 @@ export const recordActivity = async (
   const user = eventName == 'Predicted' ? args.predicter : args.winner;
 
   console.log('Parsed Activity ... ');
-  console.log({ poolId, type, user, predictionId });
+  console.log({ poolId, type, user, predictionId, timestamp: block.timestamp });
 
   const db = firestore(chain);
 
@@ -71,7 +72,7 @@ export const recordActivity = async (
 
   if (isPoolActivityRecorded) console.log('Pool Activity Already Recorded.');
   if (!isPoolActivityRecorded) {
-    const activity: PoolActivity = { type, user, predictionId, txHash };
+    const activity: PoolActivity = { type, user, predictionId, timestamp, txHash };
     await db
       .doc(`/pools/${poolId}`)
       .set(
@@ -83,7 +84,7 @@ export const recordActivity = async (
 
   if (isUserActivityRecorded) console.log('User Activity Already Recorded.');
   if (!isUserActivityRecorded) {
-    const activity: UserActivity = { type, poolId, predictionId, txHash };
+    const activity: UserActivity = { type, poolId, predictionId, timestamp, txHash };
     await db
       .doc(`/users/${user}`)
       .set(

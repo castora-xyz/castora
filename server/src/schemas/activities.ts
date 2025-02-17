@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase-admin/firestore';
+
 /**
  * Whether 'claim' or 'predict'
  */
@@ -10,6 +12,7 @@ export interface UserActivity {
   type: ActivityType;
   poolId: bigint;
   predictionId: bigint;
+  timestamp: Timestamp;
   txHash: string;
 }
 
@@ -20,5 +23,6 @@ export interface PoolActivity {
   type: ActivityType;
   user: string;
   predictionId: bigint;
+  timestamp: Timestamp;
   txHash: string;
 }
