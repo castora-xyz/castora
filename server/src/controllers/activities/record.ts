@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { createPublicClient, parseEventLogs, TransactionReceipt } from 'viem';
+import { ActivityType, PoolActivity, UserActivity } from '../../schemas';
 import { abi, Chain, firestore, getConfig } from '../../utils';
 
 /**
@@ -37,7 +38,7 @@ export const recordActivity = async (
   if (events.length === 0) throw 'Invalid txHash';
   const { args, eventName } = events[0];
 
-  let type: string;
+  let type: ActivityType;
   if (eventName == 'Predicted') type = 'predict';
   else if (eventName == 'ClaimedWinnings') type = 'claim';
   else throw 'Invalid txHash';
@@ -70,30 +71,25 @@ export const recordActivity = async (
 
   if (isPoolActivityRecorded) console.log('Pool Activity Already Recorded.');
   if (!isPoolActivityRecorded) {
-    await db.doc(`/pools/${poolId}`).set(
-      {
-        poolId,
-        activities: FieldValue.arrayUnion({ type, user, predictionId, txHash })
-      },
-      { merge: true }
-    );
+    const activity: PoolActivity = { type, user, predictionId, txHash };
+    await db
+      .doc(`/pools/${poolId}`)
+      .set(
+        { poolId, activities: FieldValue.arrayUnion(activity) },
+        { merge: true }
+      );
     console.log('Pool Activity Saved Successfully.');
   }
 
   if (isUserActivityRecorded) console.log('User Activity Already Recorded.');
   if (!isUserActivityRecorded) {
-    await db.doc(`/users/${user}`).set(
-      {
-        address: user,
-        activities: FieldValue.arrayUnion({
-          type,
-          poolId,
-          predictionId,
-          txHash
-        })
-      },
-      { merge: true }
-    );
+    const activity: UserActivity = { type, poolId, predictionId, txHash };
+    await db
+      .doc(`/users/${user}`)
+      .set(
+        { address: user, activities: FieldValue.arrayUnion(activity) },
+        { merge: true }
+      );
     console.log('User Activity Saved Successfully.');
   }
 };
