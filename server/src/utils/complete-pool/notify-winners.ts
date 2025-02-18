@@ -28,8 +28,8 @@ export const notifyWinners = async (
 
   const uniqued: { [key: string]: number } = {};
   for (const address of winnerAddresses) {
+    // the division by 0.95 below is to display the amount without fees applied
     uniqued[address] = (uniqued[address] ?? 0) + winAmount / 0.95;
-    // the division by 0.95 above is to display the amount without fees applied
   }
 
   for (const winner of Object.keys(uniqued)) {

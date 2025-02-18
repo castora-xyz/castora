@@ -8,6 +8,7 @@ import {
   notifyWinners,
   setWinners
 } from '../../utils';
+import { updateLeaderboardOnCompletePool } from '../../utils/update-leaderboard';
 
 /**
  * Completes all live pools on the provided chain.
@@ -71,10 +72,16 @@ export const completePool = async (
     const snapshotPrice = await getSnapshotPrice(pool);
     console.log('Got Snapshot Price: ', snapshotPrice);
 
-    const winnerAddresses = await setWinners(chain, pool, snapshotPrice);
+    const setWinnersResults = await setWinners(chain, pool, snapshotPrice);
 
     // refetching the pool here so that the winAmount will now be valid
     pool = await fetchPool(chain, poolId);
-    await notifyWinners(winnerAddresses, pool);
+
+    await updateLeaderboardOnCompletePool(chain, {
+      pool,
+      ...setWinnersResults
+    });
+
+    await notifyWinners(setWinnersResults.splitted.winnerAddresses, pool);
   }
 };

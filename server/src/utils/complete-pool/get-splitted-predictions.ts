@@ -1,21 +1,22 @@
-import { Prediction } from '../../schemas';
+import { Prediction, SplitPredictionResult } from '../../schemas';
 import { getNoOfWinners } from './get-no-of-winners';
 
 /**
  * Calculates and returns the predictionIds and their predicters
- * whose predictionPrices where closest to the snapshotPrice.
+ * whose predictionPrices where closest to the snapshotPrice and
+ * those that were away from it. That is both winners and losers.
  *
  * The winners are the first half of the predictions with the closest
- * predictionPrices to the snapshotPrice.
+ * predictionPrices to the snapshotPrice. The losers are the others.
  *
  * @param snapshotPrice The price of the predictionToken at the snapshotTime.
  * @param predictions Array of Predictions from which to calculate the winners.
  * @returns The predictionIds and their predicters of the winners.
  */
-export const getWinnerPredictions = (
+export const getSplittedPredictions = (
   snapshotPrice: number,
   predictions: Prediction[]
-) => {
+): SplitPredictionResult => {
   // 1. Calculate the absolute differences between the predictionPrices
   // against the snapshotPrice.
   const extracted = [];
@@ -36,12 +37,29 @@ export const getWinnerPredictions = (
   // 3. Set the winners as the first half of predicters with the lowest
   // differences (closest predictionPrices to the snapshotPrice) as the
   // winnerPredictions.
-  const winners = sorted.slice(0, getNoOfWinners(predictions.length));
-  const predictionIds = [];
-  const addresses = [];
+  const noOfWinners = getNoOfWinners(predictions.length);
+  const winners = sorted.slice(0, noOfWinners);
+  const winnerAddresses = [];
+  const winnerPredictionIds = [];
   for (let i = 0; i < winners.length; i++) {
-    predictionIds.push(BigInt(winners[i].id));
-    addresses.push(winners[i].predicter);
+    winnerPredictionIds.push(BigInt(winners[i].id));
+    winnerAddresses.push(winners[i].predicter);
   }
-  return { predictionIds, addresses };
+
+  // 4. Set the losers as the other half.
+  const losers = sorted.slice(noOfWinners, predictions.length);
+  const loserAddresses = [];
+  const loserPredictionIds = [];
+  for (let i = 0; i < losers.length; i++) {
+    loserAddresses.push(losers[i].predicter);
+    loserPredictionIds.push(BigInt(losers[i].id));
+  }
+
+  // 5. Return the splitted results
+  return {
+    loserAddresses,
+    loserPredictionIds,
+    winnerAddresses,
+    winnerPredictionIds
+  };
 };

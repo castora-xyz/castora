@@ -2,6 +2,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { createPublicClient, parseEventLogs, TransactionReceipt } from 'viem';
 import { ActivityType, PoolActivity, UserActivity } from '../../schemas';
 import { abi, Chain, firestore, getConfig } from '../../utils';
+import { updateLeaderboardOnPrediction } from '../../utils/update-leaderboard';
 
 /**
  * Looks up the chain for the activity of the provided transaction hash.
@@ -73,24 +74,24 @@ export const recordActivity = async (
   if (isPoolActivityRecorded) console.log('Pool Activity Already Recorded.');
   if (!isPoolActivityRecorded) {
     const activity: PoolActivity = { type, user, predictionId, timestamp, txHash };
-    await db
-      .doc(`/pools/${poolId}`)
-      .set(
-        { poolId, activities: FieldValue.arrayUnion(activity) },
-        { merge: true }
-      );
+    await poolRef.set(
+      { poolId, activities: FieldValue.arrayUnion(activity) },
+      { merge: true }
+    );
     console.log('Pool Activity Saved Successfully.');
   }
 
   if (isUserActivityRecorded) console.log('User Activity Already Recorded.');
   if (!isUserActivityRecorded) {
     const activity: UserActivity = { type, poolId, predictionId, timestamp, txHash };
-    await db
-      .doc(`/users/${user}`)
-      .set(
-        { address: user, activities: FieldValue.arrayUnion(activity) },
-        { merge: true }
-      );
+    await userRef.set(
+      { address: user, activities: FieldValue.arrayUnion(activity) },
+      { merge: true }
+    );
     console.log('User Activity Saved Successfully.');
+
+    if (activity.type == 'predict') {
+      await updateLeaderboardOnPrediction(chain, user, activity);
+    }
   }
 };

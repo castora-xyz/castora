@@ -14,7 +14,7 @@ export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
   if (Number.isNaN(poolId)) throw 'Got a non-numeric poolId';
   if (Number(poolId) == 0) throw 'poolId cannot be zero';
   if (Number(poolId) < 0) throw 'poolId cannot be negative';
-  if (!Number.isInteger(+poolId)) throw 'poolId must be an integer';
+  if (!Number.isInteger(Number(poolId))) throw 'poolId must be an integer';
 
   const noOfPools = Number(await readContract(chain, 'noOfPools'));
   if (Number.isNaN(noOfPools)) throw 'Got a non-numeric noOfPools';

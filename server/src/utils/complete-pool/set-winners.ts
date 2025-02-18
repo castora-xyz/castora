@@ -1,11 +1,11 @@
 import 'dotenv/config';
 
-import { Pool } from '../../schemas';
+import { Pool, SetWinnersResult } from '../../schemas';
 import { writeContract } from '../contract';
+import { Chain } from '../validate-chain';
 import { fetchPredictions } from './fetch-predictions';
 import { getNoOfWinners } from './get-no-of-winners';
-import { getWinnerPredictions } from './get-winner-predictions';
-import { Chain } from '../validate-chain';
+import { getSplittedPredictions } from './get-splitted-predictions';
 
 /**
  * Computes the winner predictions in the provided pool.
@@ -21,7 +21,7 @@ export const setWinners = async (
   chain: Chain,
   pool: Pool,
   snapshotPrice: number
-): Promise<string[]> => {
+): Promise<SetWinnersResult> => {
   console.log('\nFetching Predictions ... ');
   const predictions = await fetchPredictions(chain, pool);
   console.log(`Fetched all ${predictions.length} predictions.`);
@@ -31,13 +31,14 @@ export const setWinners = async (
       `Fatal: pool.noOfPredictions (${pool.noOfPredictions}) `,
       `doesn't equal all fetched predictions.length (${predictions.length});`
     );
+    // TODO: Alert developers
     throw 'Fatal: unmatching predictions length';
   }
 
   console.log('\nComputing Winners ... ');
-  const { predictionIds: winnerPredictions, addresses: winnerAddresses } =
-    getWinnerPredictions(snapshotPrice, predictions);
-  console.log(`Computed ${winnerPredictions.length} winners.`);
+  const splitted = getSplittedPredictions(snapshotPrice, predictions);
+  const { winnerPredictionIds } = splitted;
+  console.log(`Computed ${winnerPredictionIds.length} winners.`);
 
   const noOfWinners = getNoOfWinners(pool.noOfPredictions);
   console.log('\nnoOfWinners: ', noOfWinners);
@@ -61,9 +62,9 @@ export const setWinners = async (
     BigInt(snapshotPrice),
     BigInt(noOfWinners),
     BigInt(winAmount),
-    winnerPredictions
+    winnerPredictionIds
   ]);
   console.log('Called Complete Pool for poolId: ', pool.poolId);
 
-  return winnerAddresses;
+  return { predictions, splitted };
 };

@@ -9,6 +9,14 @@ export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
+export interface Token {
+  address: string;
+  name: string;
+  fullName: string;
+  decimals: number;
+  pythPriceId: string;
+}
+
 // AAPL stands for Apple Inc. stock. It is not an ERC20 token.
 // The Pyth Network provides price feeds for various assets including stocks.
 // The AAPL price feed is available at the following address:
@@ -36,7 +44,7 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 // SOL is the token address of Wormhole wrapped SOL on Ethereum Mainnet.
 
-export const tokens = [
+export const tokens: Token[] = [
   {
     address: CONTRACT_ADDRESS_MONAD,
     name: 'MON',
