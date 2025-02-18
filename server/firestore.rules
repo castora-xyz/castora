@@ -5,9 +5,13 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
-
-    match /live/live {
-      allow read: if true;
+    
+   	match /leaderboard/leaderboard {
+    	allow read: if true;
+    }
+    
+   	match /live/live {
+    	allow read: if true;
     }
   }
 }

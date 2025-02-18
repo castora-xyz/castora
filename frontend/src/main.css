@@ -101,15 +101,15 @@ body {
   padding-top: 64px;
 }
 
-@media (min-width: 512px) {
+@media (min-width: 600px) {
   #root {
     padding-top: 72px;
   }
-}
+} 
 
-@media (max-width: 512px) {
+@media (max-width: 600px) {
   #root {
-    padding-bottom: 64px;
+    padding-bottom: 72px;
   }
 }
 

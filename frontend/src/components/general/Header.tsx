@@ -35,7 +35,7 @@ export const Header = () => {
           </Link>
         </h1>
 
-        <nav className="max-sm:hidden grow flex items-center font-medium md:text-lg">
+        <nav className="max-[600px]:hidden grow flex items-center font-medium md:text-lg">
           <NavLink
             to="/pools"
             className={({ isActive }) =>
@@ -49,6 +49,18 @@ export const Header = () => {
             <Ripple />
           </NavLink>
           <NavLink
+            to="/leaderboard"
+            className={({ isActive }) =>
+              'p-ripple py-1 px-3 md:px-6 rounded-full ' +
+              `${
+                isActive ? 'text-primary-darker dark:text-primary-default' : ''
+              }`
+            }
+          >
+            Leaderboard
+            <Ripple />
+          </NavLink>
+          <NavLink
             to="/activity"
             className={({ isActive }) =>
               'p-ripple py-1 px-3 md:px-6 rounded-full  ' +
@@ -59,7 +71,7 @@ export const Header = () => {
               }`
             }
           >
-            <span className="max-[600px]:hidden">My </span>
+            <span className="max-[770px]:hidden">My </span>
             Activity
             <Ripple />
           </NavLink>

@@ -54,7 +54,7 @@ export const monadTestnet = defineChain({
 });
 
 const wagmiConfig = defaultWagmiConfig({
-  chains: [monadDevnet, /* monadTestnet, sepolia */],
+  chains: [/* monadDevnet */ monadTestnet /*sepolia */],
   projectId,
   metadata: {
     name: 'Castora',
@@ -85,7 +85,7 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('wagmi.store');
     }
   }, []);
-  
+
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

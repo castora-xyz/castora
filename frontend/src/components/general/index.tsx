@@ -5,3 +5,4 @@ export * from './CountdownNumbers';
 export * from './Footer';
 export * from './Header';
 export * from './SuccessIcon';
+export * from './Web3Avatar';

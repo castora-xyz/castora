@@ -25,7 +25,8 @@
     "rxjs": "^7.8.1",
     "viem": "^2.16.2",
     "vite-plugin-svgr": "^4.2.0",
-    "wagmi": "^2.10.6"
+    "wagmi": "^2.10.6",
+    "web3-avatar": "^1.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
