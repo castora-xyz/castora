@@ -3,6 +3,7 @@ import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
 export const PENGU = '0x1d8ccf87ac0147bae756eb963a2ef6244c969156';
+export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
@@ -31,6 +32,9 @@ export interface Token {
 // The Pyth price feed for SUI is available at the following address:
 // ALP8SdU9oARYVLgLR7LrqMNCYBnhtnQz1cj6bwgwQmgj on Solana Mainnet. So that
 // was converted using the method above to obtain hex.
+
+// For HYPE (HyperLiquid), its Pyth price feed address on Solana Mainnet is:
+// ijVd23mGH83nqss1GMEH61CPoRJW3VWuh6ziM27vcbT. This was converted to hex.
 
 // Coming over to PENGU (Pudgy Penguins NFT), its token address on Solana
 // Mainnet: 2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv was what was converted.
@@ -67,6 +71,14 @@ export const tokens: Token[] = [
     decimals: 8,
     pythPriceId:
       '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
+  },
+  {
+    address: HYPE,
+    name: 'HYPE',
+    fullName: 'Hyperliquid',
+    decimals: 6,
+    pythPriceId:
+      '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b'
   },
   {
     address: MOODENG,

@@ -1,6 +1,6 @@
 import { PoolSeeds } from '../schemas';
-import { getContractAddress } from './contract';
-import { TRUMP } from './tokens';
+import { CONTRACT_ADDRESS_SEPOLIA, getContractAddress } from './contract';
+import { HYPE, SOL } from './tokens';
 import { Chain } from './validate-chain';
 
 const nextNthHour = (current: number, n: number) =>
@@ -23,10 +23,10 @@ export const generateSeeds = (chain: Chain) => {
   //   new Date(yrs, months, date, hrs, 0, 0).getTime() / 1000
   // );
   // const closeHPrev = hourlyPrev - 15 * 60;
-  // const threeHPrev = Math.trunc(
-  //   new Date(yrs, months, date, prevNthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HPrev = threeHPrev - 30 * 60;
+  const threeHPrev = Math.trunc(
+    new Date(yrs, months, date, prevNthHour(hrs, 3), 0, 0).getTime() / 1000
+  );
+  const close3HPrev = threeHPrev - 30 * 60;
   // const sixHPrev = Math.trunc(
   //   new Date(yrs, months, date, prevNthHour(hrs, 6), 0, 0).getTime() / 1000
   // );
@@ -40,10 +40,10 @@ export const generateSeeds = (chain: Chain) => {
   //   new Date(yrs, months, date, hrs + 1, 0, 0).getTime() / 1000
   // );
   // const closeHNext = hourlyNext - 15 * 60;
-  // const threeHNext = Math.trunc(
-  //   new Date(yrs, months, date, nextNthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HNext = threeHNext - 30 * 60;
+  const threeHNext = Math.trunc(
+    new Date(yrs, months, date, nextNthHour(hrs, 3), 0, 0).getTime() / 1000
+  );
+  const close3HNext = threeHNext - 30 * 60;
   // const sixHNext = Math.trunc(
   //   new Date(yrs, months, date, nextNthHour(hrs, 6), 0, 0).getTime() / 1000
   // );
@@ -57,10 +57,10 @@ export const generateSeeds = (chain: Chain) => {
   //   new Date(yrs, months, date, hrs + 2, 0, 0).getTime() / 1000
   // );
   // const closeHNext2 = hourlyNext2 - 15 * 60;
-  // const threeHNext2 = Math.trunc(
-  //   new Date(yrs, months, date, next2NthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HNext2 = threeHNext2 - 30 * 60;
+  const threeHNext2 = Math.trunc(
+    new Date(yrs, months, date, next2NthHour(hrs, 3), 0, 0).getTime() / 1000
+  );
+  const close3HNext2 = threeHNext2 - 30 * 60;
   // const sixHNext2 = Math.trunc(
   //   new Date(yrs, months, date, next2NthHour(hrs, 6), 0, 0).getTime() / 1000
   // );
@@ -70,28 +70,35 @@ export const generateSeeds = (chain: Chain) => {
   );
   const close12HNext2 = twelveHNext2 - 12 * 60 * 60;
 
-  return [
+  const times = [
     // { windowCloseTime: closeHPrev, snapshotTime: hourlyPrev },
-    // { windowCloseTime: close3HPrev, snapshotTime: threeHPrev },
+    { windowCloseTime: close3HPrev, snapshotTime: threeHPrev },
     // { windowCloseTime: close6HPrev, snapshotTime: sixHPrev },
     { windowCloseTime: close12HPrev, snapshotTime: twelveHPrev },
     // { windowCloseTime: closeHNext, snapshotTime: hourlyNext },
-    // { windowCloseTime: close3HNext, snapshotTime: threeHNext },
+    { windowCloseTime: close3HNext, snapshotTime: threeHNext },
     // { windowCloseTime: close6HNext, snapshotTime: sixHNext },
     { windowCloseTime: close12HNext, snapshotTime: twelveHNext },
     // { windowCloseTime: closeHNext2, snapshotTime: hourlyNext2 },
-    // { windowCloseTime: close3HNext2, snapshotTime: threeHNext2 },
+    { windowCloseTime: close3HNext2, snapshotTime: threeHNext2 },
     // { windowCloseTime: close6HNext2, snapshotTime: sixHNext2 }
     { windowCloseTime: close12HNext2, snapshotTime: twelveHNext2 }
-  ].map(
-    ({ windowCloseTime, snapshotTime }) =>
-      new PoolSeeds({
-        // using contract address as native token representative
-        predictionToken: TRUMP,
-        stakeToken: getContractAddress(chain),
-        stakeAmount: 2e17,
-        snapshotTime,
-        windowCloseTime
-      })
-  );
+  ];
+  const tokens = [CONTRACT_ADDRESS_SEPOLIA, HYPE, SOL];
+
+  const seeds: PoolSeeds[] = [];
+  for (const { windowCloseTime, snapshotTime } of times) {
+    for (const predictionToken of tokens) {
+      seeds.push(
+        new PoolSeeds({
+          predictionToken,
+          stakeToken: getContractAddress(chain),
+          stakeAmount: 2e17,
+          snapshotTime,
+          windowCloseTime
+        })
+      );
+    }
+  }
+  return seeds;
 };

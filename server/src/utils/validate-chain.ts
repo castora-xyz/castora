@@ -11,9 +11,7 @@ export const validateChain = async (
 ) => {
   let { chain } = headers;
   let message = '';
-  // TODO: Remove the following default chain after updating main website
-  if (!chain) chain = 'monaddevnet';
-  // if (!chain) message = 'Provide valid chain in headers.';
+  if (!chain) message = 'Provide valid chain in headers.';
   if (!isChain(chain)) message = `Unsupported chain: ${chain}`;
   if (message) {
     console.error('Error at validating chain ...');
