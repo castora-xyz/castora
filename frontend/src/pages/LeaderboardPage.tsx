@@ -122,7 +122,7 @@ export const LeaderboardPage = () => {
         </div>
       )}
 
-      {entries.length > 3 &&
+      {entries.length > 0 &&
         (currentChain ?? defaultChain).name == 'Monad Testnet' && (
           <>
             <div className="max-md:mb-16 mb-4">
@@ -156,7 +156,7 @@ export const LeaderboardPage = () => {
                   className="rounded-xl border dark:border-surface-subtle p-4 flex items-center justify-between flex-wrap gap-4 mb-8"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold">{index + 1}</span>
+                    <span className="text-2xl font-bold">{index + 4}</span>
                     <a
                       href={
                         explorerUrl
