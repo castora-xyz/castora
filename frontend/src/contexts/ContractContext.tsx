@@ -93,6 +93,12 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (e) {
       console.error(e);
+      if (
+        `${e}`.includes('requests limited') ||
+        `${e}`.includes('HTTP request failed')
+      ) {
+        return null;
+      }
       toastError(
         `${e}`.toLowerCase().includes('failed to fetch')
           ? 'Network Error'
