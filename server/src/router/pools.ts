@@ -11,9 +11,7 @@ import { wrapper } from './index';
 
 const router = Router();
 
-router.use(validateChain);
-
-router.get('/pools/complete', async (_, res) => {
+router.get('/pools/complete', validateChain, async (_, res) => {
   await wrapper(
     async () => await completePools(res.locals.chain),
     'completing pools',
@@ -21,7 +19,7 @@ router.get('/pools/complete', async (_, res) => {
   );
 });
 
-router.get('/pools/live', async (req, res) => {
+router.get('/pools/live', validateChain, async (_, res) => {
   await wrapper(
     async () => await getLivePools(res.locals.chain),
     'fetching live poolIds',
@@ -29,7 +27,7 @@ router.get('/pools/live', async (req, res) => {
   );
 });
 
-router.get('/pools/sync', async (_, res) => {
+router.get('/pools/sync', validateChain, async (_, res) => {
   await wrapper(
     async () => await syncLivePools(res.locals.chain),
     'syncing live pools',
@@ -37,7 +35,7 @@ router.get('/pools/sync', async (_, res) => {
   );
 });
 
-router.get('/pool/:id/activities', async (req, res) => {
+router.get('/pool/:id/activities', validateChain, async (req, res) => {
   await wrapper(
     async () => fetchActivity(res.locals.chain, 'pool', req.params.id),
     'fetching pool activities',
@@ -45,7 +43,7 @@ router.get('/pool/:id/activities', async (req, res) => {
   );
 });
 
-router.get('/pool/:id/complete', async (req, res) => {
+router.get('/pool/:id/complete', validateChain, async (req, res) => {
   await wrapper(
     async () => await completePool(res.locals.chain, req.params.id),
     'completing pool',

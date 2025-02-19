@@ -84,7 +84,7 @@ export const generateSeeds = (chain: Chain) => {
     // { windowCloseTime: close6HNext2, snapshotTime: sixHNext2 }
     { windowCloseTime: close12HNext2, snapshotTime: twelveHNext2 }
   ];
-  const tokens = [CONTRACT_ADDRESS_SEPOLIA, HYPE, SOL];
+  const tokens = [HYPE, SOL, CONTRACT_ADDRESS_SEPOLIA];
 
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
