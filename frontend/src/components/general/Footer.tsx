@@ -1,5 +1,6 @@
 import Discord from '@/assets/discord.svg?react';
 import X from '@/assets/x.svg?react';
+import { Ripple } from 'primereact/ripple';
 import { Link } from 'react-router-dom';
 
 export const Footer = () => {
@@ -17,9 +18,9 @@ export const Footer = () => {
             rel="noopener noreferrer"
             title="Join our Discord"
             className="border border-border-default dark:border-surface-subtle rounded-full px-6 py-1 p-ripple"
-            v-ripple
           >
             <Discord className="w-10 h-10 fill-text-body" />
+            <Ripple />
           </a>
           <a
             href="https://x.com/castora_xyz"
@@ -27,9 +28,9 @@ export const Footer = () => {
             rel="noopener noreferrer"
             title="Follow us on X (Twitter)"
             className="border border-border-default dark:border-surface-subtle rounded-full px-6 py-1 p-ripple"
-            v-ripple
           >
             <X className="w-10 h-10 fill-text-body" />
+            <Ripple />
           </a>
         </div>
 

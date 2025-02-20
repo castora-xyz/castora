@@ -29,7 +29,7 @@ export const PoolDetailIntroBadge = ({ pool: { seeds } }: { pool: Pool }) => {
         <button
           className="hover:underline p-ripple"
           role="link"
-          onClick={() => navigate(location.state?.from || '/')}
+          onClick={() => navigate(location.state?.from || '/pools')}
         >
           <span>Pools</span>
           <Ripple />

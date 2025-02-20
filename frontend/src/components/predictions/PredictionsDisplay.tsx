@@ -6,6 +6,7 @@ import { abi, useContract, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Breathing } from 'react-shimmer';
 import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
@@ -167,7 +168,13 @@ export const PredictionsDisplay = ({
                   ID: {id}
                 </p>
 
-                <p className="text-text-caption">
+                <Tooltip target=".prediction-time" />
+                <p
+                  className="prediction-time text-text-caption cursor-context-menu"
+                  data-pr-tooltip={`Prediction Time: ${
+                    `${new Date(time * 1000)}`.split(' GMT')[0]
+                  }`}
+                >
                   {ms((now - time) * 1000)}{' '}
                   {now < seeds.snapshotTime ? 'ago' : ''}
                 </p>

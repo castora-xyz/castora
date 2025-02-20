@@ -24,7 +24,9 @@ export class PoolSeeds {
     const foundP = tokens.find(
       (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
     );
-    if (!foundP) throw `Token not found in tokens list: ${this.predictionToken}`;
+    if (!foundP) {
+      throw `Token not found in tokens list: ${this.predictionToken}`;
+    }
     this.predictionTokenDetails = foundP;
 
     const foundS = tokens.find(
@@ -51,7 +53,7 @@ export class PoolSeeds {
    * The pair name given to the trading view widget for the chart
    */
   chartPairName() {
-    const { name } = this.predictionTokenDetails
+    const { name } = this.predictionTokenDetails;
     if (name == 'AAPL') return 'PYTH:AAPL';
     if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
     if (name == 'PENGU') return 'BITGET:PENGUUSDT';
@@ -155,6 +157,7 @@ export class PoolSeeds {
     if (diff === 15 * 60) return 60 * 60; // hourly pool
     if (diff === 30 * 60) return 3 * 60 * 60; // 3-hoorly pool
     if (diff === 60 * 60) return 6 * 60 * 60; // 6-hourly pool
+    if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 12-hourly pool
     // TODO: Handle newer pool types when the time comes
     return 60 * 60;
   }

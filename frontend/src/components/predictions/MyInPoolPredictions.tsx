@@ -6,6 +6,7 @@ import { useMyPredictions } from '@/contexts';
 import { Pool } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Breathing } from 'react-shimmer';
 import { useAccount } from 'wagmi';
@@ -69,7 +70,15 @@ export const MyInPoolPredictions = ({
                 ID: {id}
               </p>
 
-              <p className="text-text-caption">{ms((now - time) * 1000)}</p>
+              <Tooltip target=".prediction-time" />
+              <p
+                className="prediction-time text-text-caption cursor-context-menu"
+                data-pr-tooltip={`Prediction Time: ${
+                  `${new Date(time * 1000)}`.split(' GMT')[0]
+                }`}
+              >
+                {ms((now - time) * 1000)}
+              </p>
 
               {!completionTime ? (
                 <p>

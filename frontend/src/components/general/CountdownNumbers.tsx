@@ -1,3 +1,4 @@
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 
 export const CountdownNumbers = ({ timestamp }: { timestamp: number }) => {
@@ -25,17 +26,23 @@ export const CountdownNumbers = ({ timestamp }: { timestamp: number }) => {
 
   return (
     <>
-      {days > 0 && <span>{days}d</span>}
-      {days > 0 && <span> : </span>}
-      {(hrs > 0 || (days > 0 && hrs == 0)) && (
-        <span>{days > 0 ? pad(hrs) : hrs}h</span>
-      )}
-      {(hrs > 0 || (days > 0 && hrs == 0)) && <span> : </span>}
-      {(mins > 0 || ((hrs > 0 || days > 0) && mins == 0)) && (
-        <span>{hrs > 0 || days > 0 ? pad(mins) : mins}m</span>
-      )}
-      {(mins > 0 || ((hrs > 0 || days > 0) && mins == 0)) && <span> : </span>}
-      <span>{mins > 0 || hrs > 0 || days > 0 ? pad(secs) : secs}s</span>
+      <Tooltip target=".countdown-time" />
+      <span
+        className="countdown-time cursor-context-menu"
+        data-pr-tooltip={`${new Date(timestamp * 1000)}`.split(' GMT')[0]}
+      >
+        {days > 0 && <span>{days}d</span>}
+        {days > 0 && <span> : </span>}
+        {(hrs > 0 || (days > 0 && hrs == 0)) && (
+          <span>{days > 0 ? pad(hrs) : hrs}h</span>
+        )}
+        {(hrs > 0 || (days > 0 && hrs == 0)) && <span> : </span>}
+        {(mins > 0 || ((hrs > 0 || days > 0) && mins == 0)) && (
+          <span>{hrs > 0 || days > 0 ? pad(mins) : mins}m</span>
+        )}
+        {(mins > 0 || ((hrs > 0 || days > 0) && mins == 0)) && <span> : </span>}
+        <span>{mins > 0 || hrs > 0 || days > 0 ? pad(secs) : secs}s</span>
+      </span>
     </>
   );
 };
