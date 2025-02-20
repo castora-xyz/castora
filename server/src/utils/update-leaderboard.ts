@@ -65,7 +65,7 @@ export const updateLeaderboardOnPrediction = async (
   // 2. Construct the predicted token and amount as stake data from seeds
   const { decimals, name: token } = pool.seeds.getStakeTokenDetails();
   let amount = pool.seeds.stakeAmount / 10 ** decimals;
-  amount = Math.floor(amount * 100) / 100; // round to 2 decimal places
+  amount = Math.trunc(amount * 100) / 100; // round to 2 decimal places
   console.log(`Got predicted token and amount: ${token}, ${amount}`);
 
   // 3. Fetch the leaderboard data
@@ -164,11 +164,11 @@ export const updateLeaderboardOnCompletePool = async (
   const { name: token, decimals } = pool.seeds.getStakeTokenDetails();
   // the amount lost is the stake amount that didn't win anything
   let lost = pool.seeds.stakeAmount / 10 ** decimals;
-  lost = Math.floor(lost * 100) / 100; // round to 2 decimal
+  lost = Math.trunc(lost * 100) / 100; // round to 2 decimal
   // the division below by 0.95 (after applying decimals) is to display the
   // amount without fees applied
   let won = pool.winAmount / 10 ** decimals / 0.95;
-  won = Math.floor(won * 100) / 100; // round to 2 decimal
+  won = Math.trunc(won * 100) / 100; // round to 2 decimal
   console.log(`Got token and won and lost amounts: ${token}, ${won}, ${lost}`);
 
   // 3. loop through winners and increment wins

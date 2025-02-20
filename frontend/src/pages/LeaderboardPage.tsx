@@ -4,6 +4,7 @@ import { useFirebase } from '@/contexts';
 import { LeaderboardEntry, TokenAndAmount } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { Breathing } from 'react-shimmer';
 import { useAccount, useChains } from 'wagmi';
 
 const shortenAddress = (v: string) =>
@@ -13,7 +14,7 @@ const EntryDetails = ({ entry }: { entry: LeaderboardEntry }) => {
   const { stakedAmounts: staked, wonAmounts: won, predictionsCount } = entry;
 
   const displayTAA = ({ token, amount }: TokenAndAmount) =>
-    `${amount} ${token}`;
+    `${Math.trunc(amount * 100) / 100} ${token}`;
 
   return (
     <>
@@ -82,6 +83,7 @@ const TopEntry = ({
 };
 
 export const LeaderboardPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const { firestore } = useFirebase();
   const { chain: currentChain } = useAccount();
@@ -98,6 +100,7 @@ export const LeaderboardPage = () => {
     return onSnapshot(doc(firestore, '/leaderboard/leaderboard'), (doc) => {
       if (doc.exists()) setEntries(doc.data().entries);
       else setEntries([]);
+      setIsLoading(false);
     });
   }, [firestore]);
 
@@ -113,16 +116,26 @@ export const LeaderboardPage = () => {
         </p>
       </div>
 
-      {(entries.length === 0 ||
-        (currentChain ?? defaultChain).name != 'Monad Testnet') && (
-        <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
-          <p className="text-lg mb-8">
-            The leaderboard is being prepared. Please check back later.
-          </p>
+      {isLoading && (
+        <div className="flex justify-center items-center gap-2 max-sm:grow max-sm:text-center py-20 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:px-16 md:px-4 lg:px-8 sm:text-center md:max-w-[600px]">
+          <Breathing width={18} height={18} className="rounded-full" />
+          <Breathing width={18} height={18} className="rounded-full" />
+          <Breathing width={18} height={18} className="rounded-full" />
         </div>
       )}
 
-      {entries.length > 0 &&
+      {!isLoading &&
+        (entries.length === 0 ||
+          (currentChain ?? defaultChain).name != 'Monad Testnet') && (
+          <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
+            <p className="text-lg mb-8">
+              The leaderboard is being prepared. Please check back later.
+            </p>
+          </div>
+        )}
+
+      {!isLoading &&
+        entries.length > 0 &&
         (currentChain ?? defaultChain).name == 'Monad Testnet' && (
           <>
             <div className="max-md:mb-16 mb-4">
