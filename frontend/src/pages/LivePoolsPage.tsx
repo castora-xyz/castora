@@ -16,7 +16,7 @@ export const LivePoolsPage = () => {
 
   const [categories, setCategories] = useState(['All', 'Staked']);
   const { isFetching: isFetchingMyActivity, myActivities } = useMyActivity();
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('Open');
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const getShimmerCount = () => {
@@ -42,6 +42,20 @@ export const LivePoolsPage = () => {
     ];
     setCategories(ordered.filter((member) => refreshed.has(member)));
   };
+
+  useEffect(() => {
+    if (
+      !isFetchingPools &&
+      !isFetchingMyActivity &&
+      livePools.length > 0 &&
+      selectedCategory === 'Open' &&
+      livePools.filter(({ seeds }) => seeds.status() === 'Open').length == 0
+    ) {
+      // Open pools display by default, but if there is currently no
+      // opened one show all pools
+      setSelectedCategory('All');
+    }
+  }, [isFetchingPools, isFetchingMyActivity, livePools]);
 
   useEffect(() => {
     checkCategories();
@@ -179,4 +193,4 @@ export const LivePoolsPage = () => {
       )}
     </>
   );
-}
+};
