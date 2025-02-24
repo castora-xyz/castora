@@ -2,37 +2,55 @@ import Cog from '@/assets/cog.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { abi, useContract, usePredictions } from '@/contexts';
+import { rowsPerPageOptions, usePaginators, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
+import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Breathing } from 'react-shimmer';
-import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
+import { useAccount, useChains } from 'wagmi';
 
 export const PredictionsDisplay = ({
-  pool: { poolId, noOfPredictions, seeds, completionTime },
-  pool,
+  pool: { noOfPredictions, seeds, completionTime },
+  pool
 }: {
   pool: Pool;
 }) => {
   const { address, chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
-  const { castoraAddress } = useContract();
+  const paginators = usePaginators();
   const retrieve = usePredictions();
 
+  const [currentPage, setCurrentPage] = useState(
+    paginators.getLastPage(noOfPredictions)
+  );
   const [hasError, setHasError] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [predictions, setPredictions] = useState<Prediction[]>([]);
 
-  const load = async (showLoading = true) => {
+  const load = async (
+    showLoading = true,
+    page = currentPage,
+    rows = paginators.rowsPerPage
+  ) => {
+    if (noOfPredictions == 0) {
+      setPredictions([]);
+      setIsFetching(false);
+      setHasError(false);
+      return;
+    }
+
     if (showLoading) setIsFetching(true);
 
-    const predictionIds = Array.from(Array(noOfPredictions).keys())
-      .reverse()
-      .map((i) => BigInt(i + 1));
+    let start = (page + 1) * rows;
+    if (start >= noOfPredictions) start = noOfPredictions;
+    const target = page * rows + 1;
+
+    const predictionIds = [];
+    for (let i = start; i >= target; i--) predictionIds.push(BigInt(i));
     const predictions = await retrieve(pool, predictionIds);
     if (!predictions) {
       setIsFetching(false);
@@ -54,44 +72,6 @@ export const PredictionsDisplay = ({
     );
   };
 
-  // TODO: Review if this watcher is updated for every chain (contract address)
-  // change
-  useWatchContractEvent({
-    address: castoraAddress,
-    abi,
-    eventName: 'Predicted',
-    args: { poolId: BigInt(poolId) },
-    onLogs: async (logs) => {
-      let hasChanges = false;
-      for (const { args } of logs) {
-        hasChanges = predictions.every(
-          (p) => p.id != Number(args.predictionId)
-        );
-        if (hasChanges) break;
-      }
-      if (hasChanges) await load(false);
-    }
-  });
-
-  // TODO: Review if this watcher is updated for every chain (contract address)
-  // change
-  useWatchContractEvent({
-    address: castoraAddress,
-    abi,
-    eventName: 'ClaimedWinnings',
-    args: { poolId: BigInt(poolId) },
-    onLogs: async (logs) => {
-      let hasChanges = false;
-      for (const { args } of logs) {
-        hasChanges = predictions.some(
-          (p) => p.id == Number(args.predictionId) && !p.claimWinningsTime
-        );
-        if (hasChanges) break;
-      }
-      if (hasChanges) await load(false);
-    }
-  });
-
   useEffect(() => {
     const interval = setInterval(
       () => setNow(Math.trunc(Date.now() / 1000)),
@@ -109,6 +89,27 @@ export const PredictionsDisplay = ({
       <h3 className="font-medium text-xl text-text-subtitle mb-6">
         Pool Activities
       </h3>
+
+      <Paginator
+        first={paginators.rowsPerPage * currentPage}
+        rows={paginators.rowsPerPage}
+        rowsPerPageOptions={rowsPerPageOptions}
+        totalRecords={noOfPredictions}
+        onPageChange={(e) => {
+          paginators.updateRowsPerPage(e.rows);
+          setCurrentPage(e.page);
+          load(true, e.page, e.rows);
+        }}
+        template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
+        currentPageReportTemplate="{first} to {last} of {totalRecords}"
+        className="rounded-2xl bg-surface-subtle mb-4"
+        pt={{
+          RPPDropdown: {
+            root: { className: 'bg-app-bg' },
+            panel: { className: 'bg-app-bg' }
+          }
+        }}
+      />
 
       {isFetching ? (
         [1, 2, 3, 4, 5].map((i) => (

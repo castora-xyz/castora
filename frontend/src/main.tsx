@@ -4,6 +4,7 @@ import {
   ContractProvider,
   FirebaseProvider,
   MyActivityProvider,
+  PaginatorsProvider,
   PoolsProvider,
   ServerProvider,
   ThemeProvider,
@@ -19,27 +20,29 @@ import './main.css';
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <CacheProvider>
-      <PrimeReactProvider value={{ ripple: true }}>
-        <ToastProvider>
-          <Web3Provider>
-            <ThemeProvider>
-              <AuthProvider>
-                <ServerProvider>
-                  <FirebaseProvider>
-                    <ContractProvider>
-                      <PoolsProvider>
-                        <MyActivityProvider>
-                          <App />
-                        </MyActivityProvider>
-                      </PoolsProvider>
-                    </ContractProvider>
-                  </FirebaseProvider>
-                </ServerProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </Web3Provider>
-        </ToastProvider>
-      </PrimeReactProvider>
+      <PaginatorsProvider>
+        <PrimeReactProvider value={{ ripple: true }}>
+          <ToastProvider>
+            <Web3Provider>
+              <ThemeProvider>
+                <AuthProvider>
+                  <ServerProvider>
+                    <FirebaseProvider>
+                      <ContractProvider>
+                        <PoolsProvider>
+                          <MyActivityProvider>
+                            <App />
+                          </MyActivityProvider>
+                        </PoolsProvider>
+                      </ContractProvider>
+                    </FirebaseProvider>
+                  </ServerProvider>
+                </AuthProvider>
+              </ThemeProvider>
+            </Web3Provider>
+          </ToastProvider>
+        </PrimeReactProvider>
+      </PaginatorsProvider>
     </CacheProvider>
   </React.StrictMode>
 );
