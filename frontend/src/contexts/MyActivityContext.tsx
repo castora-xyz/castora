@@ -117,7 +117,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const predictions = await retrieve(poolId, predictionIds, false);
+      const predictions = await retrieve(pool, predictionIds, false);
       if (!predictions) {
         setIsFetching(false);
         setHasError(true);

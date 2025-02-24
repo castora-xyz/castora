@@ -1,11 +1,12 @@
 import {
   WriteContractStatus,
+  useCache,
   useContract,
   useFirebase,
   useServer,
   useToast
 } from '@/contexts';
-import { Pool } from '@/schemas';
+import { Pool, PoolSeeds } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import {
   ReactNode,
@@ -15,7 +16,7 @@ import {
   useState
 } from 'react';
 import { Observable } from 'rxjs';
-import { useChains } from 'wagmi';
+import { useAccount, useChains } from 'wagmi';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
 
@@ -50,7 +51,9 @@ const PoolsContext = createContext<PoolsContextProps>({
 export const usePools = () => useContext(PoolsContext);
 
 export const PoolsProvider = ({ children }: { children: ReactNode }) => {
-  const [currentChain] = useChains();
+  const { chain: currentChain } = useAccount();
+  const cache = useCache();
+  const [defaultChain] = useChains();
   const { castoraAddress, readContract, writeContract } = useContract();
   const { ensureNotifications, firestore, recordEvent } = useFirebase();
   const server = useServer();
@@ -90,7 +93,9 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           subscriber.next('finalizing');
           await server.get(`/record/${txHash}`);
           recordEvent('claimed_winnings', { poolId, predictionId });
-          const explorerUrl = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${
+            (currentChain ?? defaultChain).blockExplorers?.default.url
+          }/tx/${txHash}`;
           toastSuccess(
             'Withdrawal Successful',
             'View Transaction on Explorer',
@@ -105,8 +110,20 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchOne = async (poolId: number) => {
     try {
+      const key = `chain::${(currentChain ?? defaultChain).id}::pool::${poolId}`;
+      let pool = await cache.retrieve(key);
+      if (pool) {
+        // Necessary to restore callable methods on retrieved instance
+        pool = Object.setPrototypeOf(pool, Pool.prototype);
+        pool.seeds = Object.setPrototypeOf(pool.seeds, PoolSeeds.prototype);
+        return pool;
+      }
+
       if (!(await isValidPoolId(poolId))) return null;
-      return new Pool(await readContract('pools', [BigInt(poolId)]));
+      pool = new Pool(await readContract('pools', [BigInt(poolId)]));
+
+      if (pool.completionTime > 0) await cache.save(key, pool);
+      return pool;
     } catch (error) {
       console.error(error);
       toastError(`${error}`);
@@ -176,7 +193,9 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           await ensureNotifications();
           await server.get(`/record/${txHash}`);
           recordEvent('predicted', { poolId, predictionId });
-          const explorerUrl = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${
+            (currentChain ?? defaultChain).blockExplorers?.default.url
+          }/tx/${txHash}`;
           toastSuccess(
             'Prediction Successful',
             'View Transaction on Explorer',

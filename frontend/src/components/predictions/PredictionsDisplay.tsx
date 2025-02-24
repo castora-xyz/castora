@@ -12,7 +12,8 @@ import { Breathing } from 'react-shimmer';
 import { useAccount, useChains, useWatchContractEvent } from 'wagmi';
 
 export const PredictionsDisplay = ({
-  pool: { poolId, noOfPredictions, seeds, completionTime }
+  pool: { poolId, noOfPredictions, seeds, completionTime },
+  pool,
 }: {
   pool: Pool;
 }) => {
@@ -32,7 +33,7 @@ export const PredictionsDisplay = ({
     const predictionIds = Array.from(Array(noOfPredictions).keys())
       .reverse()
       .map((i) => BigInt(i + 1));
-    const predictions = await retrieve(poolId, predictionIds);
+    const predictions = await retrieve(pool, predictionIds);
     if (!predictions) {
       setIsFetching(false);
       setHasError(true);

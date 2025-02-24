@@ -13,13 +13,13 @@ import { useAccount } from 'wagmi';
 
 export const MyInPoolPredictions = ({
   pool,
-  pool: { poolId, seeds, completionTime }
+  pool: { seeds, completionTime }
 }: {
   pool: Pool;
 }) => {
   const { isConnected } = useAccount();
   const { isFetching, myPredictions, hasError, fetchMyPredictions } =
-    useMyPredictions(poolId);
+    useMyPredictions(pool);
 
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
