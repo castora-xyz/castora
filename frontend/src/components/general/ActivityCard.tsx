@@ -59,7 +59,11 @@ export const ActivityCard = ({
 
           <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-flex items-center gap-1">
             <Timer className="fill-text-caption w-4 h-4" />
-            <span className="mr-1">{ms(seeds.poolLife() * 1000)}</span>
+            <span className="mr-1">
+              {seeds.poolLife() == 12 * 60 * 60
+                ? '24h'
+                : ms(seeds.poolLife() * 1000)}
+            </span>
           </p>
 
           {!!completionTime && isAWinner && !!pool.winAmount && (

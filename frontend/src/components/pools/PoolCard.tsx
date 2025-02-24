@@ -43,7 +43,9 @@ export const PoolCard = ({
         </div>
 
         <span className="text-sm text-primary-default mt-1 inline-block">
-          {ms(seeds.poolLife() * 1000)}
+          {seeds.poolLife() == 12 * 60 * 60
+            ? '24h'
+            : ms(seeds.poolLife() * 1000)}
         </span>
       </div>
 
