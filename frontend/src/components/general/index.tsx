@@ -1,5 +1,6 @@
 export * from './ActivityCard';
 export * from './BottomNav';
+export * from './ClaimAllButton';
 export * from './ClaimButton';
 export * from './CountdownNumbers';
 export * from './Footer';

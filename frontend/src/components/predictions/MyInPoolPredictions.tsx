@@ -1,9 +1,9 @@
 import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { ClaimButton } from '@/components';
-import { useMyPredictions } from '@/contexts';
-import { Pool } from '@/schemas';
+import { ClaimAllButton, ClaimButton } from '@/components';
+import { useMyActivity, useMyPredictions } from '@/contexts';
+import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
@@ -18,8 +18,19 @@ export const MyInPoolPredictions = ({
   pool: Pool;
 }) => {
   const { isConnected } = useAccount();
+  const { fetchMyActivity } = useMyActivity();
   const { isFetching, myPredictions, hasError, fetchMyPredictions } =
     useMyPredictions(pool);
+  const [unclaimedWins, setUnclaimedWins] = useState<Prediction[]>([]);
+
+  useEffect(() => {
+    setUnclaimedWins(
+      myPredictions.filter(
+        ({ claimWinningsTime, isAWinner }) =>
+          claimWinningsTime === 0 && isAWinner
+      )
+    );
+  }, [myPredictions]);
 
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
@@ -39,9 +50,22 @@ export const MyInPoolPredictions = ({
 
   return (
     <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full mb-8">
-      <h3 className="font-medium text-xl text-text-subtitle mb-6">
-        My Predictions
-      </h3>
+      <div className="flex gap-4 justify-between flex-wrap items-center mb-6">
+        <h3 className="font-medium text-xl text-text-subtitle">
+          My Predictions
+        </h3>
+
+        {pool.completionTime > 0 && unclaimedWins.length > 1 && (
+          <ClaimAllButton
+            pools={Array.from(Array(unclaimedWins.length)).map((_) => pool)}
+            predictions={unclaimedWins}
+            onSuccess={() => {
+              fetchMyPredictions();
+              fetchMyActivity();
+            }}
+          />
+        )}
+      </div>
 
       {isFetching ? (
         [1, 2, 3].map((i) => (

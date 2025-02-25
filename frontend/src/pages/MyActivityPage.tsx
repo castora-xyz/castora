@@ -1,6 +1,10 @@
 import Wallet from '@/assets/wallet.svg?react';
-import { ActivityCard, CountdownNumbers } from '@/components/general';
-import { useMyActivity } from '@/contexts';
+import {
+  ActivityCard,
+  ClaimAllButton,
+  CountdownNumbers
+} from '@/components/general';
+import { Activity, useMyActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
@@ -16,6 +20,7 @@ export const MyActivityPage = () => {
   const { fetchMyActivity, isFetching, myActivities, hasError } =
     useMyActivity();
   const { open: connectWallet } = useWeb3Modal();
+  const [unclaimedWins, setUnclaimedWins] = useState<Activity[]>([]);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 512);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
@@ -27,6 +32,15 @@ export const MyActivityPage = () => {
   );
 
   const isPredictionsRoute = location.pathname.includes('predictions');
+
+  useEffect(() => {
+    setUnclaimedWins(
+      myActivities.filter(
+        ({ prediction: { claimWinningsTime, isAWinner } }) =>
+          claimWinningsTime === 0 && isAWinner
+      )
+    );
+  }, [myActivities]);
 
   useEffect(() => {
     document.title = `My ${
@@ -217,9 +231,21 @@ export const MyActivityPage = () => {
           </div>
 
           <div className="md:basis-2/3">
-            <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-              My Activity
-            </p>
+            <div className="flex gap-4 justify-between flex-wrap items-center mb-6">
+              <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
+                My Activity
+              </p>
+
+              {unclaimedWins.length > 1 && (
+                <ClaimAllButton
+                  pools={unclaimedWins.map(({ pool }) => pool)}
+                  predictions={unclaimedWins.map(
+                    ({ prediction }) => prediction
+                  )}
+                  onSuccess={fetchMyActivity}
+                />
+              )}
+            </div>
 
             {otherActivities.map(({ pool, prediction }) => (
               <ActivityCard

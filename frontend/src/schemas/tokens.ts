@@ -40,7 +40,15 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 // SOL is the token address of Wormhole wrapped SOL on Ethereum Mainnet.
 
-export const tokens = [
+export interface Token {
+  address: string;
+  name: string;
+  fullName: string;
+  decimals: number;
+  pythPriceId: string;
+}
+
+export const tokens: Token[] = [
   {
     address: CASTORA_ADDRESS_MONAD,
     name: 'MON',

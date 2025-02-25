@@ -26,6 +26,11 @@ interface PoolsContextProps {
     predictionId: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => Observable<WriteContractPoolStatus>;
+  claimWinningsBulk: (
+    poolIds: number[],
+    predictionIds: number[],
+    onSuccessCallback?: (explorerUrl: string) => void
+  ) => Observable<WriteContractPoolStatus>;
   isFetching: boolean;
   isValidPoolId: (poolId: any) => Promise<boolean>;
   fetchOne: (poolId: number) => Promise<Pool | null>;
@@ -41,6 +46,7 @@ interface PoolsContextProps {
 
 const PoolsContext = createContext<PoolsContextProps>({
   claimWinnings: () => new Observable(),
+  claimWinningsBulk: () => new Observable(),
   isFetching: true,
   isValidPoolId: async () => false,
   fetchOne: async () => null,
@@ -107,6 +113,45 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       });
     });
   };
+
+   const claimWinningsBulk = (
+     poolIds: number[],
+     predictionIds: number[],
+     onSuccessCallback?: (explorerUrl: string) => void
+   ) => {
+     return new Observable<WriteContractPoolStatus>((subscriber) => {
+       let txHash: string;
+       writeContract(
+         'claimWinningsBulk',
+         [poolIds.map((i) => BigInt(i)), predictionIds.map((i) => BigInt(i))],
+         undefined,
+         (hash) => (txHash = hash)
+       ).subscribe({
+         next: subscriber.next.bind(subscriber),
+         error: subscriber.error.bind(subscriber),
+         complete: async () => {
+           if (!txHash) {
+             subscriber.error('Transaction Failed');
+             return;
+           }
+
+           subscriber.next('finalizing');
+           await server.get(`/record/${txHash}`);
+           recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
+           const explorerUrl = `${
+             (currentChain ?? defaultChain).blockExplorers?.default.url
+           }/tx/${txHash}`;
+           toastSuccess(
+             'Bulk Withdrawals Successful',
+             'View Transaction on Explorer',
+             explorerUrl
+           );
+           onSuccessCallback && onSuccessCallback(explorerUrl);
+           subscriber.complete();
+         }
+       });
+     });
+   };
 
   const fetchOne = async (poolId: number) => {
     try {
@@ -229,6 +274,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     <PoolsContext.Provider
       value={{
         claimWinnings,
+        claimWinningsBulk,
         isFetching,
         isValidPoolId,
         fetchOne,

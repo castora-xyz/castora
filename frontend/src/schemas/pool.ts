@@ -35,9 +35,12 @@ export class Pool {
     this.completionTime = Number(input[6]);
     this.winAmountOnChain = Number(input[7]);
     // calling Math.floor is to avoid too many decimal places
-    this.winAmount =
-      Math.floor(this.winAmountOnChain / 0.95) /
-      10 ** this.seeds.stakeTokenDetails.decimals;
+    this.winAmount = parseFloat(
+      (
+        Math.floor(this.winAmountOnChain / 0.95) /
+        10 ** this.seeds.stakeTokenDetails.decimals
+      ).toFixed(3)
+    );
     this.noOfWinners = Number(input[8]);
     this.noOfClaimedWinnings = Number(input[9]);
   }
