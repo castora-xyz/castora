@@ -63,6 +63,12 @@ $ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_DEVNET_
 # Deploying to Monad Testnet
 $ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
 $ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
+
+# Upgrading in Monad Testnet
+$ forge script script/UpgradeCastora.s.sol:UpgradeCastora --rpc-url $MONAD_TESTNET_RPC_URL \
+  --broadcast -vvvv --verify --verifier sourcify \
+  --verifier-url https://sourcify-api-monad.blockvision.org \
+  --chain 10143
 ```
 
 ### Cast

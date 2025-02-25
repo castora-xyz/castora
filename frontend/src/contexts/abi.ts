@@ -270,6 +270,16 @@ export const abi = [
   },
   {
     type: 'function',
+    name: 'claimWinningsBulk',
+    inputs: [
+      { name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' },
+      { name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
     name: 'completePool',
     inputs: [
       { name: 'poolId', type: 'uint256', internalType: 'uint256' },
@@ -948,6 +958,7 @@ export const abi = [
     name: 'UUPSUnsupportedProxiableUUID',
     inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
   },
+  { type: 'error', name: 'UnmatchingPoolsAndPredictions', inputs: [] },
   { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
   { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
   { type: 'error', name: 'UnsuccessfulStaking', inputs: [] },

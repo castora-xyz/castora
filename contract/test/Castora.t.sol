@@ -511,8 +511,95 @@ contract CastoraTest is Test {
     vm.prank(user);
     castora.claimWinnings(1, 1);
 
-    vm.prank(user); 
+    vm.prank(user);
     vm.expectRevert(AlreadyClaimedWinnings.selector);
     castora.claimWinnings(1, 1);
+  }
+
+  function testRevertUnmatchingPoolsAndPredictions() public {
+    uint256[] memory poolIds = new uint256[](1);
+    uint256[] memory predictionIds = new uint256[](2);
+    vm.expectRevert(UnmatchingPoolsAndPredictions.selector);
+    castora.claimWinningsBulk(poolIds, predictionIds);
+  }
+
+  function testClaimWinningsBulkNative() public {
+    castora.createPool(seedsNativeStake);
+    deal(user, 2e16);
+    vm.prank(user);
+    castora.predict{value: 1e16}(1, 0);
+    vm.prank(user);
+    castora.predict{value: 1e16}(1, 0);
+
+    vm.warp(block.timestamp + 1200);
+    uint256[] memory winnerPredictions = new uint256[](2);
+    winnerPredictions[0] = 1;
+    winnerPredictions[1] = 2;
+    castora.completePool(1, 0, 2, 95e14, winnerPredictions);
+
+    uint256[] memory poolIds = new uint256[](2);
+    uint256[] memory predictionIds = new uint256[](2);
+    poolIds[0] = 1;
+    poolIds[1] = 1;
+    predictionIds[0] = 1;
+    predictionIds[1] = 2;
+
+    uint256 prevNoOfClaimedWinnings = castora.totalNoOfClaimedWinningsPredictions();
+    uint256 prevPoolNoOfClaimed = castora.getPool(1).noOfClaimedWinnings;
+    uint256 prevTotalClaimedAmount = castora.totalClaimedWinningsAmounts(address(castora));
+    uint256 prevCastoraBal = address(castora).balance;
+    uint256 prevUserBal = user.balance;
+
+    vm.prank(user);
+    castora.claimWinningsBulk(poolIds, predictionIds);
+
+    assertEq(prevNoOfClaimedWinnings + 2, castora.totalNoOfClaimedWinningsPredictions());
+    assertEq(prevPoolNoOfClaimed + 2, castora.getPool(1).noOfClaimedWinnings);
+    assertEq(prevTotalClaimedAmount + 190e14, castora.totalClaimedWinningsAmounts(address(castora)));
+    assertEq(castora.getPrediction(1, 1).claimedWinningsTime, block.timestamp);
+    assertEq(castora.getPrediction(1, 2).claimedWinningsTime, block.timestamp);
+    assertEq(prevCastoraBal - 190e14, address(castora).balance);
+    assertEq(prevUserBal + 190e14, user.balance);
+  }
+
+  function testClaimWinningsBulkERC20() public {
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 2000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 2000000);
+    vm.prank(user);
+    castora.predict(1, 0);
+    vm.prank(user);
+    castora.predict(1, 0);
+
+    vm.warp(block.timestamp + 1200);
+    uint256[] memory winnerPredictions = new uint256[](2);
+    winnerPredictions[0] = 1;
+    winnerPredictions[1] = 2;
+    castora.completePool(1, 0, 2, 950000, winnerPredictions);
+
+    uint256[] memory poolIds = new uint256[](2);
+    uint256[] memory predictionIds = new uint256[](2);
+    poolIds[0] = 1;
+    poolIds[1] = 1;
+    predictionIds[0] = 1;
+    predictionIds[1] = 2;
+
+    uint256 prevNoOfClaimedWinnings = castora.totalNoOfClaimedWinningsPredictions();
+    uint256 prevPoolNoOfClaimed = castora.getPool(1).noOfClaimedWinnings;
+    uint256 prevTotalClaimedAmount = castora.totalClaimedWinningsAmounts(address(cusd));
+    uint256 prevCastoraBal = cusd.balanceOf(address(castora));
+    uint256 prevUserBal = cusd.balanceOf(user);
+
+    vm.prank(user);
+    castora.claimWinningsBulk(poolIds, predictionIds);
+
+    assertEq(prevNoOfClaimedWinnings + 2, castora.totalNoOfClaimedWinningsPredictions());
+    assertEq(prevPoolNoOfClaimed + 2, castora.getPool(1).noOfClaimedWinnings);
+    assertEq(prevTotalClaimedAmount + 1900000, castora.totalClaimedWinningsAmounts(address(cusd)));
+    assertEq(castora.getPrediction(1, 1).claimedWinningsTime, block.timestamp);
+    assertEq(castora.getPrediction(1, 2).claimedWinningsTime, block.timestamp);
+    assertEq(prevCastoraBal - 1900000, cusd.balanceOf(address(castora)));
+    assertEq(prevUserBal + 1900000, cusd.balanceOf(user));
   }
 }

@@ -27,6 +27,7 @@ error UnsuccessfulSendWinnings();
 error UnsuccessfulStaking();
 error WindowHasClosed();
 error ZeroAmountSpecified();
+error UnmatchingPoolsAndPredictions();
 
 /// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
 event CreatedPool(uint256 indexed poolId, bytes32 indexed seedsHash);
@@ -135,6 +136,7 @@ struct Pool {
 /// After snapshotTime, those whose predictedPrices are closest to the token's
 /// price are the winners of the {Pool}. They go with all the pool's money or
 /// rather they each go with almost twice of what they initially staked.
+/// @custom:oz-upgrades-unsafe-allow
 contract Castora is
   Initializable,
   OwnableUpgradeable,
@@ -366,16 +368,7 @@ contract Castora is
     emit CompletedPool(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
   }
 
-  /// Awards the predicter who made the {Prediction} with `predictionId` in
-  /// the {Pool} with `poolId` if the {Prediction-predictionPrice} is among
-  /// the {Pool-winnerPrediction}s.
-  ///
-  /// Fails if the pool has not yet been completed, if the caller is not the
-  /// predicter, if the predicter is not a winner, or if the predicter has
-  /// already claimed their winnings.
-  ///
-  /// Emits an {ClaimedWinnings} event.
-  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant {
+  function _claimWinnings(uint256 poolId, uint256 predictionId) internal {
     if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
 
     Pool storage pool = pools[poolId];
@@ -405,5 +398,36 @@ contract Castora is
     emit ClaimedWinnings(
       poolId, predictionId, prediction.predicter, pool.seeds.stakeToken, pool.seeds.stakeAmount, pool.winAmount
     );
+  }
+
+  /// Awards the predicter who made the {Prediction} with `predictionId` in
+  /// the {Pool} with `poolId` if the {Prediction-predictionPrice} is among
+  /// the {Pool-winnerPrediction}s.
+  ///
+  /// Fails if the pool has not yet been completed, if the caller is not the
+  /// predicter, if the predicter is not a winner, or if the predicter has
+  /// already claimed their winnings.
+  ///
+  /// Emits an {ClaimedWinnings} event.
+  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant {
+    _claimWinnings(poolId, predictionId);
+  }
+
+  /// Claims winnings for multiple predictions in multiple pools.
+  ///
+  /// Fails if the lengths of `poolIds` and `predictionIds` do not match.
+  /// For each prediction, fails if the pool has not yet been completed,
+  /// if the caller is not the predicter, if the predicter is not a winner,
+  /// or if the predicter has already claimed their winnings.
+  ///
+  /// Emits multiple {ClaimedWinnings} events.
+  function claimWinningsBulk(uint256[] memory poolIds, uint256[] memory predictionIds) public nonReentrant {
+    if (poolIds.length != predictionIds.length) {
+      revert UnmatchingPoolsAndPredictions();
+    }
+
+    for (uint256 i = 0; i < poolIds.length; i += 1) {
+      _claimWinnings(poolIds[i], predictionIds[i]);
+    }
   }
 }
