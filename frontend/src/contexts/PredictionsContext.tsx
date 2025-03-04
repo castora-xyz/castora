@@ -61,6 +61,8 @@ export const usePredictions = () => {
           BigInt(poolId),
           predictionId
         ]);
+        if (!raw) return null;
+        
         prediction = new Prediction(raw);
         if (fetchExplorerUrls) {
           prediction.explorerUrl = explorerUrls[prediction.id] ?? null;

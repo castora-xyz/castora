@@ -165,8 +165,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!(await isValidPoolId(poolId))) return null;
-      pool = new Pool(await readContract('pools', [BigInt(poolId)]));
+      const raw = await readContract('pools', [BigInt(poolId)]);
+      if (!raw) return null;
 
+      pool = new Pool(raw);
       if (pool.completionTime > 0) await cache.save(key, pool);
       return pool;
     } catch (error) {
