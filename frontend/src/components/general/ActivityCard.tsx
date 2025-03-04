@@ -43,7 +43,7 @@ export const ActivityCard = ({
     <div
       key={`${poolId} ${predictionId}`}
       className={
-        'border-2 border-surface-subtle rounded-2xl pt-3 sm:pt-4 pb-5 px-4 sm:px-6 mb-5 gap-4' +
+        'border-2 border-surface-subtle rounded-2xl pt-3 sm:pt-4 pb-5 px-4 sm:px-6 mb-6 gap-4' +
         (isInLandingPage ? ' bg-app-bg pointer-events-none shadow-subtle' : '')
       }
     >
@@ -83,23 +83,37 @@ export const ActivityCard = ({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {isInLandingPage ? (
-          <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
-            Pool ID: {poolId}
-          </p>
-        ) : (
-          <Link to={`/pool/${poolId}`} className="p-ripple rounded-full">
+      <div className="flex flex-wrap mb-4 justify-between items-center gap-2">
+        <div className="flex flex-wrap gap-2">
+          {isInLandingPage ? (
             <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
               Pool ID: {poolId}
             </p>
-            <Ripple />
-          </Link>
-        )}
+          ) : (
+            <Link to={`/pool/${poolId}`} className="p-ripple rounded-full">
+              <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
+                Pool ID: {poolId}
+              </p>
+              <Ripple />
+            </Link>
+          )}
 
-        <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
-          Prediction ID: {predictionId}
-        </p>
+          <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
+            Prediction ID: {predictionId}
+          </p>
+        </div>
+
+        {!!explorerUrl && (
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="flex items-center text-xs text-text-caption hover:underline ml-auto"
+          >
+            View in Explorer
+            <ExternalLink className="w-4 h-4 ml-1 fill-text-caption" />
+          </a>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-3">
@@ -123,7 +137,7 @@ export const ActivityCard = ({
           ) : (
             <>
               <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-                Snapshot Price: ${snapshotPrice}
+                Snapshot: ${snapshotPrice}
               </p>
 
               <p
@@ -158,18 +172,6 @@ export const ActivityCard = ({
             <></>
           )}
         </div>
-
-        {!!explorerUrl && (
-          <a
-            href={explorerUrl}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex items-center text-xs text-text-caption hover:underline"
-          >
-            View in Explorer
-            <ExternalLink className="w-4 h-4 ml-1 fill-text-caption" />
-          </a>
-        )}
       </div>
     </div>
   );

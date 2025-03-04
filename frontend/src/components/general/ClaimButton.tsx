@@ -78,10 +78,10 @@ export const ClaimButton = ({
   if (!!claimWinningsTime) {
     return (
       <button
-        className="py-1 px-3 rounded-full bg-surface-disabled border-2 border-surface-subtle font-medium text-text-disabled"
+        className="py-pt px-4 rounded-full bg-surface-disabled border-2 border-surface-subtle font-medium text-text-disabled"
         disabled
       >
-        <span>Claimed</span>
+        <span className="align-text-bottom">Claimed</span>
       </button>
     );
   }
@@ -89,11 +89,11 @@ export const ClaimButton = ({
   return (
     <>
       <button
-        className="py-1 px-3 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+        className="py-pt px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
         onClick={openModal}
         disabled={!!explorerUrl}
       >
-        <span>Claim Winnings</span>
+        <span className="align-text-bottom">Claim</span>
         <Ripple />
       </button>
 

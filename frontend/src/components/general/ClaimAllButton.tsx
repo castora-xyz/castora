@@ -106,11 +106,11 @@ export const ClaimAllButton = ({
   return (
     <>
       <button
-        className="py-1 px-3 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+        className="py-1 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
         onClick={openModal}
         disabled={!!explorerUrl}
       >
-        <span>Claim All Winnings</span>
+        <span>Claim All</span>
         <Ripple />
       </button>
 
