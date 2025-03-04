@@ -4,9 +4,16 @@ import {
   ClaimAllButton,
   CountdownNumbers
 } from '@/components/general';
-import { Activity, useMyActivity } from '@/contexts';
+import {
+  Activity,
+  rowsPerPageOptions,
+  useMyActivity,
+  usePaginators
+} from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
+import { Accordion, AccordionTab } from 'primereact/accordion';
+import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
@@ -17,8 +24,16 @@ import { useAccount } from 'wagmi';
 export const MyActivityPage = () => {
   const { isConnected } = useAccount();
   const location = useLocation();
-  const { fetchMyActivity, isFetching, myActivities, hasError } =
-    useMyActivity();
+  const {
+    activityCount,
+    fetchMyActivity,
+    isFetching,
+    myActivities,
+    hasError,
+    currentPage,
+    updateCurrentPage
+  } = useMyActivity();
+  const paginators = usePaginators();
   const { open: connectWallet } = useWeb3Modal();
   const [unclaimedWins, setUnclaimedWins] = useState<Activity[]>([]);
 
@@ -30,8 +45,26 @@ export const MyActivityPage = () => {
   const [otherActivities, setOtherActivities] = useState(
     myActivities.filter(({ pool }) => now > pool.seeds.snapshotTime)
   );
+  const [grouped, setGrouped] = useState<{ [key: number]: Activity[] }>({});
+  const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
 
   const isPredictionsRoute = location.pathname.includes('predictions');
+
+  useEffect(() => {
+    if (otherActivities.length == 0) {
+      setExpandedGroups([]);
+      setGrouped({});
+    } else {
+      const group: { [key: number]: Activity[] } = {};
+      for (const activity of otherActivities) {
+        const { poolId } = activity.pool;
+        if (!group[poolId]) group[poolId] = [activity];
+        else group[poolId].push(activity);
+      }
+      setExpandedGroups(Array.from(Array(Object.keys(grouped).length)));
+      setGrouped(group);
+    }
+  }, [otherActivities]);
 
   useEffect(() => {
     setUnclaimedWins(
@@ -114,7 +147,7 @@ export const MyActivityPage = () => {
           <p className="text-lg mb-8">Something went wrong</p>
           <button
             className="mx-auto py-2 px-16 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle p-ripple"
-            onClick={fetchMyActivity}
+            onClick={() => fetchMyActivity()}
           >
             Try Again
             <Ripple />
@@ -231,30 +264,71 @@ export const MyActivityPage = () => {
           </div>
 
           <div className="md:basis-2/3">
-            <div className="flex gap-4 justify-between flex-wrap items-center mb-6">
+            <div className="flex gap-4 justify-between flex-wrap items-center mb-4">
               <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
                 My Activity
               </p>
 
-              {unclaimedWins.length > 1 && (
-                <ClaimAllButton
-                  pools={unclaimedWins.map(({ pool }) => pool)}
-                  predictions={unclaimedWins.map(
-                    ({ prediction }) => prediction
-                  )}
-                  onSuccess={fetchMyActivity}
-                />
-              )}
+              <div className="flex gap-3 items-center w-fit">
+                {unclaimedWins.length > 1 && (
+                  <ClaimAllButton
+                    pools={unclaimedWins.map(({ pool }) => pool)}
+                    predictions={unclaimedWins.map(
+                      ({ prediction }) => prediction
+                    )}
+                    onSuccess={fetchMyActivity}
+                  />
+                )}
+              </div>
             </div>
 
-            {otherActivities.map(({ pool, prediction }) => (
-              <ActivityCard
-                key={pool.poolId + ' ' + prediction.id}
-                pool={pool}
-                prediction={prediction}
-                refresh={fetchMyActivity}
+            {activityCount && currentPage && (
+              <Paginator
+                first={paginators.rowsPerPage * currentPage}
+                rows={paginators.rowsPerPage}
+                rowsPerPageOptions={rowsPerPageOptions}
+                totalRecords={activityCount}
+                onPageChange={(e) => {
+                  paginators.updateRowsPerPage(e.rows);
+                  updateCurrentPage(e.page);
+                  fetchMyActivity(e.page, e.rows);
+                }}
+                template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
+                currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                className="rounded-2xl bg-surface-subtle mb-6"
+                pt={{
+                  RPPDropdown: {
+                    root: { className: 'bg-app-bg' },
+                    panel: { className: 'bg-app-bg' }
+                  }
+                }}
               />
-            ))}
+            )}
+
+            <Accordion multiple activeIndex={[0, ...expandedGroups]}>
+              {Object.entries(grouped).map(([poolId, activities]) => (
+                <AccordionTab
+                  header={
+                    <span className="font-normal">{`Pool ID: ${poolId}`}</span>
+                  }
+                  pt={{
+                    root: { className: 'bg-app-bg mb-4' },
+                    header: { className: 'rounded-2xl' },
+                    content: { className: 'bg-app-bg px-0' }
+                  }}
+                  key={poolId}
+                >
+                  {activities.map(({ pool, prediction }) => (
+                    <ActivityCard
+                      key={pool.poolId + ' ' + prediction.id}
+                      pool={pool}
+                      prediction={prediction}
+                      refresh={fetchMyActivity}
+                    />
+                  ))}
+                </AccordionTab>
+              ))}
+            </Accordion>
           </div>
         </div>
       )}
