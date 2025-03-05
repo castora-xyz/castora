@@ -18,12 +18,11 @@ export const wrapper = async (
       ...(data ? { data } : {})
     });
   } catch (e: any) {
+    let message = e['message'] ?? `${e}`;
+    if (message.includes('requests limited')) message = 'RPC Limit Reached';
     console.error(`Error at ${desc} ... `);
     console.error(e);
-    return response.status(400).json({
-      success: false,
-      message: e['message'] ?? `${e}`
-    });
+    return response.status(400).json({ success: false, message });
   }
 };
 
