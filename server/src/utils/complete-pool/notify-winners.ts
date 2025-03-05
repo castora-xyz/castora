@@ -32,6 +32,12 @@ export const notifyWinners = async (
     uniqued[address] = (uniqued[address] ?? 0) + winAmount / 0.95;
   }
 
+  const notifStats = {
+    total: Object.keys(uniqued).length,
+    success: 0,
+    failed: 0
+  };
+
   for (const winner of Object.keys(uniqued)) {
     // using the default Firestore here as that's where fcmTokens are stored
     const winnerRef = firestore().doc(`/users/${winner}`);
@@ -53,14 +59,18 @@ export const notifyWinners = async (
             staleTokens.push(token);
           }
         }
+        notifStats.success++;
       }
       if (staleTokens.length > 0) {
         await winnerRef.update({
           fcmTokens: FieldValue.arrayRemove(...staleTokens)
         });
+        if (staleTokens.length == fcmTokens.length) notifStats.failed++;
       }
+    } else {
+      notifStats.failed++;
     }
-
-    console.log('Notified Winners.');
   }
+  console.log('Notified Winners.');
+  console.dir('Notification Statistics: ', notifStats);
 };
