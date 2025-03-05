@@ -97,7 +97,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           }
 
           subscriber.next('finalizing');
-          await server.get(`/record/${txHash}`);
+          await server.get(`/record/${txHash}`, true);
           recordEvent('claimed_winnings', { poolId, predictionId });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
@@ -114,48 +114,50 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-   const claimWinningsBulk = (
-     poolIds: number[],
-     predictionIds: number[],
-     onSuccessCallback?: (explorerUrl: string) => void
-   ) => {
-     return new Observable<WriteContractPoolStatus>((subscriber) => {
-       let txHash: string;
-       writeContract(
-         'claimWinningsBulk',
-         [poolIds.map((i) => BigInt(i)), predictionIds.map((i) => BigInt(i))],
-         undefined,
-         (hash) => (txHash = hash)
-       ).subscribe({
-         next: subscriber.next.bind(subscriber),
-         error: subscriber.error.bind(subscriber),
-         complete: async () => {
-           if (!txHash) {
-             subscriber.error('Transaction Failed');
-             return;
-           }
+  const claimWinningsBulk = (
+    poolIds: number[],
+    predictionIds: number[],
+    onSuccessCallback?: (explorerUrl: string) => void
+  ) => {
+    return new Observable<WriteContractPoolStatus>((subscriber) => {
+      let txHash: string;
+      writeContract(
+        'claimWinningsBulk',
+        [poolIds.map((i) => BigInt(i)), predictionIds.map((i) => BigInt(i))],
+        undefined,
+        (hash) => (txHash = hash)
+      ).subscribe({
+        next: subscriber.next.bind(subscriber),
+        error: subscriber.error.bind(subscriber),
+        complete: async () => {
+          if (!txHash) {
+            subscriber.error('Transaction Failed');
+            return;
+          }
 
-           subscriber.next('finalizing');
-           await server.get(`/record/${txHash}`);
-           recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
-           const explorerUrl = `${
-             (currentChain ?? defaultChain).blockExplorers?.default.url
-           }/tx/${txHash}`;
-           toastSuccess(
-             'Bulk Withdrawals Successful',
-             'View Transaction on Explorer',
-             explorerUrl
-           );
-           onSuccessCallback && onSuccessCallback(explorerUrl);
-           subscriber.complete();
-         }
-       });
-     });
-   };
+          subscriber.next('finalizing');
+          await server.get(`/record/${txHash}`, true);
+          recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
+          const explorerUrl = `${
+            (currentChain ?? defaultChain).blockExplorers?.default.url
+          }/tx/${txHash}`;
+          toastSuccess(
+            'Bulk Withdrawals Successful',
+            'View Transaction on Explorer',
+            explorerUrl
+          );
+          onSuccessCallback && onSuccessCallback(explorerUrl);
+          subscriber.complete();
+        }
+      });
+    });
+  };
 
   const fetchOne = async (poolId: number) => {
     try {
-      const key = `chain::${(currentChain ?? defaultChain).id}::pool::${poolId}`;
+      const key = `chain::${
+        (currentChain ?? defaultChain).id
+      }::pool::${poolId}`;
       let pool = await cache.retrieve(key);
       if (pool) {
         // Necessary to restore callable methods on retrieved instance
@@ -238,7 +240,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           await ensureNotifications();
-          await server.get(`/record/${txHash}`);
+          await server.get(`/record/${txHash}`, true);
           recordEvent('predicted', { poolId, predictionId });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url

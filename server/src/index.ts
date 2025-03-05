@@ -2,13 +2,34 @@ import * as express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
 import * as morgan from 'morgan';
 
-import router from './router';
+import { recordActivity } from './controllers';
+import router, { wrapper } from './router';
+import { validateChain } from './utils';
 
-const app = express();
+const mainApp = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(morgan('combined'));
-app.use(router);
+mainApp.use(express.json());
+mainApp.use(express.urlencoded({ extended: false }));
+mainApp.use(morgan('combined'));
+mainApp.use(router);
 
-export const server = onRequest({ cors: true, timeoutSeconds: 1200 }, app);
+export const server = onRequest({ cors: true, timeoutSeconds: 1200 }, mainApp);
+
+const recorderApp = express();
+recorderApp.use(express.json());
+recorderApp.use(express.urlencoded({ extended: false }));
+recorderApp.use(morgan('combined'));
+recorderApp.get('/record/:txHash', validateChain, async (req, res) => {
+  await wrapper(
+    async () => await recordActivity(res.locals.chain, req.params.txHash),
+    'recording activity',
+    res
+  );
+});
+
+recorderApp.use('**', (_, res) => res.json({ success: true }));
+
+export const recorder = onRequest(
+  { cors: true, timeoutSeconds: 1200 },
+  recorderApp
+);

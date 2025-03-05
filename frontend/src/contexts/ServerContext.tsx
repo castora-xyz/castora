@@ -9,7 +9,7 @@ const ServerContext = createContext<ServerContextProps>({
 });
 
 interface ServerContextProps {
-  get: (path: string) => Promise<any>;
+  get: (path: string, useRecorder?: boolean | undefined) => Promise<any>;
   post: (path: string, body: any) => Promise<any>;
 }
 
@@ -21,11 +21,19 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
   const { signature } = useAuth();
   const { toastError } = useToast();
 
-  const call = async (path: string, body: any = undefined) => {
+  const call = async (
+    path: string,
+    body: any = undefined,
+    useRecorder: boolean = false
+  ) => {
     return new Promise(async (resolve, _) => {
       try {
+        const url = useRecorder
+          ? import.meta.env.VITE_RECORDER_SERVER_URL
+          : import.meta.env.VITE_MAIN_SERVER_URL;
+
         const result = await (
-          await fetch(`${import.meta.env.VITE_SERVER_URL}${path}`, {
+          await fetch(`${url}${path}`, {
             method: body ? 'POST' : 'GET',
             headers: {
               Accept: 'application/json',
@@ -65,7 +73,8 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const get = (path: string) => call(path);
+  const get = (path: string, useRecorder = false) =>
+    call(path, undefined, useRecorder);
   const post = (path: string, body: any) => call(path, body);
 
   return (
