@@ -94,6 +94,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.error(e);
       if (
+        `${e}`.includes('request timed out') ||
         `${e}`.includes('requests limited') ||
         `${e}`.includes('HTTP request failed')
       ) {

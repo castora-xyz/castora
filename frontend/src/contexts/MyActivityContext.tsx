@@ -83,7 +83,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
     page = currentPage,
     rows = paginators.rowsPerPage
   ) => {
-    if (!noOfJoinedPools || !page || !address || !currentChain) return;
+    if (!noOfJoinedPools || page === null || !address || !currentChain) return;
 
     setIsFetching(true);
     let start = (page + 1) * rows - 1;

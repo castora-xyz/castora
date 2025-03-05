@@ -61,7 +61,7 @@ export const MyActivityPage = () => {
         if (!group[poolId]) group[poolId] = [activity];
         else group[poolId].push(activity);
       }
-      setExpandedGroups(Array.from(Array(Object.keys(grouped).length)));
+      setExpandedGroups(Array.from(Object.keys(grouped), (_, i) => i));
       setGrouped(group);
     }
   }, [otherActivities]);
@@ -282,7 +282,7 @@ export const MyActivityPage = () => {
               </div>
             </div>
 
-            {activityCount && currentPage && (
+            {activityCount && currentPage !== null && (
               <Paginator
                 first={paginators.rowsPerPage * currentPage}
                 rows={paginators.rowsPerPage}
