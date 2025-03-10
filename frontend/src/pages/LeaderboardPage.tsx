@@ -1,8 +1,6 @@
 import ExternalLink from '@/assets/external-link.svg?react';
 import { Web3Avatar } from '@/components';
-import { useFirebase } from '@/contexts';
 import { LeaderboardEntry, TokenAndAmount } from '@/schemas';
-import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Breathing } from 'react-shimmer';
 import { useAccount, useChains } from 'wagmi';
@@ -83,9 +81,9 @@ const TopEntry = ({
 };
 
 export const LeaderboardPage = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const { firestore } = useFirebase();
+  const [isLoading, _] = useState(false);
+  const [entries, __] = useState<LeaderboardEntry[]>([]);
+  // const { firestore } = useFirebase();
   const { chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
   const [explorerUrl, setExplorerUrl] = useState(
@@ -96,13 +94,13 @@ export const LeaderboardPage = () => {
     setExplorerUrl((currentChain ?? defaultChain).blockExplorers?.default.url);
   }, [currentChain, defaultChain]);
 
-  useEffect(() => {
-    return onSnapshot(doc(firestore, '/leaderboard/leaderboard'), (doc) => {
-      if (doc.exists()) setEntries(doc.data().entries);
-      else setEntries([]);
-      setIsLoading(false);
-    });
-  }, [firestore]);
+  // useEffect(() => {
+  //   return onSnapshot(doc(firestore, '/leaderboard/leaderboard'), (doc) => {
+  //     if (doc.exists()) setEntries(doc.data().entries);
+  //     else setEntries([]);
+  //     setIsLoading(false);
+  //   });
+  // }, [firestore]);
 
   useEffect(() => {
     document.title = 'Leaderboard | Castora';

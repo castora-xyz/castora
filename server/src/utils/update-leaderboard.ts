@@ -6,6 +6,11 @@ import {
   UserActivity
 } from '../schemas';
 
+const getDateString = (date: Date) => {
+  const [, month, day, year] = date.toDateString().split(' ');
+  return `${day}-${month}-${year}`;
+};
+
 const sortLeaderboard = (
   token: string,
   a: LeaderboardEntry,
@@ -70,7 +75,10 @@ export const updateLeaderboardOnPrediction = async (
 
   // 3. Fetch the leaderboard data
   const db = firestore(chain);
-  const ldbRef = db.doc('/leaderboard/leaderboard');
+  const ldbRef = db.doc(
+    // Using the activity's occurrence time for reference
+    `/leaderboard/${getDateString(activity.timestamp.toDate())}`
+  );
   const ldbSnap = await ldbRef.get();
   let entries: LeaderboardEntry[] = [];
   if (ldbSnap.exists) entries = ldbSnap.data()!.entries as LeaderboardEntry[];
@@ -143,7 +151,12 @@ export const updateLeaderboardOnCompletePool = async (
 ): Promise<void> => {
   // 1. Fetch the leaderboard data
   const db = firestore(chain);
-  const ldbRef = db.doc('/leaderboard/leaderboard');
+  const ldbRef = db.doc(
+    `/leaderboard/${getDateString(
+      // Using the date of snapshot time for reference
+      new Date(info.pool.seeds.snapshotTime * 1000)
+    )}`
+  );
   const ldbSnap = await ldbRef.get();
   let entries: LeaderboardEntry[] = [];
   if (ldbSnap.exists) {
