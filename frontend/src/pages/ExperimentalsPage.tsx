@@ -8,10 +8,10 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export const LivePoolsPage = () => {
+export const ExperimentalsPage = () => {
   const { isConnected } = useAccount();
   const { recordEvent } = useFirebase();
-  const { isFetchingLive: isFetchingPools, livePools } = usePools();
+  const { isFetchingExprtl: isFetchingPools, exprtlPools } = usePools();
   const { open: connectWallet } = useWeb3Modal();
 
   const [categories, setCategories] = useState(['All', 'Staked']);
@@ -29,7 +29,7 @@ export const LivePoolsPage = () => {
 
   const checkCategories = () => {
     const refreshed = new Set(['All', 'Staked']);
-    for (const pool of livePools) refreshed.add(pool.seeds.status());
+    for (const pool of exprtlPools) refreshed.add(pool.seeds.status());
     // the following is to ensure that the categories are displayed in the
     // desired order
     const ordered = [
@@ -47,26 +47,26 @@ export const LivePoolsPage = () => {
     if (
       !isFetchingPools &&
       !isFetchingMyActivity &&
-      livePools.length > 0 &&
+      exprtlPools.length > 0 &&
       selectedCategory === 'Open' &&
-      livePools.filter(({ seeds }) => seeds.status() === 'Open').length == 0
+      exprtlPools.filter(({ seeds }) => seeds.status() === 'Open').length == 0
     ) {
       // Open pools display by default, but if there is currently no
       // opened one show all pools
       setSelectedCategory('All');
     }
-  }, [isFetchingPools, isFetchingMyActivity, livePools]);
+  }, [isFetchingPools, isFetchingMyActivity, exprtlPools]);
 
   useEffect(() => {
     checkCategories();
-  }, [livePools, isConnected, myActivities]);
+  }, [exprtlPools, isConnected, myActivities]);
 
   useEffect(() => {
     setShimmerCount(getShimmerCount());
   }, [windowWidth]);
 
   useEffect(() => {
-    document.title = 'Live Pools | Castora';
+    document.title = 'Experimentals | Castora';
     window.addEventListener('resize', () => setWindowWidth(window.innerWidth));
   }, []);
 
@@ -97,7 +97,10 @@ export const LivePoolsPage = () => {
                     key={category}
                     onSelect={() => {
                       setSelectedCategory(category);
-                      recordEvent('selected_pools_category', category);
+                      recordEvent(
+                        'selected_experimental_pools_category',
+                        category
+                      );
                     }}
                     title={category}
                     className="outline-none p-ripple text-text-subtitle font-lg"
@@ -117,7 +120,7 @@ export const LivePoolsPage = () => {
               key={category}
               onClick={() => {
                 setSelectedCategory(category);
-                recordEvent('selected_pools_category', category);
+                recordEvent('selected_experimental_pools_category', category);
               }}
               className={
                 'py-2 px-6 rounded-full p-ripple' +
@@ -136,7 +139,7 @@ export const LivePoolsPage = () => {
       {selectedCategory === 'Staked' &&
       !isFetchingMyActivity &&
       !myActivities.some(({ pool: { poolId: myPoolId } }) =>
-        livePools.some(({ poolId }) => poolId === myPoolId)
+        exprtlPools.some(({ poolId }) => poolId === myPoolId)
       ) ? (
         <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12  w-full max-w-screen-xl mx-auto">
           <div className="md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-16 md:px-20 md:gap-4 md:max-w-2xl md:text-center">
@@ -149,7 +152,7 @@ export const LivePoolsPage = () => {
               <button
                 onClick={() => {
                   setSelectedCategory('All');
-                  recordEvent('selected_pools_category', 'All');
+                  recordEvent('selected_experimental_pools_category', 'All');
                 }}
                 className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
               >
@@ -175,7 +178,7 @@ export const LivePoolsPage = () => {
             ? Array.from(Array(shimmerCount).keys()).map((i) => (
                 <PoolCardShimmer key={i} />
               ))
-            : livePools
+            : exprtlPools
                 .filter(({ poolId, seeds }) => {
                   if (selectedCategory === 'All') return true;
                   if (selectedCategory === 'Staked') {

@@ -35,11 +35,11 @@ export const Header = () => {
           </Link>
         </h1>
 
-        <nav className="max-[600px]:hidden grow flex items-center font-medium md:text-lg">
+        <nav className="max-md:hidden grow flex items-center font-medium lg:text-lg">
           <NavLink
             to="/pools"
             className={({ isActive }) =>
-              'p-ripple py-1 px-3 md:px-6 rounded-full ' +
+              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${
                 isActive ? 'text-primary-darker dark:text-primary-default' : ''
               }`
@@ -49,9 +49,23 @@ export const Header = () => {
             <Ripple />
           </NavLink>
           <NavLink
+            to="/experimentals"
+            className={({ isActive }) =>
+              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
+              `${
+                isActive
+                  ? 'text-primary-darker dark:text-primary-default'
+                  : 'text-accent'
+              }`
+            }
+          >
+            Experimentals
+            <Ripple />
+          </NavLink>
+          <NavLink
             to="/leaderboard"
             className={({ isActive }) =>
-              'p-ripple py-1 px-3 md:px-6 rounded-full ' +
+              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${
                 isActive ? 'text-primary-darker dark:text-primary-default' : ''
               }`
@@ -63,7 +77,7 @@ export const Header = () => {
           <NavLink
             to="/activity"
             className={({ isActive }) =>
-              'p-ripple py-1 px-3 md:px-6 rounded-full  ' +
+              'p-ripple py-1 px-4 lg:px-6 rounded-full  ' +
               `${
                 isActive || location.pathname.includes('predictions')
                   ? 'text-primary-darker dark:text-primary-default'
@@ -71,7 +85,7 @@ export const Header = () => {
               }`
             }
           >
-            <span className="max-[770px]:hidden">My </span>
+            <span className="max-lg:hidden">My </span>
             Activity
             <Ripple />
           </NavLink>

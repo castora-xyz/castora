@@ -2,7 +2,8 @@ import {
   Chain,
   createPool,
   firestore,
-  generateSeeds,
+  generateExperimentalsSeeds,
+  generateLiveSeeds,
   getPoolId
 } from '../../utils';
 
@@ -23,22 +24,56 @@ export const getLivePools = async (chain: Chain) => {
 };
 
 /**
+ * Returns the live poolIds of the provided chain.
+ *
+ * @param chain The chain to get the live pools from.
+ * @returns The live poolIds of the chain.
+ */
+export const getExperimentalsPools = async (chain: Chain) => {
+  const snap = await firestore(chain).doc('/live/experimentals').get();
+  if (snap.exists) {
+    const { poolIds } = snap.data()!;
+    return poolIds ?? [];
+  } else {
+    return [];
+  }
+};
+
+/**
  * Synchronizes the live pools of the provided chain.
  *
  * @param chain The chain to synchronize its live pools.
  */
-export const syncLivePools = async (chain: Chain) => {
-  const seeds = generateSeeds(chain);
-  const poolIds: number[] = [];
-  for (const seed of seeds) {
+export const syncPools = async (chain: Chain) => {
+  console.log('Starting Sync for LIVE Pools');
+  const liveSeeds = generateLiveSeeds(chain);
+  const livePoolIds: number[] = [];
+  for (const seed of liveSeeds) {
     const poolId =
       seed.windowCloseTime <= Math.trunc(Date.now() / 1000)
         ? await getPoolId(chain, seed)
         : await createPool(chain, seed);
-    if (poolId) poolIds.push(poolId);
+    if (poolId) livePoolIds.push(poolId);
     console.log('\n');
   }
-  console.log('PoolIds: ', poolIds);
+  console.log('Live PoolIds: ', livePoolIds);
+  await firestore(chain)
+    .doc('/live/live')
+    .set({ poolIds: livePoolIds }, { merge: true });
 
-  await firestore(chain).doc('/live/live').set({ poolIds }, { merge: true });
+  console.log('\n\nStarting Sync for EXPERIMENTAL Pools');
+  const exprSeeds = generateExperimentalsSeeds(chain);
+  const exprPoolIds: number[] = [];
+  for (const seed of exprSeeds) {
+    const poolId =
+      seed.windowCloseTime <= Math.trunc(Date.now() / 1000)
+        ? await getPoolId(chain, seed)
+        : await createPool(chain, seed);
+    if (poolId) exprPoolIds.push(poolId);
+    console.log('\n');
+  }
+  console.log('Experimental PoolIds: ', exprPoolIds);
+  await firestore(chain)
+    .doc('/live/experimentals')
+    .set({ poolIds: exprPoolIds }, { merge: true });
 };

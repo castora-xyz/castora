@@ -10,7 +10,7 @@ export const Footer = () => {
       id="footer"
       className="mt-auto px-8 py-10 lg:px-16 border-t border-border-default dark:border-surface-subtle bg-app-bg"
     >
-      <div className="flex max-md:flex-col items-center md:flex-row-reverse md:justify-between max-w-screen-xl mx-auto gap-8">
+      <div className="flex max-sm:flex-col items-center md:flex-row-reverse sm:justify-between max-w-screen-xl mx-auto gap-8">
         <div className="flex items-center gap-6">
           <a
             href="https://discord.gg/wmHceHvNBD"
@@ -34,7 +34,7 @@ export const Footer = () => {
           </a>
         </div>
 
-        <p className="text-xl text-center">
+        <p className="text-xl max-sm:text-center max-md:text-right">
           All Rights Reserved &copy; {year} <Link to="/">Castora</Link>
         </p>
       </div>

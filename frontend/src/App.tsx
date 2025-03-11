@@ -1,6 +1,7 @@
 import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
 import {
+  ExperimentalsPage,
   LandingPage,
   LeaderboardPage,
   LivePoolsPage,
@@ -26,6 +27,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',
+      '/experimentals': 'Experimentals',
       '/pools': 'Pools',
       '/predictions': 'Predictions',
       '/leaderboard': 'Leaderboard',
@@ -68,6 +70,7 @@ const router = createBrowserRouter(
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="predictions" element={<MyActivityPage />} />
+        <Route path="experimentals" element={<ExperimentalsPage />} />
         <Route path="activity" element={<MyActivityPage />} />
       </Route>
     </Route>

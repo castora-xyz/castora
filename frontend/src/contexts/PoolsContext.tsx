@@ -31,7 +31,9 @@ interface PoolsContextProps {
     predictionIds: number[],
     onSuccessCallback?: (explorerUrl: string) => void
   ) => Observable<WriteContractPoolStatus>;
-  isFetching: boolean;
+  exprtlPools: Pool[];
+  isFetchingLive: boolean;
+  isFetchingExprtl: boolean;
   isValidPoolId: (poolId: any) => Promise<boolean>;
   fetchOne: (poolId: number) => Promise<Pool | null>;
   livePools: Pool[];
@@ -47,7 +49,9 @@ interface PoolsContextProps {
 const PoolsContext = createContext<PoolsContextProps>({
   claimWinnings: () => new Observable(),
   claimWinningsBulk: () => new Observable(),
-  isFetching: true,
+  exprtlPools: [],
+  isFetchingLive: true,
+  isFetchingExprtl: true,
   isValidPoolId: async () => false,
   fetchOne: async () => null,
   livePools: [],
@@ -65,7 +69,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const server = useServer();
   const { toastError, toastSuccess } = useToast();
 
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetchingExprtl, setIsFetchingExprtl] = useState(true);
+  const [isFetchingLive, setIsFetchingLive] = useState(true);
+  const [exprtlPools, setExprtlPools] = useState<Pool[]>([]);
+  const [exprtlPoolIds, setExprtlPoolIds] = useState<number[]>([]);
   const [livePools, setLivePools] = useState<Pool[]>([]);
   const [livePoolIds, setLivePoolIds] = useState<number[]>([]);
 
@@ -180,8 +187,20 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchExprtlPools = async () => {
+    setIsFetchingExprtl(true);
+    const fetched = [];
+    const sorted = exprtlPoolIds.sort((a, b) => b - a);
+    for (const poolId of sorted) {
+      const pool = await fetchOne(poolId);
+      if (pool) fetched.push(pool);
+    }
+    setExprtlPools(fetched);
+    setIsFetchingExprtl(false);
+  };
+
   const fetchLivePools = async () => {
-    setIsFetching(true);
+    setIsFetchingLive(true);
     const fetched = [];
     const sorted = livePoolIds.sort((a, b) => b - a);
     for (const poolId of sorted) {
@@ -189,7 +208,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       if (pool) fetched.push(pool);
     }
     setLivePools(fetched);
-    setIsFetching(false);
+    setIsFetchingLive(false);
   };
 
   const isValidPoolId = async (poolId: any) => {
@@ -258,8 +277,25 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    fetchExprtlPools();
+  }, [exprtlPoolIds]);
+
+  useEffect(() => {
     fetchLivePools();
   }, [livePoolIds]);
+
+  useEffect(() => {
+    return onSnapshot(doc(firestore, '/live/experimentals'), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if ('poolIds' in data && Array.isArray(data.poolIds)) {
+          setExprtlPoolIds(data.poolIds);
+        }
+      } else {
+        setExprtlPoolIds([]);
+      }
+    });
+  }, [firestore]);
 
   useEffect(() => {
     return onSnapshot(doc(firestore, '/live/live'), (doc) => {
@@ -279,7 +315,9 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       value={{
         claimWinnings,
         claimWinningsBulk,
-        isFetching,
+        exprtlPools,
+        isFetchingExprtl,
+        isFetchingLive,
         isValidPoolId,
         fetchOne,
         livePools,

@@ -12,7 +12,53 @@ const next2NthHour = (current: number, n: number) =>
 const prevNthHour = (current: number, n: number) =>
   current % n == 0 ? current - n : Math.floor(current / n) * n;
 
-export const generateSeeds = (chain: Chain) => {
+export const generateExperimentalsSeeds = (chain: Chain) => {
+  const now = new Date();
+  const yrs = now.getFullYear();
+  const months = now.getMonth();
+  const date = now.getDate();
+  const hrs = new Date().getHours();
+
+  const twenty4HPrev = Math.trunc(
+    new Date(yrs, months, date, prevNthHour(hrs, 12), 0, 0).getTime() / 1000
+  );
+  const close24HPrev = twenty4HPrev - 12 * 60 * 60;
+
+  const twenty4HNext = Math.trunc(
+    new Date(yrs, months, date, nextNthHour(hrs, 12), 0, 0).getTime() / 1000
+  );
+  const close24HNext = twenty4HNext - 12 * 60 * 60;
+
+  const twenty4HNext2 = Math.trunc(
+    new Date(yrs, months, date, next2NthHour(hrs, 12), 0, 0).getTime() / 1000
+  );
+  const close24HNext2 = twenty4HNext2 - 12 * 60 * 60;
+
+  const times = [
+    { windowCloseTime: close24HPrev, snapshotTime: twenty4HPrev },
+    { windowCloseTime: close24HNext, snapshotTime: twenty4HNext },
+    { windowCloseTime: close24HNext2, snapshotTime: twenty4HNext2 }
+  ];
+  const tokens = [CONTRACT_ADDRESS_SEPOLIA, SOL];
+
+  const seeds: PoolSeeds[] = [];
+  for (const { windowCloseTime, snapshotTime } of times) {
+    for (const predictionToken of tokens) {
+      seeds.push(
+        new PoolSeeds({
+          predictionToken,
+          stakeToken: getContractAddress(chain),
+          stakeAmount: 2e18,
+          snapshotTime,
+          windowCloseTime
+        })
+      );
+    }
+  }
+  return seeds;
+};
+
+export const generateLiveSeeds = (chain: Chain) => {
   const now = new Date();
   const yrs = now.getFullYear();
   const months = now.getMonth();

@@ -21,6 +21,7 @@
   }
 
   :root {
+    --accent: #f15454;
     --app-bg: #fff;
     --border-darker: #c6c5cd;
     --border-default: #d9d8de;
@@ -107,7 +108,7 @@ body {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   #root {
     padding-bottom: 72px;
   }

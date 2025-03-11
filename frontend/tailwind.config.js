@@ -5,6 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        'accent': 'var(--accent)',
         'app-bg': 'var(--app-bg)',
         'border-darker': 'var(--border-darker)',
         'border-default': 'var(--border-default)',

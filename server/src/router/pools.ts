@@ -4,7 +4,7 @@ import {
   completePools,
   fetchActivity,
   getLivePools,
-  syncLivePools
+  syncPools
 } from '../controllers';
 import { validateChain } from '../utils';
 import { wrapper } from './index';
@@ -29,7 +29,7 @@ router.get('/pools/live', validateChain, async (_, res) => {
 
 router.get('/pools/sync', validateChain, async (_, res) => {
   await wrapper(
-    async () => await syncLivePools(res.locals.chain),
+    async () => await syncPools(res.locals.chain),
     'syncing live pools',
     res
   );
