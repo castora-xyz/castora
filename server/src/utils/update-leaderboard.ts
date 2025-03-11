@@ -1,4 +1,4 @@
-import { Chain, fetchPool, firestore, readContract } from '.';
+import { Chain, fetchPool, readContract, storage } from '.';
 import {
   CompletedPoolLeaderboardInfo,
   getNewLeaderboardEntry,
@@ -74,20 +74,18 @@ export const updateLeaderboardOnPrediction = async (
   console.log(`Got predicted token and amount: ${token}, ${amount}`);
 
   // 3. Fetch the leaderboard data
-  const db = firestore(chain);
-  const ldbRef = db.doc(
-    // Using the activity's occurrence time for reference
-    `/leaderboard/${getDateString(activity.timestamp.toDate())}`
-  );
-  const ldbSnap = await ldbRef.get();
-  let entries: LeaderboardEntry[] = [];
-  if (ldbSnap.exists) entries = ldbSnap.data()!.entries as LeaderboardEntry[];
+  const ldbFileRef = storage
+    .bucket()
+    .file(`leaderboards/${getDateString(activity.timestamp.toDate())}.json`);
 
-  console.log(
-    ldbSnap.exists
-      ? 'No Leaderboard Found. Created One'
-      : 'Leaderboard fetched Successfully'
-  );
+  let entries: LeaderboardEntry[] = [];
+  const [exists] = await ldbFileRef.exists();
+  if (!exists) {
+    console.log('No Leaderboard Found. Created One');
+  } else {
+    entries = JSON.parse((await ldbFileRef.download())[0].toString()).entries;
+    console.log('Fetched Leaderboard Successfully');
+  }
 
   // 4. Update the involved user
   console.log('Updating User Details ...');
@@ -134,7 +132,7 @@ export const updateLeaderboardOnPrediction = async (
   console.log('Sorted Leaderboard Successfully');
 
   // 6. Save updated leaderboard
-  await ldbRef.set({ entries, count: entries.length }, { merge: true });
+  await ldbFileRef.save(JSON.stringify({ entries, count: entries.length }));
   console.log('Saved Updated Leaderboard Successfully');
   console.log('Completed Leaderboard Update On Prediction');
 };
@@ -150,26 +148,22 @@ export const updateLeaderboardOnCompletePool = async (
   info: CompletedPoolLeaderboardInfo
 ): Promise<void> => {
   // 1. Fetch the leaderboard data
-  const db = firestore(chain);
-  const ldbRef = db.doc(
-    `/leaderboard/${getDateString(
-      // Using the date of snapshot time for reference
-      new Date(info.pool.seeds.snapshotTime * 1000)
-    )}`
-  );
-  const ldbSnap = await ldbRef.get();
+  const ldbFileRef = storage
+    .bucket()
+    .file(
+      `leaderboards/${getDateString(
+        new Date(info.pool.seeds.snapshotTime * 1000)
+      )}.json`
+    );
+
   let entries: LeaderboardEntry[] = [];
-  if (ldbSnap.exists) {
-    entries = ldbSnap.data()!.entries as LeaderboardEntry[];
+  const [exists] = await ldbFileRef.exists();
+  if (!exists) {
+    console.log('No Leaderboard Found. Created One');
   } else {
-    // this shouldn't happen as leaderboard was done at prediction
-    // TODO: Alert developers in some way
+    entries = JSON.parse((await ldbFileRef.download())[0].toString()).entries;
+    console.log('Fetched Leaderboard Successfully');
   }
-  console.log(
-    ldbSnap.exists
-      ? 'No Leaderboard Found. Created One'
-      : 'Leaderboard fetched Successfully'
-  );
 
   // 2. Destructure info and construct needed values
   const { pool, predictions, splitted } = info;
@@ -234,7 +228,7 @@ export const updateLeaderboardOnCompletePool = async (
   console.log('Sorted Leaderboard Successfully');
 
   // 6. Save updated leaderboard
-  await ldbRef.set({ entries, count: entries.length }, { merge: true });
+  await ldbFileRef.save(JSON.stringify({ entries, count: entries.length }));
   console.log('Saved Updated Leaderboard Successfully');
   console.log('Completed Leaderboard Update On Prediction');
 };

@@ -11,6 +11,7 @@ export * from './validate-chain';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getStorage } from 'firebase-admin/storage';
 import { Chain } from './validate-chain';
 
 initializeApp();
@@ -19,3 +20,5 @@ initializeApp();
 export const firestore = (chain?: Chain) =>
   chain ? getFirestore(chain) : getFirestore();
 export const messaging = getMessaging();
+
+export const storage = getStorage();
