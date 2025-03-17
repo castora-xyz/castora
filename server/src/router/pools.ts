@@ -6,7 +6,7 @@ import {
   getLivePools,
   syncPools
 } from '../controllers';
-import { validateChain } from '../utils';
+import { fetchPool, validateChain } from '../utils';
 import { wrapper } from './index';
 
 const router = Router();
@@ -47,6 +47,14 @@ router.get('/pool/:id/complete', validateChain, async (req, res) => {
   await wrapper(
     async () => await completePool(res.locals.chain, req.params.id),
     'completing pool',
+    res
+  );
+});
+
+router.get('/pool/:id', validateChain, async (req, res) => {
+  await wrapper(
+    async () => fetchPool(res.locals.chain, req.params.id),
+    'fetching pool',
     res
   );
 });

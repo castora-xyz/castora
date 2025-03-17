@@ -2,6 +2,7 @@ import 'dotenv/config';
 import {
   Chain,
   fetchPool,
+  generateExperimentalsSeeds,
   generateLiveSeeds,
   getPoolId,
   getSnapshotPrice,
@@ -16,7 +17,10 @@ import { updateLeaderboardOnCompletePool } from '../../utils/update-leaderboard'
  * @param chain The chain to complete all live pools on.
  */
 export const completePools = async (chain: Chain) => {
-  const prevs = generateLiveSeeds(chain);
+  const prevs = [
+    ...generateLiveSeeds(chain),
+    ...generateExperimentalsSeeds(chain)
+  ];
   for (const seed of prevs) {
     const poolId = await getPoolId(chain, seed);
     try {
