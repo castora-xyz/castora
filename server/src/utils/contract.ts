@@ -77,6 +77,7 @@ export const readContract = async (
   functionName: any,
   args?: any
 ) => {
+  await new Promise((resolve) => setTimeout(resolve, 100));
   return await createPublicClient({ ...getConfig(chain) }).readContract({
     address: getContractAddress(chain),
     abi,
