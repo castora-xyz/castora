@@ -72,5 +72,6 @@ export const notifyWinners = async (
     }
   }
   console.log('Notified Winners.');
-  console.dir('Notification Statistics: ', notifStats);
+  console.log('Notification Statistics');
+  console.dir(notifStats);
 };
