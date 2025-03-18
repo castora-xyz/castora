@@ -85,7 +85,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     args: any[] = []
   ) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 220));
       return await publicClient().readContract({
         address,
         abi,

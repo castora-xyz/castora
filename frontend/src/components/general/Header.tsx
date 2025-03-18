@@ -114,7 +114,7 @@ export const Header = () => {
           <DropdownMenu.Trigger asChild>
             <button
               className={
-                'outline-none p-ripple p-1 md:p-1.5 rounded-full bg-surface-subtle ' +
+                'p-ripple p-1 md:p-1.5 rounded-full bg-surface-subtle ' +
                 `${isDarkDisplay ? 'pl-6 md:pl-8' : 'pr-6 md:pr-8'}`
               }
             >
@@ -142,7 +142,7 @@ export const Header = () => {
                     recordEvent('changed_theme', theme);
                   }}
                   title={theme}
-                  className="outline-none p-ripple"
+                  className="p-ripple"
                 >
                   <Ripple />
                   <div className="m-2 rounded-md">{theme}</div>
