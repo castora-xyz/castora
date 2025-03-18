@@ -81,10 +81,10 @@ export const completePool = async (
     // refetching the pool here so that the winAmount will now be valid
     pool = await fetchPool(chain, poolId);
 
-    await updateLeaderboardOnCompletePool(chain, {
-      pool,
-      ...setWinnersResults
-    });
+    // await updateLeaderboardOnCompletePool(chain, {
+    //   pool,
+    //   ...setWinnersResults
+    // });
 
     await notifyWinners(setWinnersResults.splitted.winnerAddresses, pool);
   }

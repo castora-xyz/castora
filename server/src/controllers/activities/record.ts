@@ -110,9 +110,9 @@ export const recordActivity = async (
       );
       console.log('User Activity Saved Successfully.');
 
-      if (activity.type == 'predict') {
-        await updateLeaderboardOnPrediction(chain, user, activity);
-      }
+      // if (activity.type == 'predict') {
+      //   await updateLeaderboardOnPrediction(chain, user, activity);
+      // }
     }
   }
 };
