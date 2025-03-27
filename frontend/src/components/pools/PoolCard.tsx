@@ -1,6 +1,6 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownBadge } from '@/components';
-import { Pool } from '@/schemas';
+import { gMON, Pool } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
@@ -84,7 +84,16 @@ export const PoolCard = ({
 
       <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-8">
         <span className="mr-4">Entry Fee</span>
-        <span>{seeds.displayStake()}</span>
+        <div
+          className={`flex w-fit items-center ${
+            seeds.stakeToken == gMON ? '-mt-1' : ''
+          }`}
+        >
+          {seeds.stakeToken == gMON && (
+            <img src="/assets/gmon.png" className="w-6 h-6 rounded-full mr-2" />
+          )}
+          <span>{seeds.displayStake()}</span>
+        </div>
       </div>
 
       <Link

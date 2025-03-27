@@ -1,5 +1,5 @@
 import { CountdownNumbers } from '@/components';
-import { Pool } from '@/schemas';
+import { gMON, Pool } from '@/schemas';
 import { useEffect, useState } from 'react';
 
 export const PoolDetailsInCards = ({
@@ -76,7 +76,17 @@ export const PoolDetailsInCards = ({
 
           <div className="bg-surface-subtle px-2 py-4 rounded-lg text-center">
             <div className="mb-2 text-sm">Entry Fee</div>
-            <div className="font-medium xs:text-xl">{seeds.displayStake()}</div>
+            <div className="flex justify-center items-center">
+              {seeds.stakeToken == gMON && (
+                <img
+                  src="/assets/gmon.png"
+                  className="w-6 h-6 rounded-full mr-2"
+                />
+              )}
+              <span className="font-medium xs:text-xl">
+                {seeds.displayStake()}
+              </span>
+            </div>
           </div>
 
           <div className="bg-surface-subtle px-2 py-4 rounded-lg text-center">

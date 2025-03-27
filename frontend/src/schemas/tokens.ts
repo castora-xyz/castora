@@ -1,13 +1,14 @@
 import { CASTORA_ADDRESS_MONAD, CASTORA_ADDRESS_SEPOLIA } from '@/contexts';
 
+export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
+export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
+export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
 export const PENGU = '0x1d8ccf87ac0147bae756eb963a2ef6244c969156';
-export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
-export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 // AAPL stands for Apple Inc. stock. It is not an ERC20 token.
@@ -40,6 +41,9 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 // SOL is the token address of Wormhole wrapped SOL on Ethereum Mainnet.
 
+// gMON is the token address of the Liquid Staked Derivative of the MON token
+// (Monad) from Magma Staking on Monad Testnet.
+
 export interface Token {
   address: string;
   name: string;
@@ -71,6 +75,13 @@ export const tokens: Token[] = [
     decimals: 8,
     pythPriceId:
       '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
+  },
+  {
+    address: gMON,
+    name: 'gMON',
+    fullName: 'gMON',
+    decimals: 18,
+    pythPriceId: ''
   },
   {
     address: HYPE,
