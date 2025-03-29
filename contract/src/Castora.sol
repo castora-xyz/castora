@@ -286,6 +286,7 @@ contract Castora is
     pool.poolId = noOfPools;
     pool.seeds = seeds;
     pool.seedsHash = seedsHash;
+    pool.creationTime = block.timestamp;
 
     emit CreatedPool(noOfPools, seedsHash);
     return noOfPools;
