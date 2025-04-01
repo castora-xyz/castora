@@ -47,7 +47,8 @@ export const recordActivity = async (
     else if (eventName == 'ClaimedWinnings') type = 'claim';
     else continue;
 
-    const { poolId, predictionId } = args;
+    const poolId = Number(args.poolId);
+    const predictionId = Number(args.predictionId);
     const user = eventName == 'Predicted' ? args.predicter : args.winner;
 
     logger.info('Parsed Activity ... ');
@@ -56,7 +57,7 @@ export const recordActivity = async (
       type,
       user,
       predictionId,
-      timestamp: block.timestamp
+      timestamp: Number(block.timestamp)
     });
 
     const db = firestore(chain);
