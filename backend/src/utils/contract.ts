@@ -120,8 +120,9 @@ export const writeContract = async (
     logger.info('Transaction Hash: ', hash);
     logger.info('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    logger.info('Transaction Receipt');
-    logger.info(receipt);
+    // TODO: Make the logger to understand bigint and log the receipt with it too
+    console.log('Transaction Receipt');
+    console.log(receipt);
 
     const newBalance = await showBalance(chain, account.address);
     const balanceDiffs = +newBalance - +prevBalance;
