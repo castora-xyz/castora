@@ -1,6 +1,6 @@
 import { PoolSeeds } from '../schemas';
 import { CONTRACT_ADDRESS_SEPOLIA, getContractAddress } from './contract';
-import { /* gMON, */ HYPE, SOL } from './tokens';
+import { gMON, HYPE, SOL } from './tokens';
 import { Chain } from './validate-chain';
 
 const nextNthHour = (current: number, n: number) =>
@@ -54,16 +54,6 @@ export const generateExperimentalsSeeds = (chain: Chain) => {
         })
       );
     }
-
-    // seeds.push(
-    //   new PoolSeeds({
-    //     predictionToken: CONTRACT_ADDRESS_SEPOLIA,
-    //     stakeToken: gMON,
-    //     stakeAmount: 2e17,
-    //     snapshotTime,
-    //     windowCloseTime
-    //   })
-    // );
   }
   return seeds;
 };
@@ -155,6 +145,16 @@ export const generateLiveSeeds = (chain: Chain) => {
         })
       );
     }
+
+    seeds.push(
+      new PoolSeeds({
+        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+        stakeToken: gMON,
+        stakeAmount: 2e17,
+        snapshotTime,
+        windowCloseTime
+      })
+    );
   }
   return seeds;
 };
