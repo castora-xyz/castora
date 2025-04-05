@@ -1,4 +1,4 @@
-name: sync-live-pools
+name: syncs
 on:
   schedule:
     - cron: '1,6,15 * * * *'
