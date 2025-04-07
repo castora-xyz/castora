@@ -54,16 +54,6 @@ export const generateExperimentalsSeeds = (chain: Chain) => {
         })
       );
     }
-
-    seeds.push(
-      new PoolSeeds({
-        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
-        stakeToken: gMON,
-        stakeAmount: 2e17,
-        snapshotTime,
-        windowCloseTime
-      })
-    );
   }
   return seeds;
 };
@@ -144,6 +134,16 @@ export const generateLiveSeeds = (chain: Chain) => {
 
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
+    seeds.push(
+      new PoolSeeds({
+        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+        stakeToken: gMON,
+        stakeAmount: 2e17,
+        snapshotTime,
+        windowCloseTime
+      })
+    );
+
     for (const predictionToken of tokens) {
       seeds.push(
         new PoolSeeds({
