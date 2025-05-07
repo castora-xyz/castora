@@ -2,7 +2,6 @@ import ArrowLeftCircle from '@/assets/arrow-left-circle.svg?react';
 import ChevronRight from '@/assets/chevron-right.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import { Pool } from '@/schemas';
-import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -42,11 +41,7 @@ export const PoolDetailIntroBadge = ({ pool: { seeds } }: { pool: Pool }) => {
 
       <p className="text-sm px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle max-lg:hidden flex items-center gap-1">
         <Timer className="fill-text-caption w-4 h-4" />
-        <span className="mr-1">
-          {seeds.poolLife() == 12 * 60 * 60
-            ? '24h'
-            : ms(seeds.poolLife() * 1000)}
-        </span>
+        <span className="mr-1">{seeds.displayPoolLife()}</span>
       </p>
     </div>
   );

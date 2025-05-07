@@ -1,7 +1,6 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownBadge } from '@/components';
 import { gMON, Pool } from '@/schemas';
-import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -43,9 +42,7 @@ export const PoolCard = ({
         </div>
 
         <span className="text-sm text-primary-default mt-1 inline-block">
-          {seeds.poolLife() == 12 * 60 * 60
-            ? '24h'
-            : ms(seeds.poolLife() * 1000)}
+          {seeds.displayPoolLife()}
         </span>
       </div>
 

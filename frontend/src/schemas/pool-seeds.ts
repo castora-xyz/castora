@@ -1,3 +1,5 @@
+import { FilterPoolsProps } from '@/contexts';
+import ms from 'ms';
 import { tokens } from './tokens';
 
 /**
@@ -163,6 +165,14 @@ export class PoolSeeds {
   }
 
   /**
+   * Returns the pool life as a string to display in frontend
+   * @returns 24h or 6h or corresponding pool life
+   */
+  displayPoolLife() {
+    return this.poolLife() == 12 * 60 * 60 ? '24h' : ms(this.poolLife() * 1000);
+  }
+
+  /**
    * Whether the pool is still accepting predictions (open),
    * or its window has closed (closed), or its snapshot time
    * has passed (completed).
@@ -180,5 +190,29 @@ export class PoolSeeds {
     if (now < this.windowCloseTime) return 'Open';
     if (now < this.snapshotTime) return 'Closed';
     return 'Completed';
+  }
+
+  /**
+   * Determines whether the pool matches the current filter criteria.
+   * The filter criteria include pool statuses, pool life durations,
+   * prediction tokens, and stake tokens.
+   *
+   * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
+   */
+  matchesFilter({
+    poolLifes,
+    predictionTokens,
+    stakeTokens,
+    statuses
+  }: FilterPoolsProps): boolean {
+    if (!statuses.includes(this.status())) return false;
+    if (!poolLifes.includes(this.displayPoolLife())) return false;
+
+    const { name: prdToken } = this.predictionTokenDetails;
+    const { name: stkToken } = this.stakeTokenDetails;
+    if (!predictionTokens.includes(prdToken)) return false;
+    if (!stakeTokens.includes(stkToken)) return false;
+
+    return true;
   }
 }

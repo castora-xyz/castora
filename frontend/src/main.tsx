@@ -2,6 +2,7 @@ import { App } from '@/App.tsx';
 import {
   AuthProvider,
   ContractProvider,
+  FilterPoolsProvider,
   FirebaseProvider,
   MyActivityProvider,
   PaginatorsProvider,
@@ -29,11 +30,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <ServerProvider>
                     <FirebaseProvider>
                       <ContractProvider>
-                        <PoolsProvider>
-                          <MyActivityProvider>
-                            <App />
-                          </MyActivityProvider>
-                        </PoolsProvider>
+                        <FilterPoolsProvider>
+                          <PoolsProvider>
+                            <MyActivityProvider>
+                              <App />
+                            </MyActivityProvider>
+                          </PoolsProvider>
+                        </FilterPoolsProvider>
                       </ContractProvider>
                     </FirebaseProvider>
                   </ServerProvider>
