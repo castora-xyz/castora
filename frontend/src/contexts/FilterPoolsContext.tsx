@@ -7,7 +7,7 @@ import {
 } from 'react';
 
 export const ALL_PREDICATION_TOKENS = ['ETH', 'SOL', 'HYPE'];
-export const ALL_STAKE_TOKENS = ['MON', 'gMON'];
+export const ALL_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_POOL_LIFES = ['6h', '24h'];
 
@@ -60,7 +60,7 @@ export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
     ])
   );
   const [stakeTokens, setStakeTokens] = useState(
-    retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON'])
+    retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
   );
   const [statuses, setStatuses] = useState(
     retrieveOne('statuses', ALL_STATUSES, ['Open'])
@@ -110,7 +110,7 @@ export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
       ])
     );
     setStakeTokens(
-      retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON'])
+      retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
     );
     setStatuses(retrieveOne('statuses', ALL_STATUSES, ['Open']));
     setPoolLifes(retrieveOne('poollifes', ALL_POOL_LIFES, ['6h', '24h']));

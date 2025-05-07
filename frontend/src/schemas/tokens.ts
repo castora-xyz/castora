@@ -2,6 +2,7 @@ import { CASTORA_ADDRESS_MONAD, CASTORA_ADDRESS_SEPOLIA } from '@/contexts';
 
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
+export const aprMON = '0xb2f82D0f38dc453D596Ad40A37799446Cc89274A';
 export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
 export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
@@ -44,12 +45,15 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 // gMON is the token address of the Liquid Staked Derivative of the MON token
 // (Monad) from Magma Staking on Monad Testnet.
 
+// APRMON is the token address for Apriori on Monad Testnet.
+
 export interface Token {
   address: string;
   name: string;
   fullName: string;
   decimals: number;
   pythPriceId: string;
+  img?: string | undefined;
 }
 
 export const tokens: Token[] = [
@@ -77,11 +81,20 @@ export const tokens: Token[] = [
       '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
   },
   {
+    address: aprMON,
+    name: 'aprMON',
+    fullName: 'aPriori',
+    decimals: 18,
+    pythPriceId: '',
+    img: 'aprmon'
+  },
+  {
     address: gMON,
     name: 'gMON',
     fullName: 'gMON',
     decimals: 18,
-    pythPriceId: ''
+    pythPriceId: '',
+    img: 'gmon'
   },
   {
     address: HYPE,

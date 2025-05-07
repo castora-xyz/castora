@@ -1,6 +1,6 @@
 import { PoolSeeds } from '../schemas';
 import { CONTRACT_ADDRESS_SEPOLIA, getContractAddress } from './contract';
-import { gMON, HYPE, SOL } from './tokens';
+import { aprMON, gMON, HYPE, SOL } from './tokens';
 import { Chain } from './validate-chain';
 
 const nextNthHour = (current: number, n: number) =>
@@ -65,14 +65,6 @@ export const generateLiveSeeds = (chain: Chain) => {
   const date = now.getDate();
   const hrs = new Date().getHours();
 
-  // const hourlyPrev = Math.trunc(
-  //   new Date(yrs, months, date, hrs, 0, 0).getTime() / 1000
-  // );
-  // const closeHPrev = hourlyPrev - 15 * 60;
-  // const threeHPrev = Math.trunc(
-  //   new Date(yrs, months, date, prevNthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HPrev = threeHPrev - 30 * 60;
   const sixHPrev = Math.trunc(
     new Date(yrs, months, date, prevNthHour(hrs, 6), 0, 0).getTime() / 1000
   );
@@ -82,14 +74,6 @@ export const generateLiveSeeds = (chain: Chain) => {
   );
   const close24HPrev = twenty4HPrev - 12 * 60 * 60;
 
-  // const hourlyNext = Math.trunc(
-  //   new Date(yrs, months, date, hrs + 1, 0, 0).getTime() / 1000
-  // );
-  // const closeHNext = hourlyNext - 15 * 60;
-  // const threeHNext = Math.trunc(
-  //   new Date(yrs, months, date, nextNthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HNext = threeHNext - 30 * 60;
   const sixHNext = Math.trunc(
     new Date(yrs, months, date, nextNthHour(hrs, 6), 0, 0).getTime() / 1000
   );
@@ -99,14 +83,6 @@ export const generateLiveSeeds = (chain: Chain) => {
   );
   const close24HNext = twenty4HNext - 12 * 60 * 60;
 
-  // const hourlyNext2 = Math.trunc(
-  //   new Date(yrs, months, date, hrs + 2, 0, 0).getTime() / 1000
-  // );
-  // const closeHNext2 = hourlyNext2 - 15 * 60;
-  // const threeHNext2 = Math.trunc(
-  //   new Date(yrs, months, date, next2NthHour(hrs, 3), 0, 0).getTime() / 1000
-  // );
-  // const close3HNext2 = threeHNext2 - 30 * 60;
   const sixHNext2 = Math.trunc(
     new Date(yrs, months, date, next2NthHour(hrs, 6), 0, 0).getTime() / 1000
   );
@@ -116,24 +92,36 @@ export const generateLiveSeeds = (chain: Chain) => {
   );
   const close24HNext2 = twenty4HNext2 - 12 * 60 * 60;
 
-  const times = [
-    // { windowCloseTime: closeHPrev, snapshotTime: hourlyPrev },
-    // { windowCloseTime: close3HPrev, snapshotTime: threeHPrev },
+  const sixHtimes = [
     { windowCloseTime: close6HPrev, snapshotTime: sixHPrev },
-    { windowCloseTime: close24HPrev, snapshotTime: twenty4HPrev },
-    // { windowCloseTime: closeHNext, snapshotTime: hourlyNext },
-    // { windowCloseTime: close3HNext, snapshotTime: threeHNext },
     { windowCloseTime: close6HNext, snapshotTime: sixHNext },
+    { windowCloseTime: close6HNext2, snapshotTime: sixHNext2 }
+  ];
+  const twenty4HTimes = [
+    { windowCloseTime: close24HPrev, snapshotTime: twenty4HPrev },
     { windowCloseTime: close24HNext, snapshotTime: twenty4HNext },
-    // { windowCloseTime: closeHNext2, snapshotTime: hourlyNext2 },
-    // { windowCloseTime: close3HNext2, snapshotTime: threeHNext2 },
-    { windowCloseTime: close6HNext2, snapshotTime: sixHNext2 },
     { windowCloseTime: close24HNext2, snapshotTime: twenty4HNext2 }
   ];
-  const tokens = [HYPE, SOL, CONTRACT_ADDRESS_SEPOLIA];
 
+  const tokens = [HYPE, SOL, CONTRACT_ADDRESS_SEPOLIA];
   const seeds: PoolSeeds[] = [];
-  for (const { windowCloseTime, snapshotTime } of times) {
+
+  for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
+    seeds.push(
+      new PoolSeeds({
+        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+        stakeToken: aprMON,
+        stakeAmount: 2e17,
+        snapshotTime,
+        windowCloseTime
+      })
+    );
+  }
+
+  for (const { windowCloseTime, snapshotTime } of [
+    ...sixHtimes,
+    ...twenty4HTimes
+  ]) {
     seeds.push(
       new PoolSeeds({
         predictionToken: CONTRACT_ADDRESS_SEPOLIA,
@@ -156,5 +144,6 @@ export const generateLiveSeeds = (chain: Chain) => {
       );
     }
   }
+
   return seeds;
 };
