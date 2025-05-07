@@ -63,12 +63,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const setTheme = (value: ThemeMode) => {
     setMode(value);
-    localStorage.setItem('theme', value);
+    localStorage.setItem('castora::theme', value);
     propagate(value);
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = localStorage.getItem('castora::theme');
     if (saved && isThemeMode(saved)) setMode(saved);
 
     propagate((saved as ThemeMode) || 'System Mode');
@@ -78,6 +78,14 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       .addEventListener('change', () => {
         if (mode == 'System Mode') propagate('System Mode');
       });
+
+    window.addEventListener('storage', () => {
+      const saved = localStorage.getItem('castora::theme');
+      if (saved && isThemeMode(saved)) {
+        setMode(saved);
+        propagate(saved);
+      }
+    });
   }, []);
 
   return (
