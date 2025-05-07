@@ -3,6 +3,7 @@ import {
   completePool,
   completePools,
   fetchActivity,
+  getExperimentalsPools,
   getLivePools,
   syncPools
 } from '../controllers';
@@ -22,6 +23,14 @@ router.get('/pools/complete', validateChain, async (_, res) => {
 router.get('/pools/live', validateChain, async (_, res) => {
   await wrapper(
     async () => await getLivePools(res.locals.chain),
+    'fetching live poolIds',
+    res
+  );
+});
+
+router.get('/pools/experimentals', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await getExperimentalsPools(res.locals.chain),
     'fetching live poolIds',
     res
   );
