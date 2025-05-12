@@ -31,7 +31,7 @@ export const Header = () => {
       <div className="flex items-center max-w-screen-xl mx-auto">
         <h1 className="text-text-titles text-xl font-medium sm:text-2xl  md:font-bold grow mr-4">
           <Link to="/">
-            <img src={Castora} alt="Castora" className="w-8 xs:w-10 md:w-12" />
+            <img src={Castora} alt="Castora" className="w-6 xs:w-8 md:w-10" />
           </Link>
         </h1>
 
