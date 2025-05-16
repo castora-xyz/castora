@@ -116,12 +116,7 @@ export const generateLiveSeeds = (chain: Chain) => {
         windowCloseTime
       })
     );
-  }
 
-  for (const { windowCloseTime, snapshotTime } of [
-    ...sixHtimes,
-    ...twenty4HTimes
-  ]) {
     seeds.push(
       new PoolSeeds({
         predictionToken: CONTRACT_ADDRESS_SEPOLIA,
@@ -131,7 +126,12 @@ export const generateLiveSeeds = (chain: Chain) => {
         windowCloseTime
       })
     );
+  }
 
+  for (const { windowCloseTime, snapshotTime } of [
+    ...sixHtimes,
+    ...twenty4HTimes
+  ]) {
     for (const predictionToken of tokens) {
       seeds.push(
         new PoolSeeds({
