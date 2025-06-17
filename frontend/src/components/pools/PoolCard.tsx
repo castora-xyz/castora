@@ -1,4 +1,5 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
+import Bolt from '@/assets/bolt.svg?react';
 import { CountdownBadge } from '@/components';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
@@ -23,7 +24,17 @@ export const PoolCard = ({
   }, [now]);
 
   return (
-    <div className="border border-border-default dark:border-surface-subtle p-6 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col">
+    <div
+      className={
+        'border border-border-default dark:border-surface-subtle p-6 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col ' +
+        `${
+          poolId == 3000
+            ? 'shadow-[0px_0px_16px_1px_rgba(131,110,249,0.6)] dark:shadow-[0px_0px_16px_1px_rgba(255,255,255,0.6)]'
+            : ''
+        }`
+      }
+    >
+      {/* Pool ID and Status */}
       <div className="flex justify-between">
         <div className="flex p-2 pl-4 mb-3 rounded-full items-center  bg-surface-subtle w-fit">
           <div className="text-sm md:text-md">Pool ID: {poolId}</div>
@@ -41,9 +52,15 @@ export const PoolCard = ({
           </div>
         </div>
 
-        <span className="text-sm text-primary-default mt-1 inline-block">
-          {seeds.displayPoolLife()}
-        </span>
+        {poolId == 3000 ? (
+          <>
+            <Bolt className="w-5 h-5 mt-1 -mr-1 text-primary-default" />
+          </>
+        ) : (
+          <span className="text-sm text-primary-default mt-1 inline-block">
+            {seeds.displayPoolLife()}
+          </span>
+        )}
       </div>
 
       <div className="font-medium text-2xl text-text-title mb-3">

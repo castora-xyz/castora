@@ -55,6 +55,18 @@ export const generateExperimentalsSeeds = (chain: Chain) => {
       );
     }
   }
+
+  // Flash Mega Pool
+  seeds.push(
+    new PoolSeeds({
+      predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+      stakeToken: getContractAddress(chain),
+      stakeAmount: 5e17,
+      snapshotTime: 1750489200, // 21st June 2025, 07:00 UTC
+      windowCloseTime: 1750402800 // 20th June 2025, 07:00 UTC
+    })
+  );
+  
   return seeds;
 };
 
@@ -144,6 +156,17 @@ export const generateLiveSeeds = (chain: Chain) => {
       );
     }
   }
+
+  // Flash Mega Pool
+  seeds.push(
+    new PoolSeeds({
+      predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+      stakeToken: getContractAddress(chain),
+      stakeAmount: 5e17,
+      snapshotTime: 1750489200, // 21st June 2025, 07:00 UTC
+      windowCloseTime: 1750402800 // 20th June 2025, 07:00 UTC
+    })
+  );
 
   return seeds;
 };

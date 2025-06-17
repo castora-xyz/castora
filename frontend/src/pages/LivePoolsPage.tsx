@@ -49,16 +49,23 @@ export const LivePoolsPage = () => {
               statuses
             })
           ).length > 0 ? (
-          livePools
-            .filter((p) =>
-              p.seeds.matchesFilter({
-                poolLifes,
-                predictionTokens,
-                stakeTokens,
-                statuses
-              })
-            )
-            .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />)
+          [
+            // Flash Mega Pool
+            ...livePools
+              .filter((p) => p.poolId == 3000)
+              .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />),
+
+            ...livePools
+              .filter((p) =>
+                p.seeds.matchesFilter({
+                  poolLifes,
+                  predictionTokens,
+                  stakeTokens,
+                  statuses
+                })
+              )
+              .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />)
+          ]
         ) : (
           <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12  w-full max-w-screen-xl mx-auto">
             <div className="md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-16 md:px-20 md:gap-4 md:max-w-2xl md:text-center">
