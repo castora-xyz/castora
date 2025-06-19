@@ -1,48 +1,66 @@
-import ArrowLeftCircle from '@/assets/arrow-left-circle.svg?react';
+import Bolt from '@/assets/bolt.svg?react';
 import ChevronRight from '@/assets/chevron-right.svg?react';
 import Timer from '@/assets/timer.svg?react';
+import Trophy from '@/assets/trophy.svg?react';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Tooltip } from 'primereact/tooltip';
+import { Link, useLocation } from 'react-router-dom';
 
-export const PoolDetailIntroBadge = ({ pool: { seeds } }: { pool: Pool }) => {
-  const navigate = useNavigate();
+export const PoolDetailIntroBadge = ({
+  pool: { poolId, seeds }
+}: {
+  pool: Pool;
+}) => {
   const location = useLocation();
 
   return (
     <div
       className={
-        'w-full max-w-screen-xl mx-auto mb-4 text-text-subtitle flex gap-4' +
+        'w-full max-w-screen-xl mx-auto mb-4 text-text-subtitle flex flex-wrap gap-4' +
         (seeds.status() === 'Completed' ? ' max-lg:max-w-lg' : '')
       }
     >
-      <button
-        className="hover:underline p-ripple flex gap-2 lg:hidden"
-        role="link"
-        onClick={() => navigate(location.state?.from || '/')}
-      >
-        <ArrowLeftCircle className="stroke-text-subtitle" />
-        <span>Back To Pools</span>
-        <Ripple />
-      </button>
-
-      <p className="text-sm py-2 px-5 flex gap-2 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle max-lg:hidden">
-        <button
-          className="hover:underline p-ripple"
-          role="link"
-          onClick={() => navigate(location.state?.from || '/pools')}
-        >
-          <span>Pools</span>
-          <Ripple />
-        </button>
-        <ChevronRight className="fill-text-subtitle" />
+      <div className="text-sm py-2 px-5 flex gap-2 rounded-full w-fit border border-border-default dark:border-surface-subtle">
+        <Tooltip target="#backwards" />
+        <p id="backwards" data-pr-tooltip="Go Back" className="flex gap-2">
+          <Link
+            className="hover:underline p-ripple text-primary-default"
+            to={location.state?.from?.pathname ?? '/pools'}
+          >
+            <span>Pools</span>
+            <Ripple />
+          </Link>
+          <ChevronRight className="fill-primary-default" />
+        </p>
         <span>{seeds.pairName()}</span>
-      </p>
+      </div>
 
-      <p className="text-sm px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle max-lg:hidden flex items-center gap-1">
-        <Timer className="fill-text-caption w-4 h-4" />
-        <span className="mr-1">{seeds.displayPoolLife()}</span>
-      </p>
+      <div className="w-fit flex gap-4">
+        <Tooltip target="#pool-life" />
+        <p
+          id="pool-life"
+          className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
+          data-pr-tooltip="Pool Life"
+        >
+          <Timer className="fill-primary-default w-4 h-4" />
+          {poolId == 3000 ? (
+            <Bolt className="w-4 h-4 ml-1 text-text-caption" />
+          ) : (
+            <span className="mr-1">{seeds.displayPoolLife()}</span>
+          )}
+        </p>
+
+        <Tooltip target="#pool-multiplier" />
+        <p
+          id="pool-multiplier"
+          className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
+          data-pr-tooltip="Pool Multiplier"
+        >
+          <Trophy className="stroke-primary-default w-4 h-4" />
+          <span className="mr-1">x{poolId == 3000 ? 10 : 2}</span>
+        </p>
+      </div>
     </div>
   );
 };

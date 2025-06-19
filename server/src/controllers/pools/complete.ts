@@ -47,8 +47,6 @@ export const completePool = async (
   chain: Chain,
   poolId: any
 ): Promise<void> => {
-  if (poolId == 3000) throw 'Mega Pool will soon complete';
-
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
 

@@ -4,7 +4,7 @@ import { CountdownBadge } from '@/components';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export const PoolCard = ({
   pool: { poolId, seeds, noOfPredictions, winAmount },
@@ -14,6 +14,7 @@ export const PoolCard = ({
   isInLandingPage?: boolean;
 }) => {
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
+  const location = useLocation();
 
   useEffect(() => {
     const interval = setInterval(
@@ -87,16 +88,7 @@ export const PoolCard = ({
 
       <CountdownBadge seeds={seeds} />
 
-      <div className="hidden md:block mt-auto"></div>
-
-      {noOfPredictions > 0 && (
-        <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
-          <span className="mr-4">Predictions</span>
-          <span>{noOfPredictions}</span>
-        </div>
-      )}
-
-      <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-8">
+      <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
         <span className="mr-4">Entry Fee</span>
         <div
           className={`flex w-fit items-center ${
@@ -113,9 +105,26 @@ export const PoolCard = ({
         </div>
       </div>
 
+      <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
+        <span className="mr-4">Multiplier</span>
+        <span className="font-bold text-base -mt-1">
+          x{poolId == 3000 ? 10 : 2}
+        </span>
+      </div>
+
+      {noOfPredictions > 0 && (
+        <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
+          <span className="mr-4">Predictions</span>
+          <span>{noOfPredictions}</span>
+        </div>
+      )}
+
+      <div className="hidden md:block mt-auto"></div>
+
       <Link
-        className="w-full py-2 px-4 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle flex items-center justify-center p-ripple"
+        className="w-full mt-5 py-2 px-4 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle flex items-center justify-center p-ripple"
         to={'/pool/' + poolId}
+        state={{ from: location }}
       >
         {seeds.status() === 'Open' ? 'Join ' : 'Open '}
         Pool

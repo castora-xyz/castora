@@ -70,8 +70,9 @@ export const JoinPoolForm = ({ pool, pool: { seeds } }: { pool: Pool }) => {
       <p className="bg-surface-subtle rounded-2xl p-4 text-text-subtitle text-sm mb-6 ">
         Predict the price by Snapshot Time. This will add your prediction to the
         pool alongside with other predictions. You will stake the Entry Fee to
-        predict. The predictions whose prices are closest to the price by{' '}
-        {seeds.formattedSnapshotTime()[0]} will withdraw all the pool's money.
+        predict. The predictions whose prices are closest (based on the Pool
+        Multiplier) to the snapshot price by {seeds.formattedSnapshotTime()[0]}{' '}
+        will withdraw all the pool's money.
       </p>
 
       <form

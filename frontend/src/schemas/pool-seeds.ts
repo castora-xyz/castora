@@ -100,10 +100,11 @@ export class PoolSeeds {
 
   /**
    * Display the stake amount and stake token for frontend.
+   * @param [multiplied=1] multiplier to apply on stake being displayed
    */
-  displayStake() {
+  displayStake(multiplied: number = 1) {
     const { decimals, name } = this.stakeTokenDetails;
-    return `${this.stakeAmount / 10 ** decimals} ${name}`;
+    return `${(this.stakeAmount * multiplied) / 10 ** decimals} ${name}`;
   }
 
   /**

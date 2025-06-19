@@ -8,7 +8,7 @@ import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export const ActivityCard = ({
   pool,
@@ -30,6 +30,7 @@ export const ActivityCard = ({
   refresh?: () => void;
 }) => {
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
+  const location = useLocation();
 
   useEffect(() => {
     const interval = setInterval(
@@ -86,7 +87,11 @@ export const ActivityCard = ({
               Pool ID: {poolId}
             </p>
           ) : (
-            <Link to={`/pool/${poolId}`} className="p-ripple rounded-full">
+            <Link
+              to={`/pool/${poolId}`}
+              className="p-ripple rounded-full"
+              state={{ from: location }}
+            >
               <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
                 Pool ID: {poolId}
               </p>

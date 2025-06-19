@@ -278,6 +278,14 @@ export const MakePredictionModal = ({
         {!isMakingPrediction && hasEnoughBalance && <Ripple />}
       </button>
 
+      <p className="mt-1 text-center">
+        <span className="text-xs">Potential Winnings </span>
+        <span className="text-sm font-bold text-primary-default">
+          (x{poolId == 3000 ? 10 : 2}):{' '}
+          {seeds.displayStake(poolId == 3000 ? 10 : 2)}
+        </span>
+      </p>
+
       {!hasEnoughBalance && (
         <p className="text-xs text-center mt-4 text-errors-default">
           Insufficient Balance. Please Top Up To Continue.

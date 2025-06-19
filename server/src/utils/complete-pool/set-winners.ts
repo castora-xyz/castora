@@ -35,13 +35,17 @@ export const setWinners = async (
     throw 'Fatal: unmatching predictions length';
   }
 
+  const noOfWinners = getNoOfWinners(
+    pool.noOfPredictions,
+    pool.poolId == 3000 ? 10 : 2
+  );
+  console.log('\nnoOfWinners: ', noOfWinners);
+
   console.log('\nComputing Winners ... ');
-  const splitted = getSplittedPredictions(snapshotPrice, predictions);
+  const splitted = getSplittedPredictions(snapshotPrice, predictions, noOfWinners);
   const { winnerPredictionIds } = splitted;
   console.log(`Computed ${winnerPredictionIds.length} winners.`);
 
-  const noOfWinners = getNoOfWinners(pool.noOfPredictions);
-  console.log('\nnoOfWinners: ', noOfWinners);
 
   // Divide 95% of the total pool's money by the number of winners
   // (half of pool.noOfPredictions) and set the result as the

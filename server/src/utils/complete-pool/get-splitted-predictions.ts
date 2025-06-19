@@ -1,21 +1,22 @@
 import { Prediction, SplitPredictionResult } from '../../schemas';
-import { getNoOfWinners } from './get-no-of-winners';
 
 /**
- * Calculates and returns the predictionIds and their predicters
- * whose predictionPrices where closest to the snapshotPrice and
- * those that were away from it. That is both winners and losers.
+ * Calculates and returns the first "noOfWinners" predictionIds and their predicters
+ * whose predictionPrices where closest to the snapshotPrice and then the others
+ * that were away from it. That is, returns both winners and losers. 
  *
- * The winners are the first half of the predictions with the closest
+ * The winners are the first "noOfWinners" of the predictions with the closest
  * predictionPrices to the snapshotPrice. The losers are the others.
  *
  * @param snapshotPrice The price of the predictionToken at the snapshotTime.
  * @param predictions Array of Predictions from which to calculate the winners.
+ * @param noOfWinners The number of winners to compute based on the pool multiplier
  * @returns The predictionIds and their predicters of the winners.
  */
 export const getSplittedPredictions = (
   snapshotPrice: number,
-  predictions: Prediction[]
+  predictions: Prediction[],
+  noOfWinners: number
 ): SplitPredictionResult => {
   // 1. Calculate the absolute differences between the predictionPrices
   // against the snapshotPrice.
@@ -34,10 +35,9 @@ export const getSplittedPredictions = (
     else return a.id - b.id;
   });
 
-  // 3. Set the winners as the first half of predicters with the lowest
+  // 3. Set the winners as the first "noOfWinners" of predicters with the lowest
   // differences (closest predictionPrices to the snapshotPrice) as the
   // winnerPredictions.
-  const noOfWinners = getNoOfWinners(predictions.length);
   const winners = sorted.slice(0, noOfWinners);
   const winnerAddresses = [];
   const winnerPredictionIds = [];
@@ -46,7 +46,7 @@ export const getSplittedPredictions = (
     winnerAddresses.push(winners[i].predicter);
   }
 
-  // 4. Set the losers as the other half.
+  // 4. Set the losers as the others.
   const losers = sorted.slice(noOfWinners, predictions.length);
   const loserAddresses = [];
   const loserPredictionIds = [];
