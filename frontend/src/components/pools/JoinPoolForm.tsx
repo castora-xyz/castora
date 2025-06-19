@@ -59,6 +59,15 @@ export const JoinPoolForm = ({ pool, pool: { seeds } }: { pool: Pool }) => {
         }`
       );
     }
+
+    setTimeout(() => {
+      const input = document.querySelector(
+        'input#prediction-input[type=number]'
+      ) as HTMLInputElement;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
+      });
+    });
   }, []);
 
   if (seeds.status() != 'Open') return <></>;
@@ -101,8 +110,9 @@ export const JoinPoolForm = ({ pool, pool: { seeds } }: { pool: Pool }) => {
               recordEvent('entered_prediction_price', { price: e.target.value })
             }
             ref={predictionInput}
+            id="prediction-input"
             className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-3 font-medium focus:outline-none text-xl  focus:valid:border-primary-default focus:invalid:border-errors-default"
-            placeholder="0 USD"
+            placeholder="0.00 USD"
             required
           />
           {predictionError && (
