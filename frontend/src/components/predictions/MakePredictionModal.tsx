@@ -2,7 +2,7 @@ import CheckCircle from '@/assets/check-circle.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import { CountdownNumbers, SuccessIcon } from '@/components';
-import { useContract, usePools } from '@/contexts';
+import { useContract, useMyActivity, usePools } from '@/contexts';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
@@ -23,6 +23,7 @@ export const MakePredictionModal = ({
 }) => {
   const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
+  const { fetchMyActivity } = useMyActivity();
 
   const [currentPrice, setCurrentPrice] = useState(0);
   const [currentWalletStep, setCurrentWalletStep] = useState(0);
@@ -74,6 +75,7 @@ export const MakePredictionModal = ({
       complete: () => {
         if (successUrl) setExplorerUrl(successUrl);
         setIsSuccess(!!successUrl);
+        fetchMyActivity();
         handlePredictionSuccess();
         reset();
       }
