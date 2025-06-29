@@ -28,14 +28,14 @@ import { useAccount, useChains } from 'wagmi';
 import { firebaseConfig } from './firebase';
 
 interface FirebaseContextProps {
-  ensureNotifications: () => Promise<void>;
+  ensureNotifications: () => Promise<boolean>;
   firestore: Firestore;
   recordEvent: (event: string, params?: any) => void;
   recordNavigation: (path: string, name: string) => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextProps>({
-  ensureNotifications: async () => {},
+  ensureNotifications: async () => false,
   firestore: {} as Firestore,
   recordEvent: () => {},
   recordNavigation: () => {}
@@ -74,27 +74,27 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const hasSet = (addr: string) =>
     !!localStorage.getItem(`castora.fcmToken:${addr}`);
 
-  const ensureNotifications = async () => {
+  const ensureNotifications = async (): Promise<boolean> => {
     if (
       !isConnected ||
       !('Notification' in window) ||
       (Notification.permission == 'granted' && address && hasSet(address))
     ) {
-      return;
+      return false;
     }
 
     if (Notification.permission !== 'granted') {
-      if (requestCount >= 2 && !acceptedAtModal) return;
+      if (requestCount >= 2 && !acceptedAtModal) return false;
 
       if (!acceptedAtModal) {
         document.body.classList.add('overflow-hidden');
         setRequestCount(requestCount + 1);
         setIsShowingModal(true);
-        return;
+        return true;
       }
 
       const status = await Notification.requestPermission();
-      if (status != 'granted') return;
+      if (status != 'granted') return false;
     }
 
     const fcmToken = await getToken(messaging, {
@@ -107,7 +107,10 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
         fcmToken
       });
       if (success) localStorage.setItem(`castora.fcmToken:${address}`, 'true');
+      return success;
     }
+
+    return false;
   };
 
   const recordEvent = (event: string, params?: any) => {

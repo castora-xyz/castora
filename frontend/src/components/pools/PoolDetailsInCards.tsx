@@ -3,7 +3,7 @@ import { Pool } from '@/schemas';
 import { useEffect, useState } from 'react';
 
 export const PoolDetailsInCards = ({
-  pool: { noOfPredictions, poolId, seeds }
+  pool: { completionTime, noOfPredictions, poolId, seeds }
 }: {
   pool: Pool;
 }) => {
@@ -63,7 +63,9 @@ export const PoolDetailsInCards = ({
                 </div>
               </>
             ) : (
-              <div className="my-6 sm:text-2xl">Completed</div>
+              <div className="my-6 sm:text-2xl">
+                {completionTime == 0 ? 'Completing ...' : 'Completed'}
+              </div>
             )}
           </div>
         </div>

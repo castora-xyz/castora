@@ -13,24 +13,32 @@ import { useAccount } from 'wagmi';
 
 export const MyInPoolPredictions = ({
   pool,
-  pool: { seeds, completionTime }
+  pool: { seeds, completionTime, noOfPredictions }
 }: {
   pool: Pool;
 }) => {
   const { isConnected } = useAccount();
   const { fetchMyActivity } = useMyActivity();
-  const { isFetching, myPredictions, hasError, fetchMyPredictions } =
+  const { isFetching, hasEverFetched, myPredictions, fetchMyPredictions } =
     useMyPredictions(pool);
   const [unclaimedWins, setUnclaimedWins] = useState<Prediction[]>([]);
 
   useEffect(() => {
-    setUnclaimedWins(
-      myPredictions.filter(
-        ({ claimWinningsTime, isAWinner }) =>
-          claimWinningsTime === 0 && isAWinner
-      )
-    );
+    myPredictions &&
+      setUnclaimedWins(
+        myPredictions.filter(
+          ({ claimWinningsTime, isAWinner }) =>
+            claimWinningsTime === 0 && isAWinner
+        )
+      );
   }, [myPredictions]);
+
+  useEffect(() => {
+    if (noOfPredictions > 0) {
+      fetchMyPredictions();
+      fetchMyActivity();
+    }
+  }, [noOfPredictions]);
 
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
@@ -42,9 +50,11 @@ export const MyInPoolPredictions = ({
     return () => clearInterval(interval);
   }, [now]);
 
-  if (!isConnected) return <></>;
-
-  if (!isFetching && !hasError && myPredictions.length === 0) {
+  if (
+    !isConnected ||
+    !hasEverFetched ||
+    (!isFetching && myPredictions && myPredictions.length === 0)
+  ) {
     return <></>;
   }
 
@@ -71,7 +81,7 @@ export const MyInPoolPredictions = ({
         [1, 2, 3].map((i) => (
           <Breathing key={i} height={64} className="mb-3 rounded-2xl w-full" />
         ))
-      ) : hasError ? (
+      ) : !myPredictions ? (
         <div className="text-center pb-4">
           <p className="mb-4">Something Went Wrong</p>
           <button
@@ -132,7 +142,10 @@ export const MyInPoolPredictions = ({
                       <ClaimButton
                         pool={pool}
                         prediction={prediction}
-                        onSuccess={fetchMyPredictions}
+                        onSuccess={() => {
+                          fetchMyPredictions();
+                          fetchMyActivity();
+                        }}
                       />
                     </div>
                   ) : (

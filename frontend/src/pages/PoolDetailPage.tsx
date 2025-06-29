@@ -7,7 +7,7 @@ import {
   PoolDetailsInCards,
   PredictionsDisplay
 } from '@/components';
-import { abi, useContract, usePools, useServer, useTheme } from '@/contexts';
+import { usePools, useTheme } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
@@ -15,14 +15,12 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
-import { useAccount, useWatchContractEvent } from 'wagmi';
+import { useAccount } from 'wagmi';
 
 export const PoolDetailPage = () => {
   const { chain: currentChain } = useAccount();
   const { poolId } = useParams();
-  const { castoraAddress } = useContract();
   const { isValidPoolId, fetchOne } = usePools();
-  const server = useServer();
   const { isDarkDisplay } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -31,76 +29,52 @@ export const PoolDetailPage = () => {
   const [pool, setPool] = useState<Pool | null>(null);
   const [prevCurrentChain, setPrevCurrentChain] = useState(currentChain);
 
-  // TODO: Review if this watcher is updated for every chain (contract address)
-  // change
-  useWatchContractEvent({
-    address: castoraAddress,
-    abi,
-    eventName: 'Predicted',
-    args: {
-      poolId: BigInt(isNaN(+poolId!) ? 0 : poolId!)
-    },
-    onLogs: async (logs) => {
-      if (!pool) return await load();
-      const maxLatestPredictionId = Math.max(
-        ...logs.map(({ args }) => Number(args.predictionId))
-      );
-      if (pool.noOfPredictions < maxLatestPredictionId) {
-        const newPool = await fetchOne(pool.poolId);
-        if (newPool) setPool(newPool);
-      }
-    }
-  });
+  const load = async (showLoading: boolean) => {
+    setIsLoading(showLoading);
 
-  // TODO: Review if this watcher is updated for every chain (contract address)
-  // change
-  useWatchContractEvent({
-    address: castoraAddress,
-    abi,
-    eventName: 'CompletedPool',
-    args: {
-      poolId: BigInt(isNaN(+poolId!) ? 0 : poolId!)
-    },
-    onLogs: async () => {
-      if (!pool || !pool.completionTime) load();
-    }
-  });
-
-  const load = async () => {
-    setIsLoading(true);
     if (!(await isValidPoolId(poolId))) {
       setIsLoading(false);
       setHasError(false);
     } else {
       try {
-        const pool = await fetchOne(+poolId!);
-        if (pool) {
-          if (Math.round(Date.now() / 1000) >= pool.seeds.snapshotTime) {
-            if (pool.noOfPredictions === 0) {
+        const fetched = await fetchOne(+poolId!);
+        if (fetched) {
+          const { seeds, noOfPredictions, completionTime } = fetched;
+
+          if (Math.round(Date.now() / 1000) >= seeds.snapshotTime) {
+            if (noOfPredictions === 0 || completionTime === 0) {
+              if (Math.round(Date.now() / 1000) - seeds.snapshotTime < 15) {
+                // Waiting for the snapshot price to be available
+                await new Promise((resolve) => setTimeout(resolve, 15000));
+              }
+
+              // Fetching the snapshot price from Pyth Network
               try {
                 const { price, expo } = (
                   await new PriceServiceConnection(
                     'https://hermes.pyth.network'
                   ).getPriceFeed(
-                    pool.seeds.predictionTokenDetails.pythPriceId,
-                    pool.seeds.snapshotTime
+                    seeds.predictionTokenDetails.pythPriceId,
+                    seeds.snapshotTime
                   )
                 ).getPriceUnchecked();
-                pool.snapshotPrice = parseFloat(
+                fetched.snapshotPrice = parseFloat(
                   (+price * 10 ** expo).toFixed(Math.abs(expo))
                 );
-                pool.completionTime = Math.trunc(Date.now() / 1000);
+                if (noOfPredictions === 0) {
+                  fetched.completionTime = Math.trunc(Date.now() / 1000);
+                }
               } catch (e) {
                 console.log(e);
               }
-              setPool(pool);
-            } else if (pool.completionTime === 0) {
-              if (!!(await server.get(`/pool/${poolId}/complete`))) {
-                setPool(await fetchOne(+poolId!)); // refetching for update
-              } else setHasError(true);
-            } else setPool(pool);
-          } else setPool(pool);
-        } else setHasError(true);
+
+              setPool(fetched);
+            } else setPool(fetched);
+          } else setPool(fetched);
+        } else {
+          // Only set error if there has no been a fetched pool before
+          if (!pool) setHasError(true);
+        }
       } catch (error) {
         console.error(error);
         setHasError(true);
@@ -126,7 +100,7 @@ export const PoolDetailPage = () => {
 
   useEffect(() => {
     if (pool && now >= pool.seeds.snapshotTime && !pool.completionTime) {
-      load();
+      load(true);
     }
   }, [now]);
 
@@ -135,7 +109,10 @@ export const PoolDetailPage = () => {
   }, [pool]);
 
   useEffect(() => {
-    load();
+    load(true);
+
+    // Update the pool page contents anytime the user leaves the page and comes back
+    document.addEventListener('visibilitychange', () => load(false));
 
     const interval = setInterval(
       () => setNow(Math.trunc(Date.now() / 1000)),
@@ -153,7 +130,7 @@ export const PoolDetailPage = () => {
         <p className="text-lg mb-8">Something went wrong</p>
         <button
           className="mx-auto py-2 px-16 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle p-ripple"
-          onClick={load}
+          onClick={() => load(true)}
         >
           Try Again
           <Ripple />
@@ -217,7 +194,12 @@ export const PoolDetailPage = () => {
               {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
             </div>
 
-            {pool.seeds.status() === 'Open' && <JoinPoolForm pool={pool} />}
+            {pool.seeds.status() === 'Open' && (
+              <JoinPoolForm
+                pool={pool}
+                handlePredictionSuccess={() => load(false)}
+              />
+            )}
 
             <PredictionsDisplay pool={pool} />
           </div>

@@ -12,12 +12,14 @@ export const MakePredictionModal = ({
   pool: { poolId, seeds },
   price,
   handleShowHeading,
-  handleClose
+  handleClose,
+  handlePredictionSuccess
 }: {
   pool: Pool;
   price: number;
   handleShowHeading: (isLoading: boolean) => void;
   handleClose: () => void;
+  handlePredictionSuccess: () => void;
 }) => {
   const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
@@ -72,6 +74,7 @@ export const MakePredictionModal = ({
       complete: () => {
         if (successUrl) setExplorerUrl(successUrl);
         setIsSuccess(!!successUrl);
+        handlePredictionSuccess();
         reset();
       }
     });

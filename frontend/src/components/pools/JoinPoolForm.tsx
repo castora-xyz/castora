@@ -7,7 +7,14 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export const JoinPoolForm = ({ pool, pool: { seeds } }: { pool: Pool }) => {
+export const JoinPoolForm = ({
+  pool,
+  pool: { seeds },
+  handlePredictionSuccess
+}: {
+  pool: Pool;
+  handlePredictionSuccess: () => void;
+}) => {
   const { isConnected } = useAccount();
   const { recordEvent } = useFirebase();
   const { open: connectWallet } = useWeb3Modal();
@@ -172,6 +179,7 @@ export const JoinPoolForm = ({ pool, pool: { seeds } }: { pool: Pool }) => {
           price={+(predictionInput.current?.value ?? 0)}
           handleShowHeading={setShowModalHeading}
           handleClose={() => closeModal(true)}
+          handlePredictionSuccess={handlePredictionSuccess}
         />
       </Dialog>
     </div>

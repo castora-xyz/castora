@@ -1,10 +1,15 @@
+import { useFirebase, useToast } from '@/contexts';
 import { Pool } from '@/schemas';
+import { Ripple } from 'primereact/ripple';
 
 export const CompletedPoolDisplay = ({
-  pool: { seeds, snapshotPrice, winAmount }
+  pool: { completionTime, noOfPredictions, seeds, snapshotPrice, winAmount }
 }: {
   pool: Pool;
 }) => {
+  const { ensureNotifications } = useFirebase();
+  const { toastInfo } = useToast();
+
   return (
     <div className="border border-border-default dark:border-surface-subtle p-8 rounded-[24px] w-full max-lg:max-w-lg max-lg:mx-auto">
       <div className="mb-8">
@@ -23,21 +28,43 @@ export const CompletedPoolDisplay = ({
         </div>
       </div>
 
-      {!!snapshotPrice ? (
+      {!!snapshotPrice && (
         <>
           <p className="font-medium text-text-subtitle mb-2">Snapshot Price</p>
           <p className="text-2xl sm:text-4xl md:text-5xl text-text-title mb-8">
             {snapshotPrice} USD
           </p>
         </>
-      ) : (
+      )}
+
+      {noOfPredictions === 0 ? (
         <p className="text-xl sm:text-2xl">Nobody Joined This Pool</p>
+      ) : completionTime === 0 ? (
+        <p className="text-xl sm:text-2xl">Computing Winners ...</p>
+      ) : (
+        <></>
       )}
 
       {!!winAmount && (
         <div className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white">
           Win Amount: {winAmount} {seeds.stakeTokenDetails.name}
         </div>
+      )}
+
+      {noOfPredictions > 0 && completionTime === 0 && (
+        <button
+          className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple"
+          onClick={async () => {
+            const result = await ensureNotifications();
+            toastInfo(
+              '',
+              result ? 'Notifications Enabled' : "Couldn't enable notifications"
+            );
+          }}
+        >
+          <span>Get Notified</span>
+          <Ripple />
+        </button>
       )}
     </div>
   );
