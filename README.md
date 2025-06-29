@@ -80,7 +80,7 @@ Castora contracts are upgradeable in order to help with bug fixes and new featur
 
 The [server](./server/) is a small NodeJS/Express backend that help with managing pools, storing transaction hashes of activities, and sending browser notifications to pool winners. 
 
-Pools need to be continuously available. [GitHub cron jobs](./.github/workflows/cron-sync-live-pools.yml) continuously create pools in the contract and completes them when their snapshot time reaches. Using a server for this helps to prevent abuse and ensures that pools are created in the regulated way. 
+Pools need to be continuously available. Cron Jobs continuously create pools in the contract and completes them when their snapshot time reaches. Using a server for this helps to prevent abuse and ensures that pools are created in the regulated way. 
 
 ## Frontend
 
