@@ -3,7 +3,6 @@ import {
   useCache,
   useContract,
   useFirebase,
-  useServer,
   useToast
 } from '@/contexts';
 import { Pool, PoolSeeds } from '@/schemas';
@@ -66,7 +65,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [defaultChain] = useChains();
   const { castoraAddress, readContract, writeContract } = useContract();
   const { ensureNotifications, firestore, recordEvent } = useFirebase();
-  const server = useServer();
   const { toastError, toastSuccess } = useToast();
 
   const [isFetchingExprtl, setIsFetchingExprtl] = useState(true);
@@ -104,7 +102,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           }
 
           subscriber.next('finalizing');
-          await server.get(`/record/${txHash}`, true);
           recordEvent('claimed_winnings', { poolId, predictionId });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
@@ -143,7 +140,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           }
 
           subscriber.next('finalizing');
-          await server.get(`/record/${txHash}`, true);
           recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
@@ -259,7 +255,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           await ensureNotifications();
-          await server.get(`/record/${txHash}`, true);
           recordEvent('predicted', { poolId, predictionId });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url

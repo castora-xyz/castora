@@ -3,8 +3,7 @@ import {
   useContract,
   usePaginators,
   usePools,
-  usePredictions,
-  useServer
+  usePredictions
 } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import {
@@ -52,7 +51,6 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
   const { fetchOne: fetchPool } = usePools();
   const paginators = usePaginators();
   const fetchPredictions = usePredictions();
-  const server = useServer();
 
   const [noOfJoinedPools, setNoOfJoinedPools] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
@@ -126,18 +124,6 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
       // TODO: Filter out the right predictions to show for the overlap
     }
 
-    // Using the fetched user addresses to minimize calls for each pool
-    const explorerUrls: { [key: string]: string } = {};
-    const offchained = await server.get(`/user/${address}/activities`);
-    if (offchained && Array.isArray(offchained) && offchained.length > 0) {
-      for (const item of offchained) {
-        const { poolId, predictionId, txHash } = item;
-        if (!poolId || !predictionId || !txHash) continue;
-        const url = `${currentChain.blockExplorers?.default.url}/tx/${txHash}`;
-        explorerUrls[`pl${poolId}-pr${predictionId}`] = url;
-      }
-    }
-
     const activities: Activity[] = [];
     for (const { poolId, predictionIds } of poolInfos) {
       const pool = await fetchPool(poolId);
@@ -147,18 +133,15 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const predictions = await fetchPredictions(pool, predictionIds, false);
+      const predictions = await fetchPredictions(pool, predictionIds);
       if (!predictions) {
         setIsFetching(false);
         setHasError(true);
         return;
       }
 
-      for (const prediction of predictions) {
-        const url = explorerUrls[`pl${poolId}-pr${prediction.id}`];
-        if (url) prediction.explorerUrl = url;
+      for (const prediction of predictions)
         activities.push({ pool, prediction });
-      }
     }
 
     // sort by latest made predictions first
