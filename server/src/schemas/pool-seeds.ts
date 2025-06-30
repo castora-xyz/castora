@@ -46,6 +46,22 @@ export class PoolSeeds {
   }
 
   /**
+   * Returns info about the prediction token
+   */
+  getPredictionTokenDetails(): Token {
+    const details = tokens.find(
+      (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
+    );
+    if (!details) {
+      // TODO: Alert Developers in some way
+      const message = `Token not found in tokens list: ${this.predictionToken}`;
+      console.error(message);
+      throw message;
+    }
+    return details;
+  }
+
+  /**
    * Returns info about the stake token
    */
   getStakeTokenDetails(): Token {
@@ -59,5 +75,17 @@ export class PoolSeeds {
       throw message;
     }
     return details;
+  }
+
+  toJSON(): any {
+    const { name: predictionToken } = this.getPredictionTokenDetails();
+    const { decimals, name: stakeToken } = this.getStakeTokenDetails();
+    return {
+      predictionToken,
+      stakeToken,
+      stakeAmount: this.stakeAmount / 10 ** decimals,
+      windowCloseTime: this.windowCloseTime,
+      snapshotTime: this.snapshotTime
+    };
   }
 }

@@ -1,10 +1,3 @@
-import { SetWinnersResult } from '.';
-import { Pool } from './pool';
-
-export interface CompletedPoolLeaderboardInfo extends SetWinnersResult {
-  pool: Pool;
-}
-
 export interface TokenAndAmount {
   token: string;
   amount: number;

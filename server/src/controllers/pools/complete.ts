@@ -9,7 +9,7 @@ import {
   notifyWinners,
   setWinners
 } from '../../utils';
-import { updateLeaderboardOnCompletePool } from '../../utils/update-leaderboard';
+import { rearchivePool } from './archive';
 
 /**
  * Completes all live pools on the provided chain.
@@ -76,16 +76,15 @@ export const completePool = async (
     const snapshotPrice = await getSnapshotPrice(pool);
     console.log('Got Snapshot Price: ', snapshotPrice);
 
-    const setWinnersResults = await setWinners(chain, pool, snapshotPrice);
+    const splitResult = await setWinners(chain, pool, snapshotPrice);
 
-    // refetching the pool here so that the winAmount will now be valid
+    // refetching the pool here so that the winAmount and completionTime will now be valid
     pool = await fetchPool(chain, poolId);
 
-    // await updateLeaderboardOnCompletePool(chain, {
-    //   pool,
-    //   ...setWinnersResults
-    // });
+    // re-archiving to store the updated winner predictions off-chain for leaderboard updates.
+    await rearchivePool(chain, pool, splitResult);
 
-    await notifyWinners(setWinnersResults.splitted.winnerAddresses, pool);
+    // send notifications to winners to go and claim
+    await notifyWinners(splitResult.winnerAddressesUniqued, pool);
   }
 };

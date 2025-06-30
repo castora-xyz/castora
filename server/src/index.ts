@@ -3,6 +3,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import * as morgan from 'morgan';
 
 import {
+  archivePool,
+  archivePools,
   completePool,
   completePools,
   recordActivity,
@@ -80,4 +82,29 @@ completerApp.use('**', (_, res) => res.json({ success: true }));
 export const completer = onRequest(
   { cors: true, timeoutSeconds: 1800 },
   completerApp
+);
+
+const archiverApp = express();
+archiverApp.use(express.json());
+archiverApp.use(express.urlencoded({ extended: false }));
+archiverApp.use(morgan('combined'));
+archiverApp.get('/pool/:id/archive', validateChain, async (req, res) => {
+  await wrapper(
+    async () => await archivePool(res.locals.chain, req.params.id),
+    'completing pool',
+    res
+  );
+});
+archiverApp.get('/pools/archive', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await archivePools(res.locals.chain),
+    'completing pools',
+    res
+  );
+});
+archiverApp.use('**', (_, res) => res.json({ success: true }));
+
+export const archiver = onRequest(
+  { cors: true, timeoutSeconds: 1800 },
+  archiverApp
 );

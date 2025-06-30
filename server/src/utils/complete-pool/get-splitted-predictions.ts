@@ -2,11 +2,7 @@ import { Prediction, SplitPredictionResult } from '../../schemas';
 
 /**
  * Calculates and returns the first "noOfWinners" predictionIds and their predicters
- * whose predictionPrices where closest to the snapshotPrice and then the others
- * that were away from it. That is, returns both winners and losers. 
- *
- * The winners are the first "noOfWinners" of the predictions with the closest
- * predictionPrices to the snapshotPrice. The losers are the others.
+ * whose predictionPrices where closest to the snapshotPrice, that's the winners.
  *
  * @param snapshotPrice The price of the predictionToken at the snapshotTime.
  * @param predictions Array of Predictions from which to calculate the winners.
@@ -24,7 +20,7 @@ export const getSplittedPredictions = (
   for (let i = 0; i < predictions.length; i++) {
     const { id, predicter, price } = predictions[i];
     const diff = Math.abs(price - snapshotPrice);
-    extracted.push({ id, price, diff, predicter });
+    extracted.push({ id, price, diff, predicter, index: i });
   }
 
   // 2. Compare these differences and rank them from lowest to highest.
@@ -41,25 +37,20 @@ export const getSplittedPredictions = (
   const winners = sorted.slice(0, noOfWinners);
   const winnerAddresses = [];
   const winnerPredictionIds = [];
+  const winnerPredictionIdsBigInts = [];
   for (let i = 0; i < winners.length; i++) {
-    winnerPredictionIds.push(BigInt(winners[i].id));
+    predictions[winners[i].index].isAWinner = true;
     winnerAddresses.push(winners[i].predicter);
+    winnerPredictionIds.push(winners[i].id);
+    winnerPredictionIdsBigInts.push(BigInt(winners[i].id));
   }
-
-  // 4. Set the losers as the others.
-  const losers = sorted.slice(noOfWinners, predictions.length);
-  const loserAddresses = [];
-  const loserPredictionIds = [];
-  for (let i = 0; i < losers.length; i++) {
-    loserAddresses.push(losers[i].predicter);
-    loserPredictionIds.push(BigInt(losers[i].id));
-  }
+  const winnerAddressesUniqued = [...new Set(winnerAddresses)];
 
   // 5. Return the splitted results
   return {
-    loserAddresses,
-    loserPredictionIds,
-    winnerAddresses,
-    winnerPredictionIds
+    predictions,
+    winnerAddressesUniqued,
+    winnerPredictionIds,
+    winnerPredictionIdsBigInts
   };
 };
