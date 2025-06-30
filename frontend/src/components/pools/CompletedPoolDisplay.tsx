@@ -40,7 +40,7 @@ export const CompletedPoolDisplay = ({
       {noOfPredictions === 0 ? (
         <p className="text-xl sm:text-2xl">Nobody Joined This Pool</p>
       ) : completionTime === 0 ? (
-        <p className="text-xl sm:text-2xl">Computing Winners ...</p>
+        <p className="text-xl sm:text-2xl mb-6">Computing Winners ...</p>
       ) : (
         <></>
       )}

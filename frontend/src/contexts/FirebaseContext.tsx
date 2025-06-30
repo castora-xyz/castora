@@ -75,12 +75,10 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     !!localStorage.getItem(`castora.fcmToken:${addr}`);
 
   const ensureNotifications = async (): Promise<boolean> => {
-    if (
-      !isConnected ||
-      !('Notification' in window) ||
-      (Notification.permission == 'granted' && address && hasSet(address))
-    ) {
-      return false;
+    if (!isConnected || !('Notification' in window)) return false;
+
+    if (Notification.permission == 'granted' && address && hasSet(address)) {
+      return true;
     }
 
     if (Notification.permission !== 'granted') {

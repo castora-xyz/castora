@@ -71,6 +71,7 @@ export const PoolDetailPage = () => {
               setPool(fetched);
             } else setPool(fetched);
           } else setPool(fetched);
+          setHasError(false);
         } else {
           // Only set error if there has no been a fetched pool before
           if (!pool) setHasError(true);
@@ -97,12 +98,6 @@ export const PoolDetailPage = () => {
       setPrevCurrentChain(currentChain);
     }
   }, [currentChain]);
-
-  useEffect(() => {
-    if (pool && now >= pool.seeds.snapshotTime && !pool.completionTime) {
-      load(true);
-    }
-  }, [now]);
 
   useEffect(() => {
     if (!!pool) document.title = `Pool ${pool.poolId} - Castora`;
