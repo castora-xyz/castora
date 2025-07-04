@@ -7,7 +7,6 @@ import {
   archivePools,
   completePool,
   completePools,
-  recordActivity,
   syncPools
 } from './controllers';
 import router, { wrapper } from './router';
@@ -21,25 +20,6 @@ mainApp.use(morgan('combined'));
 mainApp.use(router);
 
 export const server = onRequest({ cors: true, timeoutSeconds: 1800 }, mainApp);
-
-const recorderApp = express();
-recorderApp.use(express.json());
-recorderApp.use(express.urlencoded({ extended: false }));
-recorderApp.use(morgan('combined'));
-recorderApp.get('/record/:txHash', validateChain, async (req, res) => {
-  await wrapper(
-    async () => await recordActivity(res.locals.chain, req.params.txHash),
-    'recording activity',
-    res
-  );
-});
-
-recorderApp.use('**', (_, res) => res.json({ success: true }));
-
-export const recorder = onRequest(
-  { cors: true, timeoutSeconds: 1800 },
-  recorderApp
-);
 
 const syncerApp = express();
 syncerApp.use(express.json());
