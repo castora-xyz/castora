@@ -2,10 +2,10 @@ import 'dotenv/config';
 import {
   Chain,
   fetchPool,
-  generateExperimentalsSeeds,
-  generateLiveSeeds,
+  getCryptoSeeds,
   getPoolId,
   getSnapshotPrice,
+  getStocksSeeds,
   notifyWinners,
   setWinners
 } from '../../utils';
@@ -17,10 +17,7 @@ import { rearchivePool } from './archive';
  * @param chain The chain to complete all live pools on.
  */
 export const completePools = async (chain: Chain) => {
-  const prevs = [
-    ...generateLiveSeeds(chain),
-    ...generateExperimentalsSeeds(chain)
-  ];
+  const prevs = [...getCryptoSeeds(chain), ...getStocksSeeds(chain)];
   for (const seed of prevs) {
     const poolId = await getPoolId(chain, seed);
     try {

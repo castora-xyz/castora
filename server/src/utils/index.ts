@@ -3,7 +3,7 @@ export * from './complete-pool';
 export * from './contract';
 export * from './create-pool';
 export * from './fetch-pool';
-export * from './generate-seeds';
+export * from './get-pool-seeds';
 export * from './get-pool-id';
 export * from './tokens';
 export * from './validate-chain';

@@ -7,9 +7,9 @@ import {
 import {
   Chain,
   fetchPool,
-  generateExperimentalsSeeds,
-  generateLiveSeeds,
+  getCryptoSeeds,
   getPoolId,
+  getStocksSeeds,
   storage
 } from '../../utils';
 import { fetchPredictions } from '../../utils/complete-pool/fetch-predictions';
@@ -22,10 +22,7 @@ import { fetchPredictions } from '../../utils/complete-pool/fetch-predictions';
  * @param chain The chain to archive all live pools on.
  */
 export const archivePools = async (chain: Chain) => {
-  const prevs = [
-    ...generateLiveSeeds(chain),
-    ...generateExperimentalsSeeds(chain)
-  ];
+  const prevs = [...getCryptoSeeds(chain), ...getStocksSeeds(chain)];
 
   for (const seed of prevs) {
     const poolId = await getPoolId(chain, seed);

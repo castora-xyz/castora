@@ -4,63 +4,14 @@ import {
   archivePools,
   completePool,
   completePools,
-  fetchActivity,
-  getExperimentalsPools,
-  getLivePools,
+  getCryptoPoolIds,
+  getStocksPoolIds,
   syncPools
 } from '../controllers';
-import { fetchPool, validateChain } from '../utils';
+import { validateChain } from '../utils';
 import { wrapper } from './index';
 
 const router = Router();
-
-router.get('/pools/archive', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await archivePools(res.locals.chain),
-    'archiving pools',
-    res
-  );
-});
-
-router.get('/pools/complete', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await completePools(res.locals.chain),
-    'completing pools',
-    res
-  );
-});
-
-router.get('/pools/live', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await getLivePools(res.locals.chain),
-    'fetching live poolIds',
-    res
-  );
-});
-
-router.get('/pools/experimentals', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await getExperimentalsPools(res.locals.chain),
-    'fetching live poolIds',
-    res
-  );
-});
-
-router.get('/pools/sync', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await syncPools(res.locals.chain),
-    'syncing live pools',
-    res
-  );
-});
-
-router.get('/pool/:id/activities', validateChain, async (req, res) => {
-  await wrapper(
-    async () => fetchActivity(res.locals.chain, 'pool', req.params.id),
-    'fetching pool activities',
-    res
-  );
-});
 
 router.get('/pool/:id/archive', validateChain, async (req, res) => {
   await wrapper(
@@ -78,10 +29,54 @@ router.get('/pool/:id/complete', validateChain, async (req, res) => {
   );
 });
 
-router.get('/pool/:id', validateChain, async (req, res) => {
+router.get('/pools/archive', validateChain, async (_, res) => {
   await wrapper(
-    async () => fetchPool(res.locals.chain, req.params.id),
-    'fetching pool',
+    async () => await archivePools(res.locals.chain),
+    'archiving pools',
+    res
+  );
+});
+
+router.get('/pools/complete', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await completePools(res.locals.chain),
+    'completing pools',
+    res
+  );
+});
+
+router.get('/pools/ids', validateChain, async (_, res) => {
+  await wrapper(
+    async () => {
+      const crypto = await getCryptoPoolIds(res.locals.chain);
+      const stocks = await getStocksPoolIds(res.locals.chain);
+      return { crypto, stocks };
+    },
+    'fetching all poolIds',
+    res
+  );
+});
+
+router.get('/pools/ids/crypto', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await getCryptoPoolIds(res.locals.chain),
+    'fetching live crypto poolIds',
+    res
+  );
+});
+
+router.get('/pools/ids/stocks', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await getStocksPoolIds(res.locals.chain),
+    'fetching live stocks poolIds',
+    res
+  );
+});
+
+router.get('/pools/sync', validateChain, async (_, res) => {
+  await wrapper(
+    async () => await syncPools(res.locals.chain),
+    'syncing live pools',
     res
   );
 });

@@ -57,10 +57,12 @@ export class PoolSeeds {
   chartPairName() {
     const { name } = this.predictionTokenDetails;
     if (name == 'AAPL') return 'PYTH:AAPL';
+    if (name == 'CRCL') return 'PYTH:CRCL';
     if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
     if (name == 'PENGU') return 'BITGET:PENGUUSDT';
     if (name == 'SUI') return 'COINBASE:SUIUSD';
     if (name == 'TRUMP') return 'KCEX:TRUMPUSDT';
+    if (name == 'TSLA') return 'PYTH:TSLA';
     return `PYTH:${name}USD`;
   }
 
@@ -117,15 +119,41 @@ export class PoolSeeds {
   }
 
   /**
+   * Whether this pool is a stock pool.
+   */
+  isStockPool() {
+    const { name } = this.predictionTokenDetails;
+    return name == 'AAPL' || name == 'CRCL' || name == 'TSLA';
+  }
+
+  /**
    * When the pool will start accepting predictions.
+   *
+   * The open time of an upcoming pool is the close time of the previous
+   * pool of the same time series.
    */
   openTime() {
     if (this.status() === 'Upcoming') {
+      // If it is a stock pool,
+      if (this.isStockPool()) {
+        // If windowClose is on Monday, open time is 3 days before,
+        // otherwise it is 1 day before.
+        const mul =
+          new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
+        return this.windowCloseTime - mul * 24 * 60 * 60;
+      }
+
+      // If it is a crypto pool, open time depends on difference
+      // between snapshotTime and windowCloseTime.
       const diff = this.snapshotTime - this.windowCloseTime;
-      if (diff === 15 * 60) return this.windowCloseTime - 45 * 60;
-      if (diff === 30 * 60) return this.windowCloseTime - 5 * 30 * 60;
-      if (diff === 60 * 60) return this.windowCloseTime - 5 * 60 * 60;
-      if (diff === 12 * 60 * 60) return this.windowCloseTime - 12 * 60 * 60;
+
+      // For 6-hourly pools with an hour close window,
+      // the open time is 6 hours before the window close time.
+      if (diff === 60 * 60) return this.windowCloseTime - 6 * 60 * 60;
+
+      // For 24-hourly pools with a 12-hour close window,
+      // the open time is 24 hours before the window close time.
+      if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
       return null;
     } else return null;
   }
@@ -156,11 +184,22 @@ export class PoolSeeds {
    * That is from when it opens till snapshotTime.
    */
   poolLife() {
+    // If it is a stock pool,
+    if (this.isStockPool()) {
+      // If windowClose is on Monday, pool life is 3 days, otherwise 1 day.
+      if (new Date(this.windowCloseTime * 1000).getUTCDay() == 1) {
+        return 3 * 24 * 60 * 60; // 3 days
+      } else {
+        // 1 day, but currently returning 12 hours to match existing crypto pool logic
+        return 12 * 60 * 60;
+      }
+    }
+
+    // If it is a crypto pool, pool life depends on difference
+    // between snapshotTime and windowCloseTime.
     const diff = this.snapshotTime - this.windowCloseTime;
-    if (diff === 15 * 60) return 60 * 60; // hourly pool
-    if (diff === 30 * 60) return 3 * 60 * 60; // 3-hoorly pool
     if (diff === 60 * 60) return 6 * 60 * 60; // 6-hourly pool
-    if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 12-hourly pool
+    if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 24-hourly pool
     // TODO: Handle newer pool types when the time comes
     return 60 * 60;
   }
