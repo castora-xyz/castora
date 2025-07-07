@@ -8,20 +8,28 @@ export const CountdownBadge = ({
 }: {
   seeds: PoolSeeds;
 }) => {
+  const getReferenceTime = () => {
+    const now = Math.trunc(Date.now() / 1000);
+    const openTime = seeds.openTime();
+    if (openTime && openTime > now) return openTime;
+    return windowCloseTime;
+  };
+
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [diff, setDiff] = useState(windowCloseTime - now);
-  const [timestamp, setTimestamp] = useState(
-    seeds.openTime() ?? windowCloseTime
-  );
+  const [timestamp, setTimestamp] = useState(getReferenceTime());
 
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Math.trunc(Date.now() / 1000));
-      setDiff(windowCloseTime - now);
-      setTimestamp(seeds.openTime() ?? windowCloseTime);
+      setTimestamp(getReferenceTime());
     }, 1000);
     return () => clearInterval(interval);
   }, [now]);
+
+  useEffect(() => {
+    setDiff(timestamp - now);
+  }, [now, timestamp]);
 
   if (diff <= 0) return <></>;
 

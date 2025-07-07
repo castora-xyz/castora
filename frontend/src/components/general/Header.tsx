@@ -49,17 +49,15 @@ export const Header = () => {
             <Ripple />
           </NavLink>
           <NavLink
-            to="/experimentals"
+            to="/stocks"
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${
-                isActive
-                  ? 'text-primary-darker dark:text-primary-default'
-                  : 'text-accent'
+                isActive ? 'text-primary-darker dark:text-primary-default' : ''
               }`
             }
           >
-            Experimentals
+            Stocks
             <Ripple />
           </NavLink>
           <NavLink

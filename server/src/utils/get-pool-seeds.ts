@@ -169,7 +169,7 @@ export const getStocksSeeds = (chain: Chain) => {
         new PoolSeeds({
           predictionToken,
           stakeToken: getContractAddress(chain),
-          stakeAmount: 2e18,
+          stakeAmount: 5e17,
           snapshotTime,
           windowCloseTime
         })

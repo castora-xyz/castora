@@ -7,6 +7,13 @@ export const PoolDetailsInCards = ({
 }: {
   pool: Pool;
 }) => {
+  const getCountdownTime = () => {
+    const now = Math.trunc(Date.now() / 1000);
+    const openTime = seeds.openTime();
+    if (openTime && openTime > now) return openTime;
+    return seeds.windowCloseTime;
+  };
+
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
   useEffect(() => {
@@ -35,9 +42,7 @@ export const PoolDetailsInCards = ({
                   Pool {seeds.status() === 'Upcoming' ? 'Opens' : 'Closes'} In
                 </div>
                 <div className="font-medium sm:text-xl">
-                  <CountdownNumbers
-                    timestamp={seeds.openTime() ?? seeds.windowCloseTime}
-                  />
+                  <CountdownNumbers timestamp={getCountdownTime()} />
                 </div>
               </>
             ) : (

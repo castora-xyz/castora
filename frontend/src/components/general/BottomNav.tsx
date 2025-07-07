@@ -1,4 +1,4 @@
-import Bolt from '@/assets/bolt.svg?react';
+import Briefcase from '@/assets/briefcase.svg?react';
 import Leaderboard from '@/assets/leaderboard.svg?react';
 import RectangleStack from '@/assets/rectangle-stack.svg?react';
 import Squares2x2 from '@/assets/squares-2x2.svg?react';
@@ -33,19 +33,18 @@ export const BottomNav = () => {
         </li>
         <li>
           <NavLink
-            to="/experimentals"
+            to="/stocks"
             className={({ isActive }) =>
               'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
               `${
                 isActive
                   ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
-                  : 'text-accent stroke-accent'
+                  : 'text-text-subtitle stroke-text-subtitle'
               }`
             }
           >
-            <Bolt className="w-6 h-6" />
-            <span className="hidden max-xs:block">Exprmn'tls</span>
-            <span className="max-xs:hidden">Experimentals</span>
+            <Briefcase className="w-6 h-6" />
+            <span>Stocks</span>
             <Ripple />
           </NavLink>
         </li>

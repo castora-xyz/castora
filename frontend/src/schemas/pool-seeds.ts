@@ -1,4 +1,4 @@
-import { FilterPoolsProps } from '@/contexts';
+import { FilterCryptoPoolsProps, FilterStockPoolsProps } from '@/contexts';
 import ms from 'ms';
 import { tokens } from './tokens';
 
@@ -133,29 +133,29 @@ export class PoolSeeds {
    * pool of the same time series.
    */
   openTime() {
-    if (this.status() === 'Upcoming') {
-      // If it is a stock pool,
-      if (this.isStockPool()) {
-        // If windowClose is on Monday, open time is 3 days before,
-        // otherwise it is 1 day before.
-        const mul =
-          new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
-        return this.windowCloseTime - mul * 24 * 60 * 60;
-      }
+    // If it is a stock pool,
+    if (this.isStockPool()) {
+      // If windowClose is on Monday, open time is 3 days before,
+      // otherwise it is 1 day before.
+      const mul =
+        new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
+      return this.windowCloseTime - mul * 24 * 60 * 60;
+    }
 
-      // If it is a crypto pool, open time depends on difference
-      // between snapshotTime and windowCloseTime.
-      const diff = this.snapshotTime - this.windowCloseTime;
+    // If it is a crypto pool, open time depends on difference
+    // between snapshotTime and windowCloseTime.
+    const diff = this.snapshotTime - this.windowCloseTime;
 
-      // For 6-hourly pools with an hour close window,
-      // the open time is 6 hours before the window close time.
-      if (diff === 60 * 60) return this.windowCloseTime - 6 * 60 * 60;
+    // For 6-hourly pools with an hour close window,
+    // the open time is 6 hours before the window close time.
+    if (diff === 60 * 60) return this.windowCloseTime - 6 * 60 * 60;
 
-      // For 24-hourly pools with a 12-hour close window,
-      // the open time is 24 hours before the window close time.
-      if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
-      return null;
-    } else return null;
+    // For 24-hourly pools with a 12-hour close window,
+    // the open time is 24 hours before the window close time.
+    if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
+    
+    // TODO: Handle newer pool types when the time comes
+    return null;
   }
 
   /**
@@ -219,32 +219,25 @@ export class PoolSeeds {
    */
   status() {
     const now = Math.floor(Date.now() / 1000);
-    const diff = this.snapshotTime - this.windowCloseTime;
-    if (
-      (diff === 15 * 60 && now < this.windowCloseTime - 45 * 60) ||
-      (diff === 30 * 60 && now < this.windowCloseTime - 5 * 30 * 60) ||
-      (diff === 60 * 60 && now < this.windowCloseTime - 5 * 60 * 60)
-    ) {
-      return 'Upcoming';
-    }
+    if (now < (this.openTime() ?? now)) return 'Upcoming';
     if (now < this.windowCloseTime) return 'Open';
     if (now < this.snapshotTime) return 'Closed';
     return 'Completed';
   }
 
   /**
-   * Determines whether the pool matches the current filter criteria.
+   * Determines whether the crypto pool matches the current filter criteria.
    * The filter criteria include pool statuses, pool life durations,
    * prediction tokens, and stake tokens.
    *
    * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
    */
-  matchesFilter({
+  matchesFilterCrypto({
     poolLifes,
     predictionTokens,
     stakeTokens,
     statuses
-  }: FilterPoolsProps): boolean {
+  }: FilterCryptoPoolsProps): boolean {
     if (!statuses.includes(this.status())) return false;
     if (!poolLifes.includes(this.displayPoolLife())) return false;
 
@@ -253,6 +246,24 @@ export class PoolSeeds {
     if (!predictionTokens.includes(prdToken)) return false;
     if (!stakeTokens.includes(stkToken)) return false;
 
+    return true;
+  }
+
+  /**
+   * Determines whether the stock pool matches the current filter criteria.
+   * The filter criteria include pool statuses, pool life durations,
+   * prediction tokens, and stake tokens.
+   *
+   * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
+   */
+  matchesFilterStock({
+    predictionTokens,
+    statuses
+  }: FilterStockPoolsProps): boolean {
+    if (!statuses.includes(this.status())) return false;
+    if (!predictionTokens.includes(this.predictionTokenDetails.name)) {
+      return false;
+    }
     return true;
   }
 }

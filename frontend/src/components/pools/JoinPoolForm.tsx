@@ -106,7 +106,8 @@ export const JoinPoolForm = ({
       >
         <label>
           <span className="font-medium text-text-subtitle block mb-2">
-            Predict {seeds.predictionTokenDetails.name}'s Price at Snapshot Time
+            Predict {seeds.predictionTokenDetails.name}'s Price for{' '}
+            {seeds.formattedSnapshotTime().reverse().join(' ')}
           </span>
           <input
             min={0}

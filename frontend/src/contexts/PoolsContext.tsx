@@ -30,12 +30,12 @@ interface PoolsContextProps {
     predictionIds: number[],
     onSuccessCallback?: (explorerUrl: string) => void
   ) => Observable<WriteContractPoolStatus>;
-  exprtlPools: Pool[];
-  isFetchingLive: boolean;
-  isFetchingExprtl: boolean;
+  liveCryptoPools: Pool[];
+  liveStocksPools: Pool[];
+  isFetchingLiveCrypto: boolean;
+  isFetchingLiveStocks: boolean;
   isValidPoolId: (poolId: any) => Promise<boolean>;
   fetchOne: (poolId: number) => Promise<Pool | null>;
-  livePools: Pool[];
   predict: (
     poolId: number,
     price: number,
@@ -48,12 +48,12 @@ interface PoolsContextProps {
 const PoolsContext = createContext<PoolsContextProps>({
   claimWinnings: () => new Observable(),
   claimWinningsBulk: () => new Observable(),
-  exprtlPools: [],
-  isFetchingLive: true,
-  isFetchingExprtl: true,
+  liveCryptoPools: [],
+  liveStocksPools: [],
+  isFetchingLiveCrypto: true,
+  isFetchingLiveStocks: true,
   isValidPoolId: async () => false,
   fetchOne: async () => null,
-  livePools: [],
   predict: () => new Observable()
 });
 
@@ -67,12 +67,12 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const { ensureNotifications, firestore, recordEvent } = useFirebase();
   const { toastError, toastSuccess } = useToast();
 
-  const [isFetchingExprtl, setIsFetchingExprtl] = useState(true);
-  const [isFetchingLive, setIsFetchingLive] = useState(true);
-  const [exprtlPools, setExprtlPools] = useState<Pool[]>([]);
-  const [exprtlPoolIds, setExprtlPoolIds] = useState<number[]>([]);
-  const [livePools, setLivePools] = useState<Pool[]>([]);
-  const [livePoolIds, setLivePoolIds] = useState<number[]>([]);
+  const [isFetchingLiveStocks, setIsFetchingLiveStocks] = useState(true);
+  const [isFetchingLiveCrypto, setIsFetchingLiveCrypto] = useState(true);
+  const [liveCryptoPools, setLiveCryptoPools] = useState<Pool[]>([]);
+  const [liveCryptoPoolIds, setLiveCryptoPoolIds] = useState<number[]>([]);
+  const [liveStocksPools, setLiveStocksPools] = useState<Pool[]>([]);
+  const [liveStocksPoolIds, setLiveStocksPoolIds] = useState<number[]>([]);
 
   /**
    * Claims the winnings of a winner from a pool.
@@ -183,28 +183,28 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const fetchExprtlPools = async () => {
-    setIsFetchingExprtl(true);
+  const fetchLiveStocksPools = async () => {
+    setIsFetchingLiveStocks(true);
     const fetched = [];
-    const sorted = exprtlPoolIds.sort((a, b) => b - a);
+    const sorted = liveStocksPoolIds.sort((a, b) => b - a);
     for (const poolId of sorted) {
       const pool = await fetchOne(poolId);
       if (pool) fetched.push(pool);
     }
-    setExprtlPools(fetched);
-    setIsFetchingExprtl(false);
+    setLiveStocksPools(fetched);
+    setIsFetchingLiveStocks(false);
   };
 
-  const fetchLivePools = async () => {
-    setIsFetchingLive(true);
+  const fetchLiveCryptoPools = async () => {
+    setIsFetchingLiveCrypto(true);
     const fetched = [];
-    const sorted = livePoolIds.sort((a, b) => b - a);
+    const sorted = liveCryptoPoolIds.sort((a, b) => b - a);
     for (const poolId of sorted) {
       const pool = await fetchOne(poolId);
       if (pool) fetched.push(pool);
     }
-    setLivePools(fetched);
-    setIsFetchingLive(false);
+    setLiveCryptoPools(fetched);
+    setIsFetchingLiveCrypto(false);
   };
 
   const isValidPoolId = async (poolId: any) => {
@@ -272,35 +272,35 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    fetchExprtlPools();
-  }, [exprtlPoolIds]);
+    fetchLiveStocksPools();
+  }, [liveStocksPoolIds]);
 
   useEffect(() => {
-    fetchLivePools();
-  }, [livePoolIds]);
+    fetchLiveCryptoPools();
+  }, [liveCryptoPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, '/live/experimentals'), (doc) => {
+    return onSnapshot(doc(firestore, '/live/stocks'), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setExprtlPoolIds(data.poolIds);
+          setLiveStocksPoolIds(data.poolIds);
         }
       } else {
-        setExprtlPoolIds([]);
+        setLiveStocksPoolIds([]);
       }
     });
   }, [firestore]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, '/live/live'), (doc) => {
+    return onSnapshot(doc(firestore, '/live/crypto'), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setLivePoolIds(data.poolIds);
+          setLiveCryptoPoolIds(data.poolIds);
         }
       } else {
-        setLivePoolIds([]);
+        setLiveCryptoPoolIds([]);
       }
     });
   }, [firestore]);
@@ -310,12 +310,12 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       value={{
         claimWinnings,
         claimWinningsBulk,
-        exprtlPools,
-        isFetchingExprtl,
-        isFetchingLive,
+        liveStocksPools,
+        liveCryptoPools,
+        isFetchingLiveStocks,
+        isFetchingLiveCrypto,
         isValidPoolId,
         fetchOne,
-        livePools,
         predict
       }}
     >

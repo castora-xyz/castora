@@ -1,10 +1,10 @@
 import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
 import {
-  ExperimentalsPage,
   LandingPage,
   LeaderboardPage,
-  LivePoolsPage,
+  LiveCryptoPoolsPage,
+  LiveStocksPoolsPage,
   MyActivityPage,
   NotFoundPage,
   PoolDetailPage
@@ -27,9 +27,9 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',
-      '/experimentals': 'Experimentals',
       '/pools': 'Pools',
       '/predictions': 'Predictions',
+      '/stocks': 'Stocks',
       '/leaderboard': 'Leaderboard',
       '/activity': 'Activity'
     };
@@ -66,11 +66,11 @@ const router = createBrowserRouter(
     >
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<LivePoolsPage />} />
+        <Route path="pools" element={<LiveCryptoPoolsPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="predictions" element={<MyActivityPage />} />
-        <Route path="experimentals" element={<ExperimentalsPage />} />
+        <Route path="stocks" element={<LiveStocksPoolsPage />} />
         <Route path="activity" element={<MyActivityPage />} />
       </Route>
     </Route>

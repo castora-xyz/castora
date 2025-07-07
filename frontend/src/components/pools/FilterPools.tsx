@@ -1,10 +1,12 @@
 import FilterList from '@/assets/filter-list.svg?react';
 import {
-  ALL_POOL_LIFES,
-  ALL_PREDICATION_TOKENS,
-  ALL_STAKE_TOKENS,
+  ALL_CRYPTO_POOL_LIFES,
+  ALL_CRYPTO_PREDICTION_TOKENS,
+  ALL_CRYPTO_STAKE_TOKENS,
   ALL_STATUSES,
-  useFilterPools,
+  ALL_STOCK_PREDICTION_TOKENS,
+  useFilterCryptoPools,
+  useFilterStockPools,
   useFirebase
 } from '@/contexts';
 import { Dialog } from 'primereact/dialog';
@@ -50,19 +52,11 @@ const FilterPoolsSection = ({
   </div>
 );
 
-export const FilterPools = () => {
+export const FilterStockPools = () => {
   const { recordEvent } = useFirebase();
   const [visible, setVisible] = useState(false);
-  const {
-    poolLifes,
-    predictionTokens,
-    stakeTokens,
-    statuses,
-    togglePoolLife,
-    togglePredictionToken,
-    toggleStakeToken,
-    toggleStatus
-  } = useFilterPools();
+  const { predictionTokens, statuses, togglePredictionToken, toggleStatus } =
+    useFilterStockPools();
 
   return (
     <>
@@ -79,10 +73,73 @@ export const FilterPools = () => {
       </button>
 
       <Dialog
-        header="Filter Pools"
+        header="Filter Stocks Pools"
         visible={visible}
         onHide={() => {
-          recordEvent('filtered_pools', {
+          recordEvent('filtered_stock_pools', {
+            predictionTokens: JSON.stringify(predictionTokens),
+            statuses: JSON.stringify(statuses)
+          });
+          if (!visible) return;
+          setVisible(false);
+        }}
+        pt={{
+          root: { className: 'mx-8' },
+          header: { className: 'dark:bg-app-bg' },
+          content: { className: 'dark:bg-app-bg' }
+        }}
+      >
+        <FilterPoolsSection
+          title="Pair"
+          current={predictionTokens}
+          all={ALL_STOCK_PREDICTION_TOKENS}
+          onClick={togglePredictionToken}
+        />
+
+        <FilterPoolsSection
+          title="Status"
+          current={statuses}
+          all={ALL_STATUSES}
+          onClick={toggleStatus}
+        />
+      </Dialog>
+    </>
+  );
+};
+
+export const FilterCryptoPools = () => {
+  const { recordEvent } = useFirebase();
+  const [visible, setVisible] = useState(false);
+  const {
+    poolLifes,
+    predictionTokens,
+    stakeTokens,
+    statuses,
+    togglePoolLife,
+    togglePredictionToken,
+    toggleStakeToken,
+    toggleStatus
+  } = useFilterCryptoPools();
+
+  return (
+    <>
+      <button
+        className="outline-none p-ripple py-2 px-6 rounded-full border border-border-default dark:border-surface-subtle flex w-fit items-center"
+        onClick={() => setVisible(true)}
+      >
+        <Ripple />
+        <span className="text-text-subtitle">Filters</span>
+        <div className="relative">
+          <FilterList className="ml-2 w-4 h-4 fill-text-subtitle" />
+          <div className="absolute w-1.5 h-1.5 rounded-full bg-primary-default top-0.5 right-0"></div>
+        </div>
+      </button>
+
+      <Dialog
+        header="Filter Crypto Pools"
+        visible={visible}
+        onHide={() => {
+          recordEvent('filtered_crypto_pools', {
             predictionTokens: JSON.stringify(predictionTokens),
             poolLifes: JSON.stringify(poolLifes),
             stakeTokens: JSON.stringify(stakeTokens),
@@ -100,14 +157,14 @@ export const FilterPools = () => {
         <FilterPoolsSection
           title="Pair"
           current={predictionTokens}
-          all={ALL_PREDICATION_TOKENS}
+          all={ALL_CRYPTO_PREDICTION_TOKENS}
           onClick={togglePredictionToken}
         />
 
         <FilterPoolsSection
           title="Life"
           current={poolLifes}
-          all={ALL_POOL_LIFES}
+          all={ALL_CRYPTO_POOL_LIFES}
           onClick={togglePoolLife}
         />
 
@@ -121,7 +178,7 @@ export const FilterPools = () => {
         <FilterPoolsSection
           title="Stake"
           current={stakeTokens}
-          all={ALL_STAKE_TOKENS}
+          all={ALL_CRYPTO_STAKE_TOKENS}
           onClick={toggleStakeToken}
         />
       </Dialog>

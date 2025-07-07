@@ -1,28 +1,15 @@
-import { FilterPools, PoolCard, PoolCardShimmer } from '@/components';
-import { useFilterPools, usePools } from '@/contexts';
-import { useEffect, useState } from 'react';
+import { FilterCryptoPools, PoolCard, PoolCardShimmer } from '@/components';
+import { useFilterCryptoPools, usePools, usePoolsShimmer } from '@/contexts';
+import { useEffect } from 'react';
 
-export const LivePoolsPage = () => {
-  const { isFetchingLive: isFetchingPools, livePools } = usePools();
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+export const LiveCryptoPoolsPage = () => {
   const { poolLifes, predictionTokens, stakeTokens, statuses } =
-    useFilterPools();
-
-  const getShimmerCount = () => {
-    if (windowWidth < 768) return 3;
-    else if (windowWidth < 1024) return 5;
-    else if (windowWidth < 1280) return 8;
-    else return 10;
-  };
-  const [shimmerCount, setShimmerCount] = useState(getShimmerCount());
+    useFilterCryptoPools();
+  const { isFetchingLiveCrypto, liveCryptoPools } = usePools();
+  const { shimmerCount } = usePoolsShimmer();
 
   useEffect(() => {
-    setShimmerCount(getShimmerCount());
-  }, [windowWidth]);
-
-  useEffect(() => {
-    document.title = 'Live Pools | Castora';
-    window.addEventListener('resize', () => setWindowWidth(window.innerWidth));
+    document.title = 'Live Crypto Pools | Castora';
   }, []);
 
   return (
@@ -33,39 +20,34 @@ export const LivePoolsPage = () => {
             <span>Pools</span>
           </p>
 
-          <FilterPools />
+          <FilterCryptoPools />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">
-        {isFetchingPools ? (
+        {isFetchingLiveCrypto ? (
           Array.from(Array(shimmerCount).keys()).map((i) => (
             <PoolCardShimmer key={i} />
           ))
-        ) : livePools.filter((p) =>
-            p.seeds.matchesFilter({
+        ) : liveCryptoPools.filter((p) =>
+            p.seeds.matchesFilterCrypto({
               poolLifes,
               predictionTokens,
               stakeTokens,
               statuses
             })
           ).length > 0 ? (
-          [
-            // Flash Mega Pool
-            ...livePools
-              .filter((p) => p.poolId == 3000)
-              .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />),
-
-            ...livePools
+          <>
+            {...liveCryptoPools
               .filter((p) =>
-                p.seeds.matchesFilter({
+                p.seeds.matchesFilterCrypto({
                   poolLifes,
                   predictionTokens,
                   stakeTokens,
                   statuses
                 })
               )
-              .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />)
-          ]
+              .map((pool) => <PoolCard key={pool.seedsHash} pool={pool} />)}
+          </>
         ) : (
           <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12  w-full max-w-screen-xl mx-auto">
             <div className="md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-16 md:px-20 md:gap-4 md:max-w-2xl md:text-center">

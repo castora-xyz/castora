@@ -16,17 +16,17 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export const LandingPage = () => {
-  const { livePools } = usePools();
+  const { liveCryptoPools } = usePools();
 
   const [activePool, setActivePool] = useState<Pool | null>(null);
   const [upcomingPool, setUpcomingPool] = useState<Pool | null>(null);
 
   useEffect(() => {
-    if (livePools.length > 0) {
-      const activePools = livePools.filter(
+    if (liveCryptoPools.length > 0) {
+      const activePools = liveCryptoPools.filter(
         ({ seeds }) => seeds.status() === 'Open'
       );
-      const upcomingPools = livePools.filter(
+      const upcomingPools = liveCryptoPools.filter(
         ({ seeds }) => seeds.status() === 'Upcoming'
       );
       const sorter = (a: Pool, b: Pool) => {
@@ -47,7 +47,7 @@ export const LandingPage = () => {
       setActivePool(null);
       setUpcomingPool(null);
     }
-  }, [livePools]);
+  }, [liveCryptoPools]);
 
   useEffect(() => {
     document.title = 'Castora';

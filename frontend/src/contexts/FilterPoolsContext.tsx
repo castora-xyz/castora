@@ -6,26 +6,42 @@ import {
   useState
 } from 'react';
 
-export const ALL_PREDICATION_TOKENS = ['ETH', 'SOL', 'HYPE'];
-export const ALL_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
+export const ALL_CRYPTO_PREDICTION_TOKENS = ['ETH', 'SOL', 'HYPE'];
+export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
-export const ALL_POOL_LIFES = ['6h', '24h'];
+export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
+export const ALL_CRYPTO_POOL_LIFES = ['6h', '24h'];
 
-export interface FilterPoolsProps {
+export interface FilterStockPoolsProps {
   predictionTokens: string[];
-  stakeTokens: string[];
   statuses: string[];
+}
+
+export interface FilterCryptoPoolsProps extends FilterStockPoolsProps {
+  stakeTokens: string[];
   poolLifes: string[];
 }
 
-interface FilterPoolsContextProps extends FilterPoolsProps {
+interface FilterStockPoolsContextProps extends FilterStockPoolsProps {
+  togglePredictionToken: (token: string) => void;
+  toggleStatus: (status: string) => void;
+}
+
+const FilterStockPoolsContext = createContext<FilterStockPoolsContextProps>({
+  predictionTokens: [],
+  statuses: [],
+  togglePredictionToken: () => {},
+  toggleStatus: () => {}
+});
+
+interface FilterCryptoPoolsContextProps extends FilterCryptoPoolsProps {
   togglePoolLife: (life: string) => void;
   togglePredictionToken: (token: string) => void;
   toggleStakeToken: (token: string) => void;
   toggleStatus: (status: string) => void;
 }
 
-const FilterPoolsContext = createContext<FilterPoolsContextProps>({
+const FilterCryptoPoolsContext = createContext<FilterCryptoPoolsContextProps>({
   predictionTokens: [],
   stakeTokens: [],
   statuses: [],
@@ -36,37 +52,129 @@ const FilterPoolsContext = createContext<FilterPoolsContextProps>({
   toggleStatus: () => {}
 });
 
-export const useFilterPools = () => useContext(FilterPoolsContext);
+export const useFilterStockPools = () => useContext(FilterStockPoolsContext);
 
-export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
-  const retrieveOne = (key: string, all: any[], initial: any[]): any[] => {
-    const saved = localStorage.getItem(`castora::filterpools::${key}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.every((p) => all.includes(p))) {
-          return parsed;
-        }
-      } catch (_) {}
-    }
-    return initial;
+export const useFilterCryptoPools = () => useContext(FilterCryptoPoolsContext);
+
+const retrieveOne = (
+  key: string,
+  prop: string,
+  all: any[],
+  initial: any[]
+): any[] => {
+  const saved = localStorage.getItem(`castora::filter${key}pools::${prop}`);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.every((p) => all.includes(p))) {
+        return parsed;
+      }
+    } catch (_) {}
+  }
+  return initial;
+};
+
+const save = (key: string, prop: string, value: string[]) => {
+  localStorage.setItem(
+    `castora::filter${key}pools::${prop}`,
+    JSON.stringify(value)
+  );
+};
+
+export const FilterStockPoolsProvider = ({
+  children
+}: {
+  children: ReactNode;
+}) => {
+  const [predictionTokens, setPredictionTokens] = useState(
+    retrieveOne('stock', 'predictiontokens', ALL_STOCK_PREDICTION_TOKENS, [
+      'AAPL',
+      'TSLA',
+      'CRCL'
+    ])
+  );
+  const [statuses, setStatuses] = useState(
+    retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open'])
+  );
+
+  const togglePredictionToken = (token: string) => {
+    setPredictionTokens(
+      predictionTokens.includes(token)
+        ? (prev) => prev.filter((t) => t !== token)
+        : (prev) => [...prev, token]
+    );
   };
 
+  const toggleStatus = (status: string) => {
+    setStatuses(
+      statuses.includes(status)
+        ? (prev) => prev.filter((s) => s !== status)
+        : (prev) => [...prev, status]
+    );
+  };
+
+  const retrieve = () => {
+    setPredictionTokens(
+      retrieveOne('stock', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
+        'AAPL',
+        'TSLA',
+        'CRCL'
+      ])
+    );
+    setStatuses(retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open']));
+  };
+
+  useEffect(() => {
+    save('stock', 'predictiontokens', predictionTokens);
+  }, [predictionTokens]);
+
+  useEffect(() => {
+    save('stock', 'statuses', statuses);
+  }, [statuses]);
+
+  useEffect(() => {
+    retrieve();
+    window.addEventListener('storage', retrieve);
+  }, []);
+
+  return (
+    <FilterStockPoolsContext.Provider
+      value={{
+        predictionTokens,
+        statuses,
+        togglePredictionToken,
+        toggleStatus
+      }}
+    >
+      {children}
+    </FilterStockPoolsContext.Provider>
+  );
+};
+
+export const FilterCryptoPoolsProvider = ({
+  children
+}: {
+  children: ReactNode;
+}) => {
   const [predictionTokens, setPredictionTokens] = useState(
-    retrieveOne('predictiontokens', ALL_PREDICATION_TOKENS, [
+    retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
       'ETH',
       'SOL',
       'HYPE'
     ])
   );
   const [stakeTokens, setStakeTokens] = useState(
-    retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
+    retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, [
+      'MON',
+      'gMON',
+      'aprMON'
+    ])
   );
   const [statuses, setStatuses] = useState(
-    retrieveOne('statuses', ALL_STATUSES, ['Open'])
+    retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open'])
   );
   const [poolLifes, setPoolLifes] = useState(
-    retrieveOne('poollifes', ALL_POOL_LIFES, ['6h', '24h'])
+    retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h'])
   );
 
   const togglePoolLife = (life: string) => {
@@ -103,37 +211,39 @@ export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const retrieve = () => {
     setPredictionTokens(
-      retrieveOne('predictiontokens', ALL_PREDICATION_TOKENS, [
+      retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
         'ETH',
         'SOL',
         'HYPE'
       ])
     );
     setStakeTokens(
-      retrieveOne('staketokens', ALL_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
+      retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, [
+        'MON',
+        'gMON',
+        'aprMON'
+      ])
     );
-    setStatuses(retrieveOne('statuses', ALL_STATUSES, ['Open']));
-    setPoolLifes(retrieveOne('poollifes', ALL_POOL_LIFES, ['6h', '24h']));
-  };
-
-  const save = (key: string, value: string[]) => {
-    localStorage.setItem(`castora::filterpools::${key}`, JSON.stringify(value));
+    setStatuses(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
+    setPoolLifes(
+      retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h'])
+    );
   };
 
   useEffect(() => {
-    save('predictiontokens', predictionTokens);
+    save('crypto', 'predictiontokens', predictionTokens);
   }, [predictionTokens]);
 
   useEffect(() => {
-    save('poollifes', poolLifes);
+    save('crypto', 'poollifes', poolLifes);
   }, [poolLifes]);
 
   useEffect(() => {
-    save('staketokens', stakeTokens);
+    save('crypto', 'staketokens', stakeTokens);
   }, [stakeTokens]);
 
   useEffect(() => {
-    save('statuses', statuses);
+    save('crypto', 'statuses', statuses);
   }, [statuses]);
 
   useEffect(() => {
@@ -142,7 +252,7 @@ export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FilterPoolsContext.Provider
+    <FilterCryptoPoolsContext.Provider
       value={{
         predictionTokens,
         stakeTokens,
@@ -155,6 +265,6 @@ export const FilterPoolsProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-    </FilterPoolsContext.Provider>
+    </FilterCryptoPoolsContext.Provider>
   );
 };
