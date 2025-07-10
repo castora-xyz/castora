@@ -124,9 +124,9 @@ const getStocksTimes = (): PoolTimes[] => {
     // 'prev', 'current', or 'next' context for -1, 0, or +1 day step
     let step = context === 'prev' ? -1 : context === 'next' ? 1 : 0;
 
-    // If current hour is after 3 PM, we move forward, that is,
+    // If current hour is after 2 PM, we move forward, that is,
     // we consider the current day as the next day.
-    if (hrs >= 15) step += 1;
+    if (hrs >= 14) step += 1;
 
     // If we've not yet added "weekend days", check if we need to.
     if (toAdd == 0) {
@@ -148,10 +148,10 @@ const getStocksTimes = (): PoolTimes[] => {
     return date + step + toAdd;
   };
 
-  // Get the snapshot time based using 9 PM as reference while factoring in the weekend above
-  const prev = Math.trunc(Date.UTC(yrs, months, dt('prev'), 21) / 1000);
-  const current = Math.trunc(Date.UTC(yrs, months, dt('current'), 21) / 1000);
-  const next = Math.trunc(Date.UTC(yrs, months, dt('next'), 21) / 1000);
+  // Get the snapshot time using 8 PM UTC as reference while factoring in the weekend above
+  const prev = Math.trunc(Date.UTC(yrs, months, dt('prev'), 20) / 1000);
+  const current = Math.trunc(Date.UTC(yrs, months, dt('current'), 20) / 1000);
+  const next = Math.trunc(Date.UTC(yrs, months, dt('next'), 20) / 1000);
 
   // waitHrs is 6 for now (21600 = 6 * 3600 seconds)
   return [
