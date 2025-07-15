@@ -106,7 +106,7 @@ export const PoolDetailPage = () => {
     load(true);
 
     // Update the pool page contents anytime the user leaves the page and comes back
-    document.addEventListener('visibilitychange', () => load(false));
+    window.addEventListener('focus', () => load(false))
 
     const interval = setInterval(
       () => setNow(Math.trunc(Date.now() / 1000)),
