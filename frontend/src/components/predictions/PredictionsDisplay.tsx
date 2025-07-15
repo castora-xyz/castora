@@ -82,6 +82,10 @@ export const PredictionsDisplay = ({
 
   useEffect(() => {
     load();
+  }, [completionTime]);
+
+  useEffect(() => {
+    load();
   }, []);
 
   return (
