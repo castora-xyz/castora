@@ -38,9 +38,9 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   );
 
   return [
-    { windowCloseTime: prev - waitHrs * 3600, snapshotTime: prev },
+    { windowCloseTime: next - waitHrs * 3600, snapshotTime: next },
     { windowCloseTime: current - waitHrs * 3600, snapshotTime: current },
-    { windowCloseTime: next - waitHrs * 3600, snapshotTime: next }
+    { windowCloseTime: prev - waitHrs * 3600, snapshotTime: prev }
   ];
 };
 
@@ -48,6 +48,23 @@ export const getCryptoSeeds = (chain: Chain) => {
   const sixHtimes = getCryptoTimes(6, 1);
   const twenty4HTimes = getCryptoTimes(24, 12);
   const seeds: PoolSeeds[] = [];
+
+  for (const { windowCloseTime, snapshotTime } of [
+    ...twenty4HTimes,
+    ...sixHtimes
+  ]) {
+    for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, HYPE]) {
+      seeds.push(
+        new PoolSeeds({
+          predictionToken,
+          stakeToken: getContractAddress(chain),
+          stakeAmount: 2e17,
+          snapshotTime,
+          windowCloseTime
+        })
+      );
+    }
+  }
 
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
     seeds.push(
@@ -69,23 +86,6 @@ export const getCryptoSeeds = (chain: Chain) => {
         windowCloseTime
       })
     );
-  }
-
-  for (const { windowCloseTime, snapshotTime } of [
-    ...sixHtimes,
-    ...twenty4HTimes
-  ]) {
-    for (const predictionToken of [HYPE, SOL, CONTRACT_ADDRESS_SEPOLIA]) {
-      seeds.push(
-        new PoolSeeds({
-          predictionToken,
-          stakeToken: getContractAddress(chain),
-          stakeAmount: 2e17,
-          snapshotTime,
-          windowCloseTime
-        })
-      );
-    }
   }
 
   return seeds;
@@ -155,16 +155,16 @@ const getStocksTimes = (): PoolTimes[] => {
 
   // waitHrs is 6 for now (21600 = 6 * 3600 seconds)
   return [
-    { windowCloseTime: prev - 21600, snapshotTime: prev },
+    { windowCloseTime: next - 21600, snapshotTime: next },
     { windowCloseTime: current - 21600, snapshotTime: current },
-    { windowCloseTime: next - 21600, snapshotTime: next }
+    { windowCloseTime: prev - 21600, snapshotTime: prev }
   ];
 };
 
 export const getStocksSeeds = (chain: Chain) => {
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of getStocksTimes()) {
-    for (const predictionToken of [CRCL, TSLA, AAPL]) {
+    for (const predictionToken of [AAPL, TSLA, CRCL]) {
       seeds.push(
         new PoolSeeds({
           predictionToken,

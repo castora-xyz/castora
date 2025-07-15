@@ -186,8 +186,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const fetchLiveStocksPools = async () => {
     setIsFetchingLiveStocks(true);
     const fetched = [];
-    const sorted = liveStocksPoolIds.sort((a, b) => b - a);
-    for (const poolId of sorted) {
+    for (const poolId of liveStocksPoolIds) {
       const pool = await fetchOne(poolId);
       if (pool) fetched.push(pool);
     }
@@ -198,8 +197,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const fetchLiveCryptoPools = async () => {
     setIsFetchingLiveCrypto(true);
     const fetched = [];
-    const sorted = liveCryptoPoolIds.sort((a, b) => b - a);
-    for (const poolId of sorted) {
+    for (const poolId of liveCryptoPoolIds) {
       const pool = await fetchOne(poolId);
       if (pool) fetched.push(pool);
     }
