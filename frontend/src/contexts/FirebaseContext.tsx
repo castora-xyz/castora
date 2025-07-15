@@ -1,10 +1,4 @@
-import {
-  monadDevnet,
-  monadTestnet,
-  useAuth,
-  useServer,
-  useToast
-} from '@/contexts';
+import { useAuth, useServer, useToast } from '@/contexts';
 import {
   getAnalytics,
   logEvent,
@@ -23,7 +17,7 @@ import {
   useEffect,
   useState
 } from 'react';
-import { sepolia } from 'viem/chains';
+import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains } from 'wagmi';
 import { firebaseConfig } from './firebase';
 
@@ -54,15 +48,11 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const { toastInfo } = useToast();
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
-  const firestoreSepolia = getFirestore(app, 'sepolia');
-  const firestoreMonadDevnet = getFirestore(app, 'monaddevnet');
   const firestoreMonadTestnet = getFirestore(app, 'monadtestnet');
   const messaging = getMessaging(app);
   const getChainFirestore = () =>
     ({
-      [monadDevnet.name]: firestoreMonadDevnet,
-      [monadTestnet.name]: firestoreMonadTestnet,
-      [sepolia.name]: firestoreSepolia
+      [monadTestnet.name]: firestoreMonadTestnet
     }[(currentChain ?? defaultChain).name]!);
   const [firestore, setFirestore] = useState(getChainFirestore());
 

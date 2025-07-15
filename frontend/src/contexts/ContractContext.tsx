@@ -1,5 +1,4 @@
 import { useToast } from '@/contexts/ToastContext';
-import { monadDevnet, monadTestnet } from '@/contexts/Web3Context';
 import { abi, erc20Abi } from '@/contexts/abi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import {
@@ -11,7 +10,7 @@ import {
 } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
+import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains, useWalletClient } from 'wagmi';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` =
@@ -59,17 +58,13 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const [defaultChain] = useChains();
   const getCastoraAddress = () =>
     ({
-      [monadDevnet.name]: CASTORA_ADDRESS_MONAD,
-      [monadTestnet.name]: CASTORA_ADDRESS_MONAD,
-      [sepolia.name]: CASTORA_ADDRESS_SEPOLIA
+      [monadTestnet.name]: CASTORA_ADDRESS_MONAD
     }[(currentChain ?? defaultChain).name]!);
   const [castoraAddress, setCastoraAddress] = useState(getCastoraAddress());
 
   const getRpcUrl = () =>
     ({
-      [monadDevnet.name]: undefined,
-      [monadTestnet.name]: undefined,
-      [sepolia.name]: 'https://sepolia.drpc.org'
+      [monadTestnet.name]: undefined
     }[(currentChain ?? defaultChain).name]!);
 
   const publicClient = () =>
