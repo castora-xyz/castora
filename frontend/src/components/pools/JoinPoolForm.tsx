@@ -154,7 +154,7 @@ export const JoinPoolForm = ({
           <span className="font-medium text-sm text-text-disabled block mb-1">
             Your Prediction
           </span>
-          
+
           <input
             min={0}
             step={10 ** (-1 * 8)}

@@ -287,8 +287,7 @@ export const MakePredictionModal = ({
       <p className="mt-1 text-center">
         <span className="text-xs">Potential Winnings </span>
         <span className="text-sm font-bold text-primary-default">
-          (x{pool.multiplier()}):{' '}
-          {seeds.displayStake(pool.multiplier())}
+          (x{pool.multiplier()}): {seeds.displayStake(pool.multiplier())}
         </span>
       </p>
 

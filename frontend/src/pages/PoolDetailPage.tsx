@@ -5,23 +5,22 @@ import {
   PoolDetailIntroBadge,
   PoolDetailPageShimmer,
   PoolDetailsInCards,
-  PredictionsDisplay
+  PredictionsDisplay,
+  TradingViewChart
 } from '@/components';
-import { usePools, useTheme } from '@/contexts';
+import { usePools } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { useAccount } from 'wagmi';
 
 export const PoolDetailPage = () => {
   const { chain: currentChain } = useAccount();
   const { poolId } = useParams();
   const { isValidPoolId, fetchOne } = usePools();
-  const { isDarkDisplay } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -157,16 +156,7 @@ export const PoolDetailPage = () => {
           >
             <div className="mb-8 lg:mb-px lg:mr-8 lg:sticky lg:top-0">
               {pool.seeds.status() !== 'Completed' ? (
-                <AdvancedRealTimeChart
-                  allow_symbol_change={false}
-                  autosize
-                  enable_publishing={false}
-                  interval="180"
-                  style="1"
-                  symbol={pool.seeds.chartPairName()}
-                  withdateranges={true}
-                  theme={isDarkDisplay ? 'dark' : 'light'}
-                />
+                <TradingViewChart pair={pool.seeds.chartPairName()} />
               ) : (
                 <CompletedPoolDisplay pool={pool} />
               )}
