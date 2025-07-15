@@ -1,6 +1,6 @@
 import { PoolSeeds } from '../schemas';
 import { CONTRACT_ADDRESS_SEPOLIA, getContractAddress } from './contract';
-import { AAPL, aprMON, CRCL, gMON, HYPE, SOL, TSLA } from './tokens';
+import { AAPL, aprMON, CRCL, gMON, HYPE, PUMP, SOL, TSLA } from './tokens';
 import { Chain } from './validate-chain';
 
 interface PoolTimes {
@@ -45,14 +45,25 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
 };
 
 export const getCryptoSeeds = (chain: Chain) => {
-  const sixHtimes = getCryptoTimes(6, 1);
+  const sixHTimes = getCryptoTimes(6, 1);
   const twenty4HTimes = getCryptoTimes(24, 12);
   const seeds: PoolSeeds[] = [];
 
-  for (const { windowCloseTime, snapshotTime } of [
-    ...twenty4HTimes,
-    ...sixHtimes
-  ]) {
+  for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
+    for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, PUMP, HYPE]) {
+      seeds.push(
+        new PoolSeeds({
+          predictionToken,
+          stakeToken: getContractAddress(chain),
+          stakeAmount: 2e17,
+          snapshotTime,
+          windowCloseTime
+        })
+      );
+    }
+  }
+
+  for (const { windowCloseTime, snapshotTime } of sixHTimes) {
     for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, HYPE]) {
       seeds.push(
         new PoolSeeds({

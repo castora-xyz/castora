@@ -8,6 +8,7 @@ export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
 export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
 export const PENGU = '0x1d8ccf87ac0147bae756eb963a2ef6244c969156';
+export const PUMP = '0x046d5f90acffc86ba3e77da42095c982481f28ec';
 export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
@@ -40,6 +41,9 @@ export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 // Coming over to PENGU (Pudgy Penguins NFT), its token address on Solana
 // Mainnet: 2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv was what was converted.
+
+// For PUMP, its Pyth Price Feed address on Solana Mainnet is:
+// JHMwicgUSPU4MwpMJ4Fiaxxd1QDUzJGcTnAiuZ2RkJU, that was what was converted.
 
 // For TRUMP, its token address on Solana Mainnet:
 // 6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPNwas converted.
@@ -132,6 +136,14 @@ export const tokens: Token[] = [
     decimals: 6,
     pythPriceId:
       '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
+  },
+  {
+    address: PUMP,
+    name: 'PUMP',
+    fullName: 'pump.fun',
+    decimals: 6,
+    pythPriceId:
+      '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9'
   },
   {
     address: SOL,
