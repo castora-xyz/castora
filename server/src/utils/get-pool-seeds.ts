@@ -18,24 +18,19 @@ interface PoolTimes {
  * for each of the three periods.
  */
 const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
-  // Get preparatory values
   const now = new Date();
-  const yrs = now.getUTCFullYear();
-  const months = now.getUTCMonth();
-  const date = now.getUTCDate();
-  const hrs = now.getUTCHours();
-
-  // The current nth hour based on the dx duration
-  const nthH = Math.trunc(hrs / dxHrs);
-
-  // Get the snapshot times based on the current hour and duration (dx)
-  const prev = Math.trunc(Date.UTC(yrs, months, date, nthH * dxHrs) / 1000);
-  const current = Math.trunc(
-    Date.UTC(yrs, months, date, nthH * dxHrs + dxHrs) / 1000
+  const utcNow = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    now.getUTCHours()
   );
-  const next = Math.trunc(
-    Date.UTC(yrs, months, date, nthH * dxHrs + dxHrs * 2) / 1000
-  );
+  const dxSecs = dxHrs * 3600;
+
+  const start = Math.floor(utcNow / 1000 / dxSecs) * dxSecs;
+  const prev = start;
+  const current = start + dxSecs;
+  const next = start + dxSecs * 2;
 
   return [
     { windowCloseTime: next - waitHrs * 3600, snapshotTime: next },
