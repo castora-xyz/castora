@@ -9,6 +9,7 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 
 export const MakePredictionModal = ({
+  pool,
   pool: { poolId, seeds },
   price,
   handleShowHeading,
@@ -261,15 +262,15 @@ export const MakePredictionModal = ({
 
       <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-6 text-sm">
         <div>
-          <p className="mb-2">Current Price</p>
+          <p className="mb-2">Your Prediction</p>
           <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
-            ${currentPrice}
+            ${price}
           </p>
         </div>
         <div>
-          <p className="mb-2">Prediction Price</p>
+          <p className="mb-2">Current Price</p>
           <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
-            ${price}
+            ${currentPrice}
           </p>
         </div>
       </div>
@@ -286,8 +287,8 @@ export const MakePredictionModal = ({
       <p className="mt-1 text-center">
         <span className="text-xs">Potential Winnings </span>
         <span className="text-sm font-bold text-primary-default">
-          (x{poolId == 3000 ? 10 : 2}):{' '}
-          {seeds.displayStake(poolId == 3000 ? 10 : 2)}
+          (x{pool.multiplier()}):{' '}
+          {seeds.displayStake(pool.multiplier())}
         </span>
       </p>
 

@@ -1,4 +1,3 @@
-import { CountdownNumbers } from '@/components';
 import { useContract } from '@/contexts';
 import { Pool, landingPageDefaults } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
@@ -91,6 +90,24 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
     return () => connection.closeWebSocket();
   }, [pool]);
 
+  useEffect(() => {
+    setTimeout(() => {
+      const input = document.querySelector(
+        'input#prediction-input[type=number]'
+      ) as HTMLInputElement;
+      input.addEventListener(
+        'keydown',
+        (e) => {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
+        },
+        { passive: false }
+      );
+      input.addEventListener('wheel', (e) => e.preventDefault(), {
+        passive: false
+      });
+    });
+  }, []);
+
   return (
     <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32">
       <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">
@@ -98,8 +115,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
       </h2>
       <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
         Join Pools by predicting the price of a Pool Pair. You stake the Entry
-        Fee into the Pool. The closest predictions to the price at the snapshot
-        time are the winners.
+        Fee as you join. The earliest & closest predictions to the price at the
+        snapshot time (Snapshot Price) are the winners.
       </p>
 
       <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
@@ -109,14 +126,44 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               Join Pool
             </h3>
 
-            <p className="bg-surface-subtle rounded-2xl p-4 text-text-subtitle text-sm mb-6 ">
-              Predict the price by Snapshot Time. This will add your prediction
-              to the pool alongside with other predictions. You will stake the
-              Entry Fee to predict. The predictions whose prices are closest to
-              the price by{' '}
-              {pool?.seeds.formattedSnapshotTime()[0] ?? nextHour()} will
-              withdraw all the pool's money.
-            </p>
+            <ul
+              id="join-pool-form-info"
+              className="bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc"
+            >
+              <li>
+                Predict{' '}
+                {pool?.seeds.predictionTokenDetails.name ??
+                  landingPageDefaults.pairToken}
+                's Price for{' '}
+                <span className="font-bold">
+                  {pool?.seeds.formattedSnapshotTime().reverse().join(' ') ??
+                    nextHour()}
+                </span>{' '}
+                with{' '}
+                <span className="font-bold">
+                  {pool?.seeds.displayStake() ?? landingPageDefaults.stake}
+                </span>{' '}
+                stake.
+              </li>
+              <li>
+                Winner Predictions are{' '}
+                <span className="font-bold">Earliest & Closest </span> Prices to
+                Snapshot Price.
+              </li>
+              <li>
+                Win x{pool?.multiplier() ?? 2} (
+                <span className="font-bold">
+                  {pool?.seeds.displayStake(pool.multiplier()) ??
+                    landingPageDefaults.stakeMultiplied}
+                </span>
+                ), if you are in Top{' '}
+                <span className="font-bold">
+                  {pool?.percentWinners() ?? landingPageDefaults.percentWinners}
+                  %
+                </span>{' '}
+                Predictions.
+              </li>
+            </ul>
 
             <form
               onSubmit={(e) => {
@@ -125,37 +172,34 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               }}
             >
               <label>
-                <span className="font-medium text-text-subtitle block mb-2">
-                  Predict{' '}
-                  {pool?.seeds.predictionTokenDetails.name ??
-                    landingPageDefaults.pairToken}
-                  's Price at Snapshot Time
+                <span className="font-medium text-sm text-text-disabled block mb-1">
+                  Your Prediction
                 </span>
+                
                 <input
                   min={0}
                   step={10 ** (-1 * 8)}
                   type="number"
                   onChange={validatePrediction}
                   ref={predictionInput}
-                  className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-3 font-medium focus:outline-none text-xl  focus:valid:border-primary-default focus:invalid:border-errors-default"
-                  placeholder="0 USD"
+                  id="prediction-input"
+                  className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-2 font-medium focus:outline-none text-xl  focus:valid:border-primary-default focus:invalid:border-errors-default"
+                  placeholder="0.00 USD"
                   required
                 />
+
                 {predictionError && (
-                  <p className="-mt-2 mb-3 text-sm text-errors-default">
+                  <p className="-mt-1 mb-3 text-sm text-errors-default">
                     {predictionError}
                   </p>
                 )}
-                {!!pool &&
-                  pool.seeds.windowCloseTime >
-                    Math.trunc(Date.now() / 1000) && (
-                    <p className="font-medium text-text-disabled mb-8">
-                      Pool Closes In&nbsp;&nbsp;
-                      <CountdownNumbers
-                        timestamp={pool.seeds.windowCloseTime}
-                      />
-                    </p>
-                  )}
+
+                <p className="font-medium mb-8">
+                  <span className="text-text-disabled">Current Price:</span>{' '}
+                  <span className="text-primary-darker dark:text-primary-subtle">
+                    {currentPrice}
+                  </span>
+                </p>
               </label>
 
               {isConnected && (
@@ -197,15 +241,15 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
             <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-8">
               <div>
-                <p className="mb-2">Current Price</p>
-                <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
-                  ${currentPrice}
-                </p>
-              </div>
-              <div>
                 <p className="mb-2">Your Prediction</p>
                 <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
                   ${predictionInput.current?.value ?? 0}
+                </p>
+              </div>
+              <div>
+                <p className="mb-2">Current Price</p>
+                <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
+                  ${currentPrice}
                 </p>
               </div>
             </div>
@@ -218,6 +262,15 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               {pool?.seeds.displayStake() ?? landingPageDefaults.stake})
               {hasEnoughBalance && <Ripple />}
             </button>
+
+            <p className="mt-1 text-center">
+              <span className="text-xs">Potential Winnings </span>
+              <span className="text-sm font-bold text-primary-default">
+                (x{pool?.multiplier() ?? landingPageDefaults.multiplier}):{' '}
+                {pool?.seeds.displayStake(pool.multiplier()) ??
+                  landingPageDefaults.stakeMultiplied}
+              </span>
+            </p>
 
             {!hasEnoughBalance && (
               <p className="text-xs text-center mt-4 text-errors-default">

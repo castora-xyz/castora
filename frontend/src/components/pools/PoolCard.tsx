@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const PoolCard = ({
+  pool,
   pool: { poolId, seeds, noOfPredictions, winAmount },
   isInLandingPage = false
 }: {
@@ -108,7 +109,7 @@ export const PoolCard = ({
       <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
         <span className="mr-4">Multiplier</span>
         <span className="font-bold text-base -mt-1">
-          x{poolId == 3000 ? 10 : 2}
+          x{pool.multiplier()}
         </span>
       </div>
 

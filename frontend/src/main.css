@@ -151,3 +151,7 @@ input[type='number'] {
 .p-accordion-header-link {
   background-color: var(--surface-subtle);
 }
+
+#join-pool-form-info li::marker {
+  color: var(--primary-default);
+}

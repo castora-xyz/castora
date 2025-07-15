@@ -1,4 +1,8 @@
-import { FilterCryptoPoolsProps, FilterStockPoolsProps } from '@/contexts';
+import {
+  ALL_STOCK_PREDICTION_TOKENS,
+  FilterCryptoPoolsProps,
+  FilterStockPoolsProps
+} from '@/contexts';
 import ms from 'ms';
 import { tokens } from './tokens';
 
@@ -122,8 +126,9 @@ export class PoolSeeds {
    * Whether this pool is a stock pool.
    */
   isStockPool() {
-    const { name } = this.predictionTokenDetails;
-    return name == 'AAPL' || name == 'CRCL' || name == 'TSLA';
+    return ALL_STOCK_PREDICTION_TOKENS.includes(
+      this.predictionTokenDetails.name
+    );
   }
 
   /**
@@ -153,7 +158,7 @@ export class PoolSeeds {
     // For 24-hourly pools with a 12-hour close window,
     // the open time is 24 hours before the window close time.
     if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
-    
+
     // TODO: Handle newer pool types when the time comes
     return null;
   }

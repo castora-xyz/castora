@@ -1,5 +1,7 @@
 import Bolt from '@/assets/bolt.svg?react';
+import Briefcase from '@/assets/briefcase.svg?react';
 import ChevronRight from '@/assets/chevron-right.svg?react';
+import InfoCircle from '@/assets/info-circle.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { Pool } from '@/schemas';
@@ -8,6 +10,7 @@ import { Tooltip } from 'primereact/tooltip';
 import { Link, useLocation } from 'react-router-dom';
 
 export const PoolDetailIntroBadge = ({
+  pool,
   pool: { poolId, seeds }
 }: {
   pool: Pool;
@@ -58,8 +61,38 @@ export const PoolDetailIntroBadge = ({
           data-pr-tooltip="Pool Multiplier"
         >
           <Trophy className="stroke-primary-default w-4 h-4" />
-          <span className="mr-1">x{poolId == 3000 ? 10 : 2}</span>
+          <span className="mr-1">x{pool.multiplier()}</span>
         </p>
+      </div>
+
+      <div className="w-fit flex gap-4">
+        {seeds.isStockPool() && (
+          <>
+            <Tooltip target="#pool-category" />
+            <p
+              id="pool-category"
+              className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
+              data-pr-tooltip="Pool Category"
+            >
+              <Briefcase className="stroke-primary-default w-4 h-4" />
+              <span className="mr-1">Stock</span>
+            </p>
+          </>
+        )}
+
+        {seeds.status() === 'Upcoming' && (
+          <>
+            <Tooltip target="#pool-status" />
+            <p
+              id="pool-status"
+              className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
+              data-pr-tooltip="Pool Status"
+            >
+              <InfoCircle className="stroke-primary-default w-4 h-4" />
+              <span className="mr-1">{seeds.status()}</span>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

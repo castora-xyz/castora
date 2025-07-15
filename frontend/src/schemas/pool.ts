@@ -44,4 +44,18 @@ export class Pool {
     this.noOfWinners = Number(input[8]);
     this.noOfClaimedWinnings = Number(input[9]);
   }
+
+  /**
+   * The units of stake that winners go with.
+   */
+  multiplier() {
+    return this.poolId === 3000 ? 10 : 2;
+  }
+
+  /**
+   *
+   */
+  percentWinners() {
+    return Math.trunc(10000 / this.multiplier()) / 100;
+  }
 }
