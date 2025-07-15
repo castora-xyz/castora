@@ -70,7 +70,8 @@ export const tokens: Token[] = [
     name: 'MON',
     fullName: 'Monad',
     decimals: 18,
-    pythPriceId: ''
+    pythPriceId: '',
+    img: 'mon'
   },
   {
     address: CASTORA_ADDRESS_SEPOLIA,
@@ -78,7 +79,8 @@ export const tokens: Token[] = [
     fullName: 'Ethereum',
     decimals: 18,
     pythPriceId:
-      '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace'
+      '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
+    img: 'eth'
   },
   {
     address: AAPL,
@@ -86,7 +88,8 @@ export const tokens: Token[] = [
     fullName: 'Apple Inc.',
     decimals: 8,
     pythPriceId:
-      '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
+      '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688',
+    img: 'aapl'
   },
   {
     address: CRCL,
@@ -94,7 +97,8 @@ export const tokens: Token[] = [
     fullName: 'Circle Internet Group Inc.',
     decimals: 8,
     pythPriceId:
-      '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365'
+      '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365',
+    img: 'crcl'
   },
   {
     address: aprMON,
@@ -118,7 +122,8 @@ export const tokens: Token[] = [
     fullName: 'Hyperliquid',
     decimals: 6,
     pythPriceId:
-      '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b'
+      '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b',
+    img: 'hype'
   },
   {
     address: MOODENG,
@@ -142,7 +147,8 @@ export const tokens: Token[] = [
     fullName: 'Solana',
     decimals: 9,
     pythPriceId:
-      '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
+      '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
+    img: 'sol'
   },
   {
     address: SUI,
@@ -166,7 +172,8 @@ export const tokens: Token[] = [
     fullName: 'Tesla Inc.',
     decimals: 8,
     pythPriceId:
-      '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1'
+      '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1',
+    img: 'tsla'
   },
   {
     address: cUSD,
@@ -186,6 +193,7 @@ export const tokens: Token[] = [
 
 export const landingPageDefaults = {
   baseTimeDiff: 60 * 60,
+  pairImg: 'eth',
   pairName: 'ETH / USD',
   pairNameFull: 'Ethereum / US Dollar',
   pairToken: 'ETH',
@@ -194,5 +202,5 @@ export const landingPageDefaults = {
   stake: '0.2 MON',
   multiplier: 2,
   percentWinners: 50,
-  stakeMultiplied: '0.4 MON',
+  stakeMultiplied: '0.4 MON'
 };

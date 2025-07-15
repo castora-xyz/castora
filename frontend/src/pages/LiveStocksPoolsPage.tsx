@@ -22,7 +22,7 @@ export const LiveStocksPoolsPage = () => {
           <FilterStockPools />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">
         {isFetchingLiveStocks ? (
           Array.from(Array(shimmerCount).keys()).map((i) => (
             <PoolCardShimmer key={i} />

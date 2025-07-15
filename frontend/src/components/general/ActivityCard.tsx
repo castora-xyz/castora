@@ -50,7 +50,13 @@ export const ActivityCard = ({
     >
       <div className="flex flex-wrap justify-between gap-4 mb-4">
         <div className="flex flex-wrap justify-start items-center gap-3">
-          <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-block">
+          <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-flex items-center gap-1">
+            {seeds.predictionTokenDetails.img && (
+              <img
+                src={`/assets/${seeds.predictionTokenDetails.img}.png`}
+                className="w-3 h-3 rounded-full"
+              />
+            )}
             {seeds.pairName()}
           </p>
 

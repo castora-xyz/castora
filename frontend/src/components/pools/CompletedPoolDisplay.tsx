@@ -20,11 +20,21 @@ export const CompletedPoolDisplay = ({
           Powered by PYTH
         </p>
 
-        <div className="font-bold text-lg sm:text-2xl text-text-title">
-          {seeds.pairNameSpaced()}
-        </div>
-        <div className="font-medium sm:text-lg text-text-caption">
-          {seeds.pairNameFull()}
+        <div className="flex gap-2 sm:gap-3 items-start">
+          {seeds.predictionTokenDetails.img && (
+            <img
+              src={`/assets/${seeds.predictionTokenDetails.img}.png`}
+              className="w-8 sm:w-12 h-8 sm:h-12 rounded-full"
+            />
+          )}
+          <div>
+            <div className="font-bold text-lg sm:text-2xl text-text-title">
+              {seeds.pairNameSpaced()}
+            </div>
+            <div className="font-medium sm:text-lg text-text-caption">
+              {seeds.pairNameFull()}
+            </div>
+          </div>
         </div>
       </div>
 

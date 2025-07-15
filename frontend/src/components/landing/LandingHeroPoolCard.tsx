@@ -76,11 +76,23 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
           Powered by PYTH
         </p>
 
-        <div className="font-bold text-lg sm:text-2xl text-text-title">
-          {pool?.seeds.pairNameSpaced() ?? landingPageDefaults.pairName}
-        </div>
-        <div className="font-medium sm:text-lg text-text-caption">
-          {pool?.seeds.pairNameFull() ?? landingPageDefaults.pairNameFull}
+        <div className="flex gap-2 sm:gap-3 items-start">
+          <img
+            src={`/assets/${
+              pool?.seeds.predictionTokenDetails.img ??
+              landingPageDefaults.pairImg
+            }.png`}
+            className="w-8 sm:w-12 h-8 sm:h-12 rounded-full"
+          />
+
+          <div>
+            <div className="font-bold text-lg sm:text-2xl text-text-title">
+              {pool?.seeds.pairNameSpaced() ?? landingPageDefaults.pairName}
+            </div>
+            <div className="font-medium sm:text-lg text-text-caption">
+              {pool?.seeds.pairNameFull() ?? landingPageDefaults.pairNameFull}
+            </div>
+          </div>
         </div>
       </div>
 

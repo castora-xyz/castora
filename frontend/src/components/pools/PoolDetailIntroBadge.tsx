@@ -36,7 +36,15 @@ export const PoolDetailIntroBadge = ({
           </Link>
           <ChevronRight className="fill-primary-default" />
         </p>
-        <span>{seeds.pairName()}</span>
+        <p className="flex gap-1.5 items-center">
+          {seeds.predictionTokenDetails.img && (
+            <img
+              src={`/assets/${seeds.predictionTokenDetails.img}.png`}
+              className="w-5 h-5 rounded-full"
+            />
+          )}
+          <span>{seeds.pairName()}</span>
+        </p>
       </div>
 
       <div className="w-fit flex gap-4">

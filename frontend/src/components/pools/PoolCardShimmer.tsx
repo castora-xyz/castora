@@ -2,7 +2,7 @@ import { Breathing } from 'react-shimmer';
 
 export const PoolCardShimmer = () => {
   return (
-    <div className="border border-border-default dark:border-surface-subtle p-6 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col">
+    <div className="border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col">
       <Breathing width={180} height={48} className="mb-3 rounded-full" />
       <Breathing width={144} height={32} className="mb-3" />
       <Breathing width={96} height={16} className="mb-2" />

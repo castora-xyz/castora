@@ -28,7 +28,7 @@ export const PoolCard = ({
   return (
     <div
       className={
-        'border border-border-default dark:border-surface-subtle p-6 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col ' +
+        'border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col ' +
         `${
           poolId == 3000
             ? 'shadow-[0px_0px_16px_1px_rgba(131,110,249,0.6)] dark:shadow-[0px_0px_16px_1px_rgba(255,255,255,0.6)]'
@@ -38,7 +38,7 @@ export const PoolCard = ({
     >
       {/* Pool ID and Status */}
       <div className="flex justify-between">
-        <div className="flex p-2 pl-4 mb-3 rounded-full items-center  bg-surface-subtle w-fit">
+        <div className="flex p-2 pl-4 mb-4 rounded-full items-center  bg-surface-subtle w-fit">
           <div className="text-sm md:text-md">Pool ID: {poolId}</div>
           <div
             className={
@@ -65,15 +65,23 @@ export const PoolCard = ({
         )}
       </div>
 
-      <div className="font-medium text-2xl text-text-title mb-3">
-        {seeds.pairName()}
+      <div className="flex gap-2.5 items-start mb-4">
+        {seeds.predictionTokenDetails.img && (
+          <img
+            src={`/assets/${seeds.predictionTokenDetails.img}.png`}
+            className="w-8 h-8 rounded-full"
+          />
+        )}
+        <div className="font-medium text-2xl text-text-title">
+          {seeds.pairName()}
+        </div>
       </div>
 
       {(now > seeds.windowCloseTime || isInLandingPage) && (
         <div
           className={
             'py-1.5 px-4 font-medium rounded-full w-fit text-sm sm:text-md bg-primary-default text-white ' +
-            (isInLandingPage ? 'mb-6' : 'mb-3')
+            (isInLandingPage ? 'mb-6' : 'mb-4')
           }
         >
           {!!winAmount
@@ -108,9 +116,7 @@ export const PoolCard = ({
 
       <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
         <span className="mr-4">Multiplier</span>
-        <span className="font-bold text-base -mt-1">
-          x{pool.multiplier()}
-        </span>
+        <span className="font-bold text-base -mt-1">x{pool.multiplier()}</span>
       </div>
 
       {noOfPredictions > 0 && (
