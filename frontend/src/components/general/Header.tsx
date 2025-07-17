@@ -27,7 +27,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="p-4 fixed xs:px-8 top-0 left-0 right-0 z-10 border-b border-border-default dark:border-surface-subtle bg-app-bg h-16 sm:h-[72px]">
+    <header className="max-[414px]:px-4 xs:px-8 py-4 fixed top-0 left-0 right-0 z-10 border-b border-border-default dark:border-surface-subtle bg-app-bg h-16 sm:h-[72px]">
       <div className="flex items-center max-w-screen-xl mx-auto">
         <h1 className="text-text-titles text-xl font-medium sm:text-2xl  md:font-bold grow mr-4">
           <Link to="/">

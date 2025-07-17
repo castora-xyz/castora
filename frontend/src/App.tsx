@@ -45,7 +45,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <main
         className={
           'grow flex flex-col items-stretch' +
-          (location.pathname === '/' ? '' : ' p-8 pb-16')
+          (location.pathname === '/' ? '' : ' max-[414px]:px-4 p-8 pb-16')
         }
       >
         {outlet}

@@ -6,7 +6,7 @@ import {
   useState
 } from 'react';
 
-export const ALL_CRYPTO_PREDICTION_TOKENS = ['ETH', 'SOL', 'HYPE'];
+export const ALL_CRYPTO_PREDICTION_TOKENS = ['ETH', 'SOL', 'PUMP', 'HYPE'];
 export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
@@ -62,7 +62,7 @@ const retrieveOne = (
   all: any[],
   initial: any[]
 ): any[] => {
-  const saved = localStorage.getItem(`castora::filter${key}pools::${prop}`);
+  const saved = localStorage.getItem(`castora::filter-v2-${key}pools::${prop}`);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -76,7 +76,7 @@ const retrieveOne = (
 
 const save = (key: string, prop: string, value: string[]) => {
   localStorage.setItem(
-    `castora::filter${key}pools::${prop}`,
+    `castora::filter-v2-${key}pools::${prop}`,
     JSON.stringify(value)
   );
 };
@@ -160,6 +160,7 @@ export const FilterCryptoPoolsProvider = ({
     retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
       'ETH',
       'SOL',
+      'PUMP',
       'HYPE'
     ])
   );

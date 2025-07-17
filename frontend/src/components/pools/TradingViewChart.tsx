@@ -20,6 +20,7 @@ export const TradingViewChart = ({ pair }: { pair: string }) => {
           autosize: true,
           enabled_features: ['header_fullscreen_button'],
           enable_publishing: false,
+          hide_side_toolbar: false,
           interval: '180',
           style: '1',
           symbol: pair,

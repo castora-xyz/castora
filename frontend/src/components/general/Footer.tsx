@@ -8,7 +8,7 @@ export const Footer = () => {
   return (
     <footer
       id="footer"
-      className="mt-auto px-8 py-10 lg:px-16 border-t border-border-default dark:border-surface-subtle bg-app-bg"
+      className="mt-auto max-[414px]:px-4 px-8 py-10 lg:px-16 border-t border-border-default dark:border-surface-subtle bg-app-bg"
     >
       <div className="flex max-sm:flex-col items-center md:flex-row-reverse sm:justify-between max-w-screen-xl mx-auto gap-8">
         <div className="flex items-center gap-6">
