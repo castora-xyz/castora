@@ -41,7 +41,7 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
 
 export const getCryptoSeeds = (chain: Chain) => {
   const sixHTimes = getCryptoTimes(6, 1);
-  const twenty4HTimes = getCryptoTimes(24, 12);
+  const twenty4HTimes = getCryptoTimes(12, 12);
   const seeds: PoolSeeds[] = [];
 
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
