@@ -1,8 +1,9 @@
+import 'dotenv/config';
 import { logger } from '..';
-import { Pool, SetWinnersResult } from '../../schemas';
+import { fetchPredictionsFromArchive } from '../../controllers';
+import { Pool, SplitPredictionResult } from '../../schemas';
 import { writeContract } from '../contract';
 import { Chain } from '../validate-chain';
-import { fetchPredictions } from './fetch-predictions';
 import { getNoOfWinners } from './get-no-of-winners';
 import { getSplittedPredictions } from './get-splitted-predictions';
 
@@ -20,9 +21,9 @@ export const setWinners = async (
   chain: Chain,
   pool: Pool,
   snapshotPrice: number
-): Promise<SetWinnersResult> => {
-  logger.info('\nFetching Predictions ... ');
-  const predictions = await fetchPredictions(chain, pool);
+): Promise<SplitPredictionResult> => {
+  logger.info('\nFetching Predictions from Archive ... ');
+  const predictions = await fetchPredictionsFromArchive(chain, pool.poolId);
   logger.info(`Fetched all ${predictions.length} predictions.`);
 
   if (predictions.length != pool.noOfPredictions) {
@@ -34,13 +35,21 @@ export const setWinners = async (
     throw 'Fatal: unmatching predictions length';
   }
 
-  logger.info('\nComputing Winners ... ');
-  const splitted = getSplittedPredictions(snapshotPrice, predictions);
-  const { winnerPredictionIds } = splitted;
-  logger.info(`Computed ${winnerPredictionIds.length} winners.`);
-
-  const noOfWinners = getNoOfWinners(pool.noOfPredictions);
+  const noOfWinners = getNoOfWinners(
+    pool.noOfPredictions,
+    pool.poolId == 3000 ? 10 : 2
+  );
   logger.info('\nnoOfWinners: ', noOfWinners);
+
+  logger.info('\nComputing Winners ... ');
+  const splitted = getSplittedPredictions(
+    snapshotPrice,
+    predictions,
+    noOfWinners
+  );
+  logger.info(
+    `Computed ${splitted.winnerPredictionIdsBigInts.length} winners.`
+  );
 
   // Divide 95% of the total pool's money by the number of winners
   // (half of pool.noOfPredictions) and set the result as the
@@ -61,9 +70,9 @@ export const setWinners = async (
     BigInt(snapshotPrice),
     BigInt(noOfWinners),
     BigInt(winAmount),
-    winnerPredictionIds
+    splitted.winnerPredictionIdsBigInts
   ]);
   logger.info('Called Complete Pool for poolId: ', pool.poolId);
 
-  return { predictions, splitted };
+  return splitted;
 };

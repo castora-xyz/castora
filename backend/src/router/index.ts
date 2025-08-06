@@ -1,5 +1,9 @@
-import { Response } from 'express';
-import { logger } from '.';
+import { Response, Router } from 'express';
+import poolRoutes from './pools';
+import userRoutes from './users';
+import { logger } from '../utils';
+
+const router = Router();
 
 export const wrapper = async (
   action: Function,
@@ -20,3 +24,10 @@ export const wrapper = async (
     return response.status(400).json({ success: false, message });
   }
 };
+
+router.use('/', poolRoutes);
+router.use('/', userRoutes);
+
+router.use('**', (_, res) => res.json({ success: true }));
+
+export default router;

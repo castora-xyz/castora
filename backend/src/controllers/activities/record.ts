@@ -2,7 +2,6 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { createPublicClient, parseEventLogs, TransactionReceipt } from 'viem';
 import { ActivityType, PoolActivity, UserActivity } from '../../schemas';
 import { abi, Chain, firestore, getConfig, logger } from '../../utils';
-// import { updateLeaderboardOnPrediction } from '../../utils/update-leaderboard';
 
 /**
  * Looks up the chain for the activity of the provided transaction hash.
@@ -47,8 +46,7 @@ export const recordActivity = async (
     else if (eventName == 'ClaimedWinnings') type = 'claim';
     else continue;
 
-    const poolId = Number(args.poolId);
-    const predictionId = Number(args.predictionId);
+    const { poolId, predictionId } = args;
     const user = eventName == 'Predicted' ? args.predicter : args.winner;
 
     logger.info('Parsed Activity ... ');
@@ -57,7 +55,7 @@ export const recordActivity = async (
       type,
       user,
       predictionId,
-      timestamp: Number(block.timestamp)
+      timestamp: block.timestamp
     });
 
     const db = firestore(chain);

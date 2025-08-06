@@ -31,4 +31,19 @@ export class Pool {
     this.noOfWinners = Number(input[8]);
     this.noOfClaimedWinnings = Number(input[9]);
   }
+
+  toJSON() {
+    const { decimals } = this.seeds.getStakeTokenDetails();
+    return {
+      poolId: this.poolId,
+      seeds: this.seeds.toJSON(),
+      seedsHash: this.seedsHash,
+      creationTime: this.creationTime,
+      noOfPredictions: this.noOfPredictions,
+      snapshotPrice: this.snapshotPrice,
+      completionTime: this.completionTime,
+      winAmount: this.winAmount / 10 ** decimals,
+      noOfWinners: this.noOfWinners
+    };
+  }
 }

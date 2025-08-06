@@ -16,7 +16,7 @@ export const createPool = async (
   chain: Chain,
   seeds: PoolSeeds
 ): Promise<number | null> => {
-  logger.info('Created Pool => Got PoolSeeds');
+  logger.info('Create Pool => Got PoolSeeds');
   const seedsHash = await readContract(chain, 'hashPoolSeeds', [
     seeds.bigIntified()
   ]);

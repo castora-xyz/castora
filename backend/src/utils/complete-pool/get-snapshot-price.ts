@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import fetch from 'node-fetch';
 import { logger } from '..';
 import { Pool } from '../../schemas';
@@ -54,6 +55,7 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
   }
 
   logger.info('Obtained Price Update Data: ', priceUpdateData);
+  console.log('Obtained Price Update Data: ', priceUpdateData);
 
   if (
     'parsed' in priceUpdateData &&

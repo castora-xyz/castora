@@ -3,36 +3,27 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "dev": "npm run build && concurrently \"npm run build:watch\" \"npm run start:all:watch\"",
-    "start:all:watch": "nodemon lib/apps/index.js",
-    "start:main": "node lib/apps/main.js",
-    "start:main:watch": "nodemon lib/apps/main.js",
-    "start:pool-manager": "node lib/apps/pool-manager.js",
-    "start:pool-manager:watch": "nodemon lib/apps/pool-manager.js",
-    "start:recorder": "node lib/apps/recorder.js",
-    "start:recorder:watch": "nodemon lib/apps/recorder.js"
+    "start": "node dist/index.js",
+    "dev": "nodemon lib/index.js"
   },
-  "main": "lib/apps/main.js",
   "dependencies": {
     "@google-cloud/logging": "^11.2.0",
     "@google-cloud/logging-bunyan": "^5.1.0",
     "bunyan": "^1.8.15",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.1",
     "express": "^4.21.2",
-    "firebase-admin": "^13.2.0",
-    "morgan": "^1.10.0",
+    "firebase-admin": "^13.4.0",
+    "morgan": "^1.10.1",
     "node-fetch": "^2.7.0",
-    "viem": "^2.24.3"
+    "viem": "^2.33.2"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.11",
-    "@types/cors": "^2.8.17",
-    "@types/morgan": "^1.9.9",
-    "@types/node-fetch": "^2.6.12",
-    "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9",
-    "typescript": "^5.8.2"
-  },
-  "private": true
+    "@types/cors": "^2.8.19",
+    "@types/morgan": "^1.9.10",
+    "@types/node-fetch": "^2.6.13",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.9.2"
+  }
 }

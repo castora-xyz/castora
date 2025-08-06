@@ -8,7 +8,7 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
-import { logger } from '.';
+import { convertNestedBigInts, logger } from '.';
 import { abi } from './abi';
 import { Chain } from './validate-chain';
 
@@ -120,8 +120,9 @@ export const writeContract = async (
     logger.info('Transaction Hash: ', hash);
     logger.info('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    // TODO: Make the logger to understand bigint and log the receipt with it too
-    console.log('Transaction Receipt');
+    logger.info('Transaction Receipt');
+    logger.info(convertNestedBigInts(receipt));
+    // Also logging the raw receipt to the console as the custom logger might not show it.
     console.log(receipt);
 
     const newBalance = await showBalance(chain, account.address);

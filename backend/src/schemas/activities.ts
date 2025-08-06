@@ -10,8 +10,8 @@ export type ActivityType = 'claim' | 'predict';
  */
 export interface UserActivity {
   type: ActivityType;
-  poolId: number;
-  predictionId: number;
+  poolId: bigint;
+  predictionId: bigint;
   timestamp: Timestamp;
   txHash: string;
 }
@@ -22,7 +22,7 @@ export interface UserActivity {
 export interface PoolActivity {
   type: ActivityType;
   user: string;
-  predictionId: number;
+  predictionId: bigint;
   timestamp: Timestamp;
   txHash: string;
 }

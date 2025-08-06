@@ -2,22 +2,18 @@ import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract';
 
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
+export const aprMON = '0xb2f82D0f38dc453D596Ad40A37799446Cc89274A';
+export const CRCL = '0x5d0d5faca8eb7c6a41eb47c978712d5e56039f24';
 export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
 export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
 export const MOODENG = '0x28561b8a2360f463011c16b6cc0b0cbef8dbbcad';
 export const PENGU = '0x1d8ccf87ac0147bae756eb963a2ef6244c969156';
+export const PUMP = '0x046d5f90acffc86ba3e77da42095c982481f28ec';
 export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
+export const TSLA = '0x425ab4f486a2a8a1b49a715617a4be2d585949cf';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
-
-export interface Token {
-  address: string;
-  name: string;
-  fullName: string;
-  decimals: number;
-  pythPriceId: string;
-}
 
 // AAPL stands for Apple Inc. stock. It is not an ERC20 token.
 // The Pyth Network provides price feeds for various assets including stocks.
@@ -37,10 +33,19 @@ export interface Token {
 // For HYPE (HyperLiquid), its Pyth price feed address on Solana Mainnet is:
 // ijVd23mGH83nqss1GMEH61CPoRJW3VWuh6ziM27vcbT. This was converted to hex.
 
+// For TSLA (Tesla Inc. stock), its Pyth price feed address on Solana Mainnet is:
+// 5U28XANpyfmiG1uHfTnoke2cTsa9yJR4GsLUUN5ywtbS. This was converted to hex
+
+// For CRCL (Circle Internet Group Inc. stock), its Pyth price feed address
+// on Solana Mainnet is: 7GEk8krWbVSA1jv3MrKrDbJyGhAPL69zkaevtFB5vFxe.
+
 // Coming over to PENGU (Pudgy Penguins NFT), its token address on Solana
 // Mainnet: 2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv was what was converted.
 
-// For  TRUMP, its token address on Solana Mainnet:
+// For PUMP, its Pyth Price Feed address on Solana Mainnet is:
+// JHMwicgUSPU4MwpMJ4Fiaxxd1QDUzJGcTnAiuZ2RkJU, that was what was converted.
+
+// For TRUMP, its token address on Solana Mainnet:
 // 6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPNwas converted.
 
 // MOODENG is a token that is live on both Ethereum and Solana Mainnet.
@@ -51,6 +56,16 @@ export interface Token {
 
 // gMON is the token address of the Liquid Staked Derivative of the MON token
 // (Monad) from Magma Staking on Monad Testnet.
+
+// aprMON is the token address for Apriori on Monad Testnet.
+
+export interface Token {
+  address: string;
+  name: string;
+  fullName: string;
+  decimals: number;
+  pythPriceId: string;
+}
 
 export const tokens: Token[] = [
   {
@@ -75,6 +90,21 @@ export const tokens: Token[] = [
     decimals: 8,
     pythPriceId:
       '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
+  },
+  {
+    address: aprMON,
+    name: 'aprMON',
+    fullName: 'aPriori',
+    decimals: 18,
+    pythPriceId: ''
+  },
+  {
+    address: CRCL,
+    name: 'CRCL',
+    fullName: 'Circle Internet Group Inc.',
+    decimals: 8,
+    pythPriceId:
+      '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365'
   },
   {
     address: gMON,
@@ -108,6 +138,14 @@ export const tokens: Token[] = [
       '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
   },
   {
+    address: PUMP,
+    name: 'PUMP',
+    fullName: 'pump.fun',
+    decimals: 6,
+    pythPriceId:
+      '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9'
+  },
+  {
     address: SOL,
     name: 'SOL',
     fullName: 'Solana',
@@ -130,6 +168,14 @@ export const tokens: Token[] = [
     decimals: 6,
     pythPriceId:
       '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a'
+  },
+  {
+    address: TSLA,
+    name: 'TSLA',
+    fullName: 'Tesla Inc.',
+    decimals: 8,
+    pythPriceId:
+      '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1'
   },
   {
     address: cUSD,

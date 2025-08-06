@@ -1,19 +1,18 @@
 import { Prediction } from './prediction';
 
 export * from './activities';
+export * from './archived-pool';
 export * from './leaderboard';
 export * from './pool';
 export * from './pool-seeds';
 export * from './prediction';
 
-export interface SplitPredictionResult {
-  loserAddresses: string[];
-  loserPredictionIds: bigint[];
-  winnerAddresses: string[];
-  winnerPredictionIds: bigint[];
+export interface PoolResults {
+  winnerAddressesUniqued: string[];
+  winnerPredictionIds: number[];
 }
 
-export interface SetWinnersResult {
+export interface SplitPredictionResult extends PoolResults {
   predictions: Prediction[];
-  splitted: SplitPredictionResult;
+  winnerPredictionIdsBigInts: bigint[];
 }

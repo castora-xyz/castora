@@ -9,16 +9,26 @@ export class Prediction {
   id: number;
   price: number;
   time: number;
-  claimWinningsTime: number;
+  claimedWinningsTime: number;
   isAWinner: boolean;
 
   constructor(input: any) {
     this.predicter = input['predicter'];
     this.poolId = Number(input['poolId']);
-    this.id = Number(input['predictionId']);
-    this.price = Number(input['predictionPrice']);
-    this.time = Number(input['predictionTime']);
-    this.claimWinningsTime = Number(input['claimedWinningsTime']);
+    this.id = Number(input['predictionId'] || input['id']);
+    this.price = Number(input['predictionPrice'] || input['price']);
+    this.time = Number(input['predictionTime'] || input['time']);
+    this.claimedWinningsTime = Number(input['claimedWinningsTime']);
     this.isAWinner = input['isAWinner'];
+  }
+
+  toJson(): any {
+    return {
+      predicter: this.predicter,
+      id: this.id,
+      price: this.price,
+      time: this.time,
+      isAWinner: this.isAWinner
+    };
   }
 }
