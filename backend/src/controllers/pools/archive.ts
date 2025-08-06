@@ -80,12 +80,12 @@ export const archivePool = async (chain: Chain, poolId: any): Promise<void> => {
   logger.info(`Fetched all ${predictions.length} predictions.`);
 
   if (predictions.length != pool.noOfPredictions) {
-    logger.info(
-      `Fatal: pool.noOfPredictions (${pool.noOfPredictions}) `,
+    logger.error(
+      'Fatal: unmatching predictions length.',
+      ` pool ID: ${pool.poolId} pool.noOfPredictions (${pool.noOfPredictions}) `,
       `doesn't equal all fetched predictions.length (${predictions.length});`
     );
-    // TODO: Alert developers
-    throw 'Fatal: unmatching predictions length';
+    throw 'Something went wrong, try again later.';
   }
 
   await archivalRef.save(

@@ -55,7 +55,9 @@ export const logger = createLogger({
         }
       })
     },
-    // Stream to Google Cloud alongside log levels
-    new LoggingBunyan({ logName: 'castora-main-backend' }).stream('info')
+    // Stream to Google Cloud alongside log levels in production
+    ...(process.env.NODE_ENV === 'production'
+      ? [new LoggingBunyan({ logName: 'castora-main-backend' }).stream('info')]
+      : [])
   ]
 });

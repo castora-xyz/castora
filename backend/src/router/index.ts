@@ -19,8 +19,8 @@ export const wrapper = async (
   } catch (e: any) {
     let message = e['message'] ?? `${e}`;
     if (message.includes('requests limited')) message = 'RPC Limit Reached';
-    logger.error(`Error at ${desc} ... `);
-    logger.error(e);
+    logger.info(`Error at ${desc} ... `);
+    logger.info(e);
     return response.status(400).json({ success: false, message });
   }
 };

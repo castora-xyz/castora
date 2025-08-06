@@ -89,10 +89,17 @@ export const readContract = async (
 };
 
 const showBalance = async (chain: Chain, address: `0x${string}`) => {
-  const balance = formatEther(
-    await createPublicClient({ ...getConfig(chain) }).getBalance({ address })
-  );
-  logger.info(`Admin Balance (${address}): ${`${balance} ETH`}`);
+  const balance = await createPublicClient({ ...getConfig(chain) }).getBalance({
+    address
+  });
+  logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ETH`}`);
+
+  if (balance < 10e18) {
+    logger.warn(
+      `Admin Balance is low: ${`${formatEther(balance)} ETH`}. Please top up.`
+    );
+  }
+
   return balance;
 };
 
@@ -126,7 +133,7 @@ export const writeContract = async (
     console.log(receipt);
 
     const newBalance = await showBalance(chain, account.address);
-    const balanceDiffs = +newBalance - +prevBalance;
+    const balanceDiffs = Number(newBalance) - Number(prevBalance);
     logger.info(`Admin Balance Change: ${`${balanceDiffs} ETH`}`);
     return result;
   } catch (e) {
@@ -134,6 +141,9 @@ export const writeContract = async (
       // occasionally the wait for transaction receipt times out.
       // in such case, do nothing so that the call simply returns
       // after all the writeContract logic is done and submitted to on-chain.
-    } else throw e;
+    } else {
+      logger.error(`Error at writeContract call: ${e}`);
+      throw e;
+    }
   }
 };

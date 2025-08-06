@@ -53,8 +53,7 @@ export class PoolSeeds {
       (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
     );
     if (!details) {
-      // TODO: Alert Developers in some way
-      const message = `Token not found in tokens list: ${this.predictionToken}`;
+      const message = `Prediction Token not found in tokens list: ${this.predictionToken}`;
       logger.error(message);
       throw message;
     }
@@ -69,8 +68,7 @@ export class PoolSeeds {
       (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
     );
     if (!details) {
-      // TODO: Alert Developers in some way
-      const message = `Token not found in tokens list: ${this.stakeToken}`;
+      const message = `Stake Token not found in tokens list: ${this.stakeToken}`;
       logger.error(message);
       throw message;
     }

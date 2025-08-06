@@ -15,8 +15,8 @@ export const validateChain = async (
   if (!chain) message = 'Provide valid chain in headers.';
   if (!isChain(chain)) message = `Unsupported chain: ${chain}`;
   if (message) {
-    logger.error('Error at validating chain ...');
-    logger.error(message);
+    logger.info('Error at validating chain ...');
+    logger.info(message);
     res.status(400).json({ success: false, message });
   } else {
     res.locals.chain = chain;

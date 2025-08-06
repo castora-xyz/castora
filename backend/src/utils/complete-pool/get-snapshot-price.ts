@@ -42,16 +42,22 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
     );
     pythResponseCloned = pythResponse.clone();
   } catch (e) {
-    logger.error('Error in fetching from Pyth: ', `${e}`);
-    throw "Couldn't fetch Price Info from Pyth. Please alert Developers.";
+    logger.error(
+      "Couldn't FETCH Price Info from Pyth. ",
+      ` pool ID: ${pool.poolId}, error: ${e} `
+    );
+    throw 'Something went wrong, try again later.';
   }
 
   try {
     priceUpdateData = (await pythResponse.json()) as any;
   } catch (e) {
-    logger.error('Error in parsing Pyth Response: ', `${e}`);
-    logger.error('Pyth Response: ', await pythResponseCloned.text());
-    throw "Couldn't parse Price Info from Pyth. Please alert Developers.";
+    logger.error(
+      "Couldn't PARSE Price Info from Pyth. ",
+      ` pool ID: ${pool.poolId} `,
+      `Pyth Response: ${await pythResponseCloned.text()}`
+    );
+    throw 'Something went wrong, try again later.';
   }
 
   logger.info('Obtained Price Update Data: ', priceUpdateData);
@@ -71,6 +77,7 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
     const power = 8 >= expo ? 8 - expo : expo - 8;
     return +price * 10 ** power;
   } else {
-    throw 'Expected Price Info not found in Pyth Data. Please alert Developers.';
+    logger.error('Expected Price Info not found in Pyth Data.');
+    throw 'Something went wrong, try again later.';
   }
 };

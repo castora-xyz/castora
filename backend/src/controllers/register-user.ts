@@ -52,7 +52,7 @@ export const registerUser = async (
       signature
     });
   } catch (e) {
-    logger.error(e);
+    logger.info(e);
     throw `Couldn't verify signature: ${e}`;
   }
   if (!isVerified) 'Unauthorized Signature';
