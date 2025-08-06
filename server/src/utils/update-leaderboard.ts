@@ -1,4 +1,4 @@
-import { Chain, fetchPool, readContract, storage } from '.';
+import { Chain, fetchPool, logger, readContract, storage } from '.';
 import {
   getNewLeaderboardEntry,
   LeaderboardEntry,
@@ -61,16 +61,16 @@ export const updateLeaderboardOnPrediction = async (
   address: string,
   activity: UserActivity
 ): Promise<void> => {
-  console.log('Beginning Leaderboard Update On Prediction ...');
+  logger.info('Beginning Leaderboard Update On Prediction ...');
   // 1. Fetch the pool for the poolId.
   const pool = await fetchPool(chain, activity.poolId);
-  console.log(`Fetched Pool with ID: ${activity.poolId}`);
+  logger.info(`Fetched Pool with ID: ${activity.poolId}`);
 
   // 2. Construct the predicted token and amount as stake data from seeds
   const { decimals, name: token } = pool.seeds.getStakeTokenDetails();
   let amount = pool.seeds.stakeAmount / 10 ** decimals;
   amount = Math.trunc(amount * 100) / 100; // round to 2 decimal places
-  console.log(`Got predicted token and amount: ${token}, ${amount}`);
+  logger.info(`Got predicted token and amount: ${token}, ${amount}`);
 
   // 3. Fetch the leaderboard data
   const ldbFileRef = storage
@@ -80,35 +80,35 @@ export const updateLeaderboardOnPrediction = async (
   let entries: LeaderboardEntry[] = [];
   const [exists] = await ldbFileRef.exists();
   if (!exists) {
-    console.log('No Leaderboard Found. Created One');
+    logger.info('No Leaderboard Found. Created One');
   } else {
     entries = JSON.parse((await ldbFileRef.download())[0].toString()).entries;
-    console.log('Fetched Leaderboard Successfully');
+    logger.info('Fetched Leaderboard Successfully');
   }
 
   // 4. Update the involved user
-  console.log('Updating User Details ...');
+  logger.info('Updating User Details ...');
   address = address.toLowerCase(); // ensure easy comparison
   let entry = entries.find((e) => e.address === address);
   if (!entry) {
     entry = getNewLeaderboardEntry(address);
     entries.push(entry);
   }
-  console.log(
+  logger.info(
     entry.predictionsCount == 0
       ? 'Is First Time User. Created new entry'
       : 'Is Existing User. Found their entry'
   );
 
   entry.predictionsCount += 1; // increment predictionsCount
-  console.log(`Incremented Predictions Count to: ${entry.predictionsCount}`);
+  logger.info(`Incremented Predictions Count to: ${entry.predictionsCount}`);
 
   const stakedIndex = entry.stakedAmounts.findIndex(
     ({ token: stakedToken }) => stakedToken == token
   ); // Update stake amount
   if (stakedIndex == -1) entry.stakedAmounts.push({ token, amount });
   else entry.stakedAmounts[stakedIndex].amount += amount;
-  console.log(
+  logger.info(
     stakedIndex == -1
       ? 'Pushed new staked token and amount into user entry'
       : 'Updated existing token for new prediction amount'
@@ -122,18 +122,18 @@ export const updateLeaderboardOnPrediction = async (
   );
   if (!noOfJoinedPools) throw "Couldn't fetch noOfJoinedPools";
   entry.poolsCount = Number(noOfJoinedPools);
-  console.log(`Updated User's Pool's Count: ${entry.poolsCount}`);
+  logger.info(`Updated User's Pool's Count: ${entry.poolsCount}`);
 
   // TODO: also increment totalStakedUsd
 
   // 5. Re-rank leaderboard entries
   entries = entries.sort((a, b) => sortLeaderboard(address, a, b));
-  console.log('Sorted Leaderboard Successfully');
+  logger.info('Sorted Leaderboard Successfully');
 
   // 6. Save updated leaderboard
   await ldbFileRef.save(JSON.stringify({ entries, count: entries.length }));
-  console.log('Saved Updated Leaderboard Successfully');
-  console.log('Completed Leaderboard Update On Prediction');
+  logger.info('Saved Updated Leaderboard Successfully');
+  logger.info('Completed Leaderboard Update On Prediction');
 };
 
 /**
@@ -158,10 +158,10 @@ export const updateLeaderboardOnPrediction = async (
 //   let entries: LeaderboardEntry[] = [];
 //   const [exists] = await ldbFileRef.exists();
 //   if (!exists) {
-//     console.log('No Leaderboard Found. Created One');
+//     logger.info('No Leaderboard Found. Created One');
 //   } else {
 //     entries = JSON.parse((await ldbFileRef.download())[0].toString()).entries;
-//     console.log('Fetched Leaderboard Successfully');
+//     logger.info('Fetched Leaderboard Successfully');
 //   }
 
 //   // 2. Destructure info and construct needed values
@@ -178,10 +178,10 @@ export const updateLeaderboardOnPrediction = async (
 //   // amount without fees applied
 //   let won = pool.winAmount / 10 ** decimals / 0.95;
 //   won = Math.trunc(won * 100) / 100; // round to 2 decimal
-//   console.log(`Got token and won and lost amounts: ${token}, ${won}, ${lost}`);
+//   logger.info(`Got token and won and lost amounts: ${token}, ${won}, ${lost}`);
 
 //   // 3. loop through winners and increment wins
-//   console.log('Looping through Winners and updating');
+//   logger.info('Looping through Winners and updating');
 //   for (let id of winners) {
 //     // certain that a matching prediction will be found as predictions were
 //     // originally splitted to obtain winners and losers
@@ -201,7 +201,7 @@ export const updateLeaderboardOnPrediction = async (
 //     if (index == -1) entry.wonAmounts.push({ token, amount: won });
 //     else entry.wonAmounts[index].amount += won;
 //   }
-//   console.log('Looped through and updated all Winners');
+//   logger.info('Looped through and updated all Winners');
 
 //   // 4. Loop through losers and increment losses
 //   for (let id of losers) {
@@ -223,14 +223,14 @@ export const updateLeaderboardOnPrediction = async (
 //     if (index == -1) entry.lostAmounts.push({ token, amount: lost });
 //     else entry.lostAmounts[index].amount += lost;
 //   }
-//   console.log('Looped through and updated all Losers');
+//   logger.info('Looped through and updated all Losers');
 
 //   // 5. Re-rank leaderboard entries
 //   entries = entries.sort((a, b) => sortLeaderboard(token, a, b));
-//   console.log('Sorted Leaderboard Successfully');
+//   logger.info('Sorted Leaderboard Successfully');
 
 //   // 6. Save updated leaderboard
 //   await ldbFileRef.save(JSON.stringify({ entries, count: entries.length }));
-//   console.log('Saved Updated Leaderboard Successfully');
-//   console.log('Completed Leaderboard Update On Prediction');
+//   logger.info('Saved Updated Leaderboard Successfully');
+//   logger.info('Completed Leaderboard Update On Prediction');
 // };

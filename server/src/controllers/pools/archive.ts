@@ -10,6 +10,7 @@ import {
   getCryptoSeeds,
   getPoolId,
   getStocksSeeds,
+  logger,
   storage
 } from '../../utils';
 import { fetchPredictions } from '../../utils/complete-pool/fetch-predictions';
@@ -30,12 +31,12 @@ export const archivePools = async (chain: Chain) => {
       if (poolId) await archivePool(chain, poolId);
     } catch (e: any) {
       if (['Not yet windowCloseTime', 'Nobody joined this pool'].includes(e)) {
-        console.log(e);
+        logger.info(e);
       } else {
         throw e;
       }
     } finally {
-      console.log('\n\n');
+      logger.info('\n\n');
     }
   }
 };
@@ -50,8 +51,8 @@ export const archivePool = async (chain: Chain, poolId: any): Promise<void> => {
   const pool = await fetchPool(chain, poolId);
   const { noOfPredictions, seeds } = pool;
 
-  console.log('pool.seeds.windowCloseTime: ', seeds.windowCloseTime);
-  console.log(
+  logger.info('pool.seeds.windowCloseTime: ', seeds.windowCloseTime);
+  logger.info(
     'pool.seeds.windowCloseTime (display): ',
     new Date(seeds.windowCloseTime * 1000)
   );
@@ -59,7 +60,7 @@ export const archivePool = async (chain: Chain, poolId: any): Promise<void> => {
     throw 'Not yet windowCloseTime';
   }
 
-  console.log('\npool.noOfPredictions: ', noOfPredictions);
+  logger.info('\npool.noOfPredictions: ', noOfPredictions);
   if (noOfPredictions === 0) {
     throw 'Nobody joined this pool';
   }
@@ -70,27 +71,27 @@ export const archivePool = async (chain: Chain, poolId: any): Promise<void> => {
   const [exists] = await archivalRef.exists();
 
   if (exists) {
-    console.log(`Pool ${poolId} already pre-archived.`);
+    logger.info(`Pool ${poolId} already pre-archived.`);
     return;
   }
 
-  console.log('\nFetching Predictions ... ');
+  logger.info('\nFetching Predictions ... ');
   const predictions = await fetchPredictions(chain, pool);
-  console.log(`Fetched all ${predictions.length} predictions.`);
+  logger.info(`Fetched all ${predictions.length} predictions.`);
 
   if (predictions.length != pool.noOfPredictions) {
-    console.log(
-      `Fatal: pool.noOfPredictions (${pool.noOfPredictions}) `,
+    logger.error(
+      'Fatal: unmatching predictions length.',
+      ` pool ID: ${pool.poolId} pool.noOfPredictions (${pool.noOfPredictions}) `,
       `doesn't equal all fetched predictions.length (${predictions.length});`
     );
-    // TODO: Alert developers
-    throw 'Fatal: unmatching predictions length';
+    throw 'Something went wrong, try again later.';
   }
 
   await archivalRef.save(
     JSON.stringify(new ArchivedPool({ chain, pool, predictions }).toJSON())
   );
-  console.log(`Successfully pre-archived predictions in Pool ${poolId}`);
+  logger.info(`Successfully pre-archived predictions in Pool ${poolId}`);
 };
 
 /**

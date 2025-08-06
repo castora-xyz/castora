@@ -1,3 +1,4 @@
+import { logger } from '.';
 import { Pool } from '../schemas';
 import { readContract } from './contract';
 import { Chain } from './validate-chain';
@@ -10,7 +11,7 @@ import { Chain } from './validate-chain';
  * @returns An instance of the pool that was fetched.
  */
 export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
-  console.log('Got poolId: ', poolId);
+  logger.info('Got poolId: ', poolId);
   if (Number.isNaN(poolId)) throw 'Got a non-numeric poolId';
   if (Number(poolId) == 0) throw 'poolId cannot be zero';
   if (Number(poolId) < 0) throw 'poolId cannot be negative';
@@ -18,17 +19,18 @@ export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
 
   const noOfPools = Number(await readContract(chain, 'noOfPools'));
   if (Number.isNaN(noOfPools)) throw 'Got a non-numeric noOfPools';
-  console.log('Current noOfPools is: ', noOfPools);
+  logger.info('Current noOfPools is: ', noOfPools);
   if (poolId > noOfPools) throw `Invalid poolId: ${poolId}`;
   poolId = Number(poolId);
 
-  console.log('\nFetching Pool Details ... ');
+  logger.info('\nFetching Pool Details ... ');
   const raw = await readContract(chain, 'pools', [BigInt(poolId)]);
   if (!raw) {
     throw 'Could not fetch pool';
   } else {
-    console.log('Fetched Pool Details.');
+    logger.info('Fetched Pool Details.');
     const pool = new Pool(raw);
+    logger.info(pool);
     console.log(pool);
     return pool;
   }

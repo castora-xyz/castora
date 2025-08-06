@@ -6,6 +6,7 @@ import {
   getPoolId,
   getSnapshotPrice,
   getStocksSeeds,
+  logger,
   notifyWinners,
   setWinners
 } from '../../utils';
@@ -24,12 +25,12 @@ export const completePools = async (chain: Chain) => {
       if (poolId) await completePool(chain, poolId);
     } catch (e: any) {
       if (['Not yet snapshotTime', 'Nobody joined this pool'].includes(e)) {
-        console.log(e);
+        logger.info(e);
       } else {
         throw e;
       }
     } finally {
-      console.log('\n\n');
+      logger.info('\n\n');
     }
   }
 };
@@ -47,8 +48,8 @@ export const completePool = async (
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
 
-  console.log('pool.seeds.snapshotTime: ', seeds.snapshotTime);
-  console.log(
+  logger.info('pool.seeds.snapshotTime: ', seeds.snapshotTime);
+  logger.info(
     'pool.seeds.snapshotTime (display): ',
     new Date(seeds.snapshotTime * 1000)
   );
@@ -56,22 +57,22 @@ export const completePool = async (
     throw 'Not yet snapshotTime';
   }
 
-  console.log('\npool.noOfPredictions: ', noOfPredictions);
+  logger.info('\npool.noOfPredictions: ', noOfPredictions);
   if (noOfPredictions === 0) {
     throw 'Nobody joined this pool';
   }
 
   if (completionTime !== 0) {
-    console.log('\npool.completionTime: ', completionTime);
-    console.log(
+    logger.info('\npool.completionTime: ', completionTime);
+    logger.info(
       'pool.completionTime (display): ',
       new Date(completionTime * 1000)
     );
-    console.log('Pool has been completed. Ending Process.');
+    logger.info('Pool has been completed. Ending Process.');
   } else {
-    console.log('Getting Snapshot Price ...');
+    logger.info('Getting Snapshot Price ...');
     const snapshotPrice = await getSnapshotPrice(pool);
-    console.log('Got Snapshot Price: ', snapshotPrice);
+    logger.info('Got Snapshot Price: ', snapshotPrice);
 
     const splitResult = await setWinners(chain, pool, snapshotPrice);
 

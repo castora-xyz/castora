@@ -4,11 +4,11 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "outDir": "lib",
-    "sourceMap": true,
+    "resolveJsonModule": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "target": "es2017"
+    "target": "es2020"
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src", "src/*.json"]
 }

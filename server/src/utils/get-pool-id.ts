@@ -1,3 +1,4 @@
+import { logger } from '.';
 import { Pool, PoolSeeds } from '../schemas';
 import { readContract } from './contract';
 import { Chain } from './validate-chain';
@@ -13,21 +14,21 @@ export const getPoolId = async (
   chain: Chain,
   seeds: PoolSeeds
 ): Promise<number | null> => {
-  console.log('GetPoolId => Got PoolSeeds');
+  logger.info('GetPoolId => Got PoolSeeds');
   const seedsHash = await readContract(chain, 'hashPoolSeeds', [
     seeds.bigIntified()
   ]);
-  console.log('Hashed PoolSeeds: ', seedsHash);
+  logger.info('Hashed PoolSeeds: ', seedsHash);
 
-  console.log('Checking if Pool Exists ...');
+  logger.info('Checking if Pool Exists ...');
   let poolId = Number(
     await readContract(chain, 'poolIdsBySeedsHashes', [seedsHash])
   );
   if (!Number.isNaN(poolId) && poolId !== 0) {
-    console.log('Pool exists. poolId: ', poolId);
+    logger.info('Pool exists. poolId: ', poolId);
     return poolId;
   } else {
-    console.log("Pool doesn't exist");
+    logger.info("Pool doesn't exist");
     return null;
   }
 };

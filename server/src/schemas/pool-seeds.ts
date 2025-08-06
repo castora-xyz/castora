@@ -1,4 +1,4 @@
-import { Token, tokens } from '../utils';
+import { logger, Token, tokens } from '../utils';
 
 /**
  * Holds information about the properties of a given pool.
@@ -53,9 +53,8 @@ export class PoolSeeds {
       (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
     );
     if (!details) {
-      // TODO: Alert Developers in some way
-      const message = `Token not found in tokens list: ${this.predictionToken}`;
-      console.error(message);
+      const message = `Prediction Token not found in tokens list: ${this.predictionToken}`;
+      logger.error(message);
       throw message;
     }
     return details;
@@ -69,9 +68,8 @@ export class PoolSeeds {
       (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
     );
     if (!details) {
-      // TODO: Alert Developers in some way
-      const message = `Token not found in tokens list: ${this.stakeToken}`;
-      console.error(message);
+      const message = `Stake Token not found in tokens list: ${this.stakeToken}`;
+      logger.error(message);
       throw message;
     }
     return details;

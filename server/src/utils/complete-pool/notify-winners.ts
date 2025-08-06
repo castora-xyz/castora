@@ -1,5 +1,5 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { firestore, messaging } from '..';
+import { firestore, logger, messaging } from '..';
 import { Pool } from '../../schemas/pool';
 
 /**
@@ -12,7 +12,7 @@ export const notifyWinners = async (
   winnerAddresses: string[],
   pool: Pool
 ): Promise<void> => {
-  console.log('\nNotifying Winners ... ');
+  logger.info('\nNotifying Winners ... ');
 
   const { poolId, winAmount, seeds } = pool;
 
@@ -71,7 +71,7 @@ export const notifyWinners = async (
       notifStats.failed++;
     }
   }
-  console.log('Notified Winners.');
-  console.log('Notification Statistics');
+  logger.info('Notified Winners.');
+  logger.info('Notification Statistics');
   console.dir(notifStats);
 };

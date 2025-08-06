@@ -8,6 +8,7 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
+import { convertNestedBigInts, logger } from '.';
 import { abi } from './abi';
 import { Chain } from './validate-chain';
 
@@ -88,10 +89,17 @@ export const readContract = async (
 };
 
 const showBalance = async (chain: Chain, address: `0x${string}`) => {
-  const balance = formatEther(
-    await createPublicClient({ ...getConfig(chain) }).getBalance({ address })
-  );
-  console.log(`Admin Balance (${address}): ${`${balance} ETH`}`);
+  const balance = await createPublicClient({ ...getConfig(chain) }).getBalance({
+    address
+  });
+  logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ETH`}`);
+
+  if (balance < 10e18) {
+    logger.warn(
+      `Admin Balance is low: ${`${formatEther(balance)} ETH`}. Please top up.`
+    );
+  }
+
   return balance;
 };
 
@@ -116,21 +124,26 @@ export const writeContract = async (
     const walletClient = createWalletClient({ account, ...config });
     const hash = await walletClient.writeContract(request);
 
-    console.log('Transaction Hash: ', hash);
-    console.log('Waiting for On-Chain Confirmation ...');
+    logger.info('Transaction Hash: ', hash);
+    logger.info('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    console.log('Transaction Receipt');
+    logger.info('Transaction Receipt');
+    logger.info(convertNestedBigInts(receipt));
+    // Also logging the raw receipt to the console as the custom logger might not show it.
     console.log(receipt);
 
     const newBalance = await showBalance(chain, account.address);
-    const balanceDiffs = +newBalance - +prevBalance;
-    console.log(`Admin Balance Change: ${`${balanceDiffs} ETH`}`);
+    const balanceDiffs = Number(newBalance) - Number(prevBalance);
+    logger.info(`Admin Balance Change: ${`${balanceDiffs} ETH`}`);
     return result;
   } catch (e) {
     if (`${e}`.toLowerCase().includes('request timed out')) {
       // occasionally the wait for transaction receipt times out.
       // in such case, do nothing so that the call simply returns
       // after all the writeContract logic is done and submitted to on-chain.
-    } else throw e;
+    } else {
+      logger.error(`Error at writeContract call: ${e}`);
+      throw e;
+    }
   }
 };

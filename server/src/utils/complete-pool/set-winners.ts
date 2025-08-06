@@ -1,5 +1,5 @@
 import 'dotenv/config';
-
+import { logger } from '..';
 import { fetchPredictionsFromArchive } from '../../controllers';
 import { Pool, SplitPredictionResult } from '../../schemas';
 import { writeContract } from '../contract';
@@ -22,32 +22,32 @@ export const setWinners = async (
   pool: Pool,
   snapshotPrice: number
 ): Promise<SplitPredictionResult> => {
-  console.log('\nFetching Predictions from Archive ... ');
+  logger.info('\nFetching Predictions from Archive ... ');
   const predictions = await fetchPredictionsFromArchive(chain, pool.poolId);
-  console.log(`Fetched all ${predictions.length} predictions.`);
+  logger.info(`Fetched all ${predictions.length} predictions.`);
 
   if (predictions.length != pool.noOfPredictions) {
-    console.log(
-      `Fatal: pool.noOfPredictions (${pool.noOfPredictions}) `,
+    logger.error(
+      'Fatal: unmatching predictions length.',
+      ` pool ID: ${pool.poolId} pool.noOfPredictions (${pool.noOfPredictions}) `,
       `doesn't equal all fetched predictions.length (${predictions.length});`
     );
-    // TODO: Alert developers
-    throw 'Fatal: unmatching predictions length';
+    throw 'Something went wrong, try again later.';
   }
 
   const noOfWinners = getNoOfWinners(
     pool.noOfPredictions,
     pool.poolId == 3000 ? 10 : 2
   );
-  console.log('\nnoOfWinners: ', noOfWinners);
+  logger.info('\nnoOfWinners: ', noOfWinners);
 
-  console.log('\nComputing Winners ... ');
+  logger.info('\nComputing Winners ... ');
   const splitted = getSplittedPredictions(
     snapshotPrice,
     predictions,
     noOfWinners
   );
-  console.log(
+  logger.info(
     `Computed ${splitted.winnerPredictionIdsBigInts.length} winners.`
   );
 
@@ -62,9 +62,9 @@ export const setWinners = async (
   const winAmount = Math.trunc(
     (pool.seeds.stakeAmount * pool.noOfPredictions * 95) / (noOfWinners * 100)
   );
-  console.log('\nwinAmount: ', winAmount);
+  logger.info('\nwinAmount: ', winAmount);
 
-  console.log('\nCalling Complete Pool in Contract ... ');
+  logger.info('\nCalling Complete Pool in Contract ... ');
   await writeContract(chain, 'completePool', [
     BigInt(pool.poolId),
     BigInt(snapshotPrice),
@@ -72,7 +72,7 @@ export const setWinners = async (
     BigInt(winAmount),
     splitted.winnerPredictionIdsBigInts
   ]);
-  console.log('Called Complete Pool for poolId: ', pool.poolId);
+  logger.info('Called Complete Pool for poolId: ', pool.poolId);
 
   return splitted;
 };

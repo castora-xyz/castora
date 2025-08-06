@@ -4,7 +4,8 @@ import {
   firestore,
   getCryptoSeeds,
   getPoolId,
-  getStocksSeeds
+  getStocksSeeds,
+  logger
 } from '../../utils';
 
 /**
@@ -45,7 +46,7 @@ export const getStocksPoolIds = async (chain: Chain): Promise<number[]> => {
  * @param chain The chain to synchronize its live pools.
  */
 export const syncPools = async (chain: Chain) => {
-  console.log('Starting Sync for Live Crypto Pools');
+  logger.info('Starting Sync for Live Crypto Pools');
   const cryptoSeeds = getCryptoSeeds(chain);
   const cryptoPoolIds: number[] = [];
   for (const seed of cryptoSeeds) {
@@ -54,14 +55,14 @@ export const syncPools = async (chain: Chain) => {
         ? await getPoolId(chain, seed)
         : await createPool(chain, seed);
     if (poolId) cryptoPoolIds.push(poolId);
-    console.log('\n');
+    logger.info('\n');
   }
-  console.log('Live Crypto PoolIds: ', cryptoPoolIds);
+  logger.info('Live Crypto PoolIds: ', cryptoPoolIds);
   await firestore(chain)
     .doc('/live/crypto')
     .set({ poolIds: cryptoPoolIds }, { merge: true });
 
-  console.log('\n\nStating Sync for Live Stock Pools');
+  logger.info('\n\nStarting Sync for Live Stock Pools');
   const stocksSeeds = getStocksSeeds(chain);
   const stocksPoolIds: number[] = [];
   for (const seed of stocksSeeds) {
@@ -70,9 +71,9 @@ export const syncPools = async (chain: Chain) => {
         ? await getPoolId(chain, seed)
         : await createPool(chain, seed);
     if (poolId) stocksPoolIds.push(poolId);
-    console.log('\n');
+    logger.info('\n');
   }
-  console.log('Live Stocks PoolIds: ', stocksPoolIds);
+  logger.info('Live Stocks PoolIds: ', stocksPoolIds);
   await firestore(chain)
     .doc('/live/stocks')
     .set({ poolIds: stocksPoolIds }, { merge: true });

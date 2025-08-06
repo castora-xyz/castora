@@ -2,7 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { IncomingMessage } from 'http';
 import { verifyMessage } from 'viem';
 
-import { firestore, messaging } from '../utils';
+import { firestore, logger, messaging } from '../utils';
 
 export const AUTH_MESSAGE = 'authentication';
 
@@ -40,9 +40,9 @@ export const registerUser = async (
   // indicates for "test-only" or "dry-run" purpose.
   await messaging.send({ token: fcmToken }, true);
 
-  console.log('Got Register User ... ');
-  console.log('address: ', address);
-  console.log('fcmToken: ', fcmToken);
+  logger.info('Got Register User ... ');
+  logger.info('address: ', address);
+  logger.info('fcmToken: ', fcmToken);
 
   let isVerified = false;
   try {
@@ -52,12 +52,12 @@ export const registerUser = async (
       signature
     });
   } catch (e) {
-    console.error(e);
+    logger.info(e);
     throw `Couldn't verify signature: ${e}`;
   }
   if (!isVerified) 'Unauthorized Signature';
 
-  console.log('\n Saving User to Firestore ... ');
+  logger.info('\n Saving User to Firestore ... ');
   // Using the default Firestore here to save fcmTokens
   await firestore()
     .doc(`/users/${address}`)
@@ -65,6 +65,6 @@ export const registerUser = async (
       { address, fcmTokens: FieldValue.arrayUnion(fcmToken) },
       { merge: true }
     );
-  console.log('User Saved Successfully.');
-  console.log('User Registration Successful.');
+  logger.info('User Saved Successfully.');
+  logger.info('User Registration Successful.');
 };

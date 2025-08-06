@@ -1,6 +1,7 @@
 import { Response, Router } from 'express';
 import poolRoutes from './pools';
 import userRoutes from './users';
+import { logger } from '../utils';
 
 const router = Router();
 
@@ -18,8 +19,8 @@ export const wrapper = async (
   } catch (e: any) {
     let message = e['message'] ?? `${e}`;
     if (message.includes('requests limited')) message = 'RPC Limit Reached';
-    console.error(`Error at ${desc} ... `);
-    console.error(e);
+    logger.info(`Error at ${desc} ... `);
+    logger.info(e);
     return response.status(400).json({ success: false, message });
   }
 };

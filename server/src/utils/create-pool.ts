@@ -1,3 +1,4 @@
+import { logger } from '.';
 import { Pool, PoolSeeds } from '../schemas';
 import { readContract, writeContract } from './contract';
 import { Chain } from './validate-chain';
@@ -15,34 +16,34 @@ export const createPool = async (
   chain: Chain,
   seeds: PoolSeeds
 ): Promise<number | null> => {
-  console.log('Create Pool => Got PoolSeeds');
+  logger.info('Create Pool => Got PoolSeeds');
   const seedsHash = await readContract(chain, 'hashPoolSeeds', [
     seeds.bigIntified()
   ]);
-  console.log('Hashed PoolSeeds: ', seedsHash);
+  logger.info('Hashed PoolSeeds: ', seedsHash);
 
-  console.log('Checking if Pool Exists ...');
+  logger.info('Checking if Pool Exists ...');
   let poolId = Number(
     await readContract(chain, 'poolIdsBySeedsHashes', [seedsHash])
   );
   if (!Number.isNaN(poolId)) {
     if (poolId == 0) {
-      console.log('Pool does not exist.');
+      logger.info('Pool does not exist.');
 
       if (seeds.windowCloseTime <= Math.trunc(Date.now() / 1000)) {
-        console.log('WindowCloseTime is in the past. Ending Process.');
+        logger.info('WindowCloseTime is in the past. Ending Process.');
         return null;
       }
 
-      console.log('\nCreating Pool ... ');
+      logger.info('\nCreating Pool ... ');
       poolId = Number(
         await writeContract(chain, 'createPool', [seeds.bigIntified()])
       );
-      console.log('Created new pool with poolId: ', poolId);
+      logger.info('Created new pool with poolId: ', poolId);
 
       return poolId;
     } else {
-      console.log('Pool exists already. poolId: ', poolId);
+      logger.info('Pool exists already. poolId: ', poolId);
       return poolId;
     }
   } else {

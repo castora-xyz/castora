@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { logger } from '.';
 
 export type Chain = 'monaddevnet' | 'monadtestnet' | 'sepolia';
 const isChain = (chain: any): chain is Chain =>
@@ -14,8 +15,8 @@ export const validateChain = async (
   if (!chain) message = 'Provide valid chain in headers.';
   if (!isChain(chain)) message = `Unsupported chain: ${chain}`;
   if (message) {
-    console.error('Error at validating chain ...');
-    console.error(message);
+    logger.info('Error at validating chain ...');
+    logger.info(message);
     res.status(400).json({ success: false, message });
   } else {
     res.locals.chain = chain;
