@@ -328,6 +328,56 @@ contract Castora is
     return pool.noOfPredictions;
   }
 
+  /// Makes multiple predictions with the same `predictionPrice` in the {Pool}
+  /// with the provided `poolId`.
+  ///
+  /// By calling this function, the predicter effectively joins the pool multiple times.
+  /// The {PoolSeeds-stakeAmount} of the {PoolSeeds-stakeToken} of the pool will be
+  /// deducted from the predicter for each prediction made (predictionsCount times).
+  ///
+  /// @param poolId The ID of the pool to make predictions in
+  /// @param predictionPrice The price prediction to use for all predictions
+  /// @param predictionsCount The number of predictions to make (must be > 0)
+  /// @return firstPredictionId The ID of the first prediction made
+  /// @return lastPredictionId The ID of the last prediction made
+  ///
+  /// Emits multiple {Predicted} events.
+  function bulkPredict(uint256 poolId, uint256 predictionPrice, uint16 predictionsCount)
+    public
+    payable
+    nonReentrant
+    returns (uint256 firstPredictionId, uint256 lastPredictionId)
+  {
+    if (predictionsCount == 0) revert ZeroAmountSpecified();
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    Pool storage pool = pools[poolId];
+    PoolSeeds memory seeds = pool.seeds;
+    if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
+
+    if (seeds.stakeToken == address(this)) {
+      if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
+    } else {
+      if (!IERC20(seeds.stakeToken).transferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount)) {
+        revert UnsuccessfulStaking();
+      }
+    }
+
+    firstPredictionId = pool.noOfPredictions + 1;
+    for (uint16 i = 0; i < predictionsCount; i++) {
+      totalNoOfPredictions += 1;
+      totalStakedAmounts[seeds.stakeToken] += seeds.stakeAmount;
+      pool.noOfPredictions += 1;
+      predictions[poolId][pool.noOfPredictions] =
+        Prediction(msg.sender, poolId, pool.noOfPredictions, predictionPrice, block.timestamp, 0, false);
+
+      predictionIdsByAddresses[poolId][msg.sender].push(pool.noOfPredictions);
+      noOfJoinedPoolsByAddresses[msg.sender] += 1;
+      joinedPoolIdsByAddresses[msg.sender].push(poolId);
+      emit Predicted(poolId, pool.noOfPredictions, msg.sender, predictionPrice);
+    }
+    lastPredictionId = pool.noOfPredictions;
+  }
+
   /// Sets the {Pool-snapshotPrice}, {Pool-noOfWinners}, {Pool-winAmount},
   /// and {Pool-winnerPredictions} of the {Pool} with the provided `poolId`.
   ///

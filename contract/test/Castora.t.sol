@@ -602,4 +602,201 @@ contract CastoraTest is Test {
     assertEq(prevCastoraBal - 1900000, cusd.balanceOf(address(castora)));
     assertEq(prevUserBal + 1900000, cusd.balanceOf(user));
   }
+
+  function testRevertZeroPredictionsCountBulkPredict() public {
+    castora.createPool(seedsErc20Stake);
+    vm.prank(user);
+    vm.expectRevert(ZeroAmountSpecified.selector);
+    castora.bulkPredict(1, 0, 0);
+  }
+
+  function testRevertInvalidPoolIdBulkPredict() public {
+    vm.prank(user);
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.bulkPredict(999, 0, 5);
+  }
+
+  function testRevertClosedWindowBulkPredict() public {
+    castora.createPool(seedsErc20Stake);
+    vm.warp(block.timestamp + 1000); // Warp past window close time
+    vm.prank(user);
+    vm.expectRevert(WindowHasClosed.selector);
+    castora.bulkPredict(1, 0, 3);
+  }
+
+  function testRevertInsufficientStakeValueBulkPredictNative() public {
+    castora.createPool(seedsNativeStake);
+    deal(user, 1e16); // Only enough for 1 prediction, not 3
+    vm.prank(user);
+    vm.expectRevert(InsufficientStakeValue.selector);
+    castora.bulkPredict{value: 1e16}(1, 0, 3);
+  }
+
+  function testRevertNotAuthorizedStakeBulkPredictERC20() public {
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 3000000); // Mint tokens but don't approve
+    vm.prank(user);
+    vm.expectPartialRevert(IERC20Errors.ERC20InsufficientAllowance.selector);
+    castora.bulkPredict(1, 0, 3);
+  }
+
+  function testBulkPredictNative() public {
+    castora.createPool(seedsNativeStake);
+    uint16 predictionsCount = 5;
+    uint256 totalStakeAmount = 1e16 * predictionsCount;
+    deal(user, totalStakeAmount);
+
+    uint256 prevTotalPredictions = castora.totalNoOfPredictions();
+    uint256 prevPoolTotalPrds = castora.getPool(1).noOfPredictions;
+    uint256 prevNoOfJoinedPools = castora.noOfJoinedPoolsByAddresses(user);
+    uint256 prevTotalStaked = castora.totalStakedAmounts(address(castora));
+    uint256 prevCastoraBal = address(castora).balance;
+    uint256 prevUserBal = user.balance;
+
+    vm.prank(user);
+    // Expect multiple Predicted events
+    for (uint256 i = 1; i <= predictionsCount; i++) {
+      vm.expectEmit(true, true, true, true);
+      emit Predicted(1, i, user, 12345);
+    }
+    (uint256 firstId, uint256 lastId) = castora.bulkPredict{value: totalStakeAmount}(1, 12345, predictionsCount);
+
+    // Verify return values
+    assertEq(firstId, 1);
+    assertEq(lastId, predictionsCount);
+
+    // Verify global state changes
+    assertEq(prevTotalPredictions + predictionsCount, castora.totalNoOfPredictions());
+    assertEq(prevPoolTotalPrds + predictionsCount, castora.getPool(1).noOfPredictions);
+    assertEq(prevNoOfJoinedPools + predictionsCount, castora.noOfJoinedPoolsByAddresses(user));
+    assertEq(prevTotalStaked + totalStakeAmount, castora.totalStakedAmounts(address(castora)));
+
+    // Verify balances
+    assertEq(prevCastoraBal + totalStakeAmount, address(castora).balance);
+    assertEq(prevUserBal - totalStakeAmount, user.balance);
+
+    // Verify each prediction was created correctly
+    for (uint256 i = 1; i <= predictionsCount; i++) {
+      Prediction memory prediction = castora.getPrediction(1, i);
+      assertEq(prediction.predicter, user);
+      assertEq(prediction.poolId, 1);
+      assertEq(prediction.predictionId, i);
+      assertEq(prediction.predictionPrice, 12345);
+      assertEq(prediction.predictionTime, block.timestamp);
+      assertEq(prediction.claimedWinningsTime, 0);
+      assertEq(prediction.isAWinner, false);
+    }
+
+    // Verify prediction IDs tracking
+    uint256[] memory userPredictionIds = castora.getPredictionIdsForAddress(1, user);
+    assertEq(userPredictionIds.length, predictionsCount);
+    for (uint256 i = 0; i < predictionsCount; i++) {
+      assertEq(userPredictionIds[i], i + 1);
+    }
+
+    // Verify joined pools tracking
+    for (uint256 i = 0; i < predictionsCount; i++) {
+      assertEq(castora.joinedPoolIdsByAddresses(user, i), 1);
+    }
+  }
+
+  function testBulkPredictERC20() public {
+    castora.createPool(seedsErc20Stake);
+    uint16 predictionsCount = 3;
+    uint256 totalStakeAmount = 1000000 * predictionsCount;
+    cusd.mint(user, totalStakeAmount);
+
+    uint256 prevTotalPredictions = castora.totalNoOfPredictions();
+    uint256 prevPoolTotalPrds = castora.getPool(1).noOfPredictions;
+    uint256 prevNoOfJoinedPools = castora.noOfJoinedPoolsByAddresses(user);
+    uint256 prevTotalStaked = castora.totalStakedAmounts(address(cusd));
+    uint256 prevCastoraBal = cusd.balanceOf(address(castora));
+    uint256 prevUserBal = cusd.balanceOf(user);
+
+    vm.prank(user);
+    cusd.approve(address(castora), totalStakeAmount);
+
+    vm.prank(user);
+    // Expect multiple Predicted events
+    for (uint256 i = 1; i <= predictionsCount; i++) {
+      vm.expectEmit(true, true, true, true);
+      emit Predicted(1, i, user, 54321);
+    }
+    (uint256 firstId, uint256 lastId) = castora.bulkPredict(1, 54321, predictionsCount);
+
+    // Verify return values
+    assertEq(firstId, 1);
+    assertEq(lastId, predictionsCount);
+
+    // Verify global state changes
+    assertEq(prevTotalPredictions + predictionsCount, castora.totalNoOfPredictions());
+    assertEq(prevPoolTotalPrds + predictionsCount, castora.getPool(1).noOfPredictions);
+    assertEq(prevNoOfJoinedPools + predictionsCount, castora.noOfJoinedPoolsByAddresses(user));
+    assertEq(prevTotalStaked + totalStakeAmount, castora.totalStakedAmounts(address(cusd)));
+
+    // Verify balances
+    assertEq(prevCastoraBal + totalStakeAmount, cusd.balanceOf(address(castora)));
+    assertEq(prevUserBal - totalStakeAmount, cusd.balanceOf(user));
+
+    // Verify each prediction was created correctly
+    for (uint256 i = 1; i <= predictionsCount; i++) {
+      Prediction memory prediction = castora.getPrediction(1, i);
+      assertEq(prediction.predicter, user);
+      assertEq(prediction.poolId, 1);
+      assertEq(prediction.predictionId, i);
+      assertEq(prediction.predictionPrice, 54321);
+      assertEq(prediction.predictionTime, block.timestamp);
+      assertEq(prediction.claimedWinningsTime, 0);
+      assertEq(prediction.isAWinner, false);
+    }
+  }
+
+  function testBulkPredictSinglePrediction() public {
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+
+    vm.prank(user);
+    vm.expectEmit(true, true, true, true);
+    emit Predicted(1, 1, user, 99999);
+    (uint256 firstId, uint256 lastId) = castora.bulkPredict(1, 99999, 1);
+
+    // For a single prediction, first and last should be the same
+    assertEq(firstId, 1);
+    assertEq(lastId, 1);
+    assertEq(castora.getPool(1).noOfPredictions, 1);
+    assertEq(castora.totalNoOfPredictions(), 1);
+  }
+
+  function testBulkPredictAfterExistingPredictions() public {
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 5000000); // Enough for individual + bulk predictions
+
+    // Make 2 individual predictions first
+    vm.prank(user);
+    cusd.approve(address(castora), 5000000);
+    vm.prank(user);
+    castora.predict(1, 11111);
+    vm.prank(user);
+    castora.predict(1, 22222);
+
+    // Now make 3 bulk predictions
+    vm.prank(user);
+    (uint256 firstId, uint256 lastId) = castora.bulkPredict(1, 33333, 3);
+
+    // Verify IDs are correct
+    assertEq(firstId, 3); // Should start after the 2 existing predictions
+    assertEq(lastId, 5); // Should end at prediction 5
+    assertEq(castora.getPool(1).noOfPredictions, 5);
+    assertEq(castora.totalNoOfPredictions(), 5);
+
+    // Verify the bulk predictions have correct data
+    for (uint256 i = 3; i <= 5; i++) {
+      Prediction memory prediction = castora.getPrediction(1, i);
+      assertEq(prediction.predictionPrice, 33333);
+      assertEq(prediction.predicter, user);
+    }
+  }
 }

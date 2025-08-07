@@ -38,6 +38,20 @@ export const abi = [
   },
   {
     type: 'function',
+    name: 'bulkPredict',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionsCount', type: 'uint16', internalType: 'uint16' }
+    ],
+    outputs: [
+      { name: 'firstPredictionId', type: 'uint256', internalType: 'uint256' },
+      { name: 'lastPredictionId', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'payable'
+  },
+  {
+    type: 'function',
     name: 'claimWinnings',
     inputs: [
       { name: 'poolId', type: 'uint256', internalType: 'uint256' },

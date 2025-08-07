@@ -220,6 +220,7 @@ export const erc20Abi = [
     type: 'event'
   }
 ] as const;
+
 export const abi = [
   { type: 'fallback', stateMutability: 'payable' },
   { type: 'receive', stateMutability: 'payable' },
@@ -257,6 +258,20 @@ export const abi = [
     inputs: [],
     outputs: [{ name: '', type: 'uint8', internalType: 'uint8' }],
     stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'bulkPredict',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionsCount', type: 'uint16', internalType: 'uint16' }
+    ],
+    outputs: [
+      { name: 'firstPredictionId', type: 'uint256', internalType: 'uint256' },
+      { name: 'lastPredictionId', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'payable'
   },
   {
     type: 'function',
