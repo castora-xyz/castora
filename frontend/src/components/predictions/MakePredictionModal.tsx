@@ -1,10 +1,11 @@
 import CheckCircle from '@/assets/check-circle.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
-import { CountdownNumbers, SuccessIcon } from '@/components';
-import { useContract, useMyActivity, usePools } from '@/contexts';
+import { CountdownNumbers, PredictionMode, SuccessIcon } from '@/components';
+import { MAX_BULK_PREDICTIONS, useContract, useMyActivity, usePools } from '@/contexts';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
+import { InputNumber } from 'primereact/inputnumber';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 
@@ -12,12 +13,14 @@ export const MakePredictionModal = ({
   pool,
   pool: { poolId, seeds },
   price,
+  mode,
   handleShowHeading,
   handleClose,
   handlePredictionSuccess
 }: {
   pool: Pool;
   price: number;
+  mode: PredictionMode;
   handleShowHeading: (isLoading: boolean) => void;
   handleClose: () => void;
   handlePredictionSuccess: () => void;
@@ -26,6 +29,7 @@ export const MakePredictionModal = ({
   const { predict } = usePools();
   const { fetchMyActivity } = useMyActivity();
 
+  const [bulkCount, setBulkCount] = useState(2);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [currentWalletStep, setCurrentWalletStep] = useState(0);
   const [explorerUrl, setExplorerUrl] = useState('');
@@ -36,9 +40,11 @@ export const MakePredictionModal = ({
   const [loadingTitle, setLoadingTitle] = useState('');
   const [walletSteps, setWalletSteps] = useState(0);
 
+  const stakeAmount = () => seeds.stakeAmount * (mode === 'multiple' ? bulkCount : 1);
+
   const checkBalance = async () => {
     const balanceOf = await balance(seeds.stakeToken);
-    setHasEnoughBalance(balanceOf !== null && balanceOf >= seeds.stakeAmount);
+    setHasEnoughBalance(balanceOf !== null && balanceOf >= stakeAmount());
   };
 
   const reset = () => {
@@ -56,8 +62,9 @@ export const MakePredictionModal = ({
     predict(
       poolId,
       price * 10 ** 8,
+      mode === 'multiple' ? bulkCount : null,
       seeds.stakeToken,
-      seeds.stakeAmount,
+      stakeAmount(),
       (url) => (successUrl = url)
     ).subscribe({
       next: (status) => {
@@ -96,25 +103,21 @@ export const MakePredictionModal = ({
       return;
     }
 
-    const { stakeToken, stakeAmount } = seeds;
+    const { stakeToken } = seeds;
     // When staking with Native token
     if (stakeToken.toLowerCase() == castoraAddress.toLowerCase()) {
       setWalletSteps(1);
       uiPredict();
     } else {
       // When staking with ERC20 token
-      const hadAllowee = await hasAllowance(stakeToken, stakeAmount);
+      const hadAllowee = await hasAllowance(stakeToken, stakeAmount());
       setWalletSteps(hadAllowee ? 1 : 2);
       if (!hadAllowee) {
         setCurrentWalletStep(1);
         setLoadingTitle('Token Spend Approval');
         setLoadingBody('Submitting ...');
         let approvalTxHash: string;
-        approve(
-          stakeToken,
-          stakeAmount,
-          (hash) => (approvalTxHash = hash)
-        ).subscribe({
+        approve(stakeToken, stakeAmount(), (hash) => (approvalTxHash = hash)).subscribe({
           next: (status) => {
             if (status === 'submitted') {
               setLoadingBody('Approve Token Spend in Wallet');
@@ -149,19 +152,13 @@ export const MakePredictionModal = ({
   useEffect(() => {
     checkBalance();
 
-    const connection = new PriceServiceConnection(
-      'https://hermes.pyth.network'
-    );
+    const connection = new PriceServiceConnection('https://hermes.pyth.network');
     connection.subscribePriceFeedUpdates(
       [seeds.predictionTokenDetails.pythPriceId],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
         setCurrentPrice(
-          parseFloat(
-            (+price * 10 ** expo).toFixed(
-              Math.abs(expo) < 2 ? Math.abs(expo) : 2
-            )
-          )
+          parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2))
         );
       }
     );
@@ -175,18 +172,11 @@ export const MakePredictionModal = ({
       <>
         <SuccessIcon child={<CheckCircle className="w-8 h-8 fill-app-bg" />} />
 
-        <p className="text-center text-xl mb-4 xs:px-4">
-          You've successfully made a Prediction!
-        </p>
+        <p className="text-center text-xl mb-4 xs:px-4">You've successfully made a Prediction!</p>
 
         <p className="mb-8 text-sm text-text-caption text-center flex items-center justify-center">
           <ExternalLink className="w-5 h-5 mr-1 fill-text-caption" />
-          <a
-            href={explorerUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
+          <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline">
             View In Explorer
           </a>
         </p>
@@ -217,8 +207,7 @@ export const MakePredictionModal = ({
               <div
                 key={i}
                 className={
-                  'flex justify-center items-center' +
-                  (i < walletSteps - 1 ? ' grow' : '')
+                  'flex justify-center items-center' + (i < walletSteps - 1 ? ' grow' : '')
                 }
               >
                 <p
@@ -260,7 +249,7 @@ export const MakePredictionModal = ({
         </span>
       </p>
 
-      <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-6 text-sm">
+      <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-3 text-sm">
         <div>
           <p className="mb-2">Your Prediction</p>
           <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
@@ -275,19 +264,68 @@ export const MakePredictionModal = ({
         </div>
       </div>
 
+      {mode === 'multiple' && (
+        <div className="py-3 px-3 mb-6 rounded-2xl border border-border-default dark:border-surface-subtle flex max-xs:flex-wrap gap-4">
+          <div>
+            <p className="pl-1 mb-2 text-xs">How many times?</p>
+            <InputNumber
+              className="border border-surface-subtle rounded-xl text-lg font-medium"
+              inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
+              allowEmpty={false}
+              pt={{
+                incrementButton: {
+                  className: 'text-primary-default bg-surface-subtle py-1'
+                },
+                decrementButton: {
+                  className: 'text-primary-default bg-surface-subtle py-1'
+                }
+              }}
+              value={bulkCount}
+              onChange={(e) =>
+                setBulkCount(
+                  e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 2
+                )
+              }
+              onValueChange={(e) => setBulkCount(e.value ?? 2)}
+              showButtons
+              min={2}
+              max={MAX_BULK_PREDICTIONS}
+            />
+          </div>
+          <ul id="list-primary-bullet" className="pl-4 text-text-subtitle list-disc text-sm w-fit">
+            <li>
+              Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
+              predictions.
+            </li>
+            <li>
+              Each at
+              <span className="font-bold text-base text-primary-default"> ${price} </span> Price.
+            </li>
+            <li>
+              Each for{' '}
+              <span className="font-bold text-base text-primary-default">
+                {seeds.displayStake()}{' '}
+              </span>
+              stake.
+            </li>
+          </ul>
+        </div>
+      )}
+
       <button
         className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled"
         disabled={isMakingPrediction || !hasEnoughBalance}
         onClick={makePrediction}
       >
-        Join Pool ({seeds.displayStake()})
+        Join Pool ({seeds.displayStake(mode === 'multiple' ? bulkCount : 1)})
         {!isMakingPrediction && hasEnoughBalance && <Ripple />}
       </button>
 
       <p className="mt-1 text-center">
         <span className="text-xs">Potential Winnings </span>
         <span className="text-sm font-bold text-primary-default">
-          (x{pool.multiplier()}): {seeds.displayStake(pool.multiplier())}
+          (x{pool.multiplier()}):{' '}
+          {seeds.displayStake((mode === 'multiple' ? bulkCount : 1) * pool.multiplier())}
         </span>
       </p>
 

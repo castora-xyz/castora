@@ -1,7 +1,8 @@
-import { useContract } from '@/contexts';
+import { MAX_BULK_PREDICTIONS, useContract } from '@/contexts';
 import { Pool, landingPageDefaults } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { InputNumber } from 'primereact/inputnumber';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +16,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
   const navigate = useNavigate();
   const { open: connectWallet } = useWeb3Modal();
 
+  const [bulkCount, setBulkCount] = useState(2);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [hasEnoughBalance, setHasEnoughBalance] = useState(true);
   const [predictionError, setPredictionError] = useState('');
@@ -24,9 +26,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
     if (!pool || !isConnected) setHasEnoughBalance(true);
     else {
       const balanceOf = await balance(pool?.seeds.stakeToken);
-      setHasEnoughBalance(
-        balanceOf !== null && balanceOf >= pool?.seeds.stakeAmount
-      );
+      setHasEnoughBalance(balanceOf !== null && balanceOf >= pool?.seeds.stakeAmount * bulkCount);
     }
   };
 
@@ -52,8 +52,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
   const validatePrediction = () => {
     if (!predictionInput.current) return;
-    const { valid, rangeUnderflow, stepMismatch, valueMissing } =
-      predictionInput.current.validity;
+    const { valid, rangeUnderflow, stepMismatch, valueMissing } = predictionInput.current.validity;
     const error = valid
       ? ''
       : valueMissing
@@ -64,6 +63,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
       ? '8 Decimals Max.'
       : predictionInput.current.validationMessage;
     setPredictionError(error);
+    return error;
   };
 
   useEffect(() => {
@@ -72,18 +72,11 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     connection.subscribePriceFeedUpdates(
-      [
-        pool?.seeds.predictionTokenDetails.pythPriceId ??
-          landingPageDefaults.pythPriceId
-      ],
+      [pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
         setCurrentPrice(
-          parseFloat(
-            (+price * 10 ** expo).toFixed(
-              Math.abs(expo) < 2 ? Math.abs(expo) : 2
-            )
-          )
+          parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2))
         );
       }
     );
@@ -114,68 +107,56 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
         Enter Predictions
       </h2>
       <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
-        Join Pools by predicting the price of a Pool Pair. You stake the Entry
-        Fee as you join. The earliest & closest predictions to the price at the
-        snapshot time (Snapshot Price) are the winners.
+        Join Pools by predicting the price of a Pool Pair. You stake the Entry Fee as you join. The
+        earliest & closest predictions to the price at the snapshot time (Snapshot Price) are the
+        winners.
       </p>
 
       <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
         <div className="max-[414px]:p-4 p-8 rounded-[32px] bg-surface-subtle border border-border-default dark:border-surface-disabled max-lg:max-w-lg max-lg:mx-auto lg:basis-1/2">
           <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full bg-app-bg">
-            <h3 className="font-medium text-xl text-text-subtitle mb-4">
-              Join Pool
-            </h3>
+            <h3 className="font-medium text-xl text-text-subtitle mb-4">Join Pool</h3>
 
             <ul
-              id="join-pool-form-info"
+              id="list-primary-bullet"
               className="bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc"
             >
               <li>
-                Predict{' '}
-                {pool?.seeds.predictionTokenDetails.name ??
-                  landingPageDefaults.pairToken}
+                Predict {pool?.seeds.predictionTokenDetails.name ?? landingPageDefaults.pairToken}
                 's Price for{' '}
                 <span className="font-bold">
-                  {pool?.seeds.formattedSnapshotTime().reverse().join(' ') ??
-                    nextHour()}
+                  {pool?.seeds.formattedSnapshotTime().reverse().join(' ') ?? nextHour()}
                 </span>{' '}
                 with{' '}
                 <span className="font-bold">
-                  {pool?.seeds.displayStake() ?? landingPageDefaults.stake}
+                  {pool?.seeds.displayStake() ?? landingPageDefaults.stake(bulkCount)}
                 </span>{' '}
                 stake.
               </li>
               <li>
-                Winner Predictions are{' '}
-                <span className="font-bold">Earliest & Closest </span> Prices to
-                Snapshot Price.
+                Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices
+                to Snapshot Price.
               </li>
               <li>
                 Win x{pool?.multiplier() ?? 2} (
                 <span className="font-bold">
                   {pool?.seeds.displayStake(pool.multiplier()) ??
-                    landingPageDefaults.stakeMultiplied}
+                    landingPageDefaults.stakeMultiplied(bulkCount)}
                 </span>
                 ), if you are in Top{' '}
                 <span className="font-bold">
-                  {pool?.percentWinners() ?? landingPageDefaults.percentWinners}
-                  %
+                  {pool?.percentWinners() ?? landingPageDefaults.percentWinners}%
                 </span>{' '}
                 Predictions.
               </li>
             </ul>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleClick();
-              }}
-            >
+            <form>
               <label>
                 <span className="font-medium text-sm text-text-disabled block mb-1">
                   Your Prediction
                 </span>
-                
+
                 <input
                   min={0}
                   step={10 ** (-1 * 8)}
@@ -189,9 +170,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                 />
 
                 {predictionError && (
-                  <p className="-mt-1 mb-3 text-sm text-errors-default">
-                    {predictionError}
-                  </p>
+                  <p className="-mt-1 mb-3 text-sm text-errors-default">{predictionError}</p>
                 )}
 
                 <p className="font-medium mb-8">
@@ -203,14 +182,32 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               </label>
 
               {isConnected && (
-                <button
-                  className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled"
-                  disabled={!!predictionError}
-                  type="submit"
-                >
-                  Make Prediction
-                  {!predictionError && <Ripple />}
-                </button>
+                <div className="flex flex-row-reverse gap-4">
+                  <button
+                    className="grow py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white whitespace-nowrap"
+                    type="submit"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (validatePrediction()) return;
+                      handleClick();
+                    }}
+                  >
+                    Make Prediction
+                    {!predictionError && <Ripple />}
+                  </button>
+                  <button
+                    className="py-2 px-4 rounded-full font-medium p-ripple text-primary-default bg-surface-subtle whitespace-nowrap"
+                    type="submit"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (validatePrediction()) return;
+                      handleClick();
+                    }}
+                  >
+                    Go Multiple
+                    {!predictionError && <Ripple />}
+                  </button>
+                </div>
               )}
             </form>
 
@@ -228,9 +225,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
         <div className="max-[414px]:p-4 p-8 rounded-[32px] bg-surface-subtle border border-border-default dark:border-surface-disabled max-lg:max-w-lg max-lg:mx-auto w-full flex flex-col grow lg:basis-1/2">
           <div className="border border-border-default dark:border-surface-subtle bg-app-bg p-6 rounded-[24px] w-full flex flex-col grow">
-            <h3 className="font-medium text-xl text-text-title mb-4">
-              Make Prediction
-            </h3>
+            <h3 className="font-medium text-xl text-text-title mb-4">Make Prediction</h3>
 
             <p className="flex text-sm p-2 pl-4 mb-6 rounded-full items-center w-fit border border-border-default dark:border-surface-subtle">
               <span>Pool Pair</span>
@@ -239,7 +234,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               </span>
             </p>
 
-            <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-8">
+            <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-6">
               <div>
                 <p className="mb-2">Your Prediction</p>
                 <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
@@ -254,12 +249,70 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               </div>
             </div>
 
+            <div className="py-3 px-3 mb-6 rounded-2xl border border-border-default dark:border-surface-subtle flex max-xs:flex-wrap gap-4">
+              <div>
+                <p className="pl-1 mb-2 text-xs">How many times?</p>
+                <InputNumber
+                  className="border border-surface-subtle rounded-xl text-lg font-medium"
+                  inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
+                  allowEmpty={false}
+                  pt={{
+                    incrementButton: {
+                      className: 'text-primary-default bg-surface-subtle py-1'
+                    },
+                    decrementButton: {
+                      className: 'text-primary-default bg-surface-subtle py-1'
+                    }
+                  }}
+                  value={bulkCount}
+                  onChange={(e) =>
+                    setBulkCount(
+                      e.value
+                        ? e.value > MAX_BULK_PREDICTIONS
+                          ? MAX_BULK_PREDICTIONS
+                          : e.value
+                        : 2
+                    )
+                  }
+                  onValueChange={(e) => setBulkCount(e.value ?? 2)}
+                  showButtons
+                  min={2}
+                  max={100}
+                />
+              </div>
+              <ul
+                id="list-primary-bullet"
+                className="pl-4 text-text-subtitle list-disc text-sm w-fit"
+              >
+                <li>
+                  Makes{' '}
+                  <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
+                  predictions.
+                </li>
+                <li>
+                  Each at
+                  <span className="font-bold text-base text-primary-default">
+                    {' '}
+                    ${predictionInput.current?.value ?? 0}{' '}
+                  </span>{' '}
+                  Price.
+                </li>
+                <li>
+                  Each for{' '}
+                  <span className="font-bold text-base text-primary-default">
+                    {pool?.seeds.displayStake(pool.multiplier() * bulkCount) ??
+                      landingPageDefaults.stakeMultiplied(bulkCount)}{' '}
+                  </span>
+                  stake.
+                </li>
+              </ul>
+            </div>
+
             <button
               className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled mt-auto"
               onClick={handleClick}
             >
-              Join Pool (
-              {pool?.seeds.displayStake() ?? landingPageDefaults.stake})
+              Join Pool ({pool?.seeds.displayStake(bulkCount) ?? landingPageDefaults.stake(bulkCount)})
               {hasEnoughBalance && <Ripple />}
             </button>
 
@@ -267,8 +320,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               <span className="text-xs">Potential Winnings </span>
               <span className="text-sm font-bold text-primary-default">
                 (x{pool?.multiplier() ?? landingPageDefaults.multiplier}):{' '}
-                {pool?.seeds.displayStake(pool.multiplier()) ??
-                  landingPageDefaults.stakeMultiplied}
+                {pool?.seeds.displayStake(pool.multiplier() * bulkCount) ??
+                  landingPageDefaults.stakeMultiplied(bulkCount)}
               </span>
             </p>
 

@@ -8,6 +8,8 @@ import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+export type PredictionMode = 'single' | 'multiple';
+
 export const JoinPoolForm = ({
   pool,
   pool: { seeds },
@@ -25,18 +27,38 @@ export const JoinPoolForm = ({
   const [currentPrice, setCurrentPrice] = useState(0);
   const [predictionError, setPredictionError] = useState('');
   const [isShowingModal, setIsShowingModal] = useState(false);
+  const [predictionMode, setPredictionMode] = useState<PredictionMode | null>(
+    null
+  );
   const [showModalHeading, setShowModalHeading] = useState(true);
   const predictionInput = useRef<HTMLInputElement>(null);
 
-  const closeModal = (reset = false) => {
+  const modalName = () =>
+    predictionMode === 'single' ? 'make_prediction' : 'go_multiple';
+
+  const closeModal = ({ reset }: { reset: boolean }) => {
     document.body.classList.remove('overflow-hidden');
     setIsShowingModal(false);
+    recordEvent(`closed_${modalName()}_modal`, { poolId: pool.poolId });
     if (reset) {
       setPredictionError('');
       predictionInput.current!.value = '';
       setShowModalHeading(true);
+      setPredictionMode(null);
     }
-    recordEvent('closed_make_prediction_modal', { poolId: pool.poolId });
+  };
+
+  const submitForm = ({ mode, e }: { mode: PredictionMode; e: any }) => {
+    e.preventDefault();
+    if (validatePrediction()) return;
+
+    if (!isConnected) connectWallet();
+    else {
+      document.body.classList.add('overflow-hidden');
+      setPredictionMode(mode);
+      setIsShowingModal(true);
+      recordEvent(`opened_${modalName()}_modal`, { poolId: pool.poolId });
+    }
   };
 
   const validatePrediction = () => {
@@ -53,6 +75,7 @@ export const JoinPoolForm = ({
       ? '8 Decimals Max.'
       : predictionInput.current.validationMessage;
     setPredictionError(error);
+    return error;
   };
 
   useEffect(() => {
@@ -111,7 +134,7 @@ export const JoinPoolForm = ({
       <h3 className="font-medium text-xl text-text-subtitle mb-4">Join Pool</h3>
 
       <ul
-        id="join-pool-form-info"
+        id="list-primary-bullet"
         className="bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc"
       >
         <li>
@@ -137,19 +160,7 @@ export const JoinPoolForm = ({
         </li>
       </ul>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!isConnected) connectWallet();
-          else {
-            document.body.classList.add('overflow-hidden');
-            setIsShowingModal(true);
-            recordEvent('opened_make_prediction_modal', {
-              poolId: pool.poolId
-            });
-          }
-        }}
-      >
+      <form>
         <label>
           <span className="font-medium text-sm text-text-disabled block mb-1">
             Your Prediction
@@ -165,7 +176,7 @@ export const JoinPoolForm = ({
             }
             ref={predictionInput}
             id="prediction-input"
-            className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-2 font-medium focus:outline-none text-xl  focus:valid:border-primary-default focus:invalid:border-errors-default"
+            className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-2 font-medium focus:outline-none text-xl focus:valid:border-primary-default focus:invalid:border-errors-default"
             placeholder="0.00 USD"
             required
           />
@@ -183,14 +194,24 @@ export const JoinPoolForm = ({
         </label>
 
         {isConnected && (
-          <button
-            className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled"
-            disabled={!!predictionError}
-            type="submit"
-          >
-            Make Prediction
-            {!predictionError && <Ripple />}
-          </button>
+          <div className="flex flex-row-reverse gap-4">
+            <button
+              className="grow py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white whitespace-nowrap"
+              type="submit"
+              onClick={(e) => submitForm({ mode: 'single', e })}
+            >
+              Make Prediction
+              {!predictionError && <Ripple />}
+            </button>
+            <button
+              className="py-2 px-4 rounded-full font-medium p-ripple text-primary-default bg-surface-subtle whitespace-nowrap"
+              type="submit"
+              onClick={(e) => submitForm({ mode: 'multiple', e })}
+            >
+              Go Multiple
+              {!predictionError && <Ripple />}
+            </button>
+          </div>
         )}
       </form>
 
@@ -205,12 +226,12 @@ export const JoinPoolForm = ({
       )}
 
       <Dialog
-        visible={isShowingModal}
-        onHide={closeModal}
+        visible={isShowingModal && !!predictionMode}
+        onHide={() => closeModal({ reset: false })}
         unstyled={true}
         header={
           <h4 className="font-medium text-xl text-text-title mr-2">
-            Make Prediction
+            {predictionMode === 'single' ? 'Make Prediction' : 'Go Multiple'}
           </h4>
         }
         pt={{
@@ -226,8 +247,9 @@ export const JoinPoolForm = ({
         <MakePredictionModal
           pool={pool}
           price={+(predictionInput.current?.value ?? 0)}
+          mode={predictionMode!}
           handleShowHeading={setShowModalHeading}
-          handleClose={() => closeModal(true)}
+          handleClose={() => closeModal({ reset: true })}
           handlePredictionSuccess={handlePredictionSuccess}
         />
       </Dialog>

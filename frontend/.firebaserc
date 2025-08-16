@@ -8,8 +8,8 @@
         "main": [
           "castora-xyz"
         ],
-        "mxndevnet": [
-          "mxndevnet-castora-xyz"
+        "staging": [
+          "staging-castora"
         ]
       }
     }

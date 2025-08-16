@@ -152,6 +152,6 @@ input[type='number'] {
   background-color: var(--surface-subtle);
 }
 
-#join-pool-form-info li::marker {
+#list-primary-bullet li::marker {
   color: var(--primary-default);
 }

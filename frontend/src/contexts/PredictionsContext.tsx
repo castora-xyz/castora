@@ -3,6 +3,8 @@ import { Pool, Prediction } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { useAccount, useChains } from 'wagmi';
 
+export const MAX_BULK_PREDICTIONS = 100;
+
 export const usePredictions = () => {
   const { chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
@@ -26,26 +28,17 @@ export const usePredictions = () => {
           prediction = await cache.retrieve(key);
           if (prediction) {
             // Necessary to restore callable methods on retrieved instance
-            prediction = Object.setPrototypeOf(
-              prediction,
-              Prediction.prototype
-            );
+            prediction = Object.setPrototypeOf(prediction, Prediction.prototype);
             predictions.push(prediction);
             continue;
           }
         }
 
-        const raw = await readContract('getPrediction', [
-          BigInt(poolId),
-          predictionId
-        ]);
+        const raw = await readContract('getPrediction', [BigInt(poolId), predictionId]);
         if (!raw) return null;
         prediction = new Prediction(raw);
 
-        if (
-          prediction.claimWinningsTime > 0 ||
-          (completionTime > 0 && !prediction.isAWinner)
-        ) {
+        if (prediction.claimWinningsTime > 0 || (completionTime > 0 && !prediction.isAWinner)) {
           await cache.save(key, prediction);
         }
         predictions.push(prediction);

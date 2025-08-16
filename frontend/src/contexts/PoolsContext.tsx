@@ -39,6 +39,7 @@ interface PoolsContextProps {
   predict: (
     poolId: number,
     price: number,
+    bulkCount: number | null,
     stakeToken: string,
     stakeAmount: number,
     onSuccessCallback?: (explorerUrl: string) => void
@@ -223,16 +224,21 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const predict = (
     poolId: number,
     price: number,
+    bulkCount: number | null,
     stakeToken: string,
     stakeAmount: number,
     onSuccessCallback?: (explorerUrl: string) => void
   ) => {
     return new Observable<WriteContractPoolStatus>((subscriber) => {
-      let predictionId: number;
+      let predictionIds: number[];
       let txHash: string;
       writeContract(
-        'predict',
-        [BigInt(poolId), BigInt(price)],
+        bulkCount ? 'bulkPredict' : 'predict',
+        [
+          BigInt(poolId),
+          BigInt(price),
+          ...(bulkCount ? [BigInt(bulkCount)] : [])
+        ],
         ...[
           stakeToken.toLowerCase() == castoraAddress.toLowerCase()
             ? stakeAmount
@@ -240,7 +246,9 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         ],
         (hash, result) => {
           txHash = hash;
-          predictionId = Number(result);
+          predictionIds = Array.isArray(result)
+            ? result.map(Number)
+            : [Number(result)];
         }
       ).subscribe({
         next: subscriber.next.bind(subscriber),
@@ -253,7 +261,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           await ensureNotifications();
-          recordEvent('predicted', { poolId, predictionId });
+          recordEvent(`${bulkCount ? 'bulk_' : ''}predicted`, {
+            poolId,
+            predictionIds
+          });
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
           }/tx/${txHash}`;

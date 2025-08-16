@@ -212,8 +212,8 @@ export const landingPageDefaults = {
   pairToken: 'ETH',
   pythPriceId:
     '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
-  stake: '0.2 MON',
+  stake: (count: number) => `${count * 0.2} MON`,
   multiplier: 2,
   percentWinners: 50,
-  stakeMultiplied: '0.4 MON'
+  stakeMultiplied: (count: number) => `${count * 0.4} MON`
 };
