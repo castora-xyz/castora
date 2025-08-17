@@ -2,6 +2,7 @@ export * from './ActivityCard';
 export * from './BottomNav';
 export * from './ClaimAllButton';
 export * from './ClaimButton';
+export * from './ConnectTelegramButton';
 export * from './CountdownNumbers';
 export * from './Footer';
 export * from './Header';

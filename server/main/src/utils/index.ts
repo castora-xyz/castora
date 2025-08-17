@@ -1,3 +1,4 @@
+export * from '../middleware/validate-chain';
 export * from './abi';
 export * from './complete-pool';
 export * from './contract';
@@ -6,7 +7,6 @@ export * from './fetch-pool';
 export * from './get-pool-id';
 export * from './get-pool-seeds';
 export * from './tokens';
-export * from './validate-chain';
 import { LoggingBunyan } from '@google-cloud/logging-bunyan';
 import { createLogger } from 'bunyan';
 import 'dotenv/config';
@@ -15,7 +15,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getStorage } from 'firebase-admin/storage';
 import { Transform } from 'stream';
-import { Chain } from './validate-chain';
+
+export type Chain = 'monaddevnet' | 'monadtestnet' | 'sepolia';
 
 // Initialize Firebase Admin SDK with custom service account in dotenv
 initializeApp({
@@ -25,8 +26,7 @@ initializeApp({
 
 // To use default firestore, don't pass a chain. Otherwise
 // send in the chain of choice to use its own firestore database
-export const firestore = (chain?: Chain) =>
-  chain ? getFirestore(chain) : getFirestore();
+export const firestore = (chain?: Chain) => (chain ? getFirestore(chain) : getFirestore());
 export const messaging = getMessaging();
 export const storage = getStorage();
 
@@ -36,9 +36,7 @@ export const storage = getStorage();
 // Also call console.log for those objects as the custom stream transformer
 // might not pick the object.
 export const convertNestedBigInts = (obj: any) => {
-  return JSON.parse(
-    JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? `${v}` : v))
-  );
+  return JSON.parse(JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? `${v}` : v)));
 };
 
 export const logger = createLogger({

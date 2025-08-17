@@ -1,16 +1,9 @@
 import 'dotenv/config';
-import {
-  createPublicClient,
-  createWalletClient,
-  defineChain,
-  formatEther,
-  http
-} from 'viem';
+import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
-import { convertNestedBigInts, logger } from '.';
+import { Chain, convertNestedBigInts, logger } from '.';
 import { abi } from './abi';
-import { Chain } from './validate-chain';
 
 const adminKeySepolia = process.env.ADMIN_KEY_SEPOLIA as `0x${string}`;
 if (!adminKeySepolia) throw 'Set ADMIN_KEY_SEPOLIA';
@@ -21,10 +14,8 @@ if (!monadDevnetRpcUrl) throw 'Set MONAD_DEVNET_RPC_URL';
 const monadTestnetRpcUrl = process.env.MONAD_TESTNET_RPC_URL;
 if (!monadTestnetRpcUrl) throw 'Set MONAD_TESTNET_RPC_URL';
 
-export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` =
-  '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
-export const CONTRACT_ADDRESS_MONAD: `0x${string}` =
-  '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
+export const CONTRACT_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 
 const monadDevnet = defineChain({
   id: 20143,
@@ -73,11 +64,7 @@ export const getContractAddress = (chain: Chain) =>
     sepolia: CONTRACT_ADDRESS_SEPOLIA
   }[chain]);
 
-export const readContract = async (
-  chain: Chain,
-  functionName: any,
-  args?: any
-) => {
+export const readContract = async (chain: Chain, functionName: any, args?: any) => {
   await new Promise((resolve) => setTimeout(resolve, 100));
   return await createPublicClient({ ...getConfig(chain) }).readContract({
     address: getContractAddress(chain),
@@ -95,19 +82,13 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
   logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ETH`}`);
 
   if (balance < 10e18) {
-    logger.warn(
-      `Admin Balance is low: ${`${formatEther(balance)} ETH`}. Please top up.`
-    );
+    logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ETH`}. Please top up.`);
   }
 
   return balance;
 };
 
-export const writeContract = async (
-  chain: Chain,
-  functionName: any,
-  args: any
-) => {
+export const writeContract = async (chain: Chain, functionName: any, args: any) => {
   try {
     const account = getAccount(chain);
     const config = getConfig(chain);

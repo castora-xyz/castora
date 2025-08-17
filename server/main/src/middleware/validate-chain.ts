@@ -1,15 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '.';
+import { Chain, logger } from '../utils';
 
-export type Chain = 'monaddevnet' | 'monadtestnet' | 'sepolia';
 const isChain = (chain: any): chain is Chain =>
   chain === 'monaddevnet' || chain === 'monadtestnet' || chain === 'sepolia';
 
-export const validateChain = async (
-  { headers }: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const validateChain = async ({ headers }: Request, res: Response, next: NextFunction) => {
   let { chain } = headers;
   let message = '';
   if (!chain) message = 'Provide valid chain in headers.';

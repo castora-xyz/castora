@@ -1,9 +1,8 @@
 import 'dotenv/config';
-import { logger } from '..';
+import { Chain, logger } from '..';
 import { fetchPredictionsFromArchive } from '../../controllers';
 import { Pool, SplitPredictionResult } from '../../schemas';
 import { writeContract } from '../contract';
-import { Chain } from '../validate-chain';
 import { getNoOfWinners } from './get-no-of-winners';
 import { getSplittedPredictions } from './get-splitted-predictions';
 
@@ -35,21 +34,12 @@ export const setWinners = async (
     throw 'Something went wrong, try again later.';
   }
 
-  const noOfWinners = getNoOfWinners(
-    pool.noOfPredictions,
-    pool.poolId == 3000 ? 10 : 2
-  );
+  const noOfWinners = getNoOfWinners(pool.noOfPredictions, pool.poolId == 3000 ? 10 : 2);
   logger.info('\nnoOfWinners: ', noOfWinners);
 
   logger.info('\nComputing Winners ... ');
-  const splitted = getSplittedPredictions(
-    snapshotPrice,
-    predictions,
-    noOfWinners
-  );
-  logger.info(
-    `Computed ${splitted.winnerPredictionIdsBigInts.length} winners.`
-  );
+  const splitted = getSplittedPredictions(snapshotPrice, predictions, noOfWinners);
+  logger.info(`Computed ${splitted.winnerPredictionIdsBigInts.length} winners.`);
 
   // Divide 95% of the total pool's money by the number of winners
   // (half of pool.noOfPredictions) and set the result as the

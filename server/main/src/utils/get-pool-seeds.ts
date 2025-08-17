@@ -1,7 +1,7 @@
+import { Chain } from '.';
 import { PoolSeeds } from '../schemas';
 import { CONTRACT_ADDRESS_SEPOLIA, getContractAddress } from './contract';
 import { AAPL, aprMON, CRCL, gMON, HYPE, PUMP, SOL, TSLA } from './tokens';
-import { Chain } from './validate-chain';
 
 interface PoolTimes {
   windowCloseTime: number;

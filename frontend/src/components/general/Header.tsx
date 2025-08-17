@@ -19,11 +19,7 @@ export const Header = () => {
 
   const shorten = (str: string) => {
     if (str.length < 10) return str;
-    return (
-      str.substring(0, 5) +
-      '...' +
-      str.split('').reverse().slice(0, 5).reverse().join('')
-    );
+    return str.substring(0, 5) + '...' + str.split('').reverse().slice(0, 5).reverse().join('');
   };
 
   return (
@@ -40,9 +36,7 @@ export const Header = () => {
             to="/pools"
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${
-                isActive ? 'text-primary-darker dark:text-primary-default' : ''
-              }`
+              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
             }
           >
             Pools
@@ -52,9 +46,7 @@ export const Header = () => {
             to="/stocks"
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${
-                isActive ? 'text-primary-darker dark:text-primary-default' : ''
-              }`
+              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
             }
           >
             Stocks
@@ -64,9 +56,7 @@ export const Header = () => {
             to="/leaderboard"
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${
-                isActive ? 'text-primary-darker dark:text-primary-default' : ''
-              }`
+              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
             }
           >
             Leaderboard
