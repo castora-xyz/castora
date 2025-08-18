@@ -30,19 +30,11 @@ router.get('/pool/:id/complete', validateChain, async (req, res) => {
 });
 
 router.get('/pools/archive', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await archivePools(res.locals.chain),
-    'archiving pools',
-    res
-  );
+  await wrapper(async () => await archivePools(res.locals.chain), 'archiving pools', res);
 });
 
 router.get('/pools/complete', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await completePools(res.locals.chain),
-    'completing pools',
-    res
-  );
+  await wrapper(async () => await completePools(res.locals.chain), 'completing pools', res);
 });
 
 router.get('/pools/ids', validateChain, async (_, res) => {
@@ -74,11 +66,7 @@ router.get('/pools/ids/stocks', validateChain, async (_, res) => {
 });
 
 router.get('/pools/sync', validateChain, async (_, res) => {
-  await wrapper(
-    async () => await syncPools(res.locals.chain),
-    'syncing live pools',
-    res
-  );
+  await wrapper(async () => await syncPools(res.locals.chain), 'syncing live pools', res);
 });
 
 export default router;

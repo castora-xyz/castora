@@ -1,4 +1,6 @@
+import { Queue } from 'bullmq';
 import 'dotenv/config';
+import IORedis from 'ioredis';
 import {
   Chain,
   fetchPool,
@@ -11,6 +13,9 @@ import {
   setWinners
 } from '../../utils';
 import { rearchivePool } from './archive';
+
+const redisUrl = process.env.REDIS_URL;
+if (!redisUrl) throw 'Set REDIS_URL';
 
 /**
  * Completes all live pools on the provided chain.
@@ -41,18 +46,12 @@ export const completePools = async (chain: Chain) => {
  * @param chain The chain to complete the pool on.
  * @param poolId The poolId in which to compute its winners
  */
-export const completePool = async (
-  chain: Chain,
-  poolId: any
-): Promise<void> => {
+export const completePool = async (chain: Chain, poolId: any): Promise<void> => {
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
 
   logger.info('pool.seeds.snapshotTime: ', seeds.snapshotTime);
-  logger.info(
-    'pool.seeds.snapshotTime (display): ',
-    new Date(seeds.snapshotTime * 1000)
-  );
+  logger.info('pool.seeds.snapshotTime (display): ', new Date(seeds.snapshotTime * 1000));
   if (Math.round(Date.now() / 1000) < seeds.snapshotTime) {
     throw 'Not yet snapshotTime';
   }
@@ -64,10 +63,7 @@ export const completePool = async (
 
   if (completionTime !== 0) {
     logger.info('\npool.completionTime: ', completionTime);
-    logger.info(
-      'pool.completionTime (display): ',
-      new Date(completionTime * 1000)
-    );
+    logger.info('pool.completionTime (display): ', new Date(completionTime * 1000));
     logger.info('Pool has been completed. Ending Process.');
   } else {
     logger.info('Getting Snapshot Price ...');
@@ -81,6 +77,11 @@ export const completePool = async (
 
     // re-archiving to store the updated winner predictions off-chain for leaderboard updates.
     await rearchivePool(chain, pool, splitResult);
+
+    // send telegram notifications to winners through redis
+    await new Queue('pool-winners-telegram-notifications', {
+      connection: new IORedis(redisUrl, { maxRetriesPerRequest: null })
+    }).add('notify', { poolId, chain });
 
     // send notifications to winners to go and claim
     await notifyWinners(splitResult.winnerAddressesUniqued, pool);
