@@ -45,7 +45,11 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
   await firestore()
     .doc(`/users/${userWalletAddress}`)
     .set(
-      { pendingTelegramAuthToken: token, pendingTelegramAuthTime: Math.floor(Date.now() / 1000) },
+      {
+        address: userWalletAddress,
+        pendingTelegramAuthToken: token,
+        pendingTelegramAuthTime: Math.floor(Date.now() / 1000)
+      },
       { merge: true }
     );
 
@@ -71,7 +75,7 @@ export const hasUserTelegram = async (userWalletAddress: string): Promise<any> =
 
   const data = userDoc.data();
   if (!data || !data.telegramId) return { hasTelegram: false };
-  
+
   logger.info('User has Telegram details saved.');
   return { hasTelegram: true };
 };
