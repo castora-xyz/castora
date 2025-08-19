@@ -1,4 +1,5 @@
-import { useFirebase, useToast } from '@/contexts';
+import Telegram from '@/assets/telegram-plain.svg?react';
+import { useAuth, useFirebase, useTelegram } from '@/contexts';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 
@@ -7,8 +8,9 @@ export const CompletedPoolDisplay = ({
 }: {
   pool: Pool;
 }) => {
-  const { ensureNotifications } = useFirebase();
-  const { toastInfo } = useToast();
+  const { signature } = useAuth();
+  const { recordEvent } = useFirebase();
+  const telegram = useTelegram();
 
   return (
     <div className="border border-border-default dark:border-surface-subtle p-8 rounded-[24px] w-full max-lg:max-w-lg max-lg:mx-auto">
@@ -31,9 +33,7 @@ export const CompletedPoolDisplay = ({
             <div className="font-bold text-lg sm:text-2xl text-text-title">
               {seeds.pairNameSpaced()}
             </div>
-            <div className="font-medium sm:text-lg text-text-caption">
-              {seeds.pairNameFull()}
-            </div>
+            <div className="font-medium sm:text-lg text-text-caption">{seeds.pairNameFull()}</div>
           </div>
         </div>
       </div>
@@ -61,17 +61,15 @@ export const CompletedPoolDisplay = ({
         </div>
       )}
 
-      {noOfPredictions > 0 && completionTime === 0 && (
+      {noOfPredictions > 0 && completionTime === 0 && signature && !telegram.hasLinked && (
         <button
-          className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple"
+          className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple flex gap-2 items-center"
           onClick={async () => {
-            const result = await ensureNotifications();
-            toastInfo(
-              '',
-              result ? 'Notifications Enabled' : "Couldn't enable notifications"
-            );
+            await telegram.startAuth();
+            recordEvent('clicked_get_telegram_notified_awaiting_pool_completion');
           }}
         >
+          <Telegram className="w-6 h-6 fill-white" />
           <span>Get Notified</span>
           <Ripple />
         </button>

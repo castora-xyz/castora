@@ -1,14 +1,13 @@
-import * as crypto from 'crypto';
 import 'dotenv/config';
 import { FieldValue } from 'firebase-admin/firestore';
 import { IncomingMessage } from 'http';
+import { nanoid } from 'nanoid';
 import { verifyMessage } from 'viem';
-
 import { AUTH_MESSAGE } from '../middleware';
 import { firestore, logger, messaging } from '../utils';
 
-const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-if (!telegramBotToken) throw 'Set TELEGRAM_BOT_TOKEN';
+const telegramBotUsername = process.env.TELEGRAM_BOT_USERNAME;
+if (!telegramBotUsername) throw 'Set TELEGRAM_BOT_USERNAME';
 
 export interface RegisterUserParams {
   address: string;
@@ -30,70 +29,51 @@ export const removeUserTelegram = async (userWalletAddress: string): Promise<voi
 };
 
 /**
- * Sets the Telegram details of a user with
- * a wallet address to enable them to receive notifications when they have
- * winnings available in a pool.
+ * Starts the auth process for a user to link their Telegram account.
  *
  * @param userWalletAddress The verified wallet address of the user from auth.
- * @param details An object containing the telegram details from auth in the frontend.
+ * @returns A URL to redirect the user to for Telegram authentication.
  */
-export const setUserTelegram = async (
-  userWalletAddress: string,
-  details: Record<string, string>
-): Promise<void> => {
-  logger.info('Got Set User Telegram ... ');
+export const startTelegramAuth = async (userWalletAddress: string): Promise<string> => {
+  logger.info('Got Start Telegram Auth ... ');
   logger.info('User Wallet Address: ', userWalletAddress);
-  logger.info('Telegram Details: ', details);
-  console.log(details);
 
-  const { hash, ...otherTelegramData } = details;
-  if (!hash) throw 'Missing required Telegram hash';
+  // Generate a random hash to verify the user later
+  const token = nanoid(16);
 
-  logger.info('\nVerifying Telegram hash ... ');
-  const checkString = Object.keys(otherTelegramData)
-    .sort()
-    .map((k) => `${k}=${otherTelegramData[k]}`)
-    .join('\n');
-  const secret = crypto.createHash('sha256').update(telegramBotToken).digest();
-  const hmac = crypto.createHmac('sha256', secret).update(checkString).digest('hex');
-  if (hmac !== hash) throw 'Invalid Telegram hash';
-  logger.info('Telegram hash verified successfully.');
-
-  const authDate = Number(details.auth_date);
-  if (!authDate) throw 'Missing required Telegram auth_date';
-  const now = Math.floor(Date.now() / 1000);
-  if (now - authDate > 86400) throw 'Telegram auth_date expired';
-
-  const telegramId = details.id;
-  if (!telegramId) throw 'Missing required Telegram ID';
-  logger.info('Telegram ID: ', telegramId);
-
-  logger.info('\n Saving Telegram User to Firestore ... ');
-  // Using the default Firestore here to save telegram IDs
+  // Save the token and timestamp in Firestore
   await firestore()
     .doc(`/users/${userWalletAddress}`)
-    .set({ address: userWalletAddress, telegramId }, { merge: true });
-  logger.info('User Telegram Saved Successfully.');
+    .set(
+      { pendingTelegramAuthToken: token, pendingTelegramAuthTime: Math.floor(Date.now() / 1000) },
+      { merge: true }
+    );
+
+  // Construct the URL for Telegram authentication
+  const telegramAuthUrl = `https://t.me/${telegramBotUsername}?start=${token}`;
+
+  logger.info('Telegram Auth URL: ', telegramAuthUrl);
+  return telegramAuthUrl;
 };
 
 /**
  * Tells whether a user has Telegram details saved in Firestore.
- * 
+ *
  * @param userWalletAddress The verified wallet address of the user from auth.
- * @returns A boolean indicating whether the user has Telegram details saved.
+ * @returns An object indicating whether the user has Telegram details saved.
  */
-export const hasUserTelegram = async (userWalletAddress: string): Promise<boolean> => {
+export const hasUserTelegram = async (userWalletAddress: string): Promise<any> => {
   logger.info('Got Has User Telegram ... ');
   logger.info('User Wallet Address: ', userWalletAddress);
 
   const userDoc = await firestore().doc(`/users/${userWalletAddress}`).get();
-  if (!userDoc.exists) return false;
+  if (!userDoc.exists) return { hasTelegram: false };
 
   const data = userDoc.data();
-  if (!data || !data.telegramId) return false;
-
+  if (!data || !data.telegramId) return { hasTelegram: false };
+  
   logger.info('User has Telegram details saved.');
-  return true;
+  return { hasTelegram: true };
 };
 
 /**

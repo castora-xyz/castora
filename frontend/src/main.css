@@ -152,6 +152,12 @@ input[type='number'] {
   background-color: var(--surface-subtle);
 }
 
-#list-primary-bullet li::marker {
+.list-primary-bullet li::marker {
   color: var(--primary-default);
+}
+
+@media (min-width: 576px) and (max-width: 768px) {
+  #theme-toggle-text {
+    display: inline;
+  }
 }

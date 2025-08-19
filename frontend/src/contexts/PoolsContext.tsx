@@ -65,7 +65,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const cache = useCache();
   const [defaultChain] = useChains();
   const { castoraAddress, readContract, writeContract } = useContract();
-  const { ensureNotifications, firestore, recordEvent } = useFirebase();
+  const { firestore, recordEvent } = useFirebase();
   const { toastError, toastSuccess } = useToast();
 
   const [isFetchingLiveStocks, setIsFetchingLiveStocks] = useState(true);
@@ -260,7 +260,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           }
 
           subscriber.next('finalizing');
-          await ensureNotifications();
           recordEvent(`${bulkCount ? 'bulk_' : ''}predicted`, {
             poolId,
             predictionIds

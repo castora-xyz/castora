@@ -117,10 +117,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
           <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full bg-app-bg">
             <h3 className="font-medium text-xl text-text-subtitle mb-4">Join Pool</h3>
 
-            <ul
-              id="list-primary-bullet"
-              className="bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc"
-            >
+            <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc">
               <li>
                 Predict {pool?.seeds.predictionTokenDetails.name ?? landingPageDefaults.pairToken}
                 's Price for{' '}
@@ -280,10 +277,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                   max={100}
                 />
               </div>
-              <ul
-                id="list-primary-bullet"
-                className="pl-4 text-text-subtitle list-disc text-sm w-fit"
-              >
+              <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
                 <li>
                   Makes{' '}
                   <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
@@ -312,7 +306,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled mt-auto"
               onClick={handleClick}
             >
-              Join Pool ({pool?.seeds.displayStake(bulkCount) ?? landingPageDefaults.stake(bulkCount)})
+              Join Pool (
+              {pool?.seeds.displayStake(bulkCount) ?? landingPageDefaults.stake(bulkCount)})
               {hasEnoughBalance && <Ripple />}
             </button>
 

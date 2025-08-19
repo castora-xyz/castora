@@ -10,6 +10,7 @@ import {
   PoolsProvider,
   PoolsShimmerProvider,
   ServerProvider,
+  TelegramProvider,
   ThemeProvider,
   ToastProvider,
   Web3Provider
@@ -30,21 +31,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <ThemeProvider>
                 <AuthProvider>
                   <ServerProvider>
-                    <FirebaseProvider>
-                      <ContractProvider>
-                        <FilterCryptoPoolsProvider>
-                          <FilterStockPoolsProvider>
-                            <PoolsProvider>
-                              <PoolsShimmerProvider>
-                                <MyActivityProvider>
-                                  <App />
-                                </MyActivityProvider>
-                              </PoolsShimmerProvider>
-                            </PoolsProvider>
-                          </FilterStockPoolsProvider>
-                        </FilterCryptoPoolsProvider>
-                      </ContractProvider>
-                    </FirebaseProvider>
+                    <TelegramProvider>
+                      <FirebaseProvider>
+                        <ContractProvider>
+                          <FilterCryptoPoolsProvider>
+                            <FilterStockPoolsProvider>
+                              <PoolsProvider>
+                                <PoolsShimmerProvider>
+                                  <MyActivityProvider>
+                                    <App />
+                                  </MyActivityProvider>
+                                </PoolsShimmerProvider>
+                              </PoolsProvider>
+                            </FilterStockPoolsProvider>
+                          </FilterCryptoPoolsProvider>
+                        </ContractProvider>
+                      </FirebaseProvider>
+                    </TelegramProvider>
                   </ServerProvider>
                 </AuthProvider>
               </ThemeProvider>

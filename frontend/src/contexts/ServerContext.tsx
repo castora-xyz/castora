@@ -10,9 +10,9 @@ const ServerContext = createContext<ServerContextProps>({
 });
 
 interface ServerContextProps {
-  delete: (path: string) => Promise<any>;
-  get: (path: string) => Promise<any>;
-  post: (path: string, body: any) => Promise<any>;
+  delete: (path: string, noToast?: boolean) => Promise<any>;
+  get: (path: string, noToast?: boolean) => Promise<any>;
+  post: (path: string, body: any, noToast?: boolean) => Promise<any>;
 }
 
 export const useServer = () => useContext(ServerContext);
@@ -23,7 +23,7 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
   const { signature } = useAuth();
   const { toastError } = useToast();
 
-  const call = async (path: string, method: string, body: any = undefined) => {
+  const call = async (path: string, method: string, body: any = undefined, noToast = false) => {
     return new Promise(async (resolve, _) => {
       try {
         const result = await (
@@ -46,23 +46,23 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
           if (result['success']) {
             return resolve(result['data'] ?? true);
           } else {
-            toastError(`${result['message']}`);
+            if (!noToast) toastError(`${result['message']}`);
           }
         } else {
-          toastError("Couldn't understand server response.");
+          if (!noToast) toastError("Couldn't understand server response.");
         }
         console.log(result);
       } catch (error: any) {
         console.error(error);
-        toastError(error['message'] == 'Failed to fetch' ? 'Network Error' : `Error: ${error}`);
+        if (!noToast) toastError(error['message'] == 'Failed to fetch' ? 'Network Error' : `Error: ${error}`);
       }
       resolve(null);
     });
   };
 
-  const delete_ = (path: string) => call(path, 'DELETE');
-  const get = (path: string) => call(path, 'GET');
-  const post = (path: string, body: any) => call(path, 'POST', body);
+  const delete_ = (path: string, noToast = false) => call(path, 'DELETE', undefined, noToast);
+  const get = (path: string, noToast = false) => call(path, 'GET', undefined, noToast);
+  const post = (path: string, body: any, noToast = false) => call(path, 'POST', body, noToast);
 
   return (
     <ServerContext.Provider value={{ delete: delete_, get, post }}>

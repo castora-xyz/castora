@@ -1,13 +1,7 @@
 import { useEffect, useRef } from 'react';
 import createWeb3Avatar from 'web3-avatar';
 
-export const Web3Avatar = ({
-  address,
-  className
-}: {
-  address: string;
-  className?: string;
-}) => {
+export const Web3Avatar = ({ address, className }: { address: string; className?: string }) => {
   const ref = useRef(null);
 
   useEffect(() => {

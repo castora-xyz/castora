@@ -27,14 +27,11 @@ export const JoinPoolForm = ({
   const [currentPrice, setCurrentPrice] = useState(0);
   const [predictionError, setPredictionError] = useState('');
   const [isShowingModal, setIsShowingModal] = useState(false);
-  const [predictionMode, setPredictionMode] = useState<PredictionMode | null>(
-    null
-  );
+  const [predictionMode, setPredictionMode] = useState<PredictionMode | null>(null);
   const [showModalHeading, setShowModalHeading] = useState(true);
   const predictionInput = useRef<HTMLInputElement>(null);
 
-  const modalName = () =>
-    predictionMode === 'single' ? 'make_prediction' : 'go_multiple';
+  const modalName = () => (predictionMode === 'single' ? 'make_prediction' : 'go_multiple');
 
   const closeModal = ({ reset }: { reset: boolean }) => {
     document.body.classList.remove('overflow-hidden');
@@ -63,8 +60,7 @@ export const JoinPoolForm = ({
 
   const validatePrediction = () => {
     if (!predictionInput.current) return;
-    const { valid, rangeUnderflow, stepMismatch, valueMissing } =
-      predictionInput.current.validity;
+    const { valid, rangeUnderflow, stepMismatch, valueMissing } = predictionInput.current.validity;
     const error = valid
       ? ''
       : valueMissing
@@ -88,9 +84,7 @@ export const JoinPoolForm = ({
       window.history.replaceState(
         {},
         '',
-        `${window.location.pathname}${
-          !!`${searchParams}` ? `?${searchParams}` : ''
-        }`
+        `${window.location.pathname}${!!`${searchParams}` ? `?${searchParams}` : ''}`
       );
     }
 
@@ -99,11 +93,7 @@ export const JoinPoolForm = ({
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
         setCurrentPrice(
-          parseFloat(
-            (+price * 10 ** expo).toFixed(
-              Math.abs(expo) < 8 ? Math.abs(expo) : 8
-            )
-          )
+          parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 8 ? Math.abs(expo) : 8))
         );
       }
     );
@@ -133,47 +123,34 @@ export const JoinPoolForm = ({
     <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full mb-8">
       <h3 className="font-medium text-xl text-text-subtitle mb-4">Join Pool</h3>
 
-      <ul
-        id="list-primary-bullet"
-        className="bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc"
-      >
+      <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-6 list-disc">
         <li>
           Predict {seeds.predictionTokenDetails.name}'s Price for{' '}
-          <span className="font-bold">
-            {seeds.formattedSnapshotTime().reverse().join(' ')}
-          </span>{' '}
+          <span className="font-bold">{seeds.formattedSnapshotTime().reverse().join(' ')}</span>{' '}
           with <span className="font-bold">{seeds.displayStake()}</span> stake.
         </li>
         <li>
-          Winner Predictions are{' '}
-          <span className="font-bold">Earliest & Closest </span> Prices to
+          Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices to
           Snapshot Price.
         </li>
         <li>
           Win x{pool.multiplier()} (
-          <span className="font-bold">
-            {seeds.displayStake(pool.multiplier())}
-          </span>
-          ), if you are in Top{' '}
-          <span className="font-bold">{pool.percentWinners()}%</span>{' '}
+          <span className="font-bold">{seeds.displayStake(pool.multiplier())}</span>
+          ), if you are in Top <span className="font-bold">{pool.percentWinners()}%</span>{' '}
           Predictions.
         </li>
       </ul>
 
       <form>
         <label>
-          <span className="font-medium text-sm text-text-disabled block mb-1">
-            Your Prediction
-          </span>
+          <span className="font-medium text-sm text-text-disabled block mb-1">Your Prediction</span>
 
           <input
             min={0}
             step={10 ** (-1 * 8)}
             type="number"
             onChange={validatePrediction}
-            onBlur={(e) =>
-              recordEvent('entered_prediction_price', { price: e.target.value })
-            }
+            onBlur={(e) => recordEvent('entered_prediction_price', { price: e.target.value })}
             ref={predictionInput}
             id="prediction-input"
             className="w-full border border-surface-subtle rounded-2xl py-2 px-3 mb-2 font-medium focus:outline-none text-xl focus:valid:border-primary-default focus:invalid:border-errors-default"
@@ -181,15 +158,11 @@ export const JoinPoolForm = ({
             required
           />
           {predictionError && (
-            <p className="-mt-1 mb-3 text-sm text-errors-default">
-              {predictionError}
-            </p>
+            <p className="-mt-1 mb-3 text-sm text-errors-default">{predictionError}</p>
           )}
           <p className="font-medium mb-8">
             <span className="text-text-disabled">Current Price:</span>{' '}
-            <span className="text-primary-darker dark:text-primary-subtle">
-              {currentPrice}
-            </span>
+            <span className="text-primary-darker dark:text-primary-subtle">{currentPrice}</span>
           </p>
         </label>
 

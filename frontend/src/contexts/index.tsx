@@ -10,6 +10,7 @@ export * from './PoolsContext';
 export * from './PoolsShimmerContext';
 export * from './PredictionsContext';
 export * from './ServerContext';
+export * from './TelegramContext';
 export * from './ThemeContext';
 export * from './ToastContext';
 export * from './Web3Context';

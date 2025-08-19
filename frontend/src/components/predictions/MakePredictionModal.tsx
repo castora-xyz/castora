@@ -1,8 +1,16 @@
 import CheckCircle from '@/assets/check-circle.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
+import Telegram from '@/assets/telegram-plain.svg?react';
 import { CountdownNumbers, PredictionMode, SuccessIcon } from '@/components';
-import { MAX_BULK_PREDICTIONS, useContract, useMyActivity, usePools } from '@/contexts';
+import {
+  MAX_BULK_PREDICTIONS,
+  useContract,
+  useFirebase,
+  useMyActivity,
+  usePools,
+  useTelegram
+} from '@/contexts';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { InputNumber } from 'primereact/inputnumber';
@@ -27,7 +35,9 @@ export const MakePredictionModal = ({
 }) => {
   const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
+  const { recordEvent } = useFirebase();
   const { fetchMyActivity } = useMyActivity();
+  const telegram = useTelegram();
 
   const [bulkCount, setBulkCount] = useState(2);
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -174,14 +184,28 @@ export const MakePredictionModal = ({
 
         <p className="text-center text-xl mb-4 xs:px-4">You've successfully made a Prediction!</p>
 
-        <p className="mb-8 text-sm text-text-caption text-center flex items-center justify-center">
+        <p className="mb-4 text-sm text-text-caption text-center flex items-center justify-center">
           <ExternalLink className="w-5 h-5 mr-1 fill-text-caption" />
           <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline">
             View In Explorer
           </a>
         </p>
 
-        <p className="flex flex-wrap gap-4 text-sm p-2 pl-4 mb-8 rounded-full justify-center items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
+        {!telegram.hasLinked && (
+          <button
+            className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple flex gap-2 items-center mx-auto mb-4"
+            onClick={async () => {
+              await telegram.startAuth();
+              recordEvent('clicked_get_telegram_notified_prediction_success');
+            }}
+          >
+            <Telegram className="w-6 h-6 fill-white" />
+            <span>Get Notified</span>
+            <Ripple />
+          </button>
+        )}
+
+        <p className="flex flex-wrap gap-4 mt-8 text-sm p-2 pl-4 mb-8 rounded-full justify-center items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
           <span>Snapshot Time</span>
           <span className="font-medium p-2 px-4 rounded-full text-primary-darker border border-border-default dark:border-surface-subtle">
             <CountdownNumbers timestamp={seeds.snapshotTime} />
@@ -292,7 +316,7 @@ export const MakePredictionModal = ({
               max={MAX_BULK_PREDICTIONS}
             />
           </div>
-          <ul id="list-primary-bullet" className="pl-4 text-text-subtitle list-disc text-sm w-fit">
+          <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
             <li>
               Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
               predictions.
