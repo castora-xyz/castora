@@ -114,8 +114,8 @@ export const writeContract = async (chain: Chain, functionName: any, args: any) 
     console.log(receipt);
 
     const newBalance = await showBalance(chain, account.address);
-    const balanceDiffs = Number(newBalance) - Number(prevBalance);
-    logger.info(`Admin Balance Change: ${`${balanceDiffs} ETH`}`);
+    const balanceDiffs = formatEther(newBalance - prevBalance);
+    logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
     return result;
   } catch (e) {
     if (`${e}`.toLowerCase().includes('request timed out')) {

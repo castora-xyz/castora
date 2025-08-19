@@ -1,6 +1,14 @@
+import { Queue } from 'bullmq';
+import IORedis from 'ioredis';
 import { Chain, logger } from '.';
 import { Pool, PoolSeeds } from '../schemas';
 import { readContract, writeContract } from './contract';
+
+if (!process.env.REDIS_URL) throw 'Set REDIS_URL';
+const connection = new IORedis(process.env.REDIS_URL, {
+  family: 0,
+  maxRetriesPerRequest: null
+});
 
 /**
  * Creates a new {@link Pool} whose {@link PoolSeeds} match the provided seeds
@@ -22,7 +30,8 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
     if (poolId == 0) {
       logger.info('Pool does not exist.');
 
-      if (seeds.windowCloseTime <= Math.trunc(Date.now() / 1000)) {
+      const now = Math.trunc(Date.now() / 1000);
+      if (seeds.windowCloseTime <= now) {
         logger.info('WindowCloseTime is in the past. Ending Process.');
         return null;
       }
@@ -30,6 +39,21 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
       logger.info('\nCreating Pool ... ');
       poolId = Number(await writeContract(chain, 'createPool', [seeds.bigIntified()]));
       logger.info('Created new pool with poolId: ', poolId);
+
+      await new Queue('pool-archiver', { connection }).add(
+        'archive-pool',
+        { poolId, chain },
+        { delay: (seeds.windowCloseTime - now) * 1000 }
+      );
+      logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
+
+      await new Queue('pool-completer', { connection }).add(
+        'complete-pool',
+        { poolId, chain },
+        // 20 seconds after snapshotTime for price availability
+        { delay: (seeds.snapshotTime - now) * 1000 + 20000 }
+      );
+      logger.info(`Posted job to complete Pool ${poolId} on chain ${chain} after snapshotTime`);
 
       return poolId;
     } else {

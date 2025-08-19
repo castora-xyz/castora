@@ -54,7 +54,7 @@ export const completePool = async (job: Job): Promise<void> => {
     // not adding retries here to manually review when this fails
     await new Queue('pool-winners-telegram-notifications', {
       connection: redisConnection
-    }).add('notify', { poolId, chain });
+    }).add('notify-winners-telegram', { poolId, chain });
 
     logger.info('Posted job to notify winners via telegram');
     logger.info(`Successfully completed Pool ${poolId} on chain ${chain}`);
