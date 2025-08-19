@@ -80,7 +80,7 @@ export const completePool = async (chain: Chain, poolId: any): Promise<void> => 
 
     // send telegram notifications to winners through redis
     await new Queue('pool-winners-telegram-notifications', {
-      connection: new IORedis(redisUrl, { maxRetriesPerRequest: null })
+      connection: new IORedis(redisUrl, { family: 0, maxRetriesPerRequest: null })
     }).add('notify', { poolId, chain });
 
     // send notifications to winners to go and claim

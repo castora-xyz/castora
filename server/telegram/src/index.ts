@@ -17,7 +17,7 @@ bot.start({ timeout: 0 });
 logger.info('😎 Telegram bot started and listening for start commands.');
 
 const worker = new Worker('pool-winners-telegram-notifications', getNotifyWinnerJob(bot), {
-  connection: new IORedis(redisUrl, { maxRetriesPerRequest: null })
+  connection: new IORedis(redisUrl, { family: 0, maxRetriesPerRequest: null })
 });
 
 worker.on('ready', () => {
