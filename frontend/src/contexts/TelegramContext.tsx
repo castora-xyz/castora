@@ -28,7 +28,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
     if (!auth.signature) return;
     setIsLoading(true);
     const result = await server.get('/user/telegram', true);
-    if (result && 'hasTelegram' in result) setHasLinked(result['hasTelegram']);
+    if (result && typeof result == 'object' && 'hasTelegram' in result) setHasLinked(result['hasTelegram']);
     else setHasLinked(false);
     setIsLoading(false);
   };

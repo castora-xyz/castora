@@ -27,7 +27,7 @@ export const wrapper = async (
 
 router.use('/', poolRoutes);
 router.use('/', userRoutes);
-
-router.use('**', (_, res) => res.json({ success: true }));
+router.use('/', (_, res) => res.json({ success: true }));
+router.use('**', (_, res) => res.status(404).json({ success: false, message: 'Not Found' }));
 
 export default router;
