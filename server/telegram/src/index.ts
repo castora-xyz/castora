@@ -32,6 +32,10 @@ worker.on('completed', (job) => {
   logger.info(`✅ Job ${job.id} completed successfully`);
 });
 
-worker.on('failed', (job, err) => {
-  logger.error(`❌ Job ${job?.id} failed: ${err.message}`);
+worker.on('failed', (job, e) => {
+  logger.error(`❌ Job ${job?.id} failed: ${e}`);
+});
+
+worker.on('error', (e) => {
+  logger.error(`❌ Worker error: ${e}`);
 });

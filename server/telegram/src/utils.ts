@@ -6,7 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { Transform } from 'stream';
 
-export type Chain = 'monaddevnet' | 'monadtestnet' | 'sepolia';
+export type Chain = 'monadtestnet';
 
 // Initialize Firebase Admin SDK with custom service account in dotenv
 initializeApp({

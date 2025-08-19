@@ -16,7 +16,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       pool = new Pool(JSON.parse((await archivalRef.download())[0].toString()));
       logger.info(`Fetched pool: ${poolId} on ${chain}`);
     } catch (e) {
-      throw new Error(`Failed to fetch pool from archive: ${e}`);
+      throw `Failed to fetch pool from archive: ${e}`;
     }
 
     // Check if winners have already been notified, if so, stop processing.
@@ -30,6 +30,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     // Notify winners on Telegram
     logger.info(`Notifying winners for pool ${poolId} on ${chain}`);
     for (const winner of pool.winners) await notifyWinner(bot, pool, winner);
+    logger.info(`Notified winners for pool ${poolId} on ${chain}`);
 
     // Update the pool to mark winners as notified
     try {
