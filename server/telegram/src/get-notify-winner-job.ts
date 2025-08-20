@@ -1,8 +1,9 @@
 import { Job } from 'bullmq';
+import { FieldValue } from 'firebase-admin/firestore';
 import { Bot } from 'grammy';
 import { notifyWinner } from './notify-winner';
 import { Pool } from './schemas';
-import { logger, storage } from './utils';
+import { firestore, logger, storage } from './utils';
 
 export const getNotifyWinnerJob = (bot: Bot) => {
   return async (job: Job<any, any, string>) => {
@@ -29,8 +30,12 @@ export const getNotifyWinnerJob = (bot: Bot) => {
 
     // Notify winners on Telegram
     logger.info(`Notifying winners for pool ${poolId} on ${chain}`);
-    for (const winner of pool.winners) await notifyWinner(bot, pool, winner);
-    logger.info(`Notified winners for pool ${poolId} on ${chain}`);
+    let notifiedCount = 0;
+    for (const winner of pool.winners) {
+      const isSuccess = await notifyWinner(bot, pool, winner);
+      if (isSuccess) notifiedCount += 1;
+    }
+    logger.info(`\nNotified winners for pool ${poolId} on ${chain}`);
 
     // Update the pool to mark winners as notified
     try {
@@ -46,6 +51,27 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       );
     }
 
-    logger.info(`Job for poolId: ${poolId}, chain: ${chain} completed successfully`);
+    logger.info(`\n📝 Total Telegram Notified Count: ${notifiedCount}`);
+    // Increment global stats on the pool if there were notifications.
+    if (notifiedCount > 0) {
+      try {
+        await firestore.doc('/counts/counts').set(
+          {
+            totalTelegramNotifiedCount: FieldValue.increment(notifiedCount),
+            perChainTelegramNotifiedCount: {
+              [chain]: FieldValue.increment(notifiedCount)
+            }
+          },
+          { merge: true }
+        );
+        logger.info(
+          `📝 Incremented global total and perChain telegram notified count by: ${notifiedCount}`
+        );
+      } catch (e) {
+        logger.error('❌ Failed to increment global total and perChain telegram notified counts.');
+      }
+    }
+
+    logger.info(`\nJob for poolId: ${poolId}, chain: ${chain} completed successfully`);
   };
 };

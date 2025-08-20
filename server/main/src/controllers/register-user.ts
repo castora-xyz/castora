@@ -48,7 +48,7 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
       {
         address: userWalletAddress,
         pendingTelegramAuthToken: token,
-        pendingTelegramAuthTime: Math.floor(Date.now() / 1000)
+        pendingTelegramAuthTime: FieldValue.serverTimestamp()
       },
       { merge: true }
     );
