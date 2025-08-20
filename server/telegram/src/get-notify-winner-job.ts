@@ -5,6 +5,20 @@ import { notifyWinner } from './notify-winner';
 import { Pool } from './schemas';
 import { firestore, logger, storage } from './utils';
 
+interface NotificationProgress {
+  processed: number;
+  notified: number;
+}
+
+const isNotificationProgress = (value: any): value is NotificationProgress => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof value.processed === 'number' &&
+    typeof value.notified === 'number'
+  );
+};
+
 export const getNotifyWinnerJob = (bot: Bot) => {
   return async (job: Job<any, any, string>) => {
     const { poolId, chain } = job.data;
@@ -30,11 +44,30 @@ export const getNotifyWinnerJob = (bot: Bot) => {
 
     // Notify winners on Telegram
     logger.info(`Notifying winners for pool ${poolId} on ${chain}`);
-    let notifiedCount = 0;
-    for (const winner of pool.winners) {
-      const isSuccess = await notifyWinner(bot, pool, winner);
-      if (isSuccess) notifiedCount += 1;
+
+    // Check if this was a notify job that was halted for whatever reason
+    // and resume safely from it ended previously
+    let progress: NotificationProgress;
+    if (isNotificationProgress(job.progress)) {
+      progress = job.progress;
+      logger.info('Resuming job from previous progress: ', progress);
+    } else {
+      progress = { processed: 0, notified: 0 };
     }
+
+    for (let i = progress.processed; i < pool.winners.length; i++) {
+      const isSuccess = await notifyWinner(bot, pool, pool.winners[i]);
+      if (isSuccess) progress.notified += 1;
+
+      // In batches of 10, update the worker with the current status to re-use
+      // the update should in case the worker/job is restarted either due to
+      // restarts from automatic redeployments or system resource re-allocation.
+      if ((i + 1) % 10 === 0 || i === pool.winners.length - 1) {
+        progress.processed = i + 1;
+        await job.updateProgress(progress);
+      }
+    }
+
     logger.info(`\nNotified winners for pool ${poolId} on ${chain}`);
 
     // Update the pool to mark winners as notified
@@ -51,21 +84,21 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       );
     }
 
-    logger.info(`\n📝 Total Telegram Notified Count: ${notifiedCount}`);
+    logger.info(`\n📝 Total Telegram Notified Count: ${progress.notified}`);
     // Increment global stats on the pool if there were notifications.
-    if (notifiedCount > 0) {
+    if (progress.notified > 0) {
       try {
         await firestore.doc('/counts/counts').set(
           {
-            totalTelegramNotifiedCount: FieldValue.increment(notifiedCount),
+            totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
             perChainTelegramNotifiedCount: {
-              [chain]: FieldValue.increment(notifiedCount)
+              [chain]: FieldValue.increment(progress.notified)
             }
           },
           { merge: true }
         );
         logger.info(
-          `📝 Incremented global total and perChain telegram notified count by: ${notifiedCount}`
+          `📝 Incremented global total and perChain telegram notified count by: ${progress.notified}`
         );
       } catch (e) {
         logger.error('❌ Failed to increment global total and perChain telegram notified counts.');

@@ -25,7 +25,7 @@ worker.on('ready', () => {
 });
 
 worker.on('active', (job) => {
-  logger.info(`\n\n🔄 Job ${job.id} started processing`);
+  logger.info(`\n\n\n🔄 Job ${job.id} started processing`);
 });
 
 worker.on('completed', (job) => {
