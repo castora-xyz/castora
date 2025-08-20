@@ -25,10 +25,8 @@ export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
   if (!raw) {
     throw 'Could not fetch pool';
   } else {
-    logger.info('Fetched Pool Details.');
     const pool = new Pool(raw);
-    logger.info(pool);
-    console.log(pool);
+    logger.info('Fetched Pool Details: ', pool);
     return pool;
   }
 };

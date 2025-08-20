@@ -50,7 +50,6 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
   }
 
   logger.info('Obtained Price Update Data: ', priceUpdateData);
-  console.log('Obtained Price Update Data: ', priceUpdateData);
 
   if (
     'parsed' in priceUpdateData &&

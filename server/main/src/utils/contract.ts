@@ -108,10 +108,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any) 
     logger.info('Transaction Hash: ', hash);
     logger.info('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    logger.info('Transaction Receipt');
-    logger.info(convertNestedBigInts(receipt));
-    // Also logging the raw receipt to the console as the custom logger might not show it.
-    console.log(receipt);
+    logger.info('Transaction Receipt: ', convertNestedBigInts(receipt));
 
     const newBalance = await showBalance(chain, account.address);
     const balanceDiffs = formatEther(newBalance - prevBalance);
