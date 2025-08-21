@@ -58,6 +58,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     for (let i = progress.processed; i < pool.winners.length; i++) {
       const isSuccess = await notifyWinner(bot, pool, pool.winners[i]);
       if (isSuccess) progress.notified += 1;
+      logger.info(`📝 Processed ${i + 1} of ${pool.winners.length} winners.`);
 
       // In batches of 10, update the worker with the current status to re-use
       // the update should in case the worker/job is restarted either due to
@@ -65,6 +66,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       if ((i + 1) % 10 === 0 || i === pool.winners.length - 1) {
         progress.processed = i + 1;
         await job.updateProgress(progress);
+        logger.info(`📝 Updated Job Progress to ${i + 1} out of ${pool.winners.length} winners.`);
       }
     }
 

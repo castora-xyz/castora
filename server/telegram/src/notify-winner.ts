@@ -38,10 +38,11 @@ export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promis
   try {
     await bot.api.sendMessage(
       userData.telegramId,
-      `🏆 You (${shortenAddress(winner)}) just won ${won} ${pool.stakeToken} in Pool ${
+      `🏆 You (${shortenAddress(winner)}) just won *${won} ${pool.stakeToken}* in Pool ${
         pool.poolId
       }! Tap to go and claim your winnings now!`,
       {
+        parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
             [{ text: 'Claim Now!', url: `https://castora.xyz/pool/${pool.poolId}` }]
