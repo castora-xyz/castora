@@ -43,7 +43,11 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
       await new Queue('pool-archiver', { connection }).add(
         'archive-pool',
         { poolId, chain },
-        { delay: (seeds.windowCloseTime - now) * 1000 }
+        {
+          delay: (seeds.windowCloseTime - now) * 1000,
+          attempts: 7,
+          backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
+        }
       );
       logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
 
@@ -51,7 +55,11 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
         'complete-pool',
         { poolId, chain },
         // 20 seconds after snapshotTime for price availability
-        { delay: (seeds.snapshotTime - now) * 1000 + 20000 }
+        {
+          delay: (seeds.snapshotTime - now) * 1000 + 20000,
+          attempts: 7,
+          backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
+        }
       );
       logger.info(`Posted job to complete Pool ${poolId} on chain ${chain} after snapshotTime`);
 

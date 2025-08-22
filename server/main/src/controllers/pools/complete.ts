@@ -1,4 +1,6 @@
+import { Queue } from 'bullmq';
 import 'dotenv/config';
+import IORedis from 'ioredis';
 import {
   Chain,
   fetchPool,
@@ -11,6 +13,12 @@ import {
   setWinners
 } from '../../utils';
 import { rearchivePool } from './archive';
+
+if (!process.env.REDIS_URL) throw 'Set REDIS_URL';
+const connection = new IORedis(process.env.REDIS_URL, {
+  family: 0,
+  maxRetriesPerRequest: null
+});
 
 /**
  * Completes all live pools on the provided chain.
@@ -72,6 +80,19 @@ export const completePool = async (chain: Chain, poolId: any): Promise<void> => 
 
     // re-archiving to store the updated winner predictions off-chain for leaderboard updates.
     await rearchivePool(chain, pool, splitResult);
+
+    // send telegram notifications to winners through redis
+    await new Queue('pool-winners-telegram-notifications', {
+      connection
+    }).add(
+      'notify-winners-telegram',
+      { poolId, chain },
+      {
+        attempts: 7,
+        backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
+      }
+    );
+    logger.info('Posted job to notify winners via telegram');
 
     // send notifications to winners to go and claim
     await notifyWinners(splitResult.winnerAddressesUniqued, pool);

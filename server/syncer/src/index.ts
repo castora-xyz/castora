@@ -9,8 +9,8 @@ new Queue('pool-syncer', { connection: redisConnection }).add(
   {
     repeat: { pattern: '5 0 0,1,5,6,7,11,12,13,17,18,19,23 * * *' },
     jobId: 'sync-pools-on-monadtestnet',
-    attempts: 10,
-    backoff: { type: 'exponential', delay: 60000 } // retry after 1min, 2min, 4min...
+    attempts: 7,
+    backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
   }
 );
 

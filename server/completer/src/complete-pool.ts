@@ -51,10 +51,16 @@ export const completePool = async (job: Job): Promise<void> => {
     await rearchivePool(chain, pool, splitResult);
 
     // send telegram notifications to winners through redis
-    // not adding retries here to manually review when this fails
     await new Queue('pool-winners-telegram-notifications', {
       connection: redisConnection
-    }).add('notify-winners-telegram', { poolId, chain });
+    }).add(
+      'notify-winners-telegram',
+      { poolId, chain },
+      {
+        attempts: 7,
+        backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
+      }
+    );
 
     logger.info('Posted job to notify winners via telegram');
     logger.info(`Successfully completed Pool ${poolId} on chain ${chain}`);
