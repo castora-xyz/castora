@@ -1,34 +1,16 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { sepolia } from 'viem/chains';
 import { Chain, convertNestedBigInts, logger } from '.';
 import { abi } from './abi';
 
-const adminKeySepolia = process.env.ADMIN_KEY_SEPOLIA as `0x${string}`;
-if (!adminKeySepolia) throw 'Set ADMIN_KEY_SEPOLIA';
 const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
 if (!adminKeyMonad) throw 'Set ADMIN_KEY_MONAD';
-const monadDevnetRpcUrl = process.env.MONAD_DEVNET_RPC_URL;
-if (!monadDevnetRpcUrl) throw 'Set MONAD_DEVNET_RPC_URL';
 const monadTestnetRpcUrl = process.env.MONAD_TESTNET_RPC_URL;
 if (!monadTestnetRpcUrl) throw 'Set MONAD_TESTNET_RPC_URL';
 
 export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const CONTRACT_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
-
-const monadDevnet = defineChain({
-  id: 20143,
-  name: 'Monad Devnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'DMonad',
-    symbol: 'DMON'
-  },
-  rpcUrls: {
-    default: { http: [monadDevnetRpcUrl] }
-  }
-});
 
 const monadTestnet = defineChain({
   id: 10143,
@@ -46,22 +28,16 @@ const monadTestnet = defineChain({
 const getAccount = (chain: Chain) =>
   privateKeyToAccount(
     {
-      monaddevnet: adminKeyMonad,
-      monadtestnet: adminKeyMonad,
-      sepolia: adminKeySepolia
+      monadtestnet: adminKeyMonad
     }[chain]
   );
 export const getConfig = (chain: Chain) =>
   ({
-    monaddevnet: { chain: monadDevnet, transport: http() },
-    monadtestnet: { chain: monadTestnet, transport: http() },
-    sepolia: { chain: sepolia, transport: http('https://sepolia.drpc.org') }
+    monadtestnet: { chain: monadTestnet, transport: http() }
   }[chain]);
 export const getContractAddress = (chain: Chain) =>
   ({
-    monaddevnet: CONTRACT_ADDRESS_MONAD,
-    monadtestnet: CONTRACT_ADDRESS_MONAD,
-    sepolia: CONTRACT_ADDRESS_SEPOLIA
+    monadtestnet: CONTRACT_ADDRESS_MONAD
   }[chain]);
 
 export const readContract = async (chain: Chain, functionName: any, args?: any) => {

@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Chain, logger } from '../utils';
 
-const isChain = (chain: any): chain is Chain =>
-  chain === 'monaddevnet' || chain === 'monadtestnet' || chain === 'sepolia';
+const isChain = (chain: any): chain is Chain => chain === 'monadtestnet';
 
 export const validateChain = async ({ headers }: Request, res: Response, next: NextFunction) => {
   let { chain } = headers;
