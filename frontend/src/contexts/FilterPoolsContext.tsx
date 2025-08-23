@@ -1,10 +1,4 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState
-} from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 export const ALL_CRYPTO_PREDICTION_TOKENS = ['ETH', 'SOL', 'PUMP', 'HYPE'];
 export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
@@ -56,12 +50,7 @@ export const useFilterStockPools = () => useContext(FilterStockPoolsContext);
 
 export const useFilterCryptoPools = () => useContext(FilterCryptoPoolsContext);
 
-const retrieveOne = (
-  key: string,
-  prop: string,
-  all: any[],
-  initial: any[]
-): any[] => {
+const retrieveOne = (key: string, prop: string, all: any[], initial: any[]): any[] => {
   const saved = localStorage.getItem(`castora::filter-v2-${key}pools::${prop}`);
   if (saved) {
     try {
@@ -75,23 +64,12 @@ const retrieveOne = (
 };
 
 const save = (key: string, prop: string, value: string[]) => {
-  localStorage.setItem(
-    `castora::filter-v2-${key}pools::${prop}`,
-    JSON.stringify(value)
-  );
+  localStorage.setItem(`castora::filter-v2-${key}pools::${prop}`, JSON.stringify(value));
 };
 
-export const FilterStockPoolsProvider = ({
-  children
-}: {
-  children: ReactNode;
-}) => {
+export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) => {
   const [predictionTokens, setPredictionTokens] = useState(
-    retrieveOne('stock', 'predictiontokens', ALL_STOCK_PREDICTION_TOKENS, [
-      'AAPL',
-      'TSLA',
-      'CRCL'
-    ])
+    retrieveOne('stock', 'predictiontokens', ALL_STOCK_PREDICTION_TOKENS, ['AAPL', 'TSLA', 'CRCL'])
   );
   const [statuses, setStatuses] = useState(
     retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open'])
@@ -135,6 +113,12 @@ export const FilterStockPoolsProvider = ({
   useEffect(() => {
     retrieve();
     window.addEventListener('storage', retrieve);
+
+    // Remove saved older filters from browser
+    const lsKeys = Object.keys(localStorage);
+    for (let key of lsKeys) {
+      if (key.startsWith('castora::filterstockpools')) localStorage.removeItem(key);
+    }
   }, []);
 
   return (
@@ -151,11 +135,7 @@ export const FilterStockPoolsProvider = ({
   );
 };
 
-export const FilterCryptoPoolsProvider = ({
-  children
-}: {
-  children: ReactNode;
-}) => {
+export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode }) => {
   const [predictionTokens, setPredictionTokens] = useState(
     retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
       'ETH',
@@ -165,11 +145,7 @@ export const FilterCryptoPoolsProvider = ({
     ])
   );
   const [stakeTokens, setStakeTokens] = useState(
-    retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, [
-      'MON',
-      'gMON',
-      'aprMON'
-    ])
+    retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
   );
   const [statuses, setStatuses] = useState(
     retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open'])
@@ -219,16 +195,10 @@ export const FilterCryptoPoolsProvider = ({
       ])
     );
     setStakeTokens(
-      retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, [
-        'MON',
-        'gMON',
-        'aprMON'
-      ])
+      retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
     );
     setStatuses(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
-    setPoolLifes(
-      retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h'])
-    );
+    setPoolLifes(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h']));
   };
 
   useEffect(() => {
@@ -250,6 +220,13 @@ export const FilterCryptoPoolsProvider = ({
   useEffect(() => {
     retrieve();
     window.addEventListener('storage', retrieve);
+
+    // Remove saved older filters from browser
+    const lsKeys = Object.keys(localStorage);
+    for (let key of lsKeys) {
+      if (key.startsWith('castora::filterpools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filtercryptopools')) localStorage.removeItem(key);
+    }
   }, []);
 
   return (

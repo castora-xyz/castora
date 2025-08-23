@@ -1,19 +1,7 @@
-import {
-  WriteContractStatus,
-  useCache,
-  useContract,
-  useFirebase,
-  useToast
-} from '@/contexts';
+import { WriteContractStatus, useCache, useContract, useFirebase, useToast } from '@/contexts';
 import { Pool, PoolSeeds } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState
-} from 'react';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
 import { useAccount, useChains } from 'wagmi';
 
@@ -107,11 +95,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
           }/tx/${txHash}`;
-          toastSuccess(
-            'Withdrawal Successful',
-            'View Transaction on Explorer',
-            explorerUrl
-          );
+          toastSuccess('Withdrawal Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
         }
@@ -145,11 +129,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
           }/tx/${txHash}`;
-          toastSuccess(
-            'Bulk Withdrawals Successful',
-            'View Transaction on Explorer',
-            explorerUrl
-          );
+          toastSuccess('Bulk Withdrawals Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
         }
@@ -159,9 +139,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchOne = async (poolId: number) => {
     try {
-      const key = `chain::${
-        (currentChain ?? defaultChain).id
-      }::pool::${poolId}`;
+      const key = `chain::${(currentChain ?? defaultChain).id}::pool::${poolId}`;
       let pool = await cache.retrieve(key);
       if (pool) {
         // Necessary to restore callable methods on retrieved instance
@@ -234,21 +212,11 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       let txHash: string;
       writeContract(
         bulkCount ? 'bulkPredict' : 'predict',
-        [
-          BigInt(poolId),
-          BigInt(price),
-          ...(bulkCount ? [BigInt(bulkCount)] : [])
-        ],
-        ...[
-          stakeToken.toLowerCase() == castoraAddress.toLowerCase()
-            ? stakeAmount
-            : undefined
-        ],
+        [BigInt(poolId), BigInt(price), ...(bulkCount ? [BigInt(bulkCount)] : [])],
+        ...[stakeToken.toLowerCase() == castoraAddress.toLowerCase() ? stakeAmount : undefined],
         (hash, result) => {
           txHash = hash;
-          predictionIds = Array.isArray(result)
-            ? result.map(Number)
-            : [Number(result)];
+          predictionIds = Array.isArray(result) ? result.map(Number) : [Number(result)];
         }
       ).subscribe({
         next: subscriber.next.bind(subscriber),
@@ -267,11 +235,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           const explorerUrl = `${
             (currentChain ?? defaultChain).blockExplorers?.default.url
           }/tx/${txHash}`;
-          toastSuccess(
-            'Prediction Successful',
-            'View Transaction on Explorer',
-            explorerUrl
-          );
+          toastSuccess('Prediction Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
         }

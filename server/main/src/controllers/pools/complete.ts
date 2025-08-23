@@ -9,7 +9,6 @@ import {
   getSnapshotPrice,
   getStocksSeeds,
   logger,
-  notifyWinners,
   setWinners
 } from '../../utils';
 import { rearchivePool } from './archive';
@@ -93,8 +92,5 @@ export const completePool = async (chain: Chain, poolId: any): Promise<void> => 
       }
     );
     logger.info('Posted job to notify winners via telegram');
-
-    // send notifications to winners to go and claim
-    await notifyWinners(splitResult.winnerAddressesUniqued, pool);
   }
 };

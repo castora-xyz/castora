@@ -1,4 +1,3 @@
-import { useToast } from '@/contexts';
 import {
   getAnalytics,
   logEvent,
@@ -7,7 +6,6 @@ import {
 } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { Firestore, getFirestore } from 'firebase/firestore';
-import { getMessaging, onMessage } from 'firebase/messaging';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains } from 'wagmi';
@@ -30,11 +28,9 @@ export const useFirebase = () => useContext(FirebaseContext);
 export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const { address, chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
-  const { toastInfo } = useToast();
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const firestoreMonadTestnet = getFirestore(app, 'monadtestnet');
-  const messaging = getMessaging(app);
   const getChainFirestore = () =>
     ({
       [monadTestnet.name]: firestoreMonadTestnet
@@ -63,27 +59,22 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (import.meta.env.DEV) setAnalyticsCollectionEnabled(analytics, false);
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      });
+    // Remove saved fcmTokens status from browser
+    const lsKeys = Object.keys(localStorage);
+    for (let key of lsKeys) {
+      if (key.startsWith('castora.fcmToken')) localStorage.removeItem(key);
     }
 
-    onMessage(messaging, (payload) => {
-      if (payload.notification && payload.data) {
-        const { poolId } = payload.data;
-        const { title, body } = payload.notification;
-        if (
-          title &&
-          body &&
-          poolId &&
-          // Only show notifications when the user is NOT on the pool page
-          !window.location.pathname.includes(`/pool/${poolId}`)
-        ) {
-          toastInfo(title, body, `/pool/${poolId}`);
+    // Remove firebase-messaging-sw.js Service Worker if there
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(async (regs) => {
+        for (const reg of regs) {
+          if (reg.active && reg.active.scriptURL.endsWith('firebase-messaging-sw.js')) {
+            await reg.unregister();
+          }
         }
-      }
-    });
+      });
+    }
   }, []);
 
   return (

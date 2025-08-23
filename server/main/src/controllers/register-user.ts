@@ -1,10 +1,7 @@
 import 'dotenv/config';
 import { FieldValue } from 'firebase-admin/firestore';
-import { IncomingMessage } from 'http';
 import { nanoid } from 'nanoid';
-import { verifyMessage } from 'viem';
-import { AUTH_MESSAGE } from '../middleware';
-import { firestore, logger, messaging } from '../utils';
+import { firestore, logger } from '../utils';
 
 const telegramBotUsername = process.env.TELEGRAM_BOT_USERNAME;
 if (!telegramBotUsername) throw 'Set TELEGRAM_BOT_USERNAME';
@@ -42,16 +39,14 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
   const token = nanoid(16);
 
   // Save the token and timestamp in Firestore
-  await firestore()
-    .doc(`/users/${userWalletAddress}`)
-    .set(
-      {
-        address: userWalletAddress,
-        pendingTelegramAuthToken: token,
-        pendingTelegramAuthTime: FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
+  await firestore().doc(`/users/${userWalletAddress}`).set(
+    {
+      address: userWalletAddress,
+      pendingTelegramAuthToken: token,
+      pendingTelegramAuthTime: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
 
   // Construct the URL for Telegram authentication
   const telegramAuthUrl = `https://t.me/${telegramBotUsername}?start=${token}`;
@@ -78,59 +73,4 @@ export const hasUserTelegram = async (userWalletAddress: string): Promise<any> =
 
   logger.info('User has Telegram details saved.');
   return { hasTelegram: true };
-};
-
-/**
- * Registers the Firebase Cloud Messaging Token (fcmToken) of a user with
- * a wallet address to enable them to receive notifications when they have
- * winnings available in a pool.
- *
- * @param headers The headers of the incoming request.
- * @param params An object containing the fcmToken and the address.
- */
-export const registerUser = async (
-  headers: IncomingMessage['headers'],
-  params: RegisterUserParams
-): Promise<void> => {
-  if (!headers['authorization']) throw 'Missing required authorization header';
-  const signature = headers['authorization'].split(' ')[1] as `0x${string}`;
-  if (!signature) throw 'Missing required signature in authorization header';
-  if (!/^(0x)[a-f0-9]{1,}$/i.test(signature)) {
-    throw 'Invalid provided signature';
-  }
-
-  const { address, fcmToken } = params;
-  if (!address) throw 'Missing required address';
-  if (!/^(0x)[0-9a-f]{40}$/i.test(address)) throw 'Invalid provided address';
-  if (!fcmToken) throw 'Missing required fcmToken';
-
-  // the following simply tests if the token is valid. If it is not, it will
-  // throw an error and auto-return. The second argument is a boolean that
-  // indicates for "test-only" or "dry-run" purpose.
-  await messaging.send({ token: fcmToken }, true);
-
-  logger.info('Got Register User ... ');
-  logger.info('address: ', address);
-  logger.info('fcmToken: ', fcmToken);
-
-  let isVerified = false;
-  try {
-    isVerified = await verifyMessage({
-      address: address as `0x${string}`,
-      message: AUTH_MESSAGE,
-      signature
-    });
-  } catch (e) {
-    logger.info(e);
-    throw `Couldn't verify signature: ${e}`;
-  }
-  if (!isVerified) 'Unauthorized Signature';
-
-  logger.info('\n Saving User to Firestore ... ');
-  // Using the default Firestore here to save fcmTokens
-  await firestore()
-    .doc(`/users/${address}`)
-    .set({ address, fcmTokens: FieldValue.arrayUnion(fcmToken) }, { merge: true });
-  logger.info('User Saved Successfully.');
-  logger.info('User Registration Successful.');
 };
