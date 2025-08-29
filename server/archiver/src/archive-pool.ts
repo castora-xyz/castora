@@ -1,6 +1,5 @@
-import { Job } from 'bullmq';
-import { ArchivedPool } from './schemas';
-import { fetchPool, fetchPredictions, logger, storage } from './utils';
+import { ArchivedPool, fetchPool, Job, logger, storage } from '@castora/shared';
+import { fetchPredictions } from './fetch-predictions';
 
 /**
  * Archives a pool by saving its predictions to use for completion later on

@@ -1,14 +1,11 @@
+import { AUTH_MESSAGE, getAddress, logger, verifyMessage } from '@castora/shared';
 import { NextFunction, Request, Response } from 'express';
-import { getAddress, verifyMessage } from 'viem';
-import { logger } from '../utils';
 
 const fail = (res: Response, message: string) => {
   logger.info('Error at validating auth ...');
   logger.info(message);
   res.status(400).json({ success: false, message });
 };
-
-export const AUTH_MESSAGE = 'authentication';
 
 export const validateAuth = async ({ headers }: Request, res: Response, next: NextFunction) => {
   const { authorization, 'user-wallet-address': userWalletAddress } = headers;

@@ -1,9 +1,7 @@
-import { Job } from 'bullmq';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, firestore, Job, logger, storage } from '@castora/shared';
 import { Bot } from 'grammy';
 import { notifyWinner } from './notify-winner';
 import { Pool } from './schemas';
-import { firestore, logger, storage } from './utils';
 
 interface NotificationProgress {
   processed: number;
@@ -36,9 +34,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
 
     // Check if winners have already been notified, if so, stop processing.
     if (pool.hasNotifiedWinnersOnTelegram) {
-      logger.info(
-        `Pool ${poolId} on ${chain} has already notified winners on Telegram. Ending job...`
-      );
+      logger.info(`Pool ${poolId} on ${chain} has already notified winners on Telegram. Ending job...`);
       return;
     }
 
@@ -75,33 +71,28 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     // Update the pool to mark winners as notified
     try {
       pool.json.pool.hasNotifiedWinnersOnTelegram = true;
-      await storage
-        .bucket()
-        .file(`archives/${chain}/pool-${poolId}.json`)
-        .save(JSON.stringify(pool.json));
+      await storage.bucket().file(`archives/${chain}/pool-${poolId}.json`).save(JSON.stringify(pool.json));
       logger.info('Updated pool to mark winners as notified on Telegram');
     } catch (e) {
-      logger.error(
-        `Failed to update pool ${poolId} on ${chain} to mark winners as notified, error: ${e}`
-      );
+      logger.error(`Failed to update pool ${poolId} on ${chain} to mark winners as notified, error: ${e}`);
     }
 
     logger.info(`\n📝 Total Telegram Notified Count: ${progress.notified}`);
     // Increment global stats on the pool if there were notifications.
     if (progress.notified > 0) {
       try {
-        await firestore.doc('/counts/counts').set(
-          {
-            totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
-            perChainTelegramNotifiedCount: {
-              [chain]: FieldValue.increment(progress.notified)
-            }
-          },
-          { merge: true }
-        );
-        logger.info(
-          `📝 Incremented global total and perChain telegram notified count by: ${progress.notified}`
-        );
+        await firestore()
+          .doc('/counts/counts')
+          .set(
+            {
+              totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
+              perChainTelegramNotifiedCount: {
+                [chain]: FieldValue.increment(progress.notified)
+              }
+            },
+            { merge: true }
+          );
+        logger.info(`📝 Incremented global total and perChain telegram notified count by: ${progress.notified}`);
       } catch (e) {
         logger.error('❌ Failed to increment global total and perChain telegram notified counts.');
       }

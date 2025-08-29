@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { removeUserTelegram, signInWithFirebase, startTelegramAuth } from '../controllers';
+import { removeUserTelegram, signInWithFirebase, startTelegramAuth } from '../controllers/auth';
 import { validateAuth } from '../middleware';
 import { wrapper } from './index';
 

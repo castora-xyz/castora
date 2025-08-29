@@ -1,15 +1,11 @@
+import { logger } from '@castora/shared';
 import { Response, Router } from 'express';
-import poolRoutes from './pools';
 import authRoutes from './auth';
-import { logger } from '../utils';
+import poolRoutes from './pools';
 
 const router = Router();
 
-export const wrapper = async (
-  action: Function,
-  desc: string,
-  response: Response
-): Promise<Response> => {
+export const wrapper = async (action: Function, desc: string, response: Response): Promise<Response> => {
   try {
     const data = await action();
     return response.json({
@@ -27,7 +23,7 @@ export const wrapper = async (
 
 router.use('/', poolRoutes);
 router.use('/', authRoutes);
-router.use('/', (_, res) => res.json({ success: true }));
+router.get('/', (_, res) => res.json({ success: true }));
 router.use('**', (_, res) => res.status(404).json({ success: false, message: 'Not Found' }));
 
 export default router;

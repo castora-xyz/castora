@@ -1,14 +1,12 @@
 {
+  "extends": "../../shared/tsconfig.base.json",
+  "references": [{ "path": "../../shared" }],
   "compilerOptions": {
-    "module": "commonjs",
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    "baseUrl": ".",
     "outDir": "lib",
-    "resolveJsonModule": true,
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "target": "es2020"
+    "paths": {
+      "@castora/shared": ["../../shared/src"]
+    }
   },
-  "compileOnSave": true,
   "include": ["src", "src/*.json"]
 }

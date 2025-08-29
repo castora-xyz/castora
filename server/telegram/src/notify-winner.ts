@@ -1,7 +1,6 @@
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, firestore, logger } from '@castora/shared';
 import { Bot } from 'grammy';
 import { Pool } from './schemas';
-import { firestore, logger } from './utils';
 
 const escapeChars = (str: string) => str.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 
@@ -12,7 +11,7 @@ const shortenAddress = (str: string) => {
 
 export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promise<boolean> => {
   // Check if the winner has a Telegram ID
-  const userRef = firestore.doc(`/users/${winner}`);
+  const userRef = firestore().doc(`/users/${winner}`);
   const userSnap = await userRef.get();
   if (!userSnap.exists) return false;
   const userData = userSnap.data();

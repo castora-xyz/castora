@@ -1,27 +1,18 @@
 {
-  "name": "castora",
+  "name": "@castora/telegram-worker",
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch",
     "start": "node lib/index.js",
-    "dev": "nodemon lib/index.js"
+    "dev": "nodemon --watch src --ext ts --ignore lib --exec \"npm run build && node lib/index.js\"",
+    "postbuild": "npm run build --prefix ../../shared",
+    "postinstall": "npm install --prefix ../../shared && npm run build --prefix ../../shared"
   },
   "dependencies": {
-    "@google-cloud/logging": "^11.2.0",
-    "@google-cloud/logging-bunyan": "^5.1.0",
-    "bullmq": "^5.58.0",
-    "bunyan": "^1.8.15",
-    "dotenv": "^17.2.1",
-    "firebase-admin": "^13.4.0",
-    "grammy": "^1.38.1",
-    "ioredis": "^5.7.0",
-    "morgan": "^1.10.1"
+    "@castora/shared": "file:../../shared",
+    "grammy": "^1.38.1"
   },
   "devDependencies": {
-    "@types/bunyan": "^1.8.11",
-    "@types/morgan": "^1.9.10",
     "@types/node": "^24.3.0",
-    "@types/node-fetch": "^2.6.13",
     "nodemon": "^3.1.10",
     "typescript": "^5.9.2"
   },

@@ -1,0 +1,28 @@
+{
+  "name": "@castora/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@google-cloud/logging": "^11.2.0",
+    "@google-cloud/logging-bunyan": "^5.1.0",
+    "bullmq": "^5.58.3",
+    "bunyan": "^1.8.15",
+    "dotenv": "^17.2.1",
+    "firebase-admin": "^13.5.0",
+    "ioredis": "^5.7.0",
+    "viem": "^2.36.0"
+  },
+  "devDependencies": {
+    "@types/bunyan": "^1.8.11",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": "22"
+  }
+}

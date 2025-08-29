@@ -1,6 +1,7 @@
-import { Job } from 'bullmq';
-import { getFirestore } from 'firebase-admin/firestore';
-import { createPool, getCryptoSeeds, getPoolId, getStocksSeeds, logger } from './utils';
+import { firestore, Job, logger } from '@castora/shared';
+import { createPool } from './create-pool';
+import { getPoolId } from './get-pool-id';
+import { getCryptoSeeds, getStocksSeeds } from './get-pool-seeds';
 
 /**
  * Synchronizes the live pools of the provided chain.
@@ -21,7 +22,7 @@ export const syncPools = async (job: Job): Promise<void> => {
     logger.info('\n');
   }
   logger.info('Live Crypto PoolIds: ', cryptoPoolIds);
-  await getFirestore(chain).doc('/live/crypto').set({ poolIds: cryptoPoolIds }, { merge: true });
+  await firestore(chain).doc('/live/crypto').set({ poolIds: cryptoPoolIds }, { merge: true });
 
   logger.info(`\n\nStarting Sync for Live Stock Pools on chain: ${chain}`);
   const stocksSeeds = getStocksSeeds(chain);
@@ -35,5 +36,5 @@ export const syncPools = async (job: Job): Promise<void> => {
     logger.info('\n');
   }
   logger.info('Live Stocks PoolIds: ', stocksPoolIds);
-  await getFirestore(chain).doc('/live/stocks').set({ poolIds: stocksPoolIds }, { merge: true });
+  await firestore(chain).doc('/live/stocks').set({ poolIds: stocksPoolIds }, { merge: true });
 };

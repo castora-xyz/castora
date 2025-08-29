@@ -1,12 +1,7 @@
-import { Job, Queue } from 'bullmq';
-import {
-  fetchPool,
-  getSnapshotPrice,
-  logger,
-  rearchivePool,
-  redisConnection,
-  setWinners
-} from './utils';
+import { fetchPool, Job, logger, queueJob } from '@castora/shared';
+import { getSnapshotPrice } from './get-snapshot-price';
+import { rearchivePool } from './rearchive-pool';
+import { setWinners } from './set-winners';
 
 /**
  * Completes a pool by taking its snapshot and computing its winners.
@@ -51,16 +46,11 @@ export const completePool = async (job: Job): Promise<void> => {
     await rearchivePool(chain, pool, splitResult);
 
     // send telegram notifications to winners through redis
-    await new Queue('pool-winners-telegram-notifications', {
-      connection: redisConnection
-    }).add(
-      'notify-winners-telegram',
-      { poolId, chain },
-      {
-        attempts: 7,
-        backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
-      }
-    );
+    await queueJob({
+      queueName: 'pool-winners-telegram-notifications',
+      jobName: 'notify-winners-telegram',
+      jobData: { poolId, chain }
+    });
 
     logger.info('Posted job to notify winners via telegram');
     logger.info(`Successfully completed Pool ${poolId} on chain ${chain}`);

@@ -1,6 +1,5 @@
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, firestore, logger } from '@castora/shared';
 import { CommandContext, Context } from 'grammy';
-import { firestore, logger } from './utils';
 
 export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
   // Check if the message contains a valid auth token
@@ -11,7 +10,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
 
   // Verify the token against the user's wallet address. If the token is valid,
   // it will be found in the user's document.
-  const pendingsSnap = await firestore
+  const pendingsSnap = await firestore()
     .collection('users')
     .where('pendingTelegramAuthToken', '==', token)
     .get();
@@ -47,7 +46,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
   );
 
   // Globally increment telegram auth counts.
-  await firestore
+  await firestore()
     .doc('/counts/counts')
     .set({ totalTelegramAuthCounts: FieldValue.increment(1) }, { merge: true });
 

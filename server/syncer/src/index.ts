@@ -1,39 +1,14 @@
-import { Queue, Worker } from 'bullmq';
-import 'dotenv/config';
+import { queueJob, setWorker } from '@castora/shared';
 import { syncPools } from './sync-pools';
-import { logger, redisConnection } from './utils';
 
-new Queue('pool-syncer', { connection: redisConnection }).add(
-  'sync-pools',
-  { chain: 'monadtestnet' },
-  {
+(async () => {
+  await queueJob({
+    queueName: 'pool-syncer',
+    jobName: 'sync-pools',
+    jobData: { chain: 'monadtestnet' },
     repeat: { pattern: '5 0 0,1,5,6,7,11,12,13,17,18,19,23 * * *' },
-    jobId: 'sync-pools-on-monadtestnet',
-    attempts: 7,
-    backoff: { type: 'exponential', delay: 15000 } // retry after 15secs, 30secs, 1min ... 16mins
-  }
-);
+    jobId: 'sync-pools-on-monadtestnet'
+  });
 
-const worker = new Worker('pool-syncer', syncPools, {
-  connection: redisConnection
-});
-
-worker.on('ready', () => {
-  logger.info('😎 Pool Syncer Worker is started and ready to execute jobs.');
-});
-
-worker.on('active', (job) => {
-  logger.info(`\n\n\n🔄 Job ${job.id} started processing`);
-});
-
-worker.on('completed', (job) => {
-  logger.info(`✅ Job ${job.id} completed successfully`);
-});
-
-worker.on('failed', (job, e) => {
-  logger.error(`❌ Job ${job?.id} failed: ${e}`);
-});
-
-worker.on('error', (e) => {
-  logger.error(`❌ Worker error: ${e}`);
-});
+  setWorker({ workerName: 'pool-syncer', handler: syncPools });
+})();

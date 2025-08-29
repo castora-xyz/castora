@@ -1,7 +1,5 @@
-import 'dotenv/config';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, firebaseAuth, firestore, logger } from '@castora/shared';
 import { nanoid } from 'nanoid';
-import { firebaseAuth, firestore, logger } from '../utils';
 
 if (!process.env.TELEGRAM_BOT_USERNAME) throw 'Set TELEGRAM_BOT_USERNAME';
 

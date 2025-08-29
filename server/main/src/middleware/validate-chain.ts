@@ -1,5 +1,5 @@
+import { Chain, logger } from '@castora/shared';
 import { NextFunction, Request, Response } from 'express';
-import { Chain, logger } from '../utils';
 
 const isChain = (chain: any): chain is Chain => chain === 'monadtestnet';
 

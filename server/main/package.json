@@ -1,31 +1,24 @@
 {
-  "name": "castora",
+  "name": "@castora/server",
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch",
     "start": "node lib/index.js",
-    "dev": "nodemon lib/index.js"
+    "dev": "nodemon --watch src --ext ts --ignore lib --exec \"npm run build && node lib/index.js\"",
+    "postbuild": "npm run build --prefix ../../shared",
+    "postinstall": "npm install --prefix ../../shared && npm run build --prefix ../../shared"
   },
   "dependencies": {
-    "@google-cloud/logging": "^11.2.0",
-    "@google-cloud/logging-bunyan": "^5.1.0",
-    "bullmq": "^5.58.0",
-    "bunyan": "^1.8.15",
+    "@castora/shared": "file:../../shared",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
     "express": "^4.21.2",
-    "firebase-admin": "^13.4.0",
-    "ioredis": "^5.7.0",
     "morgan": "^1.10.1",
-    "nanoid": "^3.3.11",
-    "node-fetch": "^2.7.0",
-    "viem": "^2.33.2"
+    "nanoid": "^3.3.11"
   },
   "devDependencies": {
-    "@types/bunyan": "^1.8.11",
     "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.10",
-    "@types/node-fetch": "^2.6.13",
+    "@types/node": "^24.3.0",
     "nodemon": "^3.1.10",
     "typescript": "^5.9.2"
   },
