@@ -2,6 +2,7 @@ import {
   CompletedPoolDisplay,
   JoinPoolForm,
   MyInPoolPredictions,
+  MyInPoolPredsRef,
   PoolDetailIntroBadge,
   PoolDetailPageShimmer,
   PoolDetailsInCards,
@@ -13,7 +14,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 
@@ -22,6 +23,7 @@ export const PoolDetailPage = () => {
   const { poolId } = useParams();
   const { isValidPoolId, fetchOne } = usePools();
 
+  const myInPoolPredsRef = useRef<MyInPoolPredsRef>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
@@ -50,16 +52,12 @@ export const PoolDetailPage = () => {
               // Fetching the snapshot price from Pyth Network
               try {
                 const { price, expo } = (
-                  await new PriceServiceConnection(
-                    'https://hermes.pyth.network'
-                  ).getPriceFeed(
+                  await new PriceServiceConnection('https://hermes.pyth.network').getPriceFeed(
                     seeds.predictionTokenDetails.pythPriceId,
                     seeds.snapshotTime
                   )
                 ).getPriceUnchecked();
-                fetched.snapshotPrice = parseFloat(
-                  (+price * 10 ** expo).toFixed(Math.abs(expo))
-                );
+                fetched.snapshotPrice = parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo)));
                 if (noOfPredictions === 0) {
                   fetched.completionTime = Math.trunc(Date.now() / 1000);
                 }
@@ -85,11 +83,7 @@ export const PoolDetailPage = () => {
   };
 
   useEffect(() => {
-    if (
-      prevCurrentChain &&
-      currentChain &&
-      prevCurrentChain.name != currentChain.name
-    ) {
+    if (prevCurrentChain && currentChain && prevCurrentChain.name != currentChain.name) {
       // Full-reloading the page if the user proactively changed the active chain
       // to something different as the poolId might be something else
       window.location.reload();
@@ -106,12 +100,9 @@ export const PoolDetailPage = () => {
     load(true);
 
     // Update the pool page contents anytime the user leaves the page and comes back
-    window.addEventListener('focus', () => load(false))
+    window.addEventListener('focus', () => load(false));
 
-    const interval = setInterval(
-      () => setNow(Math.trunc(Date.now() / 1000)),
-      1000
-    );
+    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -142,18 +133,11 @@ export const PoolDetailPage = () => {
         <PoolDetailIntroBadge pool={pool} />
 
         <div className="sm:hidden">
-          {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && (
-            <MyInPoolPredictions pool={pool} />
-          )}
+          {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
         </div>
 
         <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex">
-          <div
-            className={
-              'lg:relative lg:grow ' +
-              (pool.seeds.status() === 'Completed' ? ' lg:basis-1/2' : '')
-            }
-          >
+          <div className={'lg:relative lg:grow ' + (pool.seeds.status() === 'Completed' ? ' lg:basis-1/2' : '')}>
             <div className="mb-8 lg:mb-px lg:mr-8 lg:sticky lg:top-0">
               {pool.seeds.status() !== 'Completed' ? (
                 <TradingViewChart pair={pool.seeds.chartPairName()} />
@@ -167,22 +151,20 @@ export const PoolDetailPage = () => {
 
           <div
             className={
-              'max-lg:max-w-2xl max-lg:mx-auto lg:grow lg:basis-1/' +
-              (pool.seeds.status() !== 'Completed' ? '3' : '2')
+              'max-lg:max-w-2xl max-lg:mx-auto lg:grow lg:basis-1/' + (pool.seeds.status() !== 'Completed' ? '3' : '2')
             }
           >
-            <div
-              className={
-                now > pool.seeds.windowCloseTime ? 'max-sm:hidden' : ''
-              }
-            >
-              {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
+            <div className={now > pool.seeds.windowCloseTime ? 'max-sm:hidden' : ''}>
+              {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} ref={myInPoolPredsRef} />}
             </div>
 
             {pool.seeds.status() === 'Open' && (
               <JoinPoolForm
                 pool={pool}
-                handlePredictionSuccess={() => load(false)}
+                handlePredictionSuccess={async () => {
+                  await myInPoolPredsRef.current?.onPredict();
+                  await load(false);
+                }}
               />
             )}
 
