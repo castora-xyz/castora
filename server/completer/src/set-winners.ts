@@ -45,13 +45,18 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
   logger.info('\nwinAmount: ', winAmount);
 
   logger.info('\nCalling Complete Pool in Contract ... ');
-  await writeContract(chain, 'completePool', [
-    BigInt(pool.poolId),
-    BigInt(snapshotPrice),
-    BigInt(noOfWinners),
-    BigInt(winAmount),
-    splitted.winnerPredictionIdsBigInts
-  ]);
+  await writeContract(
+    chain,
+    'completePool',
+    [
+      BigInt(pool.poolId),
+      BigInt(snapshotPrice),
+      BigInt(noOfWinners),
+      BigInt(winAmount),
+      splitted.winnerPredictionIdsBigInts
+    ],
+    `Complete Pool ${pool.poolId} on chain ${chain}`
+  );
   logger.info('Called Complete Pool for poolId: ', pool.poolId);
 
   return splitted;

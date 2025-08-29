@@ -27,7 +27,7 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
       }
 
       logger.info('\nCreating Pool ... ');
-      poolId = Number(await writeContract(chain, 'createPool', [seeds.bigIntified()]));
+      poolId = Number(await writeContract(chain, 'createPool', [seeds.bigIntified()], `Create Pool on chain ${chain}`));
       logger.info('Created new pool with poolId: ', poolId);
 
       await queueJob({

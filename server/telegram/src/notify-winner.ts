@@ -9,7 +9,7 @@ const shortenAddress = (str: string) => {
   return str.substring(0, 5) + '...' + str.split('').reverse().slice(0, 5).reverse().join('');
 };
 
-export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promise<boolean> => {
+export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: string): Promise<boolean> => {
   // Check if the winner has a Telegram ID
   const userRef = firestore().doc(`/users/${winner}`);
   const userSnap = await userRef.get();
@@ -48,7 +48,7 @@ export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promis
     logger.info(`\n🏆 Notified winner: ${winner} who won ${won} ${pool.stakeToken}`);
   } catch (e) {
     logger.error(
-      `❌ Failed to notify winner ${winner} on Telegram for pool ${pool.poolId} on chain ${pool.chain}, error: ${e}`
+      `❌ Failed to notify winner ${winner} on Telegram in Job ID ${jobId} for pool ${pool.poolId} on chain ${pool.chain}, error: ${e}`
     );
     return false;
   }

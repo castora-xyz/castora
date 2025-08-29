@@ -64,7 +64,7 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
   return balance;
 };
 
-export const writeContract = async (chain: Chain, functionName: any, args: any) => {
+export const writeContract = async (chain: Chain, functionName: any, args: any, errorContext: string) => {
   try {
     const account = getAccount(chain);
     const config = getConfig(chain);
@@ -96,7 +96,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any) 
       // in such case, do nothing so that the call simply returns
       // after all the writeContract logic is done and submitted to on-chain.
     } else {
-      logger.error(`Error at writeContract call: ${e}`);
+      logger.error(`Error at writeContract call at ${errorContext}: ${e}`);
       throw e;
     }
   }

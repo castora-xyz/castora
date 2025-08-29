@@ -52,7 +52,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     }
 
     for (let i = progress.processed; i < pool.winners.length; i++) {
-      const isSuccess = await notifyWinner(bot, pool, pool.winners[i]);
+      const isSuccess = await notifyWinner(job.id, bot, pool, pool.winners[i]);
       if (isSuccess) progress.notified += 1;
       logger.info(`📝 Processed ${i + 1} of ${pool.winners.length} winners.`);
 
