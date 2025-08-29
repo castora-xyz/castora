@@ -1,10 +1,9 @@
 import 'dotenv/config';
 import { FieldValue } from 'firebase-admin/firestore';
 import { nanoid } from 'nanoid';
-import { firestore, logger } from '../utils';
+import { firebaseAuth, firestore, logger } from '../utils';
 
-const telegramBotUsername = process.env.TELEGRAM_BOT_USERNAME;
-if (!telegramBotUsername) throw 'Set TELEGRAM_BOT_USERNAME';
+if (!process.env.TELEGRAM_BOT_USERNAME) throw 'Set TELEGRAM_BOT_USERNAME';
 
 export interface RegisterUserParams {
   address: string;
@@ -23,6 +22,23 @@ export const removeUserTelegram = async (userWalletAddress: string): Promise<voi
   // Using the default Firestore here to remove telegram IDs
   await firestore().doc(`/users/${userWalletAddress}`).update({ telegramId: FieldValue.delete() });
   logger.info('User Telegram Removed Successfully.');
+};
+
+/**
+ * Returns frontend Firebase Auth sign in token for the user. Necessary to allow direct access
+ * of signed in user Firestore object details in frontend after we've verified their
+ * signature here in the backend.
+ *
+ * @param userWalletAddress The verified wallet address of the user from auth.
+ */
+export const signInWithFirebase = async (userWalletAddress: string): Promise<string> => {
+  logger.info('Got Sign In with Firebase ... ');
+  logger.info('User Wallet Address: ', userWalletAddress);
+
+  // Get the custom sign in token from Firebase for the user and return it
+  const token = await firebaseAuth.createCustomToken(userWalletAddress);
+  logger.info('Created Custom Sign In with Firebase Token');
+  return token;
 };
 
 /**
@@ -49,28 +65,8 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
   );
 
   // Construct the URL for Telegram authentication
-  const telegramAuthUrl = `https://t.me/${telegramBotUsername}?start=${token}`;
+  const telegramAuthUrl = `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=${token}`;
 
   logger.info('Telegram Auth URL: ', telegramAuthUrl);
   return telegramAuthUrl;
-};
-
-/**
- * Tells whether a user has Telegram details saved in Firestore.
- *
- * @param userWalletAddress The verified wallet address of the user from auth.
- * @returns An object indicating whether the user has Telegram details saved.
- */
-export const hasUserTelegram = async (userWalletAddress: string): Promise<any> => {
-  logger.info('Got Has User Telegram ... ');
-  logger.info('User Wallet Address: ', userWalletAddress);
-
-  const userDoc = await firestore().doc(`/users/${userWalletAddress}`).get();
-  if (!userDoc.exists) return { hasTelegram: false };
-
-  const data = userDoc.data();
-  if (!data || !data.telegramId) return { hasTelegram: false };
-
-  logger.info('User has Telegram details saved.');
-  return { hasTelegram: true };
 };

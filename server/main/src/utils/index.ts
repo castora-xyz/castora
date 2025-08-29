@@ -11,6 +11,7 @@ import { LoggingBunyan } from '@google-cloud/logging-bunyan';
 import { createLogger } from 'bunyan';
 import 'dotenv/config';
 import { applicationDefault, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { Transform } from 'stream';
@@ -26,6 +27,7 @@ initializeApp({
 // To use default firestore, don't pass a chain. Otherwise
 // send in the chain of choice to use its own firestore database
 export const firestore = (chain?: Chain) => (chain ? getFirestore(chain) : getFirestore());
+export const firebaseAuth = getAuth();
 export const storage = getStorage();
 
 // The Bunyan Logger doesn't handle BigInts well because it uses JSON.stringify

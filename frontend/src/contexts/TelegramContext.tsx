@@ -1,5 +1,7 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { useAuth, useServer, useToast } from '.';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth, useFirebase, useServer, useToast } from '.';
 
 const TelegramContext = createContext<TelegramContextProps>({
   isLoading: false,
@@ -18,39 +20,29 @@ interface TelegramContextProps {
 export const useTelegram = () => useContext(TelegramContext);
 
 export const TelegramProvider = ({ children }: { children: ReactNode }) => {
-  const auth = useAuth();
+  const { signature } = useAuth();
+  const { auth, getFirestore } = useFirebase();
+
   const server = useServer();
   const { toastInfo } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLinked, setHasLinked] = useState(true);
-
-  const checkHasLinked = async () => {
-    if (!auth.signature) return;
-    setIsLoading(true);
-    const result = await server.get('/user/telegram', true);
-    if (result && typeof result == 'object' && 'hasTelegram' in result) setHasLinked(result['hasTelegram']);
-    else setHasLinked(false);
-    setIsLoading(false);
-  };
+  const [hasLinked, setHasLinked] = useState(false);
+  const firestoreUnsubRef = useRef<Unsubscribe | null>(null);
 
   const removeLink = async () => {
     setIsLoading(true);
-    const result = await server.delete('/user/telegram');
+    const result = await server.delete('/auth/telegram');
     if (result) {
-      await checkHasLinked();
-      toastInfo(
-        'Unlink Successful',
-        "You've successfully unlinked your Telegram and won't receive notifications"
-      );
+      toastInfo('Unlink Successful', "You've successfully unlinked your Telegram and won't receive notifications");
     }
     setIsLoading(false);
   };
 
   const startAuth = async () => {
-    if (!auth.signature) return;
+    if (!signature) return;
 
     setIsLoading(true);
-    const telegramAuthUrl = (await server.get('/user/telegram/auth')) as string | null;
+    const telegramAuthUrl = (await server.get('/auth/telegram')) as string | null;
     if (!telegramAuthUrl) return;
     setIsLoading(false);
 
@@ -58,17 +50,23 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (auth.signature) {
-      (async () => await checkHasLinked())();
-    } else {
-      setIsLoading(false);
-      setHasLinked(false);
-    }
-  }, [auth.signature]);
-
-  useEffect(() => {
-    window.addEventListener('focus', async () => await checkHasLinked());
-  }, []);
+    return onAuthStateChanged(auth, async (user) => {
+      firestoreUnsubRef.current?.();
+      if (user) {
+        firestoreUnsubRef.current = onSnapshot(doc(getFirestore(), `/users/${user.uid}`), (doc) => {
+          setHasLinked(doc.exists() ? !!doc.data()['telegramId'] : false);
+          setIsLoading(false);
+        });
+      } else {
+        setHasLinked(false);
+        firestoreUnsubRef.current = null;
+        // showing the loader so that while the user reconnects their wallet, we wait
+        // for firebase auth sign in to take place. If the user was signed out or disconnected
+        // their wallet, the Telegram Auth Button will naturally not be visible
+        setIsLoading(true);
+      }
+    });
+  }, [auth]);
 
   return (
     <TelegramContext.Provider value={{ isLoading, hasLinked, removeLink, startAuth }}>

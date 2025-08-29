@@ -1,6 +1,6 @@
 import { Response, Router } from 'express';
 import poolRoutes from './pools';
-import userRoutes from './users';
+import authRoutes from './auth';
 import { logger } from '../utils';
 
 const router = Router();
@@ -26,7 +26,7 @@ export const wrapper = async (
 };
 
 router.use('/', poolRoutes);
-router.use('/', userRoutes);
+router.use('/', authRoutes);
 router.use('/', (_, res) => res.json({ success: true }));
 router.use('**', (_, res) => res.status(404).json({ success: false, message: 'Not Found' }));
 

@@ -1,2 +1,2 @@
 export * from './pools';
-export * from './register-user';
+export * from './auth';

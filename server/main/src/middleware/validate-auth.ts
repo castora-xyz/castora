@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { verifyMessage } from 'viem';
+import { getAddress, verifyMessage } from 'viem';
 import { logger } from '../utils';
 
 const fail = (res: Response, message: string) => {
@@ -56,6 +56,7 @@ export const validateAuth = async ({ headers }: Request, res: Response, next: Ne
     return;
   }
 
-  res.locals.userWalletAddress = userWalletAddress;
+  // Use the EIP-55 CheckSummed Address
+  res.locals.userWalletAddress = getAddress(userWalletAddress as string);
   next();
 };

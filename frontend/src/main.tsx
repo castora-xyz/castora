@@ -31,8 +31,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <ThemeProvider>
                 <AuthProvider>
                   <ServerProvider>
-                    <TelegramProvider>
-                      <FirebaseProvider>
+                    <FirebaseProvider>
+                      <TelegramProvider>
                         <ContractProvider>
                           <FilterCryptoPoolsProvider>
                             <FilterStockPoolsProvider>
@@ -46,8 +46,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                             </FilterStockPoolsProvider>
                           </FilterCryptoPoolsProvider>
                         </ContractProvider>
-                      </FirebaseProvider>
-                    </TelegramProvider>
+                      </TelegramProvider>
+                    </FirebaseProvider>
                   </ServerProvider>
                 </AuthProvider>
               </ThemeProvider>

@@ -6,16 +6,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
     
-   	match /leaderboard/leaderboard {
-    	allow read: if true;
+   	match /live/crypto {
+    	allow get: if true;
     }
     
-   	match /live/live {
-    	allow read: if true;
+   	match /live/stocks {
+    	allow get: if true;
     }
     
-   	match /live/experimentals {
-    	allow read: if true;
+    match /users/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
