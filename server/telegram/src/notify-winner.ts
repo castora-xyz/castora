@@ -3,6 +3,8 @@ import { Bot } from 'grammy';
 import { Pool } from './schemas';
 import { firestore, logger } from './utils';
 
+const escapeChars = (str: string) => str.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+
 const shortenAddress = (str: string) => {
   if (str.length < 10) return str;
   return str.substring(0, 5) + '...' + str.split('').reverse().slice(0, 5).reverse().join('');
@@ -18,9 +20,7 @@ export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promis
 
   // Update how many times the predicter won as a winner could have made
   // multiple predictions.
-  const count = pool.predictions.filter(
-    ({ predicter, isAWinner }) => predicter === winner && isAWinner
-  ).length;
+  const count = pool.predictions.filter(({ predicter, isAWinner }) => predicter === winner && isAWinner).length;
   if (count === 0) {
     logger.error(
       `❌ FATAL: Got winner ${winner} who had no winner ` +
@@ -36,20 +36,16 @@ export const notifyWinner = async (bot: Bot, pool: Pool, winner: string): Promis
 
   // Send the notification
   try {
-    await bot.api.sendMessage(
-      userData.telegramId,
-      `🏆 You \(${shortenAddress(winner)}\) just won *${won} ${pool.stakeToken}* in Pool ${
-        pool.poolId
-      }! Tap to go and claim your winnings now!`,
-      {
-        parse_mode: 'MarkdownV2',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Claim Now!', url: `https://castora.xyz/pool/${pool.poolId}` }]
-          ]
-        }
+    const winnerEsc = escapeChars(`(${shortenAddress(winner)})`);
+    const stakeEsc = escapeChars(`${won} ${pool.stakeToken}`);
+    const restMsgEsc = escapeChars(`in Pool ${pool.poolId}! Tap to go and claim your winnings now!`);
+
+    await bot.api.sendMessage(userData.telegramId, `🏆 You ${winnerEsc} just won *${stakeEsc}* ${restMsgEsc}`, {
+      parse_mode: 'MarkdownV2',
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Claim Now!', url: `https://castora.xyz/pool/${pool.poolId}` }]]
       }
-    );
+    });
     logger.info(`\n🏆 Notified winner: ${winner} who won ${won} ${pool.stakeToken}`);
   } catch (e) {
     logger.error(
