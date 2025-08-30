@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "references": [
+    { "path": "./shared" },
+    { "path": "./main" },
+    { "path": "./archiver" },
+    { "path": "./syncer" },
+    { "path": "./completer" },
+    { "path": "./telegram" }
+  ],
+  "files": []
+}

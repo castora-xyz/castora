@@ -1,0 +1,36 @@
+{
+  "name": "@castora/server-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "main",
+    "archiver",
+    "syncer",
+    "completer",
+    "telegram"
+  ],
+  "scripts": {
+    "install-all": "npm install",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace=@castora/shared",
+    "dev:main": "npm run dev --workspace=@castora/main-backend",
+    "dev:archiver": "npm run dev --workspace=@castora/pool-archiver",
+    "dev:syncer": "npm run dev --workspace=@castora/pool-syncer",
+    "dev:completer": "npm run dev --workspace=@castora/pool-completer",
+    "dev:telegram": "npm run dev --workspace=@castora/telegram-worker",
+    "start:main": "npm run start --workspace=@castora/main-backend",
+    "start:archiver": "npm run start --workspace=@castora/pool-archiver",
+    "start:syncer": "npm run start --workspace=@castora/pool-syncer",
+    "start:completer": "npm run start --workspace=@castora/pool-completer",
+    "start:telegram": "npm run start --workspace=@castora/telegram-worker",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": "22"
+  }
+}

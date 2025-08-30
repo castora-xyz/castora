@@ -1,14 +1,14 @@
 {
-  "name": "@castora/server",
+  "name": "@castora/main-backend",
   "version": "0.0.0",
   "type": "module",
   "private": true,
   "scripts": {
     "build": "tsc",
     "start": "node lib/index.js",
-    "dev": "nodemon --watch src --ext ts --ignore lib --exec \"npm run build && node lib/index.js\"",
-    "postbuild": "npm run build --prefix ../shared",
-    "postinstall": "npm install --prefix ../shared && npm run build --prefix ../shared"
+    "dev": "nodemon --watch src --watch ../shared/src --ext ts --ignore lib --exec \"npm run build:deps && npm run build && node lib/index.js\"",
+    "build:deps": "npm run build --workspace=@castora/shared",
+    "clean": "rm -rf lib"
   },
   "dependencies": {
     "@castora/shared": "file:../shared",
