@@ -26,6 +26,8 @@ Install all dependencies for all services:
 npm install
 ```
 
+**Note**: The postinstall script automatically builds the shared package, so all services are ready to build immediately after installation.
+
 ### Building
 
 Build all services:
@@ -38,6 +40,16 @@ Build only the shared package:
 
 ```bash
 npm run build:shared
+```
+
+Build a specific service:
+
+```bash
+npm run build:main      # Main API server  
+npm run build:archiver  # Pool archiver
+npm run build:syncer    # Pool syncer
+npm run build:completer # Pool completer
+npm run build:telegram  # Telegram worker
 ```
 
 ### Development
