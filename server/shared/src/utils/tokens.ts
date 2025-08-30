@@ -1,4 +1,4 @@
-import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract';
+import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract.js';
 
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
@@ -80,16 +80,14 @@ export const tokens: Token[] = [
     name: 'ETH',
     fullName: 'Ethereum',
     decimals: 18,
-    pythPriceId:
-      '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace'
+    pythPriceId: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace'
   },
   {
     address: AAPL,
     name: 'AAPL',
     fullName: 'Apple Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
+    pythPriceId: '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688'
   },
   {
     address: aprMON,
@@ -103,8 +101,7 @@ export const tokens: Token[] = [
     name: 'CRCL',
     fullName: 'Circle Internet Group Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365'
+    pythPriceId: '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365'
   },
   {
     address: gMON,
@@ -118,64 +115,56 @@ export const tokens: Token[] = [
     name: 'HYPE',
     fullName: 'Hyperliquid',
     decimals: 6,
-    pythPriceId:
-      '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b'
+    pythPriceId: '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b'
   },
   {
     address: MOODENG,
     name: 'MOODENG',
     fullName: 'MOO DENG',
     decimals: 9,
-    pythPriceId:
-      '0xffff73128917a90950cd0473fd2551d7cd274fd5a6cc45641881bbcc6ee73417'
+    pythPriceId: '0xffff73128917a90950cd0473fd2551d7cd274fd5a6cc45641881bbcc6ee73417'
   },
   {
     address: PENGU,
     name: 'PENGU',
     fullName: 'Pudgy Penguins',
     decimals: 6,
-    pythPriceId:
-      '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
+    pythPriceId: '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
   },
   {
     address: PUMP,
     name: 'PUMP',
     fullName: 'pump.fun',
     decimals: 6,
-    pythPriceId:
-      '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9'
+    pythPriceId: '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9'
   },
   {
     address: SOL,
     name: 'SOL',
     fullName: 'Solana',
     decimals: 9,
-    pythPriceId:
-      '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
+    pythPriceId: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
   },
   {
     address: SUI,
     name: 'SUI',
     fullName: 'Sui',
     decimals: 9,
-    pythPriceId:
-      '0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744'
+    pythPriceId: '0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744'
   },
   {
     address: TRUMP,
     name: 'TRUMP',
     fullName: 'Official Trump',
     decimals: 6,
-    pythPriceId:
-      '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a'
+    pythPriceId: '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a'
   },
   {
     address: TSLA,
     name: 'TSLA',
     fullName: 'Tesla Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1'
+    pythPriceId: '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1'
   },
   {
     address: cUSD,

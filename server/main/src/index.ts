@@ -1,9 +1,9 @@
 import cors from 'cors';
 import express from 'express';
-import pinoHttp, { startTime } from 'pino-http';
+import { pinoHttp, startTime } from 'pino-http';
 
 import { logger } from '@castora/shared';
-import router from './router';
+import router from './router/index.js';
 
 const app = express();
 

@@ -1,5 +1,5 @@
 import { ArchivedPool, fetchPool, Job, logger, storage } from '@castora/shared';
-import { fetchPredictions } from './fetch-predictions';
+import { fetchPredictions } from './fetch-predictions.js';
 
 /**
  * Archives a pool by saving its predictions to use for completion later on

@@ -1,11 +1,11 @@
 {
-  "extends": "../../shared/tsconfig.base.json",
-  "references": [{ "path": "../../shared" }],
+  "extends": "../shared/tsconfig.base.json",
+  "references": [{ "path": "../shared" }],
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "lib",
     "paths": {
-      "@castora/shared": ["../../shared/src"]
+      "@castora/shared": ["../shared/src"]
     }
   },
   "include": ["src", "src/*.json"]

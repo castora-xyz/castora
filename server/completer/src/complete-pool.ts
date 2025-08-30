@@ -1,7 +1,7 @@
 import { fetchPool, Job, logger, queueJob } from '@castora/shared';
-import { getSnapshotPrice } from './get-snapshot-price';
-import { rearchivePool } from './rearchive-pool';
-import { setWinners } from './set-winners';
+import { getSnapshotPrice } from './get-snapshot-price.js';
+import { rearchivePool } from './rearchive-pool.js';
+import { setWinners } from './set-winners.js';
 
 /**
  * Completes a pool by taking its snapshot and computing its winners.

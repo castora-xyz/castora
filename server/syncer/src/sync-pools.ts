@@ -1,7 +1,7 @@
 import { firestore, Job, logger } from '@castora/shared';
-import { createPool } from './create-pool';
-import { getPoolId } from './get-pool-id';
-import { getCryptoSeeds, getStocksSeeds } from './get-pool-seeds';
+import { createPool } from './create-pool.js';
+import { getPoolId } from './get-pool-id.js';
+import { getCryptoSeeds, getStocksSeeds } from './get-pool-seeds.js';
 
 /**
  * Synchronizes the live pools of the provided chain.

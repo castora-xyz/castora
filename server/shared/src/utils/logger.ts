@@ -17,7 +17,7 @@ export const logger = pino({
         }
       },
       // Google Cloud Logging
-      ...(process.env.NODE_ENV === 'production'
+      ...(process.env.NODE_ENV !== 'production'
         ? [
             {
               target: 'cloud-pine',

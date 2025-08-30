@@ -1,4 +1,4 @@
-import { logger, Token, tokens } from '../utils';
+import { logger, Token, tokens } from '../utils/index.js';
 
 /**
  * Holds information about the properties of a given pool.
@@ -49,9 +49,7 @@ export class PoolSeeds {
    * Returns info about the prediction token
    */
   getPredictionTokenDetails(): Token {
-    const details = tokens.find(
-      (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
-    );
+    const details = tokens.find((t) => t.address.toLowerCase() === this.predictionToken.toLowerCase());
     if (!details) {
       const message = `Prediction Token not found in tokens list: ${this.predictionToken}`;
       logger.error(message);
@@ -64,9 +62,7 @@ export class PoolSeeds {
    * Returns info about the stake token
    */
   getStakeTokenDetails(): Token {
-    const details = tokens.find(
-      (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
-    );
+    const details = tokens.find((t) => t.address.toLowerCase() === this.stakeToken.toLowerCase());
     if (!details) {
       const message = `Stake Token not found in tokens list: ${this.stakeToken}`;
       logger.error(message);

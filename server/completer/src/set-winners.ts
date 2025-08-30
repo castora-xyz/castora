@@ -1,7 +1,7 @@
 import { Chain, logger, Pool, SplitPredictionResult, writeContract } from '@castora/shared';
-import { fetchArchivedPredictions } from './fetch-archived-predictions';
-import { getNoOfWinners } from './get-no-of-winners';
-import { getSplittedPredictions } from './get-splitted-predictions';
+import { fetchArchivedPredictions } from './fetch-archived-predictions.js';
+import { getNoOfWinners } from './get-no-of-winners.js';
+import { getSplittedPredictions } from './get-splitted-predictions.js';
 
 /**
  * Computes the winner predictions in the provided pool.

@@ -1,4 +1,4 @@
-import { PoolSeeds } from './pool-seeds';
+import { PoolSeeds } from './pool-seeds.js';
 
 /**
  * Where participants make predictions.

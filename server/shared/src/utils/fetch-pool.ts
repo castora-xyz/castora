@@ -1,6 +1,7 @@
-import { Chain, logger } from '.';
-import { Pool } from '../schemas';
-import { readContract } from './contract';
+import { Pool } from '../schemas/pool.js';
+import { readContract } from './contract.js';
+import { Chain } from './index.js';
+import { logger } from './logger.js';
 
 /**
  * Fetches and returns a pool from the provided Castora contract.

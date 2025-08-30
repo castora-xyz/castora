@@ -1,4 +1,4 @@
-import { Pool } from './pool';
+import { Pool } from './pool.js';
 
 /**
  * The activity of a participant in a {@link Pool}.

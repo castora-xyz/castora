@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { Chain, logger } from '.';
-import { abi } from './abi';
+import { abi } from './abi.js';
+import { Chain } from './index.js';
+import { logger } from './logger.js';
 
 const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
 if (!adminKeyMonad) throw 'Set ADMIN_KEY_MONAD';

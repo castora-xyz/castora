@@ -1,7 +1,7 @@
 import { logger, setWorker } from '@castora/shared';
 import { Bot } from 'grammy';
-import { completeTelegramAuth } from './complete-telegram-auth';
-import { getNotifyWinnerJob } from './get-notify-winner-job';
+import { completeTelegramAuth } from './complete-telegram-auth.js';
+import { getNotifyWinnerJob } from './get-notify-winner-job.js';
 
 if (!process.env.TELEGRAM_BOT_TOKEN) throw 'Set TELEGRAM_BOT_TOKEN';
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);

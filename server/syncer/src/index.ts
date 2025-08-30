@@ -1,5 +1,5 @@
 import { queueJob, setWorker } from '@castora/shared';
-import { syncPools } from './sync-pools';
+import { syncPools } from './sync-pools.js';
 
 (async () => {
   await queueJob({

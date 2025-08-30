@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { archivePool, completePool, getCryptoPoolIds, getStocksPoolIds, syncPools } from '../controllers/pools';
-import { validateChain } from '../middleware';
-import { wrapper } from './index';
+import { archivePool, completePool, getCryptoPoolIds, getStocksPoolIds, syncPools } from '../controllers/pools.js';
+import { validateChain } from '../middleware/validate-chain.js';
+import { wrapper } from './index.js';
 
 const router = Router();
 

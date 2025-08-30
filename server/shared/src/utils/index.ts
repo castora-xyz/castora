@@ -1,11 +1,11 @@
 export { FieldValue, Timestamp } from 'firebase-admin/firestore';
 export { getAddress, verifyMessage } from 'viem';
-export * from './abi';
-export * from './contract';
-export * from './fetch-pool';
-export * from './jobs';
-export * from './logger';
-export * from './tokens';
+export * from './abi.js';
+export * from './contract.js';
+export * from './fetch-pool.js';
+export * from './jobs.js';
+export * from './logger.js';
+export * from './tokens.js';
 
 import 'dotenv/config';
 import { applicationDefault, initializeApp } from 'firebase-admin/app';

@@ -1,14 +1,17 @@
 {
   "name": "@castora/pool-archiver",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
   "scripts": {
     "build": "tsc",
     "start": "node lib/index.js",
     "dev": "nodemon --watch src --ext ts --ignore lib --exec \"npm run build && node lib/index.js\"",
-    "postbuild": "npm run build --prefix ../../shared",
-    "postinstall": "npm install --prefix ../../shared && npm run build --prefix ../../shared"
+    "postbuild": "npm run build --prefix ../shared",
+    "postinstall": "npm install --prefix ../shared && npm run build --prefix ../shared"
   },
   "dependencies": {
-    "@castora/shared": "file:../../shared"
+    "@castora/shared": "file:../shared"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

@@ -1,11 +1,11 @@
 import { Job, Queue, Worker } from 'bullmq';
-import IORedis from 'ioredis';
-import { logger } from '.';
+import { Redis } from 'ioredis';
+import { logger } from './logger.js';
 
 export { Job } from 'bullmq';
 
 if (!process.env.REDIS_URL) throw 'Set REDIS_URL in env';
-const connection = new IORedis(process.env.REDIS_URL, {
+const connection = new Redis(process.env.REDIS_URL, {
   family: 0,
   maxRetriesPerRequest: null
 });

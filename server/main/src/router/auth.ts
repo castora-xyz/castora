@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { removeUserTelegram, signInWithFirebase, startTelegramAuth } from '../controllers/auth';
-import { validateAuth } from '../middleware';
-import { wrapper } from './index';
+import { removeUserTelegram, signInWithFirebase, startTelegramAuth } from '../controllers/auth.js';
+import { validateAuth } from '../middleware/validate-auth.js';
+import { wrapper } from './index.js';
 
 const router = Router();
 

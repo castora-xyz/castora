@@ -1,7 +1,7 @@
 import { FieldValue, firestore, Job, logger, storage } from '@castora/shared';
 import { Bot } from 'grammy';
-import { notifyWinner } from './notify-winner';
-import { Pool } from './schemas';
+import { notifyWinner } from './notify-winner.js';
+import { Pool } from './schemas.js';
 
 interface NotificationProgress {
   processed: number;
@@ -46,7 +46,7 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     let progress: NotificationProgress;
     if (isNotificationProgress(job.progress)) {
       progress = job.progress;
-      logger.info('Resuming job from previous progress: ', progress);
+      logger.info(`Resuming job from previous progress: ${progress}`);
     } else {
       progress = { processed: 0, notified: 0 };
     }

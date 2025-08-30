@@ -1,7 +1,7 @@
 import { logger } from '@castora/shared';
 import { Response, Router } from 'express';
-import authRoutes from './auth';
-import poolRoutes from './pools';
+import authRoutes from './auth.js';
+import poolRoutes from './pools.js';
 
 const router = Router();
 

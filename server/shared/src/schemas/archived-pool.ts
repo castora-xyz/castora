@@ -1,7 +1,7 @@
-import { PoolResults } from '.';
-import { Chain } from '../utils';
-import { Pool } from './pool';
-import { Prediction } from './prediction';
+import { Chain } from '../utils/index.js';
+import { PoolResults } from './index.js';
+import { Pool } from './pool.js';
+import { Prediction } from './prediction.js';
 
 /**
  * Details about a closed/completed pool. Stored in the database to

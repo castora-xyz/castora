@@ -1,6 +1,6 @@
 import { FieldValue, firestore, logger } from '@castora/shared';
 import { Bot } from 'grammy';
-import { Pool } from './schemas';
+import { Pool } from './schemas.js';
 
 const escapeChars = (str: string) => str.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 
