@@ -5,8 +5,6 @@ import { abi } from './abi.js';
 import { Chain } from './index.js';
 import { logger } from './logger.js';
 
-const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
-if (!adminKeyMonad) throw 'Set ADMIN_KEY_MONAD';
 const monadTestnetRpcUrl = process.env.MONAD_TESTNET_RPC_URL;
 if (!monadTestnetRpcUrl) throw 'Set MONAD_TESTNET_RPC_URL';
 
@@ -26,12 +24,12 @@ const monadTestnet = defineChain({
   }
 });
 
-const getAccount = (chain: Chain) =>
-  privateKeyToAccount(
-    {
-      monadtestnet: adminKeyMonad
-    }[chain]
-  );
+const getAccount = (chain: Chain) => {
+  const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
+  if (!adminKeyMonad) throw 'Set ADMIN_KEY_MONAD';
+  return privateKeyToAccount({ monadtestnet: adminKeyMonad }[chain]);
+};
+
 export const getConfig = (chain: Chain) =>
   ({
     monadtestnet: { chain: monadTestnet, transport: http() }
@@ -47,8 +45,7 @@ export const readContract = async (chain: Chain, functionName: any, args?: any) 
     address: getContractAddress(chain),
     abi,
     functionName,
-    args,
-    account: getAccount(chain)
+    args
   });
 };
 
