@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express from 'express';
-import morgan from 'morgan';
+import pinoHttp, { startTime } from 'pino-http';
 
 import { logger } from '@castora/shared';
 import router from './router';
@@ -11,8 +11,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
-  morgan('combined', {
-    stream: { write: (log: string) => logger.info(log.trim()) }
+  pinoHttp({
+    logger,
+    customSuccessMessage: (req, res) =>
+      `HTTP ${req.method} ${req.originalUrl} ${res.statusCode} - ${new Date().getTime() - res[startTime]}ms` +
+      ` :: ${req.headers['user-agent']}`,
+    customErrorMessage: (req, res, err) =>
+      `HTTP ${req.method} ${req.originalUrl} ${res.statusCode} - ${new Date().getTime() - res[startTime]}ms` +
+      ` :: ${req.headers['user-agent']} - Error: ${err.message}`
   })
 );
 app.use(router);

@@ -27,7 +27,7 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
   }
 
   const noOfWinners = getNoOfWinners(pool.noOfPredictions, pool.poolId == 3000 ? 10 : 2);
-  logger.info('\nnoOfWinners: ', noOfWinners);
+  logger.info(`\nnoOfWinners: ${noOfWinners}`);
 
   logger.info('\nComputing Winners ... ');
   const splitted = getSplittedPredictions(snapshotPrice, predictions, noOfWinners);
@@ -42,7 +42,7 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
   //
   // Truncating is to ensure that the winAmount is a whole number.
   const winAmount = Math.trunc((pool.seeds.stakeAmount * pool.noOfPredictions * 95) / (noOfWinners * 100));
-  logger.info('\nwinAmount: ', winAmount);
+  logger.info(`\nwinAmount: ${winAmount}`);
 
   logger.info('\nCalling Complete Pool in Contract ... ');
   await writeContract(
@@ -57,7 +57,7 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
     ],
     `Complete Pool ${pool.poolId} on chain ${chain}`
   );
-  logger.info('Called Complete Pool for poolId: ', pool.poolId);
+  logger.info(`Called Complete Pool for poolId: ${pool.poolId}`);
 
   return splitted;
 };

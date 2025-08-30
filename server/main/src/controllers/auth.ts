@@ -15,7 +15,7 @@ export interface RegisterUserParams {
  */
 export const removeUserTelegram = async (userWalletAddress: string): Promise<void> => {
   logger.info('Got Remove User Telegram ... ');
-  logger.info('User Wallet Address: ', userWalletAddress);
+  logger.info(`User Wallet Address: ${userWalletAddress}`);
 
   // Using the default Firestore here to remove telegram IDs
   await firestore().doc(`/users/${userWalletAddress}`).update({ telegramId: FieldValue.delete() });
@@ -31,7 +31,7 @@ export const removeUserTelegram = async (userWalletAddress: string): Promise<voi
  */
 export const signInWithFirebase = async (userWalletAddress: string): Promise<string> => {
   logger.info('Got Sign In with Firebase ... ');
-  logger.info('User Wallet Address: ', userWalletAddress);
+  logger.info(`User Wallet Address: ${userWalletAddress}`);
 
   // Get the custom sign in token from Firebase for the user and return it
   const token = await firebaseAuth.createCustomToken(userWalletAddress);
@@ -47,7 +47,7 @@ export const signInWithFirebase = async (userWalletAddress: string): Promise<str
  */
 export const startTelegramAuth = async (userWalletAddress: string): Promise<string> => {
   logger.info('Got Start Telegram Auth ... ');
-  logger.info('User Wallet Address: ', userWalletAddress);
+  logger.info(`User Wallet Address: ${userWalletAddress}`);
 
   // Generate a random hash to verify the user later
   const token = nanoid(16);
@@ -65,6 +65,6 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
   // Construct the URL for Telegram authentication
   const telegramAuthUrl = `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=${token}`;
 
-  logger.info('Telegram Auth URL: ', telegramAuthUrl);
+  logger.info(`Telegram Auth URL: ${telegramAuthUrl}`);
   return telegramAuthUrl;
 };

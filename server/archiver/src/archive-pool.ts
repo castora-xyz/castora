@@ -13,16 +13,15 @@ export const archivePool = async (job: Job): Promise<void> => {
 
   const pool = await fetchPool(chain, poolId);
   const { noOfPredictions, seeds } = pool;
-
-  logger.info('pool.seeds.windowCloseTime: ', seeds.windowCloseTime);
-  logger.info('pool.seeds.windowCloseTime (display): ', new Date(seeds.windowCloseTime * 1000));
+  logger.info(`pool.seeds.windowCloseTime: ${seeds.windowCloseTime}`);
+  logger.info(`pool.seeds.windowCloseTime (display): ${new Date(seeds.windowCloseTime * 1000)}`);
   if (Math.round(Date.now() / 1000) < seeds.windowCloseTime) {
     throw `Not yet windowCloseTime for Pool ${poolId} on ${chain}. Ending ...`;
   }
 
-  logger.info('\npool.noOfPredictions: ', noOfPredictions);
+  logger.info(`\npool.noOfPredictions: ${noOfPredictions}`);
   if (noOfPredictions === 0) {
-    logger.info('Nobody joined this pool. Ending ...');
+    logger.info(`Nobody joined this pool. Ending ...`);
     return;
   }
 

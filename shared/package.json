@@ -9,13 +9,13 @@
     "watch": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@google-cloud/logging": "^11.2.0",
-    "@google-cloud/logging-bunyan": "^5.1.0",
     "bullmq": "^5.58.3",
-    "bunyan": "^1.8.15",
+    "cloud-pine": "^3.0.0",
     "dotenv": "^17.2.1",
     "firebase-admin": "^13.5.0",
     "ioredis": "^5.7.0",
+    "pino": "^9.9.0",
+    "pino-pretty": "^13.1.1",
     "viem": "^2.36.0"
   },
   "devDependencies": {

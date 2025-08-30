@@ -17,7 +17,7 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
   if (!found) throw `Token not found in tokens.ts: ${predictionToken}`;
   const { pythPriceId } = found;
 
-  logger.info(`Obtained Pyth ID for predictionToken (${predictionToken}) : `, pythPriceId);
+  logger.info(`Obtained Pyth ID for predictionToken (${predictionToken}): ${pythPriceId}`);
 
   logger.info(`\nObtaining Price Update Data from Pyth for pool.poolSeeds.snapshotTime:` + ` ${snapshotTime}`);
 
@@ -44,7 +44,7 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
     );
   }
 
-  logger.info('Obtained Price Update Data: ', priceUpdateData);
+  logger.info(priceUpdateData, 'Obtained Price Update Data');
 
   if (
     'parsed' in priceUpdateData &&

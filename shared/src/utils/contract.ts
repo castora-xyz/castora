@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { Chain, convertNestedBigInts, logger } from '.';
+import { Chain, logger } from '.';
 import { abi } from './abi';
 
 const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
@@ -81,22 +81,23 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const walletClient = createWalletClient({ account, ...config });
     const hash = await walletClient.writeContract(request);
 
-    logger.info('Transaction Hash: ', hash);
+    logger.info(`Transaction Hash: ${hash}`);
     logger.info('Waiting for On-Chain Confirmation ...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    logger.info('Transaction Receipt: ', convertNestedBigInts(receipt));
+    logger.info(receipt, 'Transaction Receipt');
 
     const newBalance = await showBalance(chain, account.address);
     const balanceDiffs = formatEther(newBalance - prevBalance);
     logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
     return result;
   } catch (e) {
-    if (`${e}`.toLowerCase().includes('request timed out')) {
-      // occasionally the wait for transaction receipt times out.
-      // in such case, do nothing so that the call simply returns
-      // after all the writeContract logic is done and submitted to on-chain.
+    logger.error(`Error at writeContract call at ${errorContext}: ${e}`);
+    logger.error(e);
+
+    if (`${e}`.includes('TransactionReceiptNotFoundError')) {
+      // Surprisingly, this receipt not found error happens when
+      // the transaction succeeded, so we don't rethrow to stop execution
     } else {
-      logger.error(`Error at writeContract call at ${errorContext}: ${e}`);
       throw e;
     }
   }

@@ -12,7 +12,7 @@ import { Chain, logger, Pool, PoolSeeds, queueJob, readContract, writeContract }
 export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number | null> => {
   logger.info('Create Pool => Got PoolSeeds');
   const seedsHash = await readContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
-  logger.info('Hashed PoolSeeds: ', seedsHash);
+  logger.info(`Hashed PoolSeeds: ${seedsHash}`);
 
   logger.info('Checking if Pool Exists ...');
   let poolId = Number(await readContract(chain, 'poolIdsBySeedsHashes', [seedsHash]));
@@ -28,7 +28,7 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
 
       logger.info('\nCreating Pool ... ');
       poolId = Number(await writeContract(chain, 'createPool', [seeds.bigIntified()], `Create Pool on chain ${chain}`));
-      logger.info('Created new pool with poolId: ', poolId);
+      logger.info(`Created new pool with poolId: ${poolId}`);
 
       await queueJob({
         queueName: 'pool-archiver',
@@ -49,7 +49,7 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
 
       return poolId;
     } else {
-      logger.info('Pool exists already. poolId: ', poolId);
+      logger.info(`Pool exists already. poolId: ${poolId}`);
       return poolId;
     }
   } else {

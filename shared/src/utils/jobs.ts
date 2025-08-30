@@ -49,10 +49,10 @@ export const setWorker = ({ workerName, handler }: SetWorkerOpts) => {
   });
 
   worker.on('failed', (job, e) => {
-    logger.error(`❌ Job ${job?.id} failed: ${e}`);
+    logger.error(e, `❌ Job ${job?.id} failed: ${e}`);
   });
 
   worker.on('error', (e) => {
-    logger.error(`❌ Worker error: ${e}`);
+    logger.error(e, `❌ Worker error: ${e}`);
   });
 };

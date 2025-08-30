@@ -10,12 +10,12 @@ import { Chain, logger, Pool, PoolSeeds, readContract } from '@castora/shared';
 export const getPoolId = async (chain: Chain, seeds: PoolSeeds): Promise<number | null> => {
   logger.info('GetPoolId => Got PoolSeeds');
   const seedsHash = await readContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
-  logger.info('Hashed PoolSeeds: ', seedsHash);
+  logger.info(`Hashed PoolSeeds: ${seedsHash}`);
 
   logger.info('Checking if Pool Exists ...');
   let poolId = Number(await readContract(chain, 'poolIdsBySeedsHashes', [seedsHash]));
   if (!Number.isNaN(poolId) && poolId !== 0) {
-    logger.info('Pool exists. poolId: ', poolId);
+    logger.info(`Pool exists. poolId: ${poolId}`);
     return poolId;
   } else {
     logger.info("Pool doesn't exist");

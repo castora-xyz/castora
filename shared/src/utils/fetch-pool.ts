@@ -18,7 +18,7 @@ export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
 
   const noOfPools = Number(await readContract(chain, 'noOfPools'));
   if (Number.isNaN(noOfPools)) throw 'Got a non-numeric noOfPools';
-  logger.info('Current noOfPools is: ', noOfPools);
+  logger.info(`Current noOfPools is: ${noOfPools}`);
   if (poolId > noOfPools) throw `Invalid poolId: ${poolId}`;
   poolId = Number(poolId);
 
@@ -28,7 +28,7 @@ export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
     throw 'Could not fetch pool';
   } else {
     const pool = new Pool(raw);
-    logger.info('Fetched Pool Details: ', pool);
+    logger.info(pool, 'Fetched Pool Details');
     return pool;
   }
 };
