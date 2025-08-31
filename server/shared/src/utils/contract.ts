@@ -64,6 +64,8 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
 };
 
 export const writeContract = async (chain: Chain, functionName: any, args: any, errorContext: string) => {
+  let outcome;
+
   try {
     const account = getAccount(chain);
     const config = getConfig(chain);
@@ -77,6 +79,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
       args,
       account
     });
+    outcome = result;
     const walletClient = createWalletClient({ account, ...config });
     const hash = await walletClient.writeContract(request);
 
@@ -88,16 +91,17 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const newBalance = await showBalance(chain, account.address);
     const balanceDiffs = formatEther(newBalance - prevBalance);
     logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
-    return result;
   } catch (e) {
     logger.error(`Error at writeContract call at ${errorContext}: ${e}`);
     logger.error(e);
 
     if (`${e}`.includes('TransactionReceiptNotFoundError')) {
       // Surprisingly, this receipt not found error happens when
-      // the transaction succeeded, so we don't rethrow to stop execution
+      // the transaction succeeded, so we don't rethrow to not stop execution
     } else {
       throw e;
     }
   }
+  
+  return outcome;
 };
