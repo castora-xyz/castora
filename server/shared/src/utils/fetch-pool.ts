@@ -11,7 +11,7 @@ import { logger } from './logger.js';
  * @returns An instance of the pool that was fetched.
  */
 export const fetchPool = async (chain: Chain, poolId: any): Promise<Pool> => {
-  logger.info('Got poolId: ', poolId);
+  logger.info(`Got poolId: ${poolId}`);
   if (Number.isNaN(poolId)) throw 'Got a non-numeric poolId';
   if (Number(poolId) == 0) throw 'poolId cannot be zero';
   if (Number(poolId) < 0) throw 'poolId cannot be negative';

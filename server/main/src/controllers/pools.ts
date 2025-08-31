@@ -1,28 +1,6 @@
 import { Chain, firestore, logger, queueJob } from '@castora/shared';
 
 /**
- * Archives a pool by saving its predictions to use for completion later on
- *
- * @param chain The chain to archive the pool on.
- * @param poolId The poolId to archive its predictions
- */
-export const archivePool = async (chain: Chain, poolId: any): Promise<void> => {
-  await queueJob({ queueName: 'pool-archiver', jobName: 'archive-pool', jobData: { poolId, chain } });
-  logger.info(`Posted job to archive Pool ${poolId} on chain ${chain}`);
-};
-
-/**
- * Completes a pool by posting the job to the completer
- *
- * @param chain The chain to complete the pool on.
- * @param poolId The poolId in which to compute its winners
- */
-export const completePool = async (chain: Chain, poolId: any): Promise<void> => {
-  await queueJob({ queueName: 'pool-completer', jobName: 'complete-pool', jobData: { poolId, chain } });
-  logger.info(`Posted job to complete Pool ${poolId} on chain ${chain}`);
-};
-
-/**
  * Returns the live crypto poolIds of the provided chain.
  *
  * @param {Chain} chain The chain to get the live pools from.
@@ -52,6 +30,23 @@ export const getStocksPoolIds = async (chain: Chain): Promise<number[]> => {
   } else {
     return [];
   }
+};
+
+/**
+ * Settles a pool by posting archive job with shouldComplete flag.
+ * If pool is archived, then complete, otherwise, after archiving, complete it.
+ * Useful for failed archival & completion, post pool times.
+ *
+ * @param chain The chain to settle the pool on.
+ * @param poolId The poolId in which to settle
+ */
+export const settlePool = async (chain: Chain, poolId: any): Promise<void> => {
+  await queueJob({
+    queueName: 'pool-archiver',
+    jobName: 'archive-pool',
+    jobData: { poolId, chain, shouldComplete: true }
+  });
+  logger.info(`Posted job to settle (archive with shouldComplete flag) Pool ` + `${poolId} on chain ${chain}`);
 };
 
 /**

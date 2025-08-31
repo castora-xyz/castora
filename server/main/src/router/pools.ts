@@ -1,16 +1,12 @@
 import { Router } from 'express';
-import { archivePool, completePool, getCryptoPoolIds, getStocksPoolIds, syncPools } from '../controllers/pools.js';
+import { getCryptoPoolIds, getStocksPoolIds, settlePool, syncPools } from '../controllers/pools.js';
 import { validateChain } from '../middleware/validate-chain.js';
 import { wrapper } from './index.js';
 
 const router = Router();
 
-router.get('/pool/:id/archive', validateChain, async (req, res) => {
-  await wrapper(async () => await archivePool(res.locals.chain, req.params.id), 'archiving pool', res);
-});
-
-router.get('/pool/:id/complete', validateChain, async (req, res) => {
-  await wrapper(async () => await completePool(res.locals.chain, req.params.id), 'completing pool', res);
+router.get('/pool/:id/settle', validateChain, async (req, res) => {
+  await wrapper(async () => await settlePool(res.locals.chain, req.params.id), 'settling pool', res);
 });
 
 router.get('/pools/ids', validateChain, async (_, res) => {
