@@ -92,8 +92,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const balanceDiffs = formatEther(newBalance - prevBalance);
     logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
   } catch (e) {
-    logger.error(`Error at writeContract call at ${errorContext}: ${e}`);
-    logger.error(e);
+    logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 
     if (`${e}`.includes('TransactionReceiptNotFoundError')) {
       // Surprisingly, this receipt not found error happens when
@@ -102,6 +101,6 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
       throw e;
     }
   }
-  
+
   return outcome;
 };
