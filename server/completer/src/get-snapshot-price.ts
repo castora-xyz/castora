@@ -1,4 +1,4 @@
-import { logger, Pool, tokens } from '@castora/shared';
+import { Chain, logger, Pool, tokens } from '@castora/shared';
 import fetch from 'node-fetch';
 
 /**
@@ -8,7 +8,7 @@ import fetch from 'node-fetch';
  * @param pool The poolId in which to take the snapshot price.
  * @returns The obtained snapshotPrice
  */
-export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
+export const getSnapshotPrice = async (pool: Pool, chain: Chain): Promise<number> => {
   const {
     seeds: { predictionToken, snapshotTime }
   } = pool;
@@ -31,7 +31,10 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
     );
     pythResponseCloned = pythResponse.clone();
   } catch (e) {
-    throw `Couldn't FETCH Price Info from Pyth. pool ID: ${pool.poolId}, error: ${e}`;
+    throw (
+      `Couldn't FETCH Price Info from Pyth. pool ID: ${pool.poolId} ` +
+      `snapshotTime ${snapshotTime} on chain ${chain}, error: ${e}`
+    );
   }
 
   try {
@@ -39,7 +42,7 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
   } catch (e) {
     throw (
       "Couldn't PARSE Price Info from Pyth. " +
-      ` pool ID: ${pool.poolId} ` +
+      ` pool ID: ${pool.poolId} snapshotTime ${snapshotTime} on chain ${chain} ` +
       `Pyth Response: ${await pythResponseCloned.text()}`
     );
   }
@@ -55,11 +58,20 @@ export const getSnapshotPrice = async (pool: Pool): Promise<number> => {
   ) {
     logger.info(priceUpdateData.parsed[0].price);
     let { price, expo } = priceUpdateData.parsed[0].price;
-    if (+expo > 0) throw 'Expected expo in pyth data to be negative';
+    if (+expo > 0) {
+      throw (
+        `Expected **expo** in pyth data to be negative in pool ID: ${pool.poolId} ` +
+        `snapshotTime ${snapshotTime} on chain ${chain}`
+      );
+    }
     expo = Math.abs(+expo);
     const power = 8 >= expo ? 8 - expo : expo - 8;
     return +price * 10 ** power;
   } else {
-    throw 'Expected Price Info not found in Pyth Data.';
+    if (typeof priceUpdateData === 'object') priceUpdateData = JSON.stringify(priceUpdateData);
+    throw (
+      `Expected Price Info not found in Pyth Data in pool ID: ${pool.poolId} ` +
+      `snapshotTime ${snapshotTime} on chain ${chain}. Pyth Data: ${priceUpdateData}`
+    );
   }
 };

@@ -33,7 +33,7 @@ export const completePool = async (job: Job): Promise<void> => {
     logger.info('Pool has been completed. Ending Process.');
   } else {
     logger.info('Getting Snapshot Price ...');
-    const snapshotPrice = await getSnapshotPrice(pool);
+    const snapshotPrice = await getSnapshotPrice(pool, chain);
     logger.info(`Got Snapshot Price: ${snapshotPrice}`);
 
     const splitResult = await setWinners(chain, pool, snapshotPrice);
