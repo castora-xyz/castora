@@ -23,33 +23,36 @@ export class Pool {
 
   constructor(input: any[]) {
     this.poolId = Number(input[0]);
-    this.seeds =
-      input[1] instanceof PoolSeeds ? input[1] : new PoolSeeds(input[1]);
+    this.seeds = input[1] instanceof PoolSeeds ? input[1] : new PoolSeeds(input[1]);
     this.seedsHash = input[2];
     this.creationTime = Number(input[3]);
     this.noOfPredictions = Number(input[4]);
     this.snapshotPriceOnChain = Number(input[5]);
-    this.snapshotPrice = parseFloat(
-      (this.snapshotPriceOnChain / 10 ** 8).toFixed(8)
-    );
+    this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));
     this.completionTime = Number(input[6]);
     this.winAmountOnChain = Number(input[7]);
     // calling Math.floor is to avoid too many decimal places
     this.winAmount = parseFloat(
-      (
-        Math.floor(this.winAmountOnChain / 0.95) /
-        10 ** this.seeds.stakeTokenDetails.decimals
-      ).toFixed(3)
+      (Math.floor(this.winAmountOnChain / 0.95) / 10 ** this.seeds.stakeTokenDetails.decimals).toFixed(3)
     );
     this.noOfWinners = Number(input[8]);
     this.noOfClaimedWinnings = Number(input[9]);
   }
 
   /**
+   * Whether it is a special pool.
+   */
+  isFlash() {
+    return this.poolId === 3000 || this.poolId === 5000;
+  }
+
+  /**
    * The units of stake that winners go with.
    */
   multiplier() {
-    return this.poolId === 3000 ? 10 : 2;
+    if (this.poolId === 3000) return 10;
+    if (this.poolId === 5000) return 5;
+    return 2;
   }
 
   /**

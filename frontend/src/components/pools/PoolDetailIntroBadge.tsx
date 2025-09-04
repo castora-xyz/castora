@@ -9,12 +9,7 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { Link, useLocation } from 'react-router-dom';
 
-export const PoolDetailIntroBadge = ({
-  pool,
-  pool: { poolId, seeds }
-}: {
-  pool: Pool;
-}) => {
+export const PoolDetailIntroBadge = ({ pool, pool: { seeds } }: { pool: Pool }) => {
   const location = useLocation();
 
   return (
@@ -38,10 +33,7 @@ export const PoolDetailIntroBadge = ({
         </p>
         <p className="flex gap-1.5 items-center">
           {seeds.predictionTokenDetails.img && (
-            <img
-              src={`/assets/${seeds.predictionTokenDetails.img}.png`}
-              className="w-5 h-5 rounded-full"
-            />
+            <img src={`/assets/${seeds.predictionTokenDetails.img}.png`} className="w-5 h-5 rounded-full" />
           )}
           <span>{seeds.pairName()}</span>
         </p>
@@ -52,10 +44,10 @@ export const PoolDetailIntroBadge = ({
         <p
           id="pool-life"
           className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
-          data-pr-tooltip="Pool Life"
+          data-pr-tooltip={pool.isFlash() ? 'Flash Pool' : 'Pool Life'}
         >
           <Timer className="fill-primary-default w-4 h-4" />
-          {poolId == 3000 ? (
+          {pool.isFlash() ? (
             <Bolt className="w-4 h-4 ml-1 text-text-caption" />
           ) : (
             <span className="mr-1">{seeds.displayPoolLife()}</span>

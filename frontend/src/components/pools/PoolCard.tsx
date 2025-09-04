@@ -18,10 +18,7 @@ export const PoolCard = ({
   const location = useLocation();
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setNow(Math.trunc(Date.now() / 1000)),
-      1000
-    );
+    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
     return () => clearInterval(interval);
   }, [now]);
 
@@ -30,7 +27,7 @@ export const PoolCard = ({
       className={
         'border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col ' +
         `${
-          poolId == 3000
+          pool.isFlash()
             ? 'shadow-[0px_0px_16px_1px_rgba(131,110,249,0.6)] dark:shadow-[0px_0px_16px_1px_rgba(255,255,255,0.6)]'
             : ''
         }`
@@ -54,27 +51,20 @@ export const PoolCard = ({
           </div>
         </div>
 
-        {poolId == 3000 ? (
+        {pool.isFlash() ? (
           <>
             <Bolt className="w-5 h-5 mt-1 -mr-1 text-primary-default" />
           </>
         ) : (
-          <span className="text-sm text-primary-default mt-1 inline-block">
-            {seeds.displayPoolLife()}
-          </span>
+          <span className="text-sm text-primary-default mt-1 inline-block">{seeds.displayPoolLife()}</span>
         )}
       </div>
 
       <div className="flex gap-2.5 items-start mb-4">
         {seeds.predictionTokenDetails.img && (
-          <img
-            src={`/assets/${seeds.predictionTokenDetails.img}.png`}
-            className="w-8 h-8 rounded-full"
-          />
+          <img src={`/assets/${seeds.predictionTokenDetails.img}.png`} className="w-8 h-8 rounded-full" />
         )}
-        <div className="font-medium text-2xl text-text-title">
-          {seeds.pairName()}
-        </div>
+        <div className="font-medium text-2xl text-text-title">{seeds.pairName()}</div>
       </div>
 
       {(now > seeds.windowCloseTime || isInLandingPage) && (
@@ -99,16 +89,9 @@ export const PoolCard = ({
 
       <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
         <span className="mr-4">Entry Fee</span>
-        <div
-          className={`flex w-fit items-center ${
-            seeds.stakeTokenDetails.img ? '-mt-1' : ''
-          }`}
-        >
+        <div className={`flex w-fit items-center ${seeds.stakeTokenDetails.img ? '-mt-1' : ''}`}>
           {seeds.stakeTokenDetails.img && (
-            <img
-              src={`/assets/${seeds.stakeTokenDetails.img}.png`}
-              className="w-6 h-6 rounded-full mr-2"
-            />
+            <img src={`/assets/${seeds.stakeTokenDetails.img}.png`} className="w-6 h-6 rounded-full mr-2" />
           )}
           <span>{seeds.displayStake()}</span>
         </div>

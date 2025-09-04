@@ -3,6 +3,7 @@ import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract.js'
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
 export const aprMON = '0xb2f82D0f38dc453D596Ad40A37799446Cc89274A';
+export const BTC = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac6';
 export const CRCL = '0x5d0d5faca8eb7c6a41eb47c978712d5e56039f24';
 export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
 export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
@@ -14,6 +15,8 @@ export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
 export const TSLA = '0x425ab4f486a2a8a1b49a715617a4be2d585949cf';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
+
+// BTC's token is the truncated Pyth Price Feed ID for BTC
 
 // AAPL stands for Apple Inc. stock. It is not an ERC20 token.
 // The Pyth Network provides price feeds for various assets including stocks.
@@ -95,6 +98,13 @@ export const tokens: Token[] = [
     fullName: 'aPriori',
     decimals: 18,
     pythPriceId: ''
+  },
+  {
+    address: BTC,
+    name: 'BTC',
+    fullName: 'Bitcoin',
+    decimals: 8,
+    pythPriceId: '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43'
   },
   {
     address: CRCL,

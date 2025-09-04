@@ -1,6 +1,6 @@
 import { Chain, logger, Pool, SplitPredictionResult, writeContract } from '@castora/shared';
 import { fetchArchivedPredictions } from './fetch-archived-predictions.js';
-import { getNoOfWinners } from './get-no-of-winners.js';
+import { getNoOfWinners, PoolMultiplier } from './get-no-of-winners.js';
 import { getSplittedPredictions } from './get-splitted-predictions.js';
 
 /**
@@ -26,7 +26,10 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
     );
   }
 
-  const noOfWinners = getNoOfWinners(pool.noOfPredictions, pool.poolId == 3000 ? 10 : 2);
+  let multiplier: PoolMultiplier = 2;
+  if (pool.poolId == 3000) multiplier = 10;
+  if (pool.poolId == 5000) multiplier = 5;
+  const noOfWinners = getNoOfWinners(pool.noOfPredictions, multiplier);
   logger.info(`\nnoOfWinners: ${noOfWinners}`);
 
   logger.info('\nComputing Winners ... ');

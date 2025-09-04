@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-export const ALL_CRYPTO_PREDICTION_TOKENS = ['ETH', 'SOL', 'PUMP', 'HYPE'];
+export const ALL_CRYPTO_PREDICTION_TOKENS = ['BTC', 'ETH', 'SOL', 'PUMP', 'HYPE'];
 export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
@@ -51,7 +51,7 @@ export const useFilterStockPools = () => useContext(FilterStockPoolsContext);
 export const useFilterCryptoPools = () => useContext(FilterCryptoPoolsContext);
 
 const retrieveOne = (key: string, prop: string, all: any[], initial: any[]): any[] => {
-  const saved = localStorage.getItem(`castora::filter-v2-${key}pools::${prop}`);
+  const saved = localStorage.getItem(`castora::filter-v3-${key}pools::${prop}`);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -64,40 +64,28 @@ const retrieveOne = (key: string, prop: string, all: any[], initial: any[]): any
 };
 
 const save = (key: string, prop: string, value: string[]) => {
-  localStorage.setItem(`castora::filter-v2-${key}pools::${prop}`, JSON.stringify(value));
+  localStorage.setItem(`castora::filter-v3-${key}pools::${prop}`, JSON.stringify(value));
 };
 
 export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) => {
   const [predictionTokens, setPredictionTokens] = useState(
     retrieveOne('stock', 'predictiontokens', ALL_STOCK_PREDICTION_TOKENS, ['AAPL', 'TSLA', 'CRCL'])
   );
-  const [statuses, setStatuses] = useState(
-    retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open'])
-  );
+  const [statuses, setStatuses] = useState(retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open']));
 
   const togglePredictionToken = (token: string) => {
     setPredictionTokens(
-      predictionTokens.includes(token)
-        ? (prev) => prev.filter((t) => t !== token)
-        : (prev) => [...prev, token]
+      predictionTokens.includes(token) ? (prev) => prev.filter((t) => t !== token) : (prev) => [...prev, token]
     );
   };
 
   const toggleStatus = (status: string) => {
-    setStatuses(
-      statuses.includes(status)
-        ? (prev) => prev.filter((s) => s !== status)
-        : (prev) => [...prev, status]
-    );
+    setStatuses(statuses.includes(status) ? (prev) => prev.filter((s) => s !== status) : (prev) => [...prev, status]);
   };
 
   const retrieve = () => {
     setPredictionTokens(
-      retrieveOne('stock', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
-        'AAPL',
-        'TSLA',
-        'CRCL'
-      ])
+      retrieveOne('stock', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, ['AAPL', 'TSLA', 'CRCL'])
     );
     setStatuses(retrieveOne('stock', 'statuses', ALL_STATUSES, ['Open']));
   };
@@ -137,66 +125,39 @@ export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) 
 
 export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode }) => {
   const [predictionTokens, setPredictionTokens] = useState(
-    retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
-      'ETH',
-      'SOL',
-      'PUMP',
-      'HYPE'
-    ])
+    retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, ['BTC', 'ETH', 'SOL', 'PUMP', 'HYPE'])
   );
   const [stakeTokens, setStakeTokens] = useState(
     retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
   );
-  const [statuses, setStatuses] = useState(
-    retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open'])
-  );
-  const [poolLifes, setPoolLifes] = useState(
-    retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h'])
-  );
+  const [statuses, setStatuses] = useState(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
+  const [poolLifes, setPoolLifes] = useState(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h']));
 
   const togglePoolLife = (life: string) => {
-    setPoolLifes(
-      poolLifes.includes(life)
-        ? (prev) => prev.filter((l) => l !== life)
-        : (prev) => [...prev, life]
-    );
+    setPoolLifes(poolLifes.includes(life) ? (prev) => prev.filter((l) => l !== life) : (prev) => [...prev, life]);
   };
 
   const togglePredictionToken = (token: string) => {
     setPredictionTokens(
-      predictionTokens.includes(token)
-        ? (prev) => prev.filter((t) => t !== token)
-        : (prev) => [...prev, token]
+      predictionTokens.includes(token) ? (prev) => prev.filter((t) => t !== token) : (prev) => [...prev, token]
     );
   };
 
   const toggleStakeToken = (token: string) => {
     setStakeTokens(
-      stakeTokens.includes(token)
-        ? (prev) => prev.filter((t) => t !== token)
-        : (prev) => [...prev, token]
+      stakeTokens.includes(token) ? (prev) => prev.filter((t) => t !== token) : (prev) => [...prev, token]
     );
   };
 
   const toggleStatus = (status: string) => {
-    setStatuses(
-      statuses.includes(status)
-        ? (prev) => prev.filter((s) => s !== status)
-        : (prev) => [...prev, status]
-    );
+    setStatuses(statuses.includes(status) ? (prev) => prev.filter((s) => s !== status) : (prev) => [...prev, status]);
   };
 
   const retrieve = () => {
     setPredictionTokens(
-      retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, [
-        'ETH',
-        'SOL',
-        'HYPE'
-      ])
+      retrieveOne('crypto', 'predictiontokens', ALL_CRYPTO_PREDICTION_TOKENS, ['ETH', 'SOL', 'HYPE'])
     );
-    setStakeTokens(
-      retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
-    );
+    setStakeTokens(retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON']));
     setStatuses(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
     setPoolLifes(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h']));
   };
@@ -226,6 +187,8 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
     for (let key of lsKeys) {
       if (key.startsWith('castora::filterpools')) localStorage.removeItem(key);
       if (key.startsWith('castora::filtercryptopools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filter-v2-cryptopools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filter-v2-stockpools')) localStorage.removeItem(key);
     }
   }, []);
 

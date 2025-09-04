@@ -3,6 +3,7 @@ import { CASTORA_ADDRESS_MONAD, CASTORA_ADDRESS_SEPOLIA } from '@/contexts';
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
 export const aprMON = '0xb2f82D0f38dc453D596Ad40A37799446Cc89274A';
+export const BTC = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac6';
 export const CRCL = '0x5d0d5faca8eb7c6a41eb47c978712d5e56039f24';
 export const gMON = '0xaEef2f6B429Cb59C9B2D7bB2141ADa993E8571c3';
 export const HYPE = '0x0ab0dc55f747ada00cc15d049cb654bbdc7d5aa6';
@@ -14,6 +15,8 @@ export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
 export const TSLA = '0x425ab4f486a2a8a1b49a715617a4be2d585949cf';
 export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
+
+// BTC's token is the truncated Pyth Price Feed ID for BTC
 
 // AAPL stands for Apple Inc. stock. It is not an ERC20 token.
 // The Pyth Network provides price feeds for various assets including stocks.
@@ -82,8 +85,7 @@ export const tokens: Token[] = [
     name: 'ETH',
     fullName: 'Ethereum',
     decimals: 18,
-    pythPriceId:
-      '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
+    pythPriceId: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
     img: 'eth'
   },
   {
@@ -91,17 +93,23 @@ export const tokens: Token[] = [
     name: 'AAPL',
     fullName: 'Apple Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688',
+    pythPriceId: '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688',
     img: 'aapl'
+  },
+  {
+    address: BTC,
+    name: 'BTC',
+    fullName: 'Bitcoin',
+    decimals: 8,
+    pythPriceId: '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
+    img: 'btc'
   },
   {
     address: CRCL,
     name: 'CRCL',
     fullName: 'Circle Internet Group Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365',
+    pythPriceId: '0x92b8527aabe59ea2b12230f7b532769b133ffb118dfbd48ff676f14b273f1365',
     img: 'crcl'
   },
   {
@@ -125,8 +133,7 @@ export const tokens: Token[] = [
     name: 'HYPE',
     fullName: 'Hyperliquid',
     decimals: 6,
-    pythPriceId:
-      '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b',
+    pythPriceId: '0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b',
     img: 'hype'
   },
   {
@@ -134,24 +141,21 @@ export const tokens: Token[] = [
     name: 'MOODENG',
     fullName: 'MOO DENG',
     decimals: 9,
-    pythPriceId:
-      '0xffff73128917a90950cd0473fd2551d7cd274fd5a6cc45641881bbcc6ee73417'
+    pythPriceId: '0xffff73128917a90950cd0473fd2551d7cd274fd5a6cc45641881bbcc6ee73417'
   },
   {
     address: PENGU,
     name: 'PENGU',
     fullName: 'Pudgy Penguins',
     decimals: 6,
-    pythPriceId:
-      '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
+    pythPriceId: '0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61'
   },
   {
     address: PUMP,
     name: 'PUMP',
     fullName: 'pump.fun',
     decimals: 6,
-    pythPriceId:
-      '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9',
+    pythPriceId: '0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9',
     img: 'pump'
   },
   {
@@ -159,8 +163,7 @@ export const tokens: Token[] = [
     name: 'SOL',
     fullName: 'Solana',
     decimals: 9,
-    pythPriceId:
-      '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
+    pythPriceId: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
     img: 'sol'
   },
   {
@@ -168,24 +171,21 @@ export const tokens: Token[] = [
     name: 'SUI',
     fullName: 'Sui',
     decimals: 9,
-    pythPriceId:
-      '0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744'
+    pythPriceId: '0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744'
   },
   {
     address: TRUMP,
     name: 'TRUMP',
     fullName: 'Official Trump',
     decimals: 6,
-    pythPriceId:
-      '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a'
+    pythPriceId: '0x879551021853eec7a7dc827578e8e69da7e4fa8148339aa0d3d5296405be4b1a'
   },
   {
     address: TSLA,
     name: 'TSLA',
     fullName: 'Tesla Inc.',
     decimals: 8,
-    pythPriceId:
-      '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1',
+    pythPriceId: '0x16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1',
     img: 'tsla'
   },
   {
@@ -210,8 +210,7 @@ export const landingPageDefaults = {
   pairName: 'ETH / USD',
   pairNameFull: 'Ethereum / US Dollar',
   pairToken: 'ETH',
-  pythPriceId:
-    '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
+  pythPriceId: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
   stake: (count: number) => `${count * 0.2} MON`,
   multiplier: 2,
   percentWinners: 50,
