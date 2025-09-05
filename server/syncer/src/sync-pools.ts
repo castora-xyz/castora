@@ -22,7 +22,7 @@ export const syncPools = async (job: Job): Promise<void> => {
     logger.info('\n');
   }
   logger.info(cryptoPoolIds, 'Live Crypto PoolIds');
-  await firestore(chain).doc('/live/crypto').set({ poolIds: cryptoPoolIds }, { merge: true });
+  await firestore.doc(`/chains/${chain}/live/crypto`).set({ poolIds: cryptoPoolIds }, { merge: true });
 
   logger.info(`\n\nStarting Sync for Live Stock Pools on chain: ${chain}`);
   const stocksSeeds = getStocksSeeds(chain);
@@ -36,5 +36,5 @@ export const syncPools = async (job: Job): Promise<void> => {
     logger.info('\n');
   }
   logger.info(stocksPoolIds, 'Live Stocks PoolIds');
-  await firestore(chain).doc('/live/stocks').set({ poolIds: stocksPoolIds }, { merge: true });
+  await firestore.doc(`/chains/${chain}/live/stocks`).set({ poolIds: stocksPoolIds }, { merge: true });
 };

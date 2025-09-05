@@ -1,9 +1,8 @@
 import { getAnalytics, logEvent, setAnalyticsCollectionEnabled, setUserId } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { Auth, getAuth, onAuthStateChanged, signInWithCustomToken, signOut, Unsubscribe } from 'firebase/auth';
-import { Firestore, getFirestore as rawGetFirestore } from 'firebase/firestore';
+import { Firestore, getFirestore } from 'firebase/firestore';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { Chain, monadTestnet } from 'viem/chains';
 import { useAccount } from 'wagmi';
 import { useAuth } from './AuthContext';
 import { firebaseConfig } from './firebase';
@@ -11,19 +10,17 @@ import { useServer } from './ServerContext';
 
 interface FirebaseContextProps {
   auth: Auth;
-  getFirestore: (name?: string) => Firestore;
+  firestore: Firestore;
   recordEvent: (event: string, params?: any) => void;
   recordNavigation: (path: string, name: string) => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextProps>({
   auth: {} as Auth,
-  getFirestore: () => ({} as Firestore),
+  firestore: {} as Firestore,
   recordEvent: () => {},
   recordNavigation: () => {}
 });
-
-export const getFirestoreName = (chain: Chain) => ({ [monadTestnet.name]: 'monadtestnet' }[chain.name]);
 
 export const useFirebase = () => useContext(FirebaseContext);
 
@@ -33,13 +30,10 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const auth = getAuth(app);
   const authUnsub = useRef<Unsubscribe | null>(null);
   const analytics = getAnalytics(app);
+  const firestore = getFirestore(app);
   const { signature } = useAuth();
   const [isFirebaseAuthReady, setIsFirebaseAuthReady] = useState(false);
   const server = useServer();
-
-  // To use default firestore, don't pass a name. Otherwise
-  // send in the chain of choice to use its own firestore database
-  const getFirestore = (name?: string) => (name ? rawGetFirestore(name) : rawGetFirestore());
 
   const handleAuth = async () => {
     if (!isFirebaseAuthReady) return;
@@ -112,7 +106,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FirebaseContext.Provider value={{ auth, getFirestore, recordEvent, recordNavigation }}>
+    <FirebaseContext.Provider value={{ auth, firestore, recordEvent, recordNavigation }}>
       {children}
     </FirebaseContext.Provider>
   );

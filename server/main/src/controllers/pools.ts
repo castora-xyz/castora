@@ -7,7 +7,7 @@ import { Chain, firestore, logger, queueJob } from '@castora/shared';
  * @returns {Array} The live crypto poolIds of the chain.
  */
 export const getCryptoPoolIds = async (chain: Chain): Promise<number[]> => {
-  const snap = await firestore(chain).doc('/live/crypto').get();
+  const snap = await firestore.doc(`/chains/${chain}/live/crypto`).get();
   if (snap.exists) {
     const { poolIds } = snap.data()!;
     return poolIds ?? [];
@@ -23,7 +23,7 @@ export const getCryptoPoolIds = async (chain: Chain): Promise<number[]> => {
  * @returns {Array} The live stock poolIds of the chain.
  */
 export const getStocksPoolIds = async (chain: Chain): Promise<number[]> => {
-  const snap = await firestore(chain).doc('/live/stocks').get();
+  const snap = await firestore.doc(`/chains/${chain}/live/stocks`).get();
   if (snap.exists) {
     const { poolIds } = snap.data()!;
     return poolIds ?? [];

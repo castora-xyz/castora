@@ -10,10 +10,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
 
   // Verify the token against the user's wallet address. If the token is valid,
   // it will be found in the user's document.
-  const pendingsSnap = await firestore()
-    .collection('users')
-    .where('pendingTelegramAuthToken', '==', token)
-    .get();
+  const pendingsSnap = await firestore.collection('users').where('pendingTelegramAuthToken', '==', token).get();
   if (pendingsSnap.empty) return ctx.reply('⚠️ Error. Please restart linking.');
 
   const userSnap = pendingsSnap.docs[0];
@@ -46,9 +43,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
   );
 
   // Globally increment telegram auth counts.
-  await firestore()
-    .doc('/counts/counts')
-    .set({ totalTelegramAuthCounts: FieldValue.increment(1) }, { merge: true });
+  await firestore.doc('/counts/counts').set({ totalTelegramAuthCounts: FieldValue.increment(1) }, { merge: true });
 
   logger.info(`🎉 User ${userWalletAddress} linked Telegram ID ${ctx.from.id}`);
 

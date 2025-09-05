@@ -81,17 +81,15 @@ export const getNotifyWinnerJob = (bot: Bot) => {
     // Increment global stats on the pool if there were notifications.
     if (progress.notified > 0) {
       try {
-        await firestore()
-          .doc('/counts/counts')
-          .set(
-            {
-              totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
-              perChainTelegramNotifiedCount: {
-                [chain]: FieldValue.increment(progress.notified)
-              }
-            },
-            { merge: true }
-          );
+        await firestore.doc('/counts/counts').set(
+          {
+            totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
+            perChainTelegramNotifiedCount: {
+              [chain]: FieldValue.increment(progress.notified)
+            }
+          },
+          { merge: true }
+        );
         logger.info(`📝 Incremented global total and perChain telegram notified count by: ${progress.notified}`);
       } catch (e) {
         logger.error('❌ Failed to increment global total and perChain telegram notified counts.');

@@ -63,7 +63,7 @@ export const TelegramNotificationsButton = () => {
                     className="p-ripple px-4 py-2 rounded-full border border-errors-default text-errors-default text-sm"
                     onClick={async () => {
                       await removeLink();
-                      overlayRef.current!.toggle(null);
+                      overlayRef.current?.toggle(null);
                       recordEvent('clicked_remove_telegram_link');
                     }}
                   >

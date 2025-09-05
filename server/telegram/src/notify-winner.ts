@@ -11,7 +11,7 @@ const shortenAddress = (str: string) => {
 
 export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: string): Promise<boolean> => {
   // Check if the winner has a Telegram ID
-  const userRef = firestore().doc(`/users/${winner}`);
+  const userRef = firestore.doc(`/users/${winner}`);
   const userSnap = await userRef.get();
   if (!userSnap.exists) return false;
   const userData = userSnap.data();

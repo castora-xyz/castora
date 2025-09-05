@@ -21,7 +21,7 @@ export const useTelegram = () => useContext(TelegramContext);
 
 export const TelegramProvider = ({ children }: { children: ReactNode }) => {
   const { signature } = useAuth();
-  const { auth, getFirestore } = useFirebase();
+  const { auth, firestore } = useFirebase();
 
   const server = useServer();
   const { toastInfo } = useToast();
@@ -53,7 +53,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
     return onAuthStateChanged(auth, async (user) => {
       firestoreUnsubRef.current?.();
       if (user) {
-        firestoreUnsubRef.current = onSnapshot(doc(getFirestore(), `/users/${user.uid}`), (doc) => {
+        firestoreUnsubRef.current = onSnapshot(doc(firestore, `/users/${user.uid}`), (doc) => {
           setHasLinked(doc.exists() ? !!doc.data()['telegramId'] : false);
           setIsLoading(false);
         });

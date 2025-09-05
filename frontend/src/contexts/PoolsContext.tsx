@@ -1,8 +1,9 @@
-import { WriteContractStatus, getFirestoreName, useCache, useContract, useFirebase, useToast } from '@/contexts';
+import { WriteContractStatus, useCache, useContract, useFirebase, useToast } from '@/contexts';
 import { Pool, PoolSeeds } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
+import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains } from 'wagmi';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
@@ -53,7 +54,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const cache = useCache();
   const [defaultChain] = useChains();
   const { castoraAddress, readContract, writeContract } = useContract();
-  const { getFirestore: rawGetFirestore, recordEvent } = useFirebase();
+  const { firestore, recordEvent } = useFirebase();
   const { toastError, toastSuccess } = useToast();
 
   const [isFetchingLiveStocks, setIsFetchingLiveStocks] = useState(true);
@@ -63,7 +64,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [liveStocksPools, setLiveStocksPools] = useState<Pool[]>([]);
   const [liveStocksPoolIds, setLiveStocksPoolIds] = useState<number[]>([]);
 
-  const getFirestore = () => rawGetFirestore(getFirestoreName(currentChain ?? defaultChain));
+  const getChain = () => currentChain ?? defaultChain;
+  const getChainName = () => ({ [monadTestnet.id]: 'monadtestnet' }[getChain().id]);
 
   /**
    * Claims the winnings of a winner from a pool.
@@ -90,7 +92,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_winnings', { poolId, predictionId });
-          const explorerUrl = `${(currentChain ?? defaultChain).blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Withdrawal Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -122,7 +124,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
-          const explorerUrl = `${(currentChain ?? defaultChain).blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Bulk Withdrawals Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -133,7 +135,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchOne = async (poolId: number) => {
     try {
-      const key = `chain::${(currentChain ?? defaultChain).id}::pool::${poolId}`;
+      const key = `chain::${getChain().id}::pool::${poolId}`;
       let pool = await cache.retrieve(key);
       if (pool) {
         // Necessary to restore callable methods on retrieved instance
@@ -226,7 +228,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
             poolId,
             predictionIds
           });
-          const explorerUrl = `${(currentChain ?? defaultChain).blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Prediction Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -244,7 +246,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [liveCryptoPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(getFirestore(), '/live/stocks'), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/stocks`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -257,7 +259,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(getFirestore(), '/live/crypto'), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/crypto`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {

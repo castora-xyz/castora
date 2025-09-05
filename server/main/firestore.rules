@@ -6,11 +6,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
     
-   	match /live/crypto {
+   	match /chains/{document=**}/live/crypto {
     	allow get: if true;
     }
     
-   	match /live/stocks {
+   	match /chains/{document=**}/live/stocks {
     	allow get: if true;
     }
     

@@ -22,8 +22,6 @@ initializeApp({
   storageBucket: 'castora-xyz.firebasestorage.app'
 });
 
-// To use default firestore, don't pass a chain. Otherwise
-// send in the chain of choice to use its own firestore database
-export const firestore = (chain?: Chain) => (chain ? getFirestore(chain) : getFirestore());
+export const firestore = getFirestore();
 export const firebaseAuth = getAuth();
 export const storage = getStorage();
