@@ -21,8 +21,10 @@ interface PoolsContextProps {
   ) => Observable<WriteContractPoolStatus>;
   liveCryptoPools: Pool[];
   liveStocksPools: Pool[];
+  liveCommunityPools: Pool[];
   isFetchingLiveCrypto: boolean;
   isFetchingLiveStocks: boolean;
+  isFetchingLiveCommunity: boolean;
   isValidPoolId: (poolId: any) => Promise<boolean>;
   fetchOne: (poolId: number) => Promise<Pool | null>;
   predict: (
@@ -40,8 +42,10 @@ const PoolsContext = createContext<PoolsContextProps>({
   claimWinningsBulk: () => new Observable(),
   liveCryptoPools: [],
   liveStocksPools: [],
+  liveCommunityPools: [],
   isFetchingLiveCrypto: true,
   isFetchingLiveStocks: true,
+  isFetchingLiveCommunity: true,
   isValidPoolId: async () => false,
   fetchOne: async () => null,
   predict: () => new Observable()
@@ -59,10 +63,13 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const [isFetchingLiveStocks, setIsFetchingLiveStocks] = useState(true);
   const [isFetchingLiveCrypto, setIsFetchingLiveCrypto] = useState(true);
+  const [isFetchingLiveCommunity, setIsFetchingLiveCommunity] = useState(true);
   const [liveCryptoPools, setLiveCryptoPools] = useState<Pool[]>([]);
   const [liveCryptoPoolIds, setLiveCryptoPoolIds] = useState<number[]>([]);
   const [liveStocksPools, setLiveStocksPools] = useState<Pool[]>([]);
   const [liveStocksPoolIds, setLiveStocksPoolIds] = useState<number[]>([]);
+  const [liveCommunityPools, setLiveCommunityPools] = useState<Pool[]>([]);
+  const [liveCommunityPoolIds, setLiveCommunityPoolIds] = useState<number[]>([]);
 
   const getChain = () => currentChain ?? defaultChain;
   const getChainName = () => ({ [monadTestnet.id]: 'monadtestnet' }[getChain().id]);
@@ -278,8 +285,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         claimWinningsBulk,
         liveStocksPools,
         liveCryptoPools,
+        liveCommunityPools,
         isFetchingLiveStocks,
         isFetchingLiveCrypto,
+        isFetchingLiveCommunity,
         isValidPoolId,
         fetchOne,
         predict

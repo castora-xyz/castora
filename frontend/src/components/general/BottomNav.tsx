@@ -20,7 +20,7 @@ export const BottomNav = () => {
             className={({ isActive }) =>
               'p-ripple py-2 px-5 rounded-md flex flex-col justify-center items-center ' +
               `${
-                isActive || location.pathname.includes('pool')
+                isActive || location.pathname.includes('pool') || location.pathname.includes('stocks') || location.pathname.includes('community')
                   ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
                   : 'text-text-subtitle stroke-text-subtitle'
               }`
@@ -28,23 +28,6 @@ export const BottomNav = () => {
           >
             <RectangleStack className="w-6 h-6" />
             <span>Pools</span>
-            <Ripple />
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/stocks"
-            className={({ isActive }) =>
-              'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
-              `${
-                isActive
-                  ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
-                  : 'text-text-subtitle stroke-text-subtitle'
-              }`
-            }
-          >
-            <Briefcase className="w-6 h-6" />
-            <span>Stocks</span>
             <Ripple />
           </NavLink>
         </li>
@@ -71,7 +54,7 @@ export const BottomNav = () => {
             className={({ isActive }) =>
               'p-ripple py-2 px-4 rounded-md flex flex-col justify-center items-center ' +
               `${
-                isActive
+                isActive || location.pathname.includes('activity') || location.pathname.includes('predictions')
                   ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
                   : 'text-text-subtitle stroke-text-subtitle'
               }`

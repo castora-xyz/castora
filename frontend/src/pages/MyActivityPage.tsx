@@ -15,6 +15,7 @@ import ms from 'ms';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
+import { TabView, TabPanel } from 'primereact/tabview';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -47,6 +48,7 @@ export const MyActivityPage = () => {
   );
   const [grouped, setGrouped] = useState<{ [key: number]: Activity[] }>({});
   const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState(0);
 
   const isPredictionsRoute = location.pathname.includes('predictions');
 
@@ -170,167 +172,208 @@ export const MyActivityPage = () => {
           </Link>
         </div>
       ) : (
-        <div className="md:flex md:flex-row-reverse md:gap-8">
-          <div className="md:basis-1/3 md:relative">
-            <div className="md:sticky md:top-0 max-md:mb-16">
-              <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-                Open Predictions
-              </p>
-
-              {openActivities.length === 0 ? (
-                <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border-2 sm:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-2xl ">
-                  <p className="max-md:text-lg mb-8">
-                    You have no predictions in currently Open Pools. Join a pool
-                    by making a prediction.
+        <TabView
+          activeIndex={activeTab}
+          onTabChange={(e) => setActiveTab(e.index)}
+          pt={{
+            root: { className: 'w-full' },
+            navContainer: { className: 'mb-6' },
+            nav: { className: 'flex border-b border-border-default dark:border-surface-subtle' },
+            inkbar: { className: 'bg-primary-default' }
+          }}
+        >
+          <TabPanel
+            header="My Predictions"
+            pt={{
+              headerAction: { className: 'px-4 py-2 text-text-subtitle hover:text-primary-default' },
+              headerTitle: { className: 'font-medium' }
+            }}
+          >
+            <div className="md:flex md:flex-row-reverse md:gap-8">
+              <div className="md:basis-1/3 md:relative">
+                <div className="md:sticky md:top-0 max-md:mb-16">
+                  <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
+                    Open Predictions
                   </p>
-                  <Link
-                    to="/pools"
-                    className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-                  >
-                    Predict Now
-                    <Ripple />
-                  </Link>
-                </div>
-              ) : (
-                <>
-                  {openActivities.map(
-                    ({
-                      pool: { poolId, seeds },
-                      prediction: {
-                        id: predictionId,
-                        price: predictionPrice,
-                        time
-                      }
-                    }) => (
-                      <div
-                        key={`${poolId} ${predictionId}`}
-                        className="rounded-2xl border-2 border-surface-subtle p-4 flex justify-between items-center flex-wrap gap-4 mb-4"
+
+                  {openActivities.length === 0 ? (
+                    <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border-2 sm:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-2xl ">
+                      <p className="max-md:text-lg mb-8">
+                        You have no predictions in currently Open Pools. Join a pool
+                        by making a prediction.
+                      </p>
+                      <Link
+                        to="/pools"
+                        className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                       >
-                        <p>
-                          {seeds.predictionTokenDetails.name} @{' '}
-                          {predictionPrice}
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            to={`/pool/${poolId}`}
-                            className="p-ripple rounded-full"
+                        Predict Now
+                        <Ripple />
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      {openActivities.map(
+                        ({
+                          pool: { poolId, seeds },
+                          prediction: {
+                            id: predictionId,
+                            price: predictionPrice,
+                            time
+                          }
+                        }) => (
+                          <div
+                            key={`${poolId} ${predictionId}`}
+                            className="rounded-2xl border-2 border-surface-subtle p-4 flex justify-between items-center flex-wrap gap-4 mb-4"
                           >
-                            <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
-                              Pool ID: {poolId}
+                            <p>
+                              {seeds.predictionTokenDetails.name} @{' '}
+                              {predictionPrice}
                             </p>
-                            <Ripple />
-                          </Link>
 
-                          <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
-                            Prediction ID: {predictionId}
-                          </p>
-                        </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                to={`/pool/${poolId}`}
+                                className="p-ripple rounded-full"
+                              >
+                                <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
+                                  Pool ID: {poolId}
+                                </p>
+                                <Ripple />
+                              </Link>
 
-                        {seeds.snapshotTime > now && (
-                          <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-                            <CountdownNumbers timestamp={seeds.snapshotTime} />
-                          </p>
-                        )}
+                              <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
+                                Prediction ID: {predictionId}
+                              </p>
+                            </div>
 
-                        <Tooltip target=".prediction-time" />
-                        <p
-                          className="prediction-time text-text-caption cursor-context-menu"
-                          data-pr-tooltip={`Prediction Time: ${
-                            `${new Date(time * 1000)}`.split(' GMT')[0]
-                          }`}
-                        >
-                          {ms((now - time) * 1000)} ago
+                            {seeds.snapshotTime > now && (
+                              <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
+                                <CountdownNumbers timestamp={seeds.snapshotTime} />
+                              </p>
+                            )}
+
+                            <Tooltip target=".prediction-time" />
+                            <p
+                              className="prediction-time text-text-caption cursor-context-menu"
+                              data-pr-tooltip={`Prediction Time: ${
+                                `${new Date(time * 1000)}`.split(' GMT')[0]
+                              }`}
+                            >
+                              {ms((now - time) * 1000)} ago
+                            </p>
+                          </div>
+                        )
+                      )}
+
+                      <div className="border-2 border-surface-subtle rounded-2xl py-16 max-xs:px-4 max-md:px-16 md:px-4 lg:px-8 gap-4 text-center">
+                        <p className="max-md:text-lg mb-8">
+                          You can make multiple predictions in the same pools.
                         </p>
+                        <Link
+                          to="/pools"
+                          className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+                        >
+                          Predict Now
+                          <Ripple />
+                        </Link>
                       </div>
-                    )
+                    </>
                   )}
+                </div>
+              </div>
 
-                  <div className="border-2 border-surface-subtle rounded-2xl py-16 max-xs:px-4 max-md:px-16 md:px-4 lg:px-8 gap-4 text-center">
-                    <p className="max-md:text-lg mb-8">
-                      You can make multiple predictions in the same pools.
-                    </p>
-                    <Link
-                      to="/pools"
-                      className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-                    >
-                      Predict Now
-                      <Ripple />
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+              <div className="md:basis-2/3">
+                <div className="flex gap-4 justify-between flex-wrap items-center mb-4">
+                  <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
+                    My Activity
+                  </p>
 
-          <div className="md:basis-2/3">
-            <div className="flex gap-4 justify-between flex-wrap items-center mb-4">
-              <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-                My Activity
-              </p>
-
-              <div className="flex gap-3 items-center w-fit">
-                {unclaimedWins.length > 1 && (
-                  <ClaimAllButton
-                    pools={unclaimedWins.map(({ pool }) => pool)}
-                    predictions={unclaimedWins.map(
-                      ({ prediction }) => prediction
+                  <div className="flex gap-3 items-center w-fit">
+                    {unclaimedWins.length > 1 && (
+                      <ClaimAllButton
+                        pools={unclaimedWins.map(({ pool }) => pool)}
+                        predictions={unclaimedWins.map(
+                          ({ prediction }) => prediction
+                        )}
+                        onSuccess={fetchMyActivity}
+                      />
                     )}
-                    onSuccess={fetchMyActivity}
+                  </div>
+                </div>
+
+                {activityCount && currentPage !== null && (
+                  <Paginator
+                    first={paginators.rowsPerPage * currentPage}
+                    rows={paginators.rowsPerPage}
+                    rowsPerPageOptions={rowsPerPageOptions}
+                    totalRecords={activityCount}
+                    onPageChange={(e) => {
+                      paginators.updateRowsPerPage(e.rows);
+                      updateCurrentPage(e.page);
+                      fetchMyActivity(e.page, e.rows);
+                    }}
+                    template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
+                    currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                    className="rounded-2xl bg-surface-subtle mb-6"
+                    pt={{
+                      RPPDropdown: {
+                        root: { className: 'bg-app-bg' },
+                        panel: { className: 'bg-app-bg' }
+                      }
+                    }}
                   />
                 )}
+
+                <Accordion multiple activeIndex={[0, ...expandedGroups]}>
+                  {Object.entries(grouped).map(([poolId, activities]) => (
+                    <AccordionTab
+                      header={
+                        <span className="font-normal">{`Pool ID: ${poolId}`}</span>
+                      }
+                      pt={{
+                        root: { className: 'bg-app-bg mb-4' },
+                        header: { className: 'rounded-2xl' },
+                        content: { className: 'bg-app-bg px-0' }
+                      }}
+                      key={poolId}
+                    >
+                      {activities.map(({ pool, prediction }) => (
+                        <ActivityCard
+                          key={pool.poolId + ' ' + prediction.id}
+                          pool={pool}
+                          prediction={prediction}
+                          refresh={fetchMyActivity}
+                        />
+                      ))}
+                    </AccordionTab>
+                  ))}
+                </Accordion>
               </div>
             </div>
+          </TabPanel>
 
-            {activityCount && currentPage !== null && (
-              <Paginator
-                first={paginators.rowsPerPage * currentPage}
-                rows={paginators.rowsPerPage}
-                rowsPerPageOptions={rowsPerPageOptions}
-                totalRecords={activityCount}
-                onPageChange={(e) => {
-                  paginators.updateRowsPerPage(e.rows);
-                  updateCurrentPage(e.page);
-                  fetchMyActivity(e.page, e.rows);
-                }}
-                template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
-                currentPageReportTemplate="{first} to {last} of {totalRecords}"
-                className="rounded-2xl bg-surface-subtle mb-6"
-                pt={{
-                  RPPDropdown: {
-                    root: { className: 'bg-app-bg' },
-                    panel: { className: 'bg-app-bg' }
-                  }
-                }}
-              />
-            )}
-
-            <Accordion multiple activeIndex={[0, ...expandedGroups]}>
-              {Object.entries(grouped).map(([poolId, activities]) => (
-                <AccordionTab
-                  header={
-                    <span className="font-normal">{`Pool ID: ${poolId}`}</span>
-                  }
-                  pt={{
-                    root: { className: 'bg-app-bg mb-4' },
-                    header: { className: 'rounded-2xl' },
-                    content: { className: 'bg-app-bg px-0' }
-                  }}
-                  key={poolId}
-                >
-                  {activities.map(({ pool, prediction }) => (
-                    <ActivityCard
-                      key={pool.poolId + ' ' + prediction.id}
-                      pool={pool}
-                      prediction={prediction}
-                      refresh={fetchMyActivity}
-                    />
-                  ))}
-                </AccordionTab>
-              ))}
-            </Accordion>
-          </div>
-        </div>
+          <TabPanel
+            header="My Created Pools"
+            pt={{
+              headerAction: { className: 'px-4 py-2 text-text-subtitle hover:text-primary-default' },
+              headerTitle: { className: 'font-medium' }
+            }}
+          >
+            <div className="flex flex-col items-center justify-center grow text-center py-16">
+              <h2 className="text-2xl font-bold mb-4">My Created Pools</h2>
+              <p className="text-lg mb-8 max-w-md">
+                Pools that you have created will appear here. Create your first community pool to get started!
+              </p>
+              <Link
+                to="/pools/community/create"
+                className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+              >
+                Create Community Pool
+                <Ripple />
+              </Link>
+            </div>
+          </TabPanel>
+        </TabView>
       )}
     </div>
   );

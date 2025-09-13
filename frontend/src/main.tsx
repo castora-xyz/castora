@@ -4,6 +4,7 @@ import {
   ContractProvider,
   FilterCryptoPoolsProvider,
   FilterStockPoolsProvider,
+  FilterCommunityPoolsProvider,
   FirebaseProvider,
   MyActivityProvider,
   PaginatorsProvider,
@@ -36,13 +37,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <ContractProvider>
                           <FilterCryptoPoolsProvider>
                             <FilterStockPoolsProvider>
-                              <PoolsProvider>
-                                <PoolsShimmerProvider>
-                                  <MyActivityProvider>
-                                    <App />
-                                  </MyActivityProvider>
-                                </PoolsShimmerProvider>
-                              </PoolsProvider>
+                              <FilterCommunityPoolsProvider>
+                                <PoolsProvider>
+                                  <PoolsShimmerProvider>
+                                    <MyActivityProvider>
+                                      <App />
+                                    </MyActivityProvider>
+                                  </PoolsShimmerProvider>
+                                </PoolsProvider>
+                              </FilterCommunityPoolsProvider>
                             </FilterStockPoolsProvider>
                           </FilterCryptoPoolsProvider>
                         </ContractProvider>

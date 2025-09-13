@@ -22,20 +22,10 @@ export const Header = () => {
             to="/pools"
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
+              `${isActive || location.pathname.includes('pools') || location.pathname.includes('stocks') || location.pathname.includes('community') ? 'text-primary-darker dark:text-primary-default' : ''}`
             }
           >
             Pools
-            <Ripple />
-          </NavLink>
-          <NavLink
-            to="/stocks"
-            className={({ isActive }) =>
-              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
-            }
-          >
-            Stocks
             <Ripple />
           </NavLink>
           <NavLink
@@ -53,7 +43,7 @@ export const Header = () => {
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full  ' +
               `${
-                isActive || location.pathname.includes('predictions')
+                isActive || location.pathname.includes('activity') || location.pathname.includes('predictions')
                   ? 'text-primary-darker dark:text-primary-default'
                   : ''
               }`

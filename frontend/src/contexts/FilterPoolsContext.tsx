@@ -5,6 +5,9 @@ export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
 export const ALL_CRYPTO_POOL_LIFES = ['6h', '24h'];
+export const ALL_COMMUNITY_PREDICTION_TOKENS = ['BTC', 'ETH', 'SOL', 'PUMP', 'HYPE', 'AAPL', 'TSLA', 'CRCL', 'MON', 'gMON', 'aprMON'];
+export const ALL_COMMUNITY_STAKE_TOKENS = ['MON', 'USDC'];
+export const ALL_COMMUNITY_MULTIPLIERS = ['x2', 'x3', 'x4', 'x5', 'x10'];
 
 export interface FilterStockPoolsProps {
   predictionTokens: string[];
@@ -14,6 +17,11 @@ export interface FilterStockPoolsProps {
 export interface FilterCryptoPoolsProps extends FilterStockPoolsProps {
   stakeTokens: string[];
   poolLifes: string[];
+}
+
+export interface FilterCommunityPoolsProps extends FilterStockPoolsProps {
+  stakeTokens: string[];
+  multipliers: string[];
 }
 
 interface FilterStockPoolsContextProps extends FilterStockPoolsProps {
@@ -46,9 +54,29 @@ const FilterCryptoPoolsContext = createContext<FilterCryptoPoolsContextProps>({
   toggleStatus: () => {}
 });
 
+interface FilterCommunityPoolsContextProps extends FilterCommunityPoolsProps {
+  togglePredictionToken: (token: string) => void;
+  toggleStakeToken: (token: string) => void;
+  toggleStatus: (status: string) => void;
+  toggleMultiplier: (multiplier: string) => void;
+}
+
+const FilterCommunityPoolsContext = createContext<FilterCommunityPoolsContextProps>({
+  predictionTokens: [],
+  stakeTokens: [],
+  statuses: [],
+  multipliers: [],
+  togglePredictionToken: () => {},
+  toggleStakeToken: () => {},
+  toggleStatus: () => {},
+  toggleMultiplier: () => {}
+});
+
 export const useFilterStockPools = () => useContext(FilterStockPoolsContext);
 
 export const useFilterCryptoPools = () => useContext(FilterCryptoPoolsContext);
+
+export const useFilterCommunityPools = () => useContext(FilterCommunityPoolsContext);
 
 const retrieveOne = (key: string, prop: string, all: any[], initial: any[]): any[] => {
   const saved = localStorage.getItem(`castora::filter-v3-${key}pools::${prop}`);
@@ -207,5 +235,93 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
     >
       {children}
     </FilterCryptoPoolsContext.Provider>
+  );
+};
+
+export const FilterCommunityPoolsProvider = ({ children }: { children: ReactNode }) => {
+  const [predictionTokens, setPredictionTokens] = useState(
+    retrieveOne('community', 'predictiontokens', ALL_COMMUNITY_PREDICTION_TOKENS, ALL_COMMUNITY_PREDICTION_TOKENS)
+  );
+  const [stakeTokens, setStakeTokens] = useState(
+    retrieveOne('community', 'staketokens', ALL_COMMUNITY_STAKE_TOKENS, ALL_COMMUNITY_STAKE_TOKENS)
+  );
+  const [statuses, setStatuses] = useState(retrieveOne('community', 'statuses', ALL_STATUSES, ['Open']));
+  const [multipliers, setMultipliers] = useState(
+    retrieveOne('community', 'multipliers', ALL_COMMUNITY_MULTIPLIERS, ALL_COMMUNITY_MULTIPLIERS)
+  );
+
+  const togglePredictionToken = (token: string) => {
+    setPredictionTokens(
+      predictionTokens.includes(token) ? (prev) => prev.filter((t) => t !== token) : (prev) => [...prev, token]
+    );
+  };
+
+  const toggleStakeToken = (token: string) => {
+    setStakeTokens(
+      stakeTokens.includes(token) ? (prev) => prev.filter((t) => t !== token) : (prev) => [...prev, token]
+    );
+  };
+
+  const toggleStatus = (status: string) => {
+    setStatuses(statuses.includes(status) ? (prev) => prev.filter((s) => s !== status) : (prev) => [...prev, status]);
+  };
+
+  const toggleMultiplier = (multiplier: string) => {
+    setMultipliers(
+      multipliers.includes(multiplier) ? (prev) => prev.filter((m) => m !== multiplier) : (prev) => [...prev, multiplier]
+    );
+  };
+
+  const retrieve = () => {
+    setPredictionTokens(
+      retrieveOne('community', 'predictiontokens', ALL_COMMUNITY_PREDICTION_TOKENS, ALL_COMMUNITY_PREDICTION_TOKENS)
+    );
+    setStakeTokens(retrieveOne('community', 'staketokens', ALL_COMMUNITY_STAKE_TOKENS, ALL_COMMUNITY_STAKE_TOKENS));
+    setStatuses(retrieveOne('community', 'statuses', ALL_STATUSES, ['Open']));
+    setMultipliers(retrieveOne('community', 'multipliers', ALL_COMMUNITY_MULTIPLIERS, ALL_COMMUNITY_MULTIPLIERS));
+  };
+
+  useEffect(() => {
+    save('community', 'predictiontokens', predictionTokens);
+  }, [predictionTokens]);
+
+  useEffect(() => {
+    save('community', 'staketokens', stakeTokens);
+  }, [stakeTokens]);
+
+  useEffect(() => {
+    save('community', 'statuses', statuses);
+  }, [statuses]);
+
+  useEffect(() => {
+    save('community', 'multipliers', multipliers);
+  }, [multipliers]);
+
+  useEffect(() => {
+    retrieve();
+    window.addEventListener('storage', retrieve);
+
+    // Remove saved older filters from browser
+    const lsKeys = Object.keys(localStorage);
+    for (let key of lsKeys) {
+      if (key.startsWith('castora::filtercommunitypools')) localStorage.removeItem(key);
+    }
+  }, []);
+
+  return (
+    <FilterCommunityPoolsContext.Provider
+      value={{
+        predictionTokens,
+        stakeTokens,
+        statuses,
+        multipliers,
+        togglePredictionToken,
+        toggleStakeToken,
+        toggleStatus,
+        toggleMultiplier
+      }}
+    >
+      {children}
+    </FilterCommunityPoolsContext.Provider>
   );
 };

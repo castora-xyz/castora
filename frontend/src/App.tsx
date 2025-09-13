@@ -4,10 +4,18 @@ import {
   LandingPage,
   LeaderboardPage,
   LiveCryptoPoolsPage,
+  LiveCryptoPoolsPageV2,
   LiveStocksPoolsPage,
+  LiveStocksPoolsPageV2,
+  LiveCommunityPoolsPage,
   MyActivityPage,
+  MyPredictionsPage,
+  MyCreatedPoolsPage,
+  ActivityPage,
   NotFoundPage,
-  PoolDetailPage
+  PoolDetailPage,
+  PoolsPage,
+  CreateCommunityPoolPage
 } from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
@@ -66,12 +74,18 @@ const router = createBrowserRouter(
     >
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<LiveCryptoPoolsPage />} />
+        <Route path="pools" element={<PoolsPage />} />
+        <Route path="pools/crypto" element={<LiveCryptoPoolsPageV2 />} />
+        <Route path="pools/stocks" element={<LiveStocksPoolsPageV2 />} />
+        <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
+        <Route path="pools/community/create" element={<CreateCommunityPoolPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="predictions" element={<MyActivityPage />} />
         <Route path="stocks" element={<LiveStocksPoolsPage />} />
-        <Route path="activity" element={<MyActivityPage />} />
+        <Route path="activity" element={<ActivityPage />} />
+        <Route path="activity/predictions" element={<MyPredictionsPage />} />
+        <Route path="activity/created-pools" element={<MyCreatedPoolsPage />} />
       </Route>
     </Route>
   )
