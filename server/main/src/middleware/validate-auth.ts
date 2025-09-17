@@ -38,6 +38,7 @@ export const validateAuth = async ({ headers }: Request, res: Response, next: Ne
 
   let isVerified = false;
   try {
+    logger.info({ address: userWalletAddress, signature });
     isVerified = await verifyMessage({
       address: userWalletAddress as `0x${string}`,
       message: AUTH_MESSAGE,

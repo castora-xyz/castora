@@ -15,9 +15,9 @@ app.use(
     logger,
     customSuccessMessage: (req, res) =>
       `HTTP ${req.method} ${req.originalUrl} ${res.statusCode} - ${new Date().getTime() - res[startTime]}ms` +
-      ` :: ${req.headers['user-agent']}`,
+      ` :: ${req.headers['user-agent']} :: ${req.ip}`,
     customErrorMessage: (req, res, err) =>
-      `HTTP ${req.method} ${req.originalUrl} ${res.statusCode} - ${new Date().getTime() - res[startTime]}ms` +
+      `HTTP ${req.method} ${req.originalUrl} ${res.statusCode} - ${new Date().getTime() - res[startTime]}ms :: ${req.ip}` +
       ` :: ${req.headers['user-agent']} - Error: ${err.message}`
   })
 );
