@@ -1,9 +1,7 @@
 import {
   AAPL,
   aprMON,
-  BTC,
   Chain,
-  CONTRACT_ADDRESS_MONAD,
   CONTRACT_ADDRESS_SEPOLIA,
   CRCL,
   getContractAddress,
@@ -49,15 +47,7 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
 export const getCryptoSeeds = (chain: Chain) => {
   const sixHTimes = getCryptoTimes(6, 1);
   const twenty4HTimes = getCryptoTimes(12, 12);
-  const seeds: PoolSeeds[] = [
-    new PoolSeeds({
-      predictionToken: BTC,
-      stakeAmount: 5e17,
-      stakeToken: CONTRACT_ADDRESS_MONAD,
-      windowCloseTime: 1757548740,
-      snapshotTime: 1757807940
-    })
-  ];
+  const seeds: PoolSeeds[] = [];
 
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
     for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, PUMP, HYPE]) {
