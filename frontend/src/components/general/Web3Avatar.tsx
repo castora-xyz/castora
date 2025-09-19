@@ -6,7 +6,7 @@ export const Web3Avatar = ({ address, className }: { address: string; className?
 
   useEffect(() => {
     createWeb3Avatar(ref.current!, address);
-  }, []);
+  }, [address]);
 
   return <div ref={ref} className={className ?? 'w-8 h-8'}></div>;
 };
