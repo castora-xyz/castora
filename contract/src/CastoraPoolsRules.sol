@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import './Castora.sol';
 
 error InvalidPoolTimeInterval();
@@ -21,9 +24,15 @@ event UpdatedAllowedStakeAmount(address indexed token, uint256 amount, bool allo
 /// Emitted when the required time interval for pool timing validation is updated.
 event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
 
-contract CastoraPoolsRules is Ownable {
+/// @title CastoraPoolsRules - Pool Creation and Validation Rules for Castora
+/// @notice This upgradeable contract manages validation rules and permissions for pool creation in the Castora protocol.
+/// It controls which tokens can be used for staking and predictions, what stake amounts are allowed,
+/// and enforces timing constraints for pool windows and snapshots.
+/// @dev The contract is upgradeable using UUPS pattern and includes comprehensive validation functions
+/// that can either revert on failure or return boolean results for integration flexibility.
+contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   /// Required time interval in seconds for pool timing validation
-  uint256 public requiredTimeInterval = 5 * 60;
+  uint256 public requiredTimeInterval;
   /// Tracks which tokens are allowed for staking
   mapping(address => bool) public allowedStakeTokens;
   /// Tracks which tokens are allowed for predictions
@@ -31,11 +40,23 @@ contract CastoraPoolsRules is Ownable {
   /// Tracks which stake amounts are allowed per token
   mapping(address => mapping(uint256 => bool)) public allowedStakeAmounts;
 
-  constructor() Ownable(msg.sender) {}
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize() public initializer {
+    __Ownable_init(msg.sender);
+    __UUPSUpgradeable_init();
+    __ReentrancyGuard_init();
+    requiredTimeInterval = 5 * 60; // 5 minutes default
+  }
+
+  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
   /// Update the required time interval for pool times
   /// @param newInterval The new time interval in seconds
-  function updateRequiredTimeInterval(uint256 newInterval) external onlyOwner {
+  function updateRequiredTimeInterval(uint256 newInterval) external onlyOwner nonReentrant {
     uint256 oldInterval = requiredTimeInterval;
     requiredTimeInterval = newInterval;
     emit UpdatedRequiredTimeInterval(oldInterval, newInterval);
@@ -44,7 +65,7 @@ contract CastoraPoolsRules is Ownable {
   /// Set whether a stake token is allowed
   /// @param token The token address
   /// @param allowed Whether the token is allowed
-  function updateAllowedStakeToken(address token, bool allowed) external onlyOwner {
+  function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
     allowedStakeTokens[token] = allowed;
     emit UpdatedAllowedStakeToken(token, allowed);
   }
@@ -52,7 +73,7 @@ contract CastoraPoolsRules is Ownable {
   /// Set whether a prediction token is allowed
   /// @param token The token address
   /// @param allowed Whether the token is allowed
-  function updateAllowedPredictionToken(address token, bool allowed) external onlyOwner {
+  function updateAllowedPredictionToken(address token, bool allowed) external onlyOwner nonReentrant {
     allowedPredictionTokens[token] = allowed;
     emit UpdatedAllowedPredictionToken(token, allowed);
   }
@@ -61,7 +82,7 @@ contract CastoraPoolsRules is Ownable {
   /// @param token The stake token address
   /// @param amount The stake amount
   /// @param allowed Whether this amount is allowed
-  function updateAllowedStakeAmount(address token, uint256 amount, bool allowed) external onlyOwner {
+  function updateAllowedStakeAmount(address token, uint256 amount, bool allowed) external onlyOwner nonReentrant {
     allowedStakeAmounts[token][amount] = allowed;
     emit UpdatedAllowedStakeAmount(token, amount, allowed);
   }

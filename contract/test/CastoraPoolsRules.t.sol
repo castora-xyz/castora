@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
 import 'forge-std/Test.sol';
 import '../src/CastoraPoolsRules.sol';
 import '../src/cUSD.sol';
@@ -19,7 +20,8 @@ contract CastoraPoolsRulesTest is Test {
     user = makeAddr('user');
     mockToken = makeAddr('mockToken');
 
-    rules = new CastoraPoolsRules();
+    rules = CastoraPoolsRules(payable(address(new ERC1967Proxy(address(new CastoraPoolsRules()), ''))));
+    rules.initialize();
     cusd = new cUSD();
 
     // Initialize valid pool seeds for testing
@@ -490,5 +492,45 @@ contract CastoraPoolsRulesTest is Test {
     rules.updateAllowedStakeAmount(invalidIntervalSeeds.stakeToken, invalidIntervalSeeds.stakeAmount, true);
 
     assertFalse(rules.isValidCreatePool(invalidIntervalSeeds));
+  }
+
+  function testRevertWhenNotOwnerUpgrading() public {
+    address impl = address(new CastoraPoolsRules());
+    vm.prank(user);
+    vm.expectRevert();
+    rules.upgradeToAndCall(impl, '');
+  }
+
+  function testUpgrade() public {
+    // Store initial state
+    uint256 initialTimeInterval = rules.requiredTimeInterval();
+    address initialOwner = rules.owner();
+
+    // Allow some tokens and amounts
+    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.updateAllowedPredictionToken(mockToken, true);
+    rules.updateAllowedStakeAmount(address(cusd), 1000000, true);
+
+    // Verify initial state
+    assertTrue(rules.allowedStakeTokens(address(cusd)));
+    assertTrue(rules.allowedPredictionTokens(mockToken));
+    assertTrue(rules.allowedStakeAmounts(address(cusd), 1000000));
+
+    // Deploy new implementation
+    address newImpl = address(new CastoraPoolsRules());
+
+    // Upgrade the contract
+    rules.upgradeToAndCall(newImpl, '');
+
+    // Verify state is preserved after upgrade
+    assertEq(rules.requiredTimeInterval(), initialTimeInterval);
+    assertEq(rules.owner(), initialOwner);
+    assertTrue(rules.allowedStakeTokens(address(cusd)));
+    assertTrue(rules.allowedPredictionTokens(mockToken));
+    assertTrue(rules.allowedStakeAmounts(address(cusd), 1000000));
+
+    // Verify functionality still works after upgrade
+    rules.updateRequiredTimeInterval(10 * 60); // 10 minutes
+    assertEq(rules.requiredTimeInterval(), 10 * 60);
   }
 }
