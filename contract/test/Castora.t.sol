@@ -8,12 +8,38 @@ import 'forge-std/Test.sol';
 import '../src/Castora.sol';
 import '../src/cUSD.sol';
 
+contract MockSuccessfulHandler {
+  bool public wasProcessPoolCompletionCalled;
+  uint256 public lastProcessedPoolId;
+
+  function processPoolCompletion(uint256 poolId) external {
+    wasProcessPoolCompletionCalled = true;
+    lastProcessedPoolId = poolId;
+  }
+}
+
+contract MockFailingHandler {
+  bool public wasProcessPoolCompletionCalled;
+  uint256 public lastProcessedPoolId;
+
+  function processPoolCompletion(uint256 poolId) external {
+    wasProcessPoolCompletionCalled = true;
+    lastProcessedPoolId = poolId;
+    revert();
+  }
+}
+
+contract MockNonHandlerContract {}
+
 contract CastoraTest is Test {
   Castora castora;
   cUSD cusd;
   address owner;
   address feeCollector;
   address user;
+  MockSuccessfulHandler successfulHandler;
+  MockFailingHandler failingHandler;
+  MockNonHandlerContract nonHandlerContract;
   PoolSeeds seedsErc20Stake;
   PoolSeeds seedsNativeStake;
 
@@ -23,6 +49,10 @@ contract CastoraTest is Test {
     user = makeAddr('user');
 
     cusd = new cUSD();
+    successfulHandler = new MockSuccessfulHandler();
+    failingHandler = new MockFailingHandler();
+    nonHandlerContract = new MockNonHandlerContract();
+
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
     castora.initialize(feeCollector);
 
@@ -999,5 +1029,219 @@ contract CastoraTest is Test {
       assertEq(prediction.predictionPrice, 33333);
       assertEq(prediction.predicter, user);
     }
+  }
+
+  // ========== POOL COMPLETION HANDLER TESTS ==========
+
+  function testCompletePoolWithSuccessfulHandler() public {
+    // Set up successful handler as fee collector
+    castora.setFeeCollector(address(successfulHandler));
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fund the fee collector (handler contract) to receive fees
+    cusd.mint(address(successfulHandler), 0); // Just to ensure it can receive ERC20
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Complete pool - should successfully call processPoolCompletion
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Verify the handler was called
+    assertTrue(successfulHandler.wasProcessPoolCompletionCalled());
+    assertEq(successfulHandler.lastProcessedPoolId(), 1);
+
+    // Verify pool was completed despite handler call
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+    assertEq(pool.snapshotPrice, 95000000);
+  }
+
+  function testCompletePoolWithFailingHandler() public {
+    // Set up failing handler as fee collector
+    castora.setFeeCollector(address(failingHandler));
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fund the fee collector to receive fees
+    cusd.mint(address(failingHandler), 0);
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Complete pool - should NOT revert even though handler fails
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Since the handler reverts, state changes in the handler are reverted too
+    // So we can't check wasProcessPoolCompletionCalled - it will be false
+    // But we can verify that the pool was still completed despite handler failure
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+    assertEq(pool.snapshotPrice, 95000000);
+
+    // Verify that fees were transferred to the handler before it failed
+    assertGt(cusd.balanceOf(address(failingHandler)), 0);
+  }
+
+  function testCompletePoolWithNonHandlerContract() public {
+    // Set up non-handler contract as fee collector
+    castora.setFeeCollector(address(nonHandlerContract));
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fund the fee collector to receive fees
+    cusd.mint(address(nonHandlerContract), 0);
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Complete pool - should NOT revert even though contract doesn't implement interface
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Verify pool was completed despite interface mismatch
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+    assertEq(pool.snapshotPrice, 95000000);
+  }
+
+  function testCompletePoolWithEOAFeeCollector() public {
+    // Set up EOA as fee collector (code.length == 0)
+    address eoaFeeCollector = makeAddr('eoaFeeCollector');
+    castora.setFeeCollector(eoaFeeCollector);
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Complete pool - should NOT call processPoolCompletion since EOA has no code
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Verify pool was completed
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+    assertEq(pool.snapshotPrice, 95000000);
+
+    // Verify EOA received the fees
+    assertGt(cusd.balanceOf(eoaFeeCollector), 0);
+  }
+
+  function testCompletePoolHandlerCallWithMockCall() public {
+    // Use vm.mockCall to simulate specific handler behavior
+    address mockHandler = makeAddr('mockHandler');
+
+    // Deploy mock contract code to the address
+    vm.etch(mockHandler, type(MockSuccessfulHandler).creationCode);
+    castora.setFeeCollector(mockHandler);
+
+    // Mock the processPoolCompletion call to track it was called
+    vm.mockCall(
+      mockHandler, abi.encodeWithSelector(MockSuccessfulHandler.processPoolCompletion.selector, 1), abi.encode()
+    );
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fund the mock handler
+    cusd.mint(mockHandler, 0);
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Expect the processPoolCompletion call
+    vm.expectCall(mockHandler, abi.encodeWithSelector(MockSuccessfulHandler.processPoolCompletion.selector, 1));
+
+    // Complete pool
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Verify pool was completed
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+  }
+
+  function testCompletePoolHandlerCallWithRevertingMockCall() public {
+    // Use vm.mockCall to simulate a reverting handler
+    address mockHandler = makeAddr('mockHandler');
+
+    // Deploy mock contract code to the address
+    vm.etch(mockHandler, type(MockFailingHandler).creationCode);
+    castora.setFeeCollector(mockHandler);
+
+    // Mock the processPoolCompletion call to revert
+    vm.mockCallRevert(
+      mockHandler,
+      abi.encodeWithSelector(MockFailingHandler.processPoolCompletion.selector, 1),
+      'Mocked handler failure'
+    );
+
+    // Create pool and make prediction
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 1000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 1000000);
+    vm.prank(user);
+    castora.predict(1, 99999);
+
+    // Fund the mock handler
+    cusd.mint(mockHandler, 0);
+
+    // Fast forward to snapshot time
+    vm.warp(block.timestamp + 1201);
+
+    uint256[] memory winnerPredictions = new uint256[](1);
+    winnerPredictions[0] = 1;
+
+    // Complete pool - should NOT revert despite mocked revert
+    castora.completePool(1, 95000000, 1, 950000, winnerPredictions);
+
+    // Verify pool was completed despite handler failure
+    Pool memory pool = castora.getPool(1);
+    assertEq(pool.completionTime, block.timestamp);
+    assertEq(pool.snapshotPrice, 95000000);
   }
 }
