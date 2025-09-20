@@ -16,6 +16,7 @@ error InsufficientCreationFeeValue();
 error InvalidSplitFeesPercent();
 error CreationFeeTokenAlreadyDisallowed();
 error CreationFeeTokenNotAllowed();
+error PoolCompletionAlreadyProcessed();
 error UnsuccessfulCreationFeeCollection();
 error WithdrawFailed();
 
@@ -133,7 +134,7 @@ struct CompletionFeesTokenInfo {
   /// Total number of times this token has been used for completion fees
   uint256 totalUseCount;
   /// Total amount of this token rewarded as completion fees
-  uint256 totalAmountRewarded;
+  uint256 totalAmountIssued;
   /// Total amount of this token claimed from completion fees
   uint256 totalAmountClaimed;
 }
@@ -245,6 +246,8 @@ contract CastoraPoolsManager is
   mapping(address user => mapping(address token => UserCompletionTokenFeesInfo info)) public userCompletionTokenFeesInfo;
   /// Keeps track of pool IDs to user created pool details
   mapping(uint256 poolId => UserCreatedPool pool) public userCreatedPools;
+  /// Keeps track of pool IDs from non-users whose fees have been collected
+  mapping(uint256 poolId => bool hasCollectedFees) public nonUserPoolHasCollectedFees;
   /// Efficient lookup for creation fee token existence
   mapping(address token => bool exists) private creationFeesTokenExists;
 
@@ -740,5 +743,90 @@ contract CastoraPoolsManager is
       completionFeesAmount: 0,
       completionFeesPercent: allConfig.completionPoolFeesSplitPercent
     });
+  }
+
+  /// @notice Processes completion fees for a completed pool
+  /// @param poolId The pool ID that was completed
+  function processPoolCompletion(uint256 poolId) external nonReentrant {
+    // Verify pool is completed in main Castora
+    Pool memory pool = castora().getPool(poolId);
+    if (pool.completionTime == 0) revert PoolNotYetCompleted();
+
+    // Get the total fees. Following is Same logic as is in Castora.completePool
+    uint256 totalFees = (pool.seeds.stakeAmount * pool.noOfPredictions) - (pool.winAmount * pool.noOfWinners);
+
+    // Get the corresponding UserCreatedPool struct
+    UserCreatedPool storage userPool = userCreatedPools[poolId];
+
+    // If the pool wasn't created by an external user, send out the fees to castora's
+    // fee collector (that's if that's not yet done before)
+    if (userPool.creator == address(0)) {
+      if (nonUserPoolHasCollectedFees[poolId]) revert PoolCompletionAlreadyProcessed();
+
+      _sendToCastoraFeeCollector(totalFees, pool.seeds.stakeToken);
+      nonUserPoolHasCollectedFees[poolId] = true;
+      return;
+    }
+
+    // if we are still here, then it is a user created pool
+    // Check if pool completion was already processed and revert if so
+    if (userPool.completionTime != 0) revert PoolCompletionAlreadyProcessed();
+
+    // compute user's share and castora's share
+    uint256 userShare = (totalFees * userPool.completionFeesPercent) / 10000;
+    uint256 castoraShare = totalFees - userShare;
+
+    // payout Castora's share to fee collector
+    if (castoraShare > 0) _sendToCastoraFeeCollector(castoraShare, pool.seeds.stakeToken);
+
+    // payout user's share and update state
+    if (userShare > 0) _updatePoolCompletionStats(poolId, userPool.creator, pool.seeds.stakeToken, userShare);
+
+    // update user pool data, marking it as processed. also emit event.
+    userPool.completionTime = block.timestamp;
+    userPool.completionFeesAmount = userShare;
+    emit IssuedCompletionFees(poolId, pool.seeds.stakeToken, userShare);
+  }
+
+  /// @notice Internal function to update statistics after pool completion
+  /// @param poolId The ID of the completed pool
+  /// @param user The address of the pool creator
+  /// @param completionFeeToken The token used for completion fees
+  /// @param userShare The amount of completion fees allocated to the user
+  function _updatePoolCompletionStats(uint256 poolId, address user, address completionFeeToken, uint256 userShare)
+    internal
+  {
+    // Update global stats
+    allStats.noOfClaimableFeesPools += 1;
+    totalClaimablePoolIds.push(poolId);
+    if (completionFeesTokenInfos[completionFeeToken].totalUseCount == 0) {
+      allStats.noOfCompletionFeesTokens += 1;
+      completionFeesTokens.push(completionFeeToken);
+    }
+    completionFeesTokenInfos[completionFeeToken].totalUseCount += 1;
+    completionFeesTokenInfos[completionFeeToken].totalAmountIssued += userShare;
+
+    // Update user stats
+    userStats[user].noOfClaimablePoolCompletionFees += 1;
+    userClaimableFeesPoolIds[user].push(poolId);
+    if (userCompletionTokenFeesInfo[user][completionFeeToken].count == 0) {
+      userStats[user].noOfCompletionFeeTokens += 1;
+      userPoolCompletionFeesTokens[user].push(completionFeeToken);
+    }
+    userCompletionTokenFeesInfo[user][completionFeeToken].count += 1;
+    userCompletionTokenFeesInfo[user][completionFeeToken].claimableAmount += userShare;
+  }
+
+  /// @notice Sends fees to castora fee collector
+  /// @param amount Amount to send
+  /// @param token Token address
+  function _sendToCastoraFeeCollector(uint256 amount, address token) internal {
+    if (amount == 0) return;
+    if (token == address(this)) {
+      (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
+      if (!isSuccess) revert UnsuccessfulFeeCollection();
+    } else {
+      IERC20(token).safeTransfer(allConfig.feeCollector, amount);
+    }
   }
 }

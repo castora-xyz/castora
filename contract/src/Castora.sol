@@ -7,6 +7,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import './IPoolCompletionHandler.sol';
 
 error AlreadyClaimedWinnings();
 error InsufficientStakeValue();
@@ -417,6 +418,16 @@ contract Castora is
     }
 
     emit CompletedPool(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
+
+    // As the feeCollector is now the CastoraPoolsManager contract, this main Castora needs to tell it
+    // to process the received fees to either send out to the main Castora fee collector address or split
+    // it with the user who created the pool. Checking for code length, confirms that it is a contract.
+    if (feeCollector.code.length > 0) {
+      // This try/catch method allows that failures in the processing doesn't fail this current running
+      // completePool method. Also, an external/off-chain process could trigger the processPoolCompletion
+      // if it failed from here.
+      try IPoolCompletionHandler(feeCollector).processPoolCompletion(poolId) {} catch {}
+    }
   }
 
   function _claimWinnings(uint256 poolId, uint256 predictionId) internal {
