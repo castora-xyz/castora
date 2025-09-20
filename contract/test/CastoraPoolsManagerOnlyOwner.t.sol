@@ -326,7 +326,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is Test {
     vm.mockCall(address(cusd), abi.encodeWithSelector(IERC20.transfer.selector, owner, 500), abi.encode(false));
 
     // Attempt withdrawal should fail
-    vm.expectRevert(WithdrawFailed.selector);
+    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(cusd)));
     poolsManager.withdraw(address(cusd), 500);
   }
 

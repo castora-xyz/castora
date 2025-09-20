@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
@@ -10,8 +11,12 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import './Castora.sol';
 import './CastoraPoolsRules.sol';
 
+error IncorrectCreationFeeValue();
+error InsufficientCreationFeeValue();
 error InvalidSplitFeesPercent();
 error CreationFeeTokenAlreadyDisallowed();
+error CreationFeeTokenNotAllowed();
+error UnsuccessfulCreationFeeCollection();
 error WithdrawFailed();
 
 /// Emitted when the Castora contract address is updated
@@ -92,7 +97,9 @@ struct AllStats {
   /// Total number of unique users who have created pools
   uint256 noOfUsers;
   /// Total number of pools created across all users
-  uint256 noOfCreatedPools;
+  uint256 noOfUserCreatedPools;
+  /// Total number of paid pool creations
+  uint256 noOfUserPaidPoolCreations;
   /// Total number of pools with claimable completion fees
   uint256 noOfClaimableFeesPools;
   /// Total number of pools where completion fees have been claimed
@@ -198,6 +205,8 @@ contract CastoraPoolsManager is
   PausableUpgradeable,
   UUPSUpgradeable
 {
+  using SafeERC20 for IERC20;
+
   /// Global settings for core logic
   AllConfig public allConfig;
   /// Global statistics for all pools and users
@@ -624,12 +633,112 @@ contract CastoraPoolsManager is
     if (token == address(0)) revert InvalidAddress();
     if (amount == 0) revert ZeroAmountSpecified();
 
-    bool isSuccess = false;
     if (token == address(this)) {
-      (isSuccess,) = payable(owner()).call{value: amount}('');
+      (bool isSuccess,) = payable(owner()).call{value: amount}('');
+      if (!isSuccess) revert WithdrawFailed();
     } else {
-      isSuccess = IERC20(token).transfer(owner(), amount);
+      IERC20(token).safeTransfer(owner(), amount);
     }
-    if (!isSuccess) revert WithdrawFailed();
+  }
+
+  /// @notice Creates a new pool with the provided seeds and creation fee token
+  /// @param seeds The PoolSeeds struct containing pool parameters
+  /// @param creationFeeToken The token to pay creation fees with
+  /// @return poolId The ID of the newly created pool
+  function createPool(PoolSeeds memory seeds, address creationFeeToken)
+    external
+    payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256 poolId)
+  {
+    if (creationFeeToken == address(0)) revert InvalidAddress();
+
+    // Validate pool seeds using the rules contract
+    poolsRules().validateCreatePool(seeds);
+
+    // Check if creation fee token is allowed
+    if (!creationFeesTokenInfos[creationFeeToken].isAllowed) revert CreationFeeTokenNotAllowed();
+
+    // Collect creation fee and create pool
+    uint256 creationFeeAmount = _collectCreationFee(creationFeeToken);
+    poolId = castora().createPool(seeds);
+
+    // Update statistics and user data
+    _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
+
+    emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
+  }
+
+  /// @notice Internal function to collect creation fees
+  /// @param creationFeeToken The token to collect fees in
+  /// @return creationFeeAmount The amount of fees collected
+  function _collectCreationFee(address creationFeeToken) internal returns (uint256 creationFeeAmount) {
+    creationFeeAmount = creationFeesTokenInfos[creationFeeToken].amount;
+    if (creationFeeAmount > 0) {
+      if (creationFeeToken == address(this)) {
+        // native token payment
+        if (msg.value < creationFeeAmount) revert InsufficientCreationFeeValue();
+        if (msg.value > creationFeeAmount) revert IncorrectCreationFeeValue();
+      } else {
+        // ERC20 token payment
+        IERC20(creationFeeToken).safeTransferFrom(msg.sender, address(this), creationFeeAmount);
+      }
+    }
+  }
+
+  /// @notice Internal function to update statistics after pool creation
+  /// @param poolId The ID of the created pool
+  /// @param stakeToken The stake token from pool seeds
+  /// @param creationFeeToken The token used for creation fees
+  /// @param creationFeeAmount The amount of creation fees paid
+  function _updatePoolCreationStats(
+    uint256 poolId,
+    address stakeToken,
+    address creationFeeToken,
+    uint256 creationFeeAmount
+  ) internal {
+    // Update user statistics if this is a new user
+    if (userStats[msg.sender].nthUserCount == 0) {
+      allStats.noOfUsers += 1;
+      userStats[msg.sender].nthUserCount = allStats.noOfUsers;
+      users.push(msg.sender);
+    }
+
+    // Update global and user statistics
+    allStats.noOfUserCreatedPools += 1;
+    totalCreatedPoolIds.push(poolId);
+    userStats[msg.sender].noOfPoolsCreated += 1;
+    userCreatedPoolIds[msg.sender].push(poolId);
+
+    // Update fee statistics
+    if (creationFeeAmount > 0) {
+      allStats.noOfUserPaidPoolCreations += 1;
+      userStats[msg.sender].noOfPaidPoolCreationFees += 1;
+      creationFeesTokenInfos[creationFeeToken].totalUseCount += 1;
+      creationFeesTokenInfos[creationFeeToken].totalAmountUsed += creationFeeAmount;
+
+      // Update user creation token fees info
+      if (userCreationTokenFeesInfo[msg.sender][creationFeeToken].count == 0) {
+        userStats[msg.sender].noOfCreationFeeTokens += 1;
+        userPoolCreationFeesTokens[msg.sender].push(creationFeeToken);
+      }
+      userCreationTokenFeesInfo[msg.sender][creationFeeToken].amount += creationFeeAmount;
+      userCreationTokenFeesInfo[msg.sender][creationFeeToken].count += 1;
+    }
+
+    // Store user created pool details
+    userCreatedPools[poolId] = UserCreatedPool({
+      creator: msg.sender,
+      completionFeesToken: stakeToken,
+      creationFeesToken: creationFeeToken,
+      nthPoolCount: userStats[msg.sender].noOfPoolsCreated,
+      creationTime: block.timestamp,
+      creationFeesAmount: creationFeeAmount,
+      completionTime: 0,
+      creatorClaimTime: 0,
+      completionFeesAmount: 0,
+      completionFeesPercent: allConfig.completionPoolFeesSplitPercent
+    });
   }
 }
