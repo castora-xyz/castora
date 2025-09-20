@@ -275,7 +275,7 @@ contract Castora is
     if (seeds.stakeToken == address(0)) revert InvalidAddress();
     if (seeds.stakeAmount == 0) revert ZeroAmountSpecified();
     if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
-    if (seeds.windowCloseTime > seeds.snapshotTime) revert InvalidPoolTimes();
+    if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
 
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
