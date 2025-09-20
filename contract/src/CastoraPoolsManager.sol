@@ -11,13 +11,16 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import './Castora.sol';
 import './CastoraPoolsRules.sol';
 
+error AlreadyClaimedCompletionFees();
 error IncorrectCreationFeeValue();
 error InsufficientCreationFeeValue();
 error InvalidSplitFeesPercent();
 error CreationFeeTokenAlreadyDisallowed();
 error CreationFeeTokenNotAllowed();
+error NotYourPool();
 error PoolCompletionAlreadyProcessed();
 error UnsuccessfulCreationFeeCollection();
+error UnsuccessfulSendCompletionFees();
 error WithdrawFailed();
 
 /// Emitted when the Castora contract address is updated
@@ -146,11 +149,11 @@ struct UserStats {
   /// Total number of pools created by this user
   uint256 noOfPoolsCreated;
   /// Total number of times this user paid pool creation fees
-  uint256 noOfPaidPoolCreationFees;
+  uint256 noOfPaidCreationFeesPools;
   /// Total number of pools where this user has claimable completion fees
-  uint256 noOfClaimablePoolCompletionFees;
+  uint256 noOfClaimableCompletionFeesPools;
   /// Total number of pools where this user has claimed completion fees
-  uint256 noOfClaimedPoolCompletionFees;
+  uint256 noOfClaimedCompletionFeesPools;
   /// Number of different tokens this user has used for creation fees
   uint256 noOfCreationFeeTokens;
   /// Number of different tokens this user has received as completion fees
@@ -717,7 +720,7 @@ contract CastoraPoolsManager is
     // Update fee statistics
     if (creationFeeAmount > 0) {
       allStats.noOfUserPaidPoolCreations += 1;
-      userStats[msg.sender].noOfPaidPoolCreationFees += 1;
+      userStats[msg.sender].noOfPaidCreationFeesPools += 1;
       creationFeesTokenInfos[creationFeeToken].totalUseCount += 1;
       creationFeesTokenInfos[creationFeeToken].totalAmountUsed += creationFeeAmount;
 
@@ -807,7 +810,7 @@ contract CastoraPoolsManager is
     completionFeesTokenInfos[completionFeeToken].totalAmountIssued += userShare;
 
     // Update user stats
-    userStats[user].noOfClaimablePoolCompletionFees += 1;
+    userStats[user].noOfClaimableCompletionFeesPools += 1;
     userClaimableFeesPoolIds[user].push(poolId);
     if (userCompletionTokenFeesInfo[user][completionFeeToken].count == 0) {
       userStats[user].noOfCompletionFeeTokens += 1;
@@ -827,6 +830,81 @@ contract CastoraPoolsManager is
       if (!isSuccess) revert UnsuccessfulFeeCollection();
     } else {
       IERC20(token).safeTransfer(allConfig.feeCollector, amount);
+    }
+  }
+
+  /// @notice Claims completion fees for a pool created by the caller
+  /// @param poolId The ID of the pool to claim completion fees for
+  /// @dev Only the pool creator can claim fees. Pool must be completed and fees not yet claimed.
+  function claimPoolCompletionFees(uint256 poolId) external nonReentrant whenNotPaused {
+    _claimPoolCompletionFees(poolId);
+  }
+
+  /// Claims completions fees of the provided pools by the caller
+  /// @param poolIds Array of pool IDs to claim their completion fees
+  /// @dev Only the pool creator can claim fees. Pool must be completed and fees not yet claimed.
+  function claimPoolCompletionFeesBulk(uint256[] calldata poolIds) external nonReentrant whenNotPaused {
+    for (uint256 i = 0; i < poolIds.length; i += 1) {
+      _claimPoolCompletionFees(poolIds[i]);
+    }
+  }
+
+  function _claimPoolCompletionFees(uint256 poolId) internal {
+    UserCreatedPool storage pool = userCreatedPools[poolId];
+    if (pool.creator != msg.sender) revert NotYourPool();
+    if (pool.completionTime == 0) revert PoolNotYetCompleted();
+    if (pool.creatorClaimTime != 0) revert AlreadyClaimedCompletionFees();
+    if (pool.completionFeesAmount == 0) revert ZeroAmountSpecified();
+
+    // Transfer the fees
+    if (pool.completionFeesToken == address(this)) {
+      (bool isSuccess,) = payable(msg.sender).call{value: pool.completionFeesAmount}('');
+      if (!isSuccess) revert UnsuccessfulSendCompletionFees();
+    } else {
+      IERC20(pool.completionFeesToken).safeTransfer(msg.sender, pool.completionFeesAmount);
+    }
+
+    // Update state and statistics
+    pool.creatorClaimTime = block.timestamp;
+    _updateClaimStats(poolId, pool.creator, pool.completionFeesToken, pool.completionFeesAmount);
+    emit ClaimedCompletionFees(poolId, msg.sender, pool.completionFeesToken, pool.completionFeesAmount);
+  }
+
+  /// @notice Internal function to update statistics when completion fees are claimed
+  /// @param poolId The ID of the pool where fees were claimed
+  /// @param user The address of the user claiming the fees
+  /// @param completionFeeToken The token used for completion fees
+  /// @param claimedAmount The amount of completion fees being claimed
+  function _updateClaimStats(uint256 poolId, address user, address completionFeeToken, uint256 claimedAmount) internal {
+    // Update global stats
+    allStats.noOfClaimedFeesPools += 1;
+    allStats.noOfClaimableFeesPools -= 1;
+    totalClaimedPoolIds.push(poolId);
+    _removeFromArray(totalClaimablePoolIds, poolId);
+    completionFeesTokenInfos[completionFeeToken].totalAmountClaimed += claimedAmount;
+
+    // Update user stats
+    userStats[user].noOfClaimedCompletionFeesPools += 1;
+    userStats[user].noOfClaimableCompletionFeesPools -= 1;
+    userClaimedFeesPoolIds[user].push(poolId);
+    _removeFromArray(userClaimableFeesPoolIds[user], poolId);
+    userCompletionTokenFeesInfo[user][completionFeeToken].claimedAmount += claimedAmount;
+    userCompletionTokenFeesInfo[user][completionFeeToken].claimableAmount -= claimedAmount;
+  }
+
+  /// @notice Internal helper to remove an element from a uint256 array while preserving order
+  /// @param array The array to modify
+  /// @param value The value to remove
+  function _removeFromArray(uint256[] storage array, uint256 value) internal {
+    for (uint256 i = 0; i < array.length; i++) {
+      if (array[i] == value) {
+        // Shift all elements after the found index one position left
+        for (uint256 j = i; j < array.length - 1; j++) {
+          array[j] = array[j + 1];
+        }
+        array.pop();
+        break;
+      }
     }
   }
 }

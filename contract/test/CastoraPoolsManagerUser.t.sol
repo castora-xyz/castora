@@ -110,7 +110,7 @@ contract CastoraPoolsManagerUserTest is Test {
     UserStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.nthUserCount, 1);
     assertEq(userStats.noOfPoolsCreated, 1);
-    assertEq(userStats.noOfPaidPoolCreationFees, 1);
+    assertEq(userStats.noOfPaidCreationFeesPools, 1);
     assertEq(userStats.noOfCreationFeeTokens, 1);
 
     // Verify user created pool details
@@ -214,7 +214,7 @@ contract CastoraPoolsManagerUserTest is Test {
     UserStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.nthUserCount, 1); // Still the 1st user
     assertEq(userStats.noOfPoolsCreated, 2); // But created 2 pools
-    assertEq(userStats.noOfPaidPoolCreationFees, 2);
+    assertEq(userStats.noOfPaidCreationFeesPools, 2);
 
     // Verify user creation token fees (doubled)
     UserCreationTokenFeesInfo memory userTokenInfo =
@@ -388,7 +388,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // Verify user statistics for zero fee
     UserStats memory userStats = poolsManager.getUserStats(user1);
-    assertEq(userStats.noOfPaidPoolCreationFees, 0); // No paid fees since it was zero
+    assertEq(userStats.noOfPaidCreationFeesPools, 0); // No paid fees since it was zero
 
     // Verify user created pool details
     UserCreatedPool memory userPool = poolsManager.getUserCreatedPool(poolId);
