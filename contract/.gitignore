@@ -12,3 +12,7 @@ docs/
 
 # Dotenv file
 .env
+
+# Tests
+coverage
+lcov.info
