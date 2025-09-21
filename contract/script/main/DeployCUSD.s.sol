@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import 'forge-std/Script.sol';
-import '../src/cUSD.sol';
+import '../../src/cUSD.sol';
 
 contract DeployCUSD is Script {
   cUSD public cUSD_;
