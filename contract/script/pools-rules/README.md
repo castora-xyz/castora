@@ -59,13 +59,13 @@ REQUIRED_TIME_INTERVAL=<interval_in_seconds>
 ### Deploy CastoraPoolsRules
 
 ```bash
-forge script script/PoolsRules/DeployCastoraPoolsRules.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/DeployCastoraPoolsRules.s.sol:DeployCastoraPoolsRules --rpc-url <rpc_url> --broadcast -vvv --verifier sourcify --verify --chain 10143
 ```
 
 ### Upgrade CastoraPoolsRules
 
 ```bash
-forge script script/PoolsRules/UpgradeCastoraPoolsRules.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/UpgradeCastoraPoolsRules.s.sol:UpgradeCastoraPoolsRules --rpc-url <rpc_url> --broadcast -vvv --verifier sourcify --verify --chain <chain_id>
 ```
 
 ### Allow a Prediction Token
@@ -73,7 +73,7 @@ forge script script/PoolsRules/UpgradeCastoraPoolsRules.s.sol --rpc-url <rpc_url
 ```bash
 export PREDICTION_TOKEN_ADDRESS=0x1234567890123456789012345678901234567890
 export PREDICTION_TOKEN_ALLOWED=true
-forge script script/PoolsRules/UpdatePredictionToken.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/UpdatePredictionToken.s.sol:UpdatePredictionToken --rpc-url <rpc_url> --broadcast -vvv --chain <chain_id> 
 ```
 
 ### Allow a Stake Token
@@ -81,7 +81,7 @@ forge script script/PoolsRules/UpdatePredictionToken.s.sol --rpc-url <rpc_url> -
 ```bash
 export STAKE_TOKEN_ADDRESS=0x1234567890123456789012345678901234567890
 export STAKE_TOKEN_ALLOWED=true
-forge script script/PoolsRules/UpdateStakeToken.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/UpdateStakeToken.s.sol:UpdateStakeToken --rpc-url <rpc_url> --broadcast -vvv --chain <chain_id>
 ```
 
 ### Allow a Specific Stake Amount
@@ -90,14 +90,14 @@ forge script script/PoolsRules/UpdateStakeToken.s.sol --rpc-url <rpc_url> --broa
 export STAKE_TOKEN_ADDRESS=0x1234567890123456789012345678901234567890
 export STAKE_AMOUNT=1000000
 export STAKE_AMOUNT_ALLOWED=true
-forge script script/PoolsRules/UpdateStakeAmount.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/UpdateStakeAmount.s.sol:UpdateStakeAmount --rpc-url <rpc_url> --broadcast -vvv --chain <chain_id>
 ```
 
 ### Update Time Interval (e.g., to 10 minutes)
 
 ```bash
 export REQUIRED_TIME_INTERVAL=600
-forge script script/PoolsRules/UpdatePoolTimeInterval.s.sol --rpc-url <rpc_url> --broadcast
+forge script script/pools-rules/UpdatePoolTimeInterval.s.sol:UpdatePoolTimeInterval --rpc-url <rpc_url> --broadcast -vvv --chain <chain_id>
 ```
 
 ## Notes

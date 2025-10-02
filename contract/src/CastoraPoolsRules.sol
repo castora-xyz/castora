@@ -30,6 +30,7 @@ event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
 /// and enforces timing constraints for pool windows and snapshots.
 /// @dev The contract is upgradeable using UUPS pattern and includes comprehensive validation functions
 /// that can either revert on failure or return boolean results for integration flexibility.
+/// @custom:oz-upgrades-from build-info-ref:CastoraPoolsRules
 contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   /// Required time interval in seconds for pool timing validation
   uint256 public requiredTimeInterval;

@@ -10,9 +10,9 @@ contract UpgradeCastoraPoolsRules is Script {
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
 
     Options memory opts;
-    opts.unsafeSkipAllChecks = true;
+    opts.referenceBuildInfoDir = 'build-info-ref';
 
-    address proxy = vm.envAddress('CASTORA_POOLS_RULES_PROXY');
+    address proxy = 0x00Ae1567c73f74b8445A013FD71E518E2EFD326e;
     Upgrades.upgradeProxy(proxy, 'CastoraPoolsRules.sol', '', opts);
     console.log('Updated CastoraPoolsRules to: ', proxy);
 

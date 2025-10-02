@@ -73,7 +73,6 @@ $ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_TESTNET
 # Upgrading in Monad Testnet
 $ forge script script/main/UpgradeCastora.s.sol:UpgradeCastora --rpc-url $MONAD_TESTNET_RPC_URL \
   --broadcast -vvv --verify --verifier sourcify \
-  --verifier-url https://sourcify-api-monad.blockvision.org \
   --chain 10143
 ```
 
