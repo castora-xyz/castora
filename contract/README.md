@@ -1,5 +1,28 @@
 # Castora - Contract
 
+## Allowed User Pool Rules
+
+### Prediction Tokens
+
+| Symbol | Address                                    |
+| ------ | ------------------------------------------ |
+| BTC    | 0x294C2647D9f3EacA43A364859c6E6a1E0E582DBD |
+| ETH    | 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 |
+| SOL    | 0xD31a59c85aE9D8edEFeC411D448f90841571b89c |
+| HYPE   | 0x0ab0Dc55F747ADA00cC15D049CB654bbdc7d5AA6 |
+| PUMP   | 0x046d5f90aCffC86BA3E77dA42095C982481F28eC |
+
+### Stake Tokens
+
+| Symbol | Address                                    |
+| ------ | ------------------------------------------ |
+| USDC   | 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53 |
+
+### Stake Amounts
+
+- MON (0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53) 18 decimals
+  - 0.2 MON, 0.5 MON, 1 MON, 1.5 MON, 2 MON, 2.5 MON, 5 MON, 10 MON.
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
@@ -49,7 +72,7 @@ $ anvil
 
 ### Deploy & Upgrading
 
-After first deploy of a contract, copy out the contents of `out/build-info` into `deploys/...` directory. 
+After first deploy of a contract, copy out the contents of `out/build-info` into `deploys/...` directory.
 
 When upgrading, create a `build-info-ref` and copy-in the contents of the reference subdirectory from `deploys/...` into this `build-info-ref` and use it to upgrade. It runs validation checks with OpenZeppelin. After successful upgrade, re-copy out the latest `out/build-info` contents to a new version folder in `deploys/...`. Remember to delete `build-info-ref` immediately to be sure to copy-in what's needed back later on, on a new upgrade.
 
@@ -62,7 +85,7 @@ $ source .env
 $ forge script --chain sepolia script/DeployCUSD.s.sol:DeployCUSD --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvv
 $ forge script --chain sepolia script/DeployCastora.s.sol:DeployCastora --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvv
 
-# Deploying to Monad Devnet 
+# Deploying to Monad Devnet
 $ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvv
 $ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvv
 

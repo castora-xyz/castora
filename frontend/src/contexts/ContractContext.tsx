@@ -1,22 +1,15 @@
 import { useToast } from '@/contexts/ToastContext';
-import { abi, erc20Abi } from '@/contexts/abi';
+import { castoraAbi, erc20Abi } from '@/contexts/abis';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState
-} from 'react';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
 import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains, useWalletClient } from 'wagmi';
 
-export const CASTORA_ADDRESS_MONAD: `0x${string}` =
-  '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
-export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` =
-  '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
+export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
+// const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
 
 export type WriteContractStatus = 'initializing' | 'submitted' | 'waiting';
 
@@ -73,12 +66,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
       transport: http(getRpcUrl())
     });
 
-  const read = async (
-    address: any,
-    abi: any,
-    functionName: string,
-    args: any[] = []
-  ) => {
+  const read = async (address: any, abi: any, functionName: string, args: any[] = []) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 220));
       return await publicClient().readContract({
@@ -96,11 +84,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
       ) {
         return null;
       }
-      toastError(
-        `${e}`.toLowerCase().includes('failed to fetch')
-          ? 'Network Error'
-          : `${e}`
-      );
+      toastError(`${e}`.toLowerCase().includes('failed to fetch') ? 'Network Error' : `${e}`);
       return null;
     }
   };
@@ -155,19 +139,8 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     return bs.asObservable();
   };
 
-  const approve = (
-    token: any,
-    amount: number,
-    onSuccessCallback?: (txHash: string) => void
-  ) => {
-    return write(
-      token,
-      erc20Abi,
-      'approve',
-      [getCastoraAddress(), BigInt(amount)],
-      undefined,
-      onSuccessCallback
-    );
+  const approve = (token: any, amount: number, onSuccessCallback?: (txHash: string) => void) => {
+    return write(token, erc20Abi, 'approve', [getCastoraAddress(), BigInt(amount)], undefined, onSuccessCallback);
   };
 
   const balance = async (token: any) => {
@@ -187,14 +160,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const hasAllowance = async (token: any, amount: number) => {
     if (!isConnected) return false;
     try {
-      return (
-        Number(
-          await read(token, erc20Abi, 'allowance', [
-            address,
-            getCastoraAddress()
-          ])
-        ) >= amount
-      );
+      return Number(await read(token, erc20Abi, 'allowance', [address, getCastoraAddress()])) >= amount;
     } catch (e) {
       console.error(e);
       return false;
@@ -202,22 +168,14 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const readContract = async (functionName: string, args: any[] = []) =>
-    read(getCastoraAddress(), abi, functionName, args);
+    read(getCastoraAddress(), castoraAbi, functionName, args);
 
   const writeContract = (
     functionName: string,
     args: any[] = [],
     value?: number | undefined,
     onSuccessCallBack?: (txHash: string, result: any) => void
-  ) =>
-    write(
-      getCastoraAddress(),
-      abi,
-      functionName,
-      args,
-      value,
-      onSuccessCallBack
-    );
+  ) => write(getCastoraAddress(), castoraAbi, functionName, args, value, onSuccessCallBack);
 
   useEffect(() => {
     setCastoraAddress(getCastoraAddress());
