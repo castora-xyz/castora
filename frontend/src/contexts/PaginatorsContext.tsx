@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-export const rowsPerPageOptions = [10, 25, 50, 100];
+export const rowsPerPageOptions = [10, 25, 50, 100, 250, 500];
 
 interface PaginatorsContextProps {
   rowsPerPage: number;

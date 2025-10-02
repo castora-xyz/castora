@@ -152,7 +152,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!(await isValidPoolId(poolId))) return null;
-      const raw = await readContract('pools', [BigInt(poolId)]);
+      const raw = await readContract('getPool', [BigInt(poolId)]);
       if (!raw) return null;
 
       pool = new Pool(raw);
@@ -165,24 +165,36 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchMany = async (poolIds: number[]) => {
+    try {
+      const fetched = [];
+      const raw = await readContract('getPools', [poolIds]);
+      if (!raw) return [];
+
+      for (let i = 0; i < raw.length; i++) {
+        const pool = new Pool(raw[i]);
+        if (pool.completionTime > 0) await cache.save(`chain::${getChain().id}::pool::${poolIds[i]}`, pool);
+        fetched.push(pool);
+      }
+
+      return fetched;
+    } catch (error) {
+      console.error(error);
+      toastError(`${error}`);
+      return [];
+    }
+  };
+
   const fetchLiveStocksPools = async () => {
     setIsFetchingLiveStocks(true);
-    const fetched = [];
-    for (const poolId of liveStocksPoolIds) {
-      const pool = await fetchOne(poolId);
-      if (pool) fetched.push(pool);
-    }
+    const fetched = await fetchMany(liveStocksPoolIds);
     setLiveStocksPools(fetched);
     setIsFetchingLiveStocks(false);
   };
 
   const fetchLiveCryptoPools = async () => {
     setIsFetchingLiveCrypto(true);
-    const fetched = [];
-    for (const poolId of liveCryptoPoolIds) {
-      const pool = await fetchOne(poolId);
-      if (pool) fetched.push(pool);
-    }
+    const fetched = await fetchMany(liveCryptoPoolIds);
     setLiveCryptoPools(fetched);
     setIsFetchingLiveCrypto(false);
   };
