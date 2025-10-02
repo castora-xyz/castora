@@ -639,7 +639,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testClaimPoolCompletionFeesETH() public {
     // Set up pool with ETH as stake token (using contract address)
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256 poolId = 1;
 
@@ -680,7 +680,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testClaimPoolCompletionFeesBulkETH() public {
     // Set up multiple pools with ETH as stake token
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256[] memory poolIds = new uint256[](2);
     poolIds[0] = 1;
@@ -731,7 +731,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testProcessPoolCompletionFailedETHSendToFeeCollector() public {
     // Set up pool with ETH as stake token (using contract address)
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256 poolId = 1;
 
@@ -770,7 +770,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     // Setup completed pool with ETH as stake token
     Pool memory ethPool = mockPool;
     ethPool.poolId = poolId;
-    ethPool.seeds.stakeToken = address(poolsManager);
+    ethPool.seeds.stakeToken = address(mockCastora);
     ethPool.completionTime = block.timestamp + 1500;
 
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.getPool.selector, poolId), abi.encode(ethPool));
@@ -788,7 +788,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testClaimPoolCompletionFeesFailedETHSend() public {
     // Set up pool with ETH as stake token (using contract address)
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256 poolId = 1;
 
@@ -826,7 +826,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testClaimPoolCompletionFeesBulkFailedETHSend() public {
     // Set up multiple pools with ETH as stake token
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256[] memory poolIds = new uint256[](2);
     poolIds[0] = 1;
@@ -883,7 +883,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
     // Now create a pool with ETH as stake token
     PoolSeeds memory ethSeeds = validSeeds;
-    ethSeeds.stakeToken = address(poolsManager);
+    ethSeeds.stakeToken = address(mockCastora);
 
     uint256 poolId2 = 2;
 

@@ -829,7 +829,8 @@ contract CastoraPoolsManager is
   /// @param token Token address
   function _sendToCastoraFeeCollector(uint256 amount, address token) internal {
     if (amount == 0) return;
-    if (token == address(this)) {
+      // native token payment is when the main castora is used
+    if (token == allConfig.castora) {
       (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
       if (!isSuccess) revert UnsuccessfulFeeCollection();
     } else {
@@ -861,7 +862,8 @@ contract CastoraPoolsManager is
     if (pool.completionFeesAmount == 0) revert ZeroAmountSpecified();
 
     // Transfer the fees
-    if (pool.completionFeesToken == address(this)) {
+      // native token payment is when the main castora is used
+    if (pool.completionFeesToken == allConfig.castora) {
       (bool isSuccess,) = payable(msg.sender).call{value: pool.completionFeesAmount}('');
       if (!isSuccess) revert UnsuccessfulSendCompletionFees();
     } else {

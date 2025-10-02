@@ -11,8 +11,8 @@ contract SetCreationFeesForToken is Script {
     address poolsManagerAddress = 0xb4a03C32C7cAa4069f89184f93dfAe065C141061; // vm.envAddress('POOLS_MANAGER_ADDRESS');
     address feeTokenAddress = 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53;// vm.envAddress('CREATION_FEE_TOKEN_ADDRESS');
     uint256 feeAmount = 10e18; // 10 MON // vm.envUint('CREATION_FEE_AMOUNT');
-    
-    CastoraPoolsManager poolsManager = CastoraPoolsManager(poolsManagerAddress);
+
+    CastoraPoolsManager poolsManager = CastoraPoolsManager(payable(poolsManagerAddress));
     poolsManager.setCreationFees(feeTokenAddress, feeAmount);
     
     console.log('Set creation fees for token: ', feeTokenAddress);
