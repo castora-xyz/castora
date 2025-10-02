@@ -256,6 +256,97 @@ contract Castora is
     predictionIds = predictionIdsByAddresses[poolId][predicter];
   }
 
+  /// Returns the pools corresponding to the provided list of poolIds.
+  /// @param poolIds The array of poolIds to fetch
+  /// @return poolsList The array of Pool structs
+  function getPools(uint256[] memory poolIds) public view returns (Pool[] memory poolsList) {
+    poolsList = new Pool[](poolIds.length);
+    for (uint256 i = 0; i < poolIds.length; i++) {
+      if (poolIds[i] == 0 || poolIds[i] > noOfPools) revert InvalidPoolId();
+      poolsList[i] = pools[poolIds[i]];
+    }
+  }
+
+  /// Returns the predictions corresponding to the provided list of predictionIds in a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param predictionIds The array of predictionIds to fetch
+  /// @return predictionsList The array of Prediction structs
+  function getPredictions(uint256 poolId, uint256[] memory predictionIds)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    Pool storage pool = pools[poolId];
+    predictionsList = new Prediction[](predictionIds.length);
+    for (uint256 i = 0; i < predictionIds.length; i++) {
+      if (predictionIds[i] == 0 || predictionIds[i] > pool.noOfPredictions) revert InvalidPredictionId();
+      predictionsList[i] = predictions[poolId][predictionIds[i]];
+    }
+  }
+
+  /// Returns a paginated list of pools.
+  /// @param offset The starting index (1-based) of the pool list
+  /// @param limit The maximum number of pools to return
+  /// @return poolsList The array of Pool structs
+  function getPoolsPaginated(uint256 offset, uint256 limit) public view returns (Pool[] memory poolsList) {
+    if (offset == 0 || offset > noOfPools) revert InvalidPoolId();
+    uint256 end = offset + limit - 1;
+    if (end > noOfPools) end = noOfPools;
+    uint256 size = end >= offset ? end - offset + 1 : 0;
+    poolsList = new Pool[](size);
+    for (uint256 i = 0; i < size; i++) {
+      poolsList[i] = pools[offset + i];
+    }
+  }
+
+  /// Returns a paginated list of predictions for a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param offset The starting predictionId (1-based)
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getPoolPredictionsPaginated(uint256 poolId, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    Pool storage pool = pools[poolId];
+    if (offset == 0 || offset > pool.noOfPredictions) revert InvalidPredictionId();
+    uint256 end = offset + limit - 1;
+    if (end > pool.noOfPredictions) end = pool.noOfPredictions;
+    uint256 size = end >= offset ? end - offset + 1 : 0;
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][offset + i];
+    }
+  }
+
+  /// Returns a paginated list of predictions made by a user in a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param user The address of the user
+  /// @param offset The starting index (0-based) in the user's predictions array
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getUserPredictionsPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][user];
+    uint256 total = userPredictionIds.length;
+    if (offset >= total) return new Prediction[](0);
+    uint256 end = offset + limit;
+    if (end > total) end = total;
+    uint256 size = end > offset ? end - offset : 0;
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
+    }
+  }
+
   /// Returns a hash of the provided `seeds`.
   function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
     return keccak256(
