@@ -33,12 +33,36 @@ event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
 contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   /// Required time interval in seconds for pool timing validation
   uint256 public requiredTimeInterval;
+  /// Counter for the number of stake tokens that have ever been allowed
+  uint256 public everAllowedStakeTokensCount;
+  /// Counter for the number of prediction tokens that have ever been allowed
+  uint256 public everAllowedPredictionTokensCount;
+  /// Counter for the number of stake tokens that are currently allowed
+  uint256 public currentlyAllowedStakeTokensCount;
+  /// Counter for the number of prediction tokens that are currently allowed
+  uint256 public currentlyAllowedPredictionTokensCount;
+  /// Array of all stake tokens that have ever been allowed
+  address[] public everAllowedStakeTokens;
+  /// Array of all prediction tokens that have ever been allowed
+  address[] public everAllowedPredictionTokens;
+  /// Array of stake tokens that are currently allowed
+  address[] public currentlyAllowedStakeTokens;
+  /// Array of prediction tokens that are currently allowed
+  address[] public currentlyAllowedPredictionTokens;
   /// Tracks which tokens are allowed for staking
   mapping(address => bool) public allowedStakeTokens;
   /// Tracks which tokens are allowed for predictions
   mapping(address => bool) public allowedPredictionTokens;
   /// Tracks which stake amounts are allowed per token
   mapping(address => mapping(uint256 => bool)) public allowedStakeAmounts;
+  /// Tracks if a stake token has ever been added to everAllowedStakeTokens (prevents duplicates)
+  mapping(address => bool) public hasEverBeenAllowedStakeToken;
+  /// Tracks if a prediction token has ever been added to everAllowedPredictionTokens (prevents duplicates)
+  mapping(address => bool) public hasEverBeenAllowedPredictionToken;
+  /// Maps each currently allowed stake token to its index in currentlyAllowedStakeTokens (for efficient removal)
+  mapping(address => uint256) public currentlyAllowedStakeTokenIndex;
+  /// Maps each currently allowed prediction token to its index in currentlyAllowedPredictionTokens (for efficient removal)
+  mapping(address => uint256) public currentlyAllowedPredictionTokenIndex;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -66,7 +90,39 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param token The token address
   /// @param allowed Whether the token is allowed
   function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
+    bool wasAllowed = allowedStakeTokens[token];
     allowedStakeTokens[token] = allowed;
+
+    // Track in ever allowed array if this is the first time it's being allowed
+    if (allowed && !hasEverBeenAllowedStakeToken[token]) {
+      everAllowedStakeTokens.push(token);
+      hasEverBeenAllowedStakeToken[token] = true;
+      everAllowedStakeTokensCount++;
+    }
+
+    // Update currently allowed arrays
+    if (allowed && !wasAllowed) {
+      // Adding to currently allowed
+      currentlyAllowedStakeTokenIndex[token] = currentlyAllowedStakeTokens.length;
+      currentlyAllowedStakeTokens.push(token);
+      currentlyAllowedStakeTokensCount++;
+    } else if (!allowed && wasAllowed) {
+      // Removing from currently allowed
+      uint256 indexToRemove = currentlyAllowedStakeTokenIndex[token];
+      uint256 lastIndex = currentlyAllowedStakeTokens.length - 1;
+
+      if (indexToRemove != lastIndex) {
+        // Move the last element to the position of the element to remove
+        address lastToken = currentlyAllowedStakeTokens[lastIndex];
+        currentlyAllowedStakeTokens[indexToRemove] = lastToken;
+        currentlyAllowedStakeTokenIndex[lastToken] = indexToRemove;
+      }
+
+      currentlyAllowedStakeTokens.pop();
+      delete currentlyAllowedStakeTokenIndex[token];
+      currentlyAllowedStakeTokensCount--;
+    }
+
     emit UpdatedAllowedStakeToken(token, allowed);
   }
 
@@ -74,7 +130,39 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param token The token address
   /// @param allowed Whether the token is allowed
   function updateAllowedPredictionToken(address token, bool allowed) external onlyOwner nonReentrant {
+    bool wasAllowed = allowedPredictionTokens[token];
     allowedPredictionTokens[token] = allowed;
+
+    // Track in ever allowed array if this is the first time it's being allowed
+    if (allowed && !hasEverBeenAllowedPredictionToken[token]) {
+      everAllowedPredictionTokens.push(token);
+      hasEverBeenAllowedPredictionToken[token] = true;
+      everAllowedPredictionTokensCount++;
+    }
+
+    // Update currently allowed arrays
+    if (allowed && !wasAllowed) {
+      // Adding to currently allowed
+      currentlyAllowedPredictionTokenIndex[token] = currentlyAllowedPredictionTokens.length;
+      currentlyAllowedPredictionTokens.push(token);
+      currentlyAllowedPredictionTokensCount++;
+    } else if (!allowed && wasAllowed) {
+      // Removing from currently allowed
+      uint256 indexToRemove = currentlyAllowedPredictionTokenIndex[token];
+      uint256 lastIndex = currentlyAllowedPredictionTokens.length - 1;
+
+      if (indexToRemove != lastIndex) {
+        // Move the last element to the position of the element to remove
+        address lastToken = currentlyAllowedPredictionTokens[lastIndex];
+        currentlyAllowedPredictionTokens[indexToRemove] = lastToken;
+        currentlyAllowedPredictionTokenIndex[lastToken] = indexToRemove;
+      }
+
+      currentlyAllowedPredictionTokens.pop();
+      delete currentlyAllowedPredictionTokenIndex[token];
+      currentlyAllowedPredictionTokensCount--;
+    }
+
     emit UpdatedAllowedPredictionToken(token, allowed);
   }
 
@@ -178,5 +266,75 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
         && (seeds.windowCloseTime % requiredTimeInterval != 0 || seeds.snapshotTime % requiredTimeInterval != 0)
     ) return false;
     return true;
+  }
+
+  /// Get paginated tokens that have ever been allowed for staking
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokens Array of stake tokens
+  function getEverAllowedStakeTokensPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokens)
+  {
+    tokens = _paginateAddressArray(everAllowedStakeTokens, everAllowedStakeTokensCount, offset, limit);
+  }
+
+  /// Get paginated tokens that have ever been allowed for predictions
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokens Array of prediction tokens
+  function getEverAllowedPredictionTokensPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokens)
+  {
+    return _paginateAddressArray(everAllowedPredictionTokens, everAllowedPredictionTokensCount, offset, limit);
+  }
+
+  /// Get paginated tokens that are currently allowed for staking
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokens Array of currently allowed stake tokens
+  function getCurrentlyAllowedStakeTokensPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokens)
+  {
+    return _paginateAddressArray(currentlyAllowedStakeTokens, currentlyAllowedStakeTokensCount, offset, limit);
+  }
+
+  /// Get paginated tokens that are currently allowed for predictions
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokens Array of currently allowed prediction tokens
+  function getCurrentlyAllowedPredictionTokensPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokens)
+  {
+    return _paginateAddressArray(currentlyAllowedPredictionTokens, currentlyAllowedPredictionTokensCount, offset, limit);
+  }
+
+  /// Internal helper to paginate address arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (address[] memory items)
+  {
+    if (offset >= total) return new address[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new address[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      items[i] = array[offset + i];
+    }
   }
 }
