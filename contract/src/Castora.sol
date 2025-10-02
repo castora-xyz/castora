@@ -137,7 +137,7 @@ struct Pool {
 /// After snapshotTime, those whose predictedPrices are closest to the token's
 /// price are the winners of the {Pool}. They go with all the pool's money or
 /// rather they each go with almost twice of what they initially staked.
-/// @custom:oz-upgrades-unsafe-allow
+/// @custom:oz-upgrades-from build-info-ref:Castora
 contract Castora is
   Initializable,
   OwnableUpgradeable,

@@ -10,7 +10,7 @@ contract UpgradeCastora is Script {
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
 
     Options memory opts;
-    opts.unsafeSkipAllChecks = true;
+    opts.referenceBuildInfoDir = 'build-info-ref';
 
     address proxy = 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53;
     Upgrades.upgradeProxy(proxy, 'Castora.sol', '', opts);

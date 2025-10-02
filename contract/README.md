@@ -47,26 +47,32 @@ $ forge snapshot
 $ anvil
 ```
 
-### Deploy
+### Deploy & Upgrading
+
+After first deploy of a contract, copy out the contents of `out/build-info` into `deploys/...` directory. 
+
+When upgrading, create a `build-info-ref` and copy-in the contents of the reference subdirectory from `deploys/...` into this `build-info-ref` and use it to upgrade. It runs validation checks with OpenZeppelin. After successful upgrade, re-copy out the latest `out/build-info` contents to a new version folder in `deploys/...`. Remember to delete `build-info-ref` immediately to be sure to copy-in what's needed back later on, on a new upgrade.
+
+Following are helpful commands.
 
 ```shell
 $ source .env
 
 # Deploying to Sepolia
-$ forge script --chain sepolia script/DeployCUSD.s.sol:DeployCUSD --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
-$ forge script --chain sepolia script/DeployCastora.s.sol:DeployCastora --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
+$ forge script --chain sepolia script/DeployCUSD.s.sol:DeployCUSD --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvv
+$ forge script --chain sepolia script/DeployCastora.s.sol:DeployCastora --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvv
 
 # Deploying to Monad Devnet 
-$ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvvv
-$ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvvv
+$ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvv
+$ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_DEVNET_RPC_URL --broadcast -vvv
 
 # Deploying to Monad Testnet
-$ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
-$ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvvv
+$ forge script script/DeployCUSD.s.sol:DeployCUSD --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvv
+$ forge script script/DeployCastora.s.sol:DeployCastora --rpc-url $MONAD_TESTNET_RPC_URL --broadcast -vvv
 
 # Upgrading in Monad Testnet
-$ forge script script/UpgradeCastora.s.sol:UpgradeCastora --rpc-url $MONAD_TESTNET_RPC_URL \
-  --broadcast -vvvv --verify --verifier sourcify \
+$ forge script script/main/UpgradeCastora.s.sol:UpgradeCastora --rpc-url $MONAD_TESTNET_RPC_URL \
+  --broadcast -vvv --verify --verifier sourcify \
   --verifier-url https://sourcify-api-monad.blockvision.org \
   --chain 10143
 ```

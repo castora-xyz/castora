@@ -16,3 +16,6 @@ docs/
 # Tests
 coverage
 lcov.info
+
+# Upgrade-related 
+build-info-ref/
