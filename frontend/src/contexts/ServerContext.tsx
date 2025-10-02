@@ -1,7 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { ReactNode, createContext, useContext } from 'react';
-import { useAccount, useChains } from 'wagmi';
 
 export interface ServerCallOptions {
   noToast: boolean;
@@ -20,9 +19,7 @@ interface ServerContextProps {
 export const useServer = () => useContext(ServerContext);
 
 export const ServerProvider = ({ children }: { children: ReactNode }) => {
-  const { address, chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
-  const { signature } = useAuth();
+  const { address, signature } = useAuth();
   const { toastError } = useToast();
 
   const call = async (path: string, method: string, body: any = undefined, opts?: ServerCallOptions) => {
@@ -36,9 +33,7 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
               'Content-Type': 'application/json',
               ...(path.startsWith('/auth') && signature && address
                 ? { Authorization: `Bearer ${signature}`, 'user-wallet-address': address }
-                : {
-                    chain: (currentChain ?? defaultChain).name.toLowerCase().split(' ').join('')
-                  })
+                : {})
             },
             ...(body ? { body: JSON.stringify(body) } : {})
           })

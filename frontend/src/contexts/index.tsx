@@ -1,4 +1,4 @@
-export * from './abi';
+export * from './abis';
 export * from './AuthContext';
 export * from './CacheContext';
 export * from './ContractContext';

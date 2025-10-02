@@ -78,11 +78,7 @@ export const abi = [
       { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
       { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
       { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
-      {
-        name: 'winnerPredictions',
-        type: 'uint256[]',
-        internalType: 'uint256[]'
-      }
+      { name: 'winnerPredictions', type: 'uint256[]', internalType: 'uint256[]' }
     ],
     outputs: [],
     stateMutability: 'nonpayable'
@@ -130,23 +126,11 @@ export const abi = [
             type: 'tuple',
             internalType: 'struct PoolSeeds',
             components: [
-              {
-                name: 'predictionToken',
-                type: 'address',
-                internalType: 'address'
-              },
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
               { name: 'stakeToken', type: 'address', internalType: 'address' },
               { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
-              {
-                name: 'snapshotTime',
-                type: 'uint256',
-                internalType: 'uint256'
-              },
-              {
-                name: 'windowCloseTime',
-                type: 'uint256',
-                internalType: 'uint256'
-              }
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
             ]
           },
           { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
@@ -156,11 +140,108 @@ export const abi = [
           { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
           { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getPoolPredictionsPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getPools',
+    inputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    outputs: [
+      {
+        name: 'poolsList',
+        type: 'tuple[]',
+        internalType: 'struct Pool[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
           {
-            name: 'noOfClaimedWinnings',
-            type: 'uint256',
-            internalType: 'uint256'
-          }
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct PoolSeeds',
+            components: [
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getPoolsPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'poolsList',
+        type: 'tuple[]',
+        internalType: 'struct Pool[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct PoolSeeds',
+            components: [
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
         ]
       }
     ],
@@ -184,11 +265,7 @@ export const abi = [
           { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
           { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
           { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          {
-            name: 'claimedWinningsTime',
-            type: 'uint256',
-            internalType: 'uint256'
-          },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
           { name: 'isAWinner', type: 'bool', internalType: 'bool' }
         ]
       }
@@ -202,8 +279,31 @@ export const abi = [
       { name: 'poolId', type: 'uint256', internalType: 'uint256' },
       { name: 'predicter', type: 'address', internalType: 'address' }
     ],
-    outputs: [
+    outputs: [{ name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getPredictions',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
       { name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    outputs: [
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
     ],
     stateMutability: 'view'
   },
@@ -212,6 +312,33 @@ export const abi = [
     name: 'getRoleAdmin',
     inputs: [{ name: 'role', type: 'bytes32', internalType: 'bytes32' }],
     outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getUserPredictionsPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
     stateMutability: 'view'
   },
   {
@@ -264,9 +391,7 @@ export const abi = [
   {
     type: 'function',
     name: 'initialize',
-    inputs: [
-      { name: 'feeCollector_', type: 'address', internalType: 'address' }
-    ],
+    inputs: [{ name: 'feeCollector_', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
@@ -354,13 +479,7 @@ export const abi = [
     outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
     stateMutability: 'view'
   },
-  {
-    type: 'function',
-    name: 'renounceOwnership',
-    inputs: [],
-    outputs: [],
-    stateMutability: 'nonpayable'
-  },
+  { type: 'function', name: 'renounceOwnership', inputs: [], outputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
     name: 'renounceRole',
@@ -391,9 +510,7 @@ export const abi = [
   {
     type: 'function',
     name: 'setFeeCollector',
-    inputs: [
-      { name: 'newFeeCollector', type: 'address', internalType: 'address' }
-    ],
+    inputs: [{ name: 'newFeeCollector', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
@@ -463,42 +580,12 @@ export const abi = [
     type: 'event',
     name: 'ClaimedWinnings',
     inputs: [
-      {
-        name: 'poolId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'predictionId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'winner',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      },
-      {
-        name: 'stakeToken',
-        type: 'address',
-        indexed: false,
-        internalType: 'address'
-      },
-      {
-        name: 'stakedAmount',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      },
-      {
-        name: 'wonAmount',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'winner', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'stakeToken', type: 'address', indexed: false, internalType: 'address' },
+      { name: 'stakedAmount', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'wonAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
@@ -506,36 +593,11 @@ export const abi = [
     type: 'event',
     name: 'CompletedPool',
     inputs: [
-      {
-        name: 'poolId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'snapshotTime',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      },
-      {
-        name: 'snapshotPrice',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      },
-      {
-        name: 'winAmount',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      },
-      {
-        name: 'noOfWinners',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'snapshotTime', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'snapshotPrice', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'winAmount', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'noOfWinners', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
@@ -543,50 +605,23 @@ export const abi = [
     type: 'event',
     name: 'CreatedPool',
     inputs: [
-      {
-        name: 'poolId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'seedsHash',
-        type: 'bytes32',
-        indexed: true,
-        internalType: 'bytes32'
-      }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'seedsHash', type: 'bytes32', indexed: true, internalType: 'bytes32' }
     ],
     anonymous: false
   },
   {
     type: 'event',
     name: 'Initialized',
-    inputs: [
-      {
-        name: 'version',
-        type: 'uint64',
-        indexed: false,
-        internalType: 'uint64'
-      }
-    ],
+    inputs: [{ name: 'version', type: 'uint64', indexed: false, internalType: 'uint64' }],
     anonymous: false
   },
   {
     type: 'event',
     name: 'OwnershipTransferred',
     inputs: [
-      {
-        name: 'previousOwner',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      },
-      {
-        name: 'newOwner',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      }
+      { name: 'previousOwner', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newOwner', type: 'address', indexed: true, internalType: 'address' }
     ],
     anonymous: false
   },
@@ -594,30 +629,10 @@ export const abi = [
     type: 'event',
     name: 'Predicted',
     inputs: [
-      {
-        name: 'poolId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'predictionId',
-        type: 'uint256',
-        indexed: true,
-        internalType: 'uint256'
-      },
-      {
-        name: 'predicter',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      },
-      {
-        name: 'predictionPrice',
-        type: 'uint256',
-        indexed: false,
-        internalType: 'uint256'
-      }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'predictionPrice', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
@@ -626,18 +641,8 @@ export const abi = [
     name: 'RoleAdminChanged',
     inputs: [
       { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      {
-        name: 'previousAdminRole',
-        type: 'bytes32',
-        indexed: true,
-        internalType: 'bytes32'
-      },
-      {
-        name: 'newAdminRole',
-        type: 'bytes32',
-        indexed: true,
-        internalType: 'bytes32'
-      }
+      { name: 'previousAdminRole', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      { name: 'newAdminRole', type: 'bytes32', indexed: true, internalType: 'bytes32' }
     ],
     anonymous: false
   },
@@ -646,18 +651,8 @@ export const abi = [
     name: 'RoleGranted',
     inputs: [
       { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      {
-        name: 'account',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      },
-      {
-        name: 'sender',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      }
+      { name: 'account', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'sender', type: 'address', indexed: true, internalType: 'address' }
     ],
     anonymous: false
   },
@@ -666,32 +661,15 @@ export const abi = [
     name: 'RoleRevoked',
     inputs: [
       { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      {
-        name: 'account',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      },
-      {
-        name: 'sender',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      }
+      { name: 'account', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'sender', type: 'address', indexed: true, internalType: 'address' }
     ],
     anonymous: false
   },
   {
     type: 'event',
     name: 'Upgraded',
-    inputs: [
-      {
-        name: 'implementation',
-        type: 'address',
-        indexed: true,
-        internalType: 'address'
-      }
-    ],
+    inputs: [{ name: 'implementation', type: 'address', indexed: true, internalType: 'address' }],
     anonymous: false
   },
   { type: 'error', name: 'AccessControlBadConfirmation', inputs: [] },
@@ -703,18 +681,12 @@ export const abi = [
       { name: 'neededRole', type: 'bytes32', internalType: 'bytes32' }
     ]
   },
-  {
-    type: 'error',
-    name: 'AddressEmptyCode',
-    inputs: [{ name: 'target', type: 'address', internalType: 'address' }]
-  },
+  { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
   { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
   {
     type: 'error',
     name: 'ERC1967InvalidImplementation',
-    inputs: [
-      { name: 'implementation', type: 'address', internalType: 'address' }
-    ]
+    inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
   },
   { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
   { type: 'error', name: 'FailedCall', inputs: [] },
@@ -730,11 +702,7 @@ export const abi = [
   { type: 'error', name: 'NotInitializing', inputs: [] },
   { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
   { type: 'error', name: 'NotYourPrediction', inputs: [] },
-  {
-    type: 'error',
-    name: 'OwnableInvalidOwner',
-    inputs: [{ name: 'owner', type: 'address', internalType: 'address' }]
-  },
+  { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
   {
     type: 'error',
     name: 'OwnableUnauthorizedAccount',

@@ -3,7 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { Auth, getAuth, onAuthStateChanged, signInWithCustomToken, signOut, Unsubscribe } from 'firebase/auth';
 import { Firestore, getFirestore } from 'firebase/firestore';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { useAccount } from 'wagmi';
 import { useAuth } from './AuthContext';
 import { firebaseConfig } from './firebase';
 import { useServer } from './ServerContext';
@@ -25,13 +24,12 @@ const FirebaseContext = createContext<FirebaseContextProps>({
 export const useFirebase = () => useContext(FirebaseContext);
 
 export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
-  const { address } = useAccount();
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const authUnsub = useRef<Unsubscribe | null>(null);
   const analytics = getAnalytics(app);
   const firestore = getFirestore(app);
-  const { signature } = useAuth();
+  const { address, signature } = useAuth();
   const [isFirebaseAuthReady, setIsFirebaseAuthReady] = useState(false);
   const server = useServer();
 
@@ -46,8 +44,8 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
         } else {
           await signOut(auth);
 
-          // Keep retrying the sign in every 10 seconds till success
-          await new Promise((resolve) => setTimeout(resolve, 10000));
+          // Keep retrying the sign in every 15 seconds till success
+          await new Promise((resolve) => setTimeout(resolve, 15000));
           await handleAuth();
         }
       } else {
