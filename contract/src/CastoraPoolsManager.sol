@@ -202,6 +202,7 @@ struct UserCreatedPool {
   uint256 completionFeesPercent;
 }
 
+/// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
 contract CastoraPoolsManager is
   Initializable,
   OwnableUpgradeable,
@@ -524,6 +525,10 @@ contract CastoraPoolsManager is
       items[i] = array[offset + i];
     }
   }
+
+  fallback() external payable {}
+
+  receive() external payable {}
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
