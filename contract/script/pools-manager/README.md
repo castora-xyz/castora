@@ -19,7 +19,7 @@ Deploys a new CastoraPoolsManager contract using UUPS proxy pattern.
 **Usage:**
 
 ```bash
-forge script script/pools-manager/DeployCastoraPoolsManager.s.sol --rpc-url $RPC_URL --broadcast --verify
+forge script script/pools-manager/DeployCastoraPoolsManager.s.sol --rpc-url $RPC_URL --broadcast --verify --verifier sourcify -vvv
 ```
 
 ### UpgradeCastoraPoolsManager.s.sol
@@ -34,7 +34,7 @@ Upgrades an existing CastoraPoolsManager proxy to a new implementation.
 **Usage:**
 
 ```bash
-forge script script/pools-manager/UpgradeCastoraPoolsManager.s.sol --rpc-url $RPC_URL --broadcast --verify
+forge script script/pools-manager/UpgradeCastoraPoolsManager.s.sol --rpc-url $RPC_URL --broadcast --verify --verifier sourcify -vvv
 ```
 
 ## Environment Variables
