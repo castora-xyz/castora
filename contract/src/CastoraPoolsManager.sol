@@ -235,6 +235,8 @@ contract CastoraPoolsManager is
   mapping(address user => UserStats stats) public userStats;
   /// Keeps track of user addresses to array of created pool IDs
   mapping(address user => uint256[] poolIds) public userCreatedPoolIds;
+  /// Keeps track of user addresses to array of paid created pool IDs
+  mapping(address user => uint256[] poolIds) public userPaidCreatedPoolIds;
   /// Keeps track of user addresses to array of claimed fees pool IDs
   mapping(address user => uint256[] poolIds) public userClaimedFeesPoolIds;
   /// Keeps track of user addresses to array of claimable fees pool IDs
@@ -341,13 +343,6 @@ contract CastoraPoolsManager is
     return completionFeesTokens;
   }
 
-  /// Gets user's claimable fees pool IDs
-  /// @param user The user address to query
-  /// @return poolIds Array of pool IDs where user has claimable fees
-  function getUserClaimableFeesPoolIds(address user) external view returns (uint256[] memory poolIds) {
-    return userClaimableFeesPoolIds[user];
-  }
-
   /// Gets tokens used by user for pool creation fees
   /// @param user The user address to query
   /// @return tokens Array of token addresses used for creation fees
@@ -379,7 +374,7 @@ contract CastoraPoolsManager is
   /// Checks if a pool exists
   /// @param poolId The pool ID to check
   /// @return exists True if pool exists
-  function poolExists(uint256 poolId) external view returns (bool exists) {
+  function doesUserCreatedPoolExist(uint256 poolId) external view returns (bool exists) {
     return userCreatedPools[poolId].creationTime != 0;
   }
 
@@ -390,13 +385,25 @@ contract CastoraPoolsManager is
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return poolIds Array of pool IDs for the page
-  /// @return total Total number of pools for this user
   function getUserCreatedPoolIdsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(userCreatedPoolIds[user], offset, limit);
+    return _paginateUint256Array(userCreatedPoolIds[user], userStats[user].noOfPoolsCreated, offset, limit);
+  }
+
+  /// Gets paginated paid user created pool IDs
+  /// @param user The user address to query
+  /// @param offset Starting index (0-based)
+  /// @param limit Maximum number of items to return
+  /// @return poolIds Array of pool IDs for the page
+  function getUserPaidCreatedPoolIdsPaginated(address user, uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint256[] memory poolIds)
+  {
+    return _paginateUint256Array(userPaidCreatedPoolIds[user], userStats[user].noOfPaidCreationFeesPools, offset, limit);
   }
 
   /// Gets paginated user claimable fees pool IDs
@@ -404,13 +411,14 @@ contract CastoraPoolsManager is
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return poolIds Array of claimable pool IDs for the page
-  /// @return total Total number of claimable pools for this user
   function getUserClaimableFeesPoolIdsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(userClaimableFeesPoolIds[user], offset, limit);
+    return _paginateUint256Array(
+      userClaimableFeesPoolIds[user], userStats[user].noOfClaimableCompletionFeesPools, offset, limit
+    );
   }
 
   /// Gets paginated user claimed fees pool IDs
@@ -418,82 +426,73 @@ contract CastoraPoolsManager is
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return poolIds Array of claimed pool IDs for the page
-  /// @return total Total number of claimed pools for this user
   function getUserClaimedFeesPoolIdsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(userClaimedFeesPoolIds[user], offset, limit);
+    return
+      _paginateUint256Array(userClaimedFeesPoolIds[user], userStats[user].noOfClaimedCompletionFeesPools, offset, limit);
   }
 
   /// Gets paginated global created pool IDs
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return poolIds Array of created pool IDs for the page
-  /// @return total Total number of created pools globally
   function getAllCreatedPoolIdsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(totalCreatedPoolIds, offset, limit);
+    return _paginateUint256Array(totalCreatedPoolIds, allStats.noOfUserCreatedPools, offset, limit);
   }
 
   /// Gets paginated global claimable pool IDs
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return poolIds Array of claimable pool IDs for the page
-  /// @return total Total number of claimable pools globally
   function getAllClaimablePoolIdsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(totalClaimablePoolIds, offset, limit);
+    return _paginateUint256Array(totalClaimablePoolIds, allStats.noOfClaimableFeesPools, offset, limit);
   }
 
   /// Gets paginated global claimed pool IDs
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
-  /// @return poolIds Array of claimed pool IDs for the page
-  /// @return total Total number of claimed pools globally
+  /// @return poolIds Array of claimed pool IDs for the page\
   function getAllClaimedPoolIdsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (uint256[] memory poolIds, uint256 total)
+    returns (uint256[] memory poolIds)
   {
-    return _paginateUint256Array(totalClaimedPoolIds, offset, limit);
+    return _paginateUint256Array(totalClaimedPoolIds, allStats.noOfClaimedFeesPools, offset, limit);
   }
 
   /// Gets paginated users list
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
   /// @return usersList Array of user addresses for the page
-  /// @return total Total number of users
-  function getAllUsersPaginated(uint256 offset, uint256 limit)
-    external
-    view
-    returns (address[] memory usersList, uint256 total)
-  {
-    return _paginateAddressArray(users, offset, limit);
+  function getAllUsersPaginated(uint256 offset, uint256 limit) external view returns (address[] memory usersList) {
+    return _paginateAddressArray(users, allStats.noOfUsers, offset, limit);
   }
 
   // ========== INTERNAL PAGINATION HELPERS ==========
 
   /// Internal helper to paginate uint256 arrays
   /// @param array The array to paginate
+  /// @param total The length of the array to paginate
   /// @param offset Starting index
   /// @param limit Maximum items to return
   /// @return items The paginated items
-  /// @return total Total array length
-  function _paginateUint256Array(uint256[] storage array, uint256 offset, uint256 limit)
+  function _paginateUint256Array(uint256[] storage array, uint256 total, uint256 offset, uint256 limit)
     internal
     view
-    returns (uint256[] memory items, uint256 total)
+    returns (uint256[] memory items)
   {
-    total = array.length;
-    if (offset >= total) return (new uint256[](0), total);
+    if (offset >= total) return new uint256[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
     uint256 length = end - offset;
@@ -506,17 +505,16 @@ contract CastoraPoolsManager is
 
   /// Internal helper to paginate address arrays
   /// @param array The array to paginate
+  /// @param total The length of the array to paginate
   /// @param offset Starting index
   /// @param limit Maximum items to return
   /// @return items The paginated items
-  /// @return total Total array length
-  function _paginateAddressArray(address[] storage array, uint256 offset, uint256 limit)
+  function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
     internal
     view
-    returns (address[] memory items, uint256 total)
+    returns (address[] memory items)
   {
-    total = array.length;
-    if (offset >= total) return (new address[](0), total);
+    if (offset >= total) return new address[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
     uint256 length = end - offset;
@@ -719,6 +717,7 @@ contract CastoraPoolsManager is
 
     // Update fee statistics
     if (creationFeeAmount > 0) {
+      userPaidCreatedPoolIds[msg.sender].push(poolId);
       allStats.noOfUserPaidPoolCreations += 1;
       userStats[msg.sender].noOfPaidCreationFeesPools += 1;
       creationFeesTokenInfos[creationFeeToken].totalUseCount += 1;
@@ -782,7 +781,7 @@ contract CastoraPoolsManager is
     // payout Castora's share to fee collector
     if (castoraShare > 0) _sendToCastoraFeeCollector(castoraShare, pool.seeds.stakeToken);
 
-    // payout user's share and update state
+    // update state for user's share payout. user will come and claim themselves
     if (userShare > 0) _updatePoolCompletionStats(poolId, userPool.creator, pool.seeds.stakeToken, userShare);
 
     // update user pool data, marking it as processed. also emit event.

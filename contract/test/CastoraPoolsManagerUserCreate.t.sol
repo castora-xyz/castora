@@ -456,12 +456,12 @@ contract CastoraPoolsManagerUserTest is Test {
     assertEq(poolsManager.getCreationFeeAmount(address(creationFeeToken)), CREATION_FEE_AMOUNT);
     assertEq(poolsManager.getCreationFeeAmount(makeAddr('randomToken')), 0);
 
-    // Test poolExists
-    assertTrue(poolsManager.poolExists(poolId));
-    assertFalse(poolsManager.poolExists(999));
+    // Test doesUserCreatedPoolExist
+    assertTrue(poolsManager.doesUserCreatedPoolExist(poolId));
+    assertFalse(poolsManager.doesUserCreatedPoolExist(999));
 
     // Test userCreatedPoolIds array length (since we can't access the array directly)
-    (uint256[] memory userPoolIds,) = poolsManager.getUserCreatedPoolIdsPaginated(user1, 0, 10);
+    uint256[] memory userPoolIds = poolsManager.getUserCreatedPoolIdsPaginated(user1, 0, 10);
     assertEq(userPoolIds.length, 1);
     assertEq(userPoolIds[0], poolId);
 
@@ -482,10 +482,6 @@ contract CastoraPoolsManagerUserTest is Test {
     // Test getUserPoolCompletionFeesTokens (should be empty initially)
     address[] memory userCompletionTokens = poolsManager.getUserPoolCompletionFeesTokens(user1);
     assertEq(userCompletionTokens.length, 0);
-
-    // Test getUserClaimableFeesPoolIds (should be empty initially)
-    uint256[] memory claimablePoolIds = poolsManager.getUserClaimableFeesPoolIds(user1);
-    assertEq(claimablePoolIds.length, 0);
   }
 
   function testCreatePoolPaginationGetters() public {
@@ -511,33 +507,52 @@ contract CastoraPoolsManagerUserTest is Test {
     }
 
     // Test getUserCreatedPoolIdsPaginated
-    (uint256[] memory paginatedIds, uint256 total) = poolsManager.getUserCreatedPoolIdsPaginated(user1, 0, 3);
-    assertEq(total, 5);
+    uint256[] memory paginatedIds = poolsManager.getUserCreatedPoolIdsPaginated(user1, 0, 3);
     assertEq(paginatedIds.length, 3);
     assertEq(paginatedIds[0], poolIds[0]);
     assertEq(paginatedIds[1], poolIds[1]);
     assertEq(paginatedIds[2], poolIds[2]);
 
     // Test second page
-    (uint256[] memory secondPage, uint256 totalSecond) = poolsManager.getUserCreatedPoolIdsPaginated(user1, 3, 3);
-    assertEq(totalSecond, 5);
+    uint256[] memory secondPage = poolsManager.getUserCreatedPoolIdsPaginated(user1, 3, 3);
     assertEq(secondPage.length, 2);
     assertEq(secondPage[0], poolIds[3]);
     assertEq(secondPage[1], poolIds[4]);
 
     // Test getAllCreatedPoolIdsPaginated
-    (uint256[] memory allPaginated, uint256 allTotal) = poolsManager.getAllCreatedPoolIdsPaginated(0, 10);
-    assertEq(allTotal, 5);
+    uint256[] memory allPaginated = poolsManager.getAllCreatedPoolIdsPaginated(0, 10);   
     assertEq(allPaginated.length, 5);
 
     // Test getAllUsersPaginated
-    (address[] memory paginatedUsers, uint256 usersTotal) = poolsManager.getAllUsersPaginated(0, 10);
-    assertEq(usersTotal, 1);
+    address[] memory paginatedUsers = poolsManager.getAllUsersPaginated(0, 10);
     assertEq(paginatedUsers.length, 1);
     assertEq(paginatedUsers[0], user1);
 
     // Test pagination beyond bounds
-    (uint256[] memory emptyPage,) = poolsManager.getUserCreatedPoolIdsPaginated(user1, 10, 3);
+    uint256[] memory emptyPage = poolsManager.getUserCreatedPoolIdsPaginated(user1, 10, 3);
     assertEq(emptyPage.length, 0);
+
+    // Test getUserPaidCreatedPoolIdsPaginated
+    uint256[] memory paidPoolIds = poolsManager.getUserPaidCreatedPoolIdsPaginated(user1, 0, 10);
+    assertEq(paidPoolIds.length, 5);
+    for (uint256 i = 0; i < 5; i++) {
+      assertEq(paidPoolIds[i], poolIds[i]);
+    }
+
+    // Test pagination for paid pools
+    uint256[] memory paidFirstPage = poolsManager.getUserPaidCreatedPoolIdsPaginated(user1, 0, 3);
+    assertEq(paidFirstPage.length, 3);
+    assertEq(paidFirstPage[0], poolIds[0]);
+    assertEq(paidFirstPage[1], poolIds[1]);
+    assertEq(paidFirstPage[2], poolIds[2]);
+
+    uint256[] memory paidSecondPage = poolsManager.getUserPaidCreatedPoolIdsPaginated(user1, 3, 3);
+    assertEq(paidSecondPage.length, 2);
+    assertEq(paidSecondPage[0], poolIds[3]);
+    assertEq(paidSecondPage[1], poolIds[4]);
+
+    // Test pagination beyond bounds for paid pools
+    uint256[] memory paidEmptyPage = poolsManager.getUserPaidCreatedPoolIdsPaginated(user1, 10, 3);
+    assertEq(paidEmptyPage.length, 0);
   }
 }

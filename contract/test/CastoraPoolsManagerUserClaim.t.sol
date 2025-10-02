@@ -495,44 +495,6 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
   // ========== GETTER FUNCTION TESTS ==========
 
-  function testGetUserClaimableFeesPoolIds() public {
-    // Create and process multiple pools for user1
-    uint256[] memory expectedPoolIds = new uint256[](3);
-    expectedPoolIds[0] = 1;
-    expectedPoolIds[1] = 2;
-    expectedPoolIds[2] = 3;
-
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
-
-    for (uint256 i = 0; i < expectedPoolIds.length; i++) {
-      _createPoolForUser(user1, expectedPoolIds[i]);
-      _setupCompletedPool(expectedPoolIds[i], totalFees);
-      poolsManager.processPoolCompletion(expectedPoolIds[i]);
-    }
-
-    // Get claimable pool IDs
-    uint256[] memory claimableIds = poolsManager.getUserClaimableFeesPoolIds(user1);
-
-    assertEq(claimableIds.length, 3);
-    for (uint256 i = 0; i < expectedPoolIds.length; i++) {
-      assertEq(claimableIds[i], expectedPoolIds[i]);
-    }
-
-    // Claim one pool and verify the list updates
-    vm.prank(user1);
-    poolsManager.claimPoolCompletionFees(expectedPoolIds[0]);
-
-    uint256[] memory updatedClaimableIds = poolsManager.getUserClaimableFeesPoolIds(user1);
-    assertEq(updatedClaimableIds.length, 2);
-    assertEq(updatedClaimableIds[0], expectedPoolIds[1]);
-    assertEq(updatedClaimableIds[1], expectedPoolIds[2]);
-
-    // Check claimed pool IDs
-    (uint256[] memory claimedIds,) = poolsManager.getUserClaimedFeesPoolIdsPaginated(user1, 0, 10);
-    assertEq(claimedIds.length, 1);
-    assertEq(claimedIds[0], expectedPoolIds[0]);
-  }
-
   function testGetUserPoolCompletionFeesTokens() public {
     // Deploy additional token
     cUSD anotherToken = new cUSD();
@@ -638,22 +600,19 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     }
 
     // Test pagination for user claimable fees
-    (uint256[] memory page1, uint256 total1) = poolsManager.getUserClaimableFeesPoolIdsPaginated(user1, 0, 3);
-    assertEq(total1, numPools);
+    uint256[] memory page1 = poolsManager.getUserClaimableFeesPoolIdsPaginated(user1, 0, 3);
     assertEq(page1.length, 3);
     assertEq(page1[0], 1);
     assertEq(page1[1], 2);
     assertEq(page1[2], 3);
 
-    (uint256[] memory page2, uint256 total2) = poolsManager.getUserClaimableFeesPoolIdsPaginated(user1, 3, 3);
-    assertEq(total2, numPools);
+    uint256[] memory page2 = poolsManager.getUserClaimableFeesPoolIdsPaginated(user1, 3, 3);
     assertEq(page2.length, 2); // Only 2 remaining
     assertEq(page2[0], 4);
     assertEq(page2[1], 5);
 
     // Test global claimable pagination
-    (uint256[] memory globalPage1, uint256 globalTotal1) = poolsManager.getAllClaimablePoolIdsPaginated(0, 2);
-    assertEq(globalTotal1, numPools);
+    uint256[] memory globalPage1 = poolsManager.getAllClaimablePoolIdsPaginated(0, 2);
     assertEq(globalPage1.length, 2);
     assertEq(globalPage1[0], 1);
     assertEq(globalPage1[1], 2);
@@ -664,14 +623,12 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     poolsManager.claimPoolCompletionFees(2);
     vm.stopPrank();
 
-    (uint256[] memory claimedPage, uint256 claimedTotal) = poolsManager.getUserClaimedFeesPoolIdsPaginated(user1, 0, 10);
-    assertEq(claimedTotal, 2);
+    uint256[] memory claimedPage = poolsManager.getUserClaimedFeesPoolIdsPaginated(user1, 0, 10);
     assertEq(claimedPage.length, 2);
     assertEq(claimedPage[0], 1);
     assertEq(claimedPage[1], 2);
 
-    (uint256[] memory globalClaimedPage, uint256 globalClaimedTotal) = poolsManager.getAllClaimedPoolIdsPaginated(0, 10);
-    assertEq(globalClaimedTotal, 2);
+    uint256[] memory globalClaimedPage = poolsManager.getAllClaimedPoolIdsPaginated(0, 10);
     assertEq(globalClaimedPage.length, 2);
     assertEq(globalClaimedPage[0], 1);
     assertEq(globalClaimedPage[1], 2);
