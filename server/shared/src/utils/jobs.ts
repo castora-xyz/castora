@@ -10,6 +10,8 @@ const connection = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null
 });
 
+export const redisClient = connection;
+
 export interface QueueJobOpts {
   queueName: string;
   jobName: string;

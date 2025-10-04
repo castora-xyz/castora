@@ -33,6 +33,22 @@ export const getStocksPoolIds = async (chain: Chain): Promise<number[]> => {
 };
 
 /**
+ * Returns the live community poolIds of the provided chain.
+ *
+ * @param {Chain} chain The chain to get the live pools from.
+ * @returns {Array} The live community poolIds of the chain.
+ */
+export const getCommunityPoolIds = async (chain: Chain): Promise<number[]> => {
+  const snap = await firestore.doc(`/chains/${chain}/live/community`).get();
+  if (snap.exists) {
+    const { poolIds } = snap.data()!;
+    return poolIds ?? [];
+  } else {
+    return [];
+  }
+};
+
+/**
  * Settles a pool by posting archive job with shouldComplete flag.
  * If pool is archived, then complete, otherwise, after archiving, complete it.
  * Useful for failed archival & completion, post pool times.

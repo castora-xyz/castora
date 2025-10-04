@@ -1,4 +1,4 @@
-import { Chain, logger, Pool, PoolSeeds, readContract } from '@castora/shared';
+import { Chain, logger, Pool, PoolSeeds, readCastoraContract } from '@castora/shared';
 
 /**
  * Returns the poolId of the {@link Pool} with provided {@link PoolSeeds}
@@ -9,11 +9,11 @@ import { Chain, logger, Pool, PoolSeeds, readContract } from '@castora/shared';
  */
 export const getPoolId = async (chain: Chain, seeds: PoolSeeds): Promise<number | null> => {
   logger.info('GetPoolId => Got PoolSeeds');
-  const seedsHash = await readContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
+  const seedsHash = await readCastoraContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
   logger.info(`Hashed PoolSeeds: ${seedsHash}`);
 
   logger.info('Checking if Pool Exists ...');
-  let poolId = Number(await readContract(chain, 'poolIdsBySeedsHashes', [seedsHash]));
+  let poolId = Number(await readCastoraContract(chain, 'poolIdsBySeedsHashes', [seedsHash]));
   if (!Number.isNaN(poolId) && poolId !== 0) {
     logger.info(`Pool exists. poolId: ${poolId}`);
     return poolId;

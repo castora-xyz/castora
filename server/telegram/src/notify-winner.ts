@@ -22,7 +22,7 @@ export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: str
   const count = pool.predictions.filter(({ predicter, isAWinner }) => predicter === winner && isAWinner).length;
   if (count === 0) {
     logger.error(
-      `❌ FATAL: Got winner ${winner} who had no winner ` +
+      `FATAL: Got winner ${winner} who had no winner ` +
         `predictions in pool: ${pool.poolId} on chain: ${pool.chain}`
     );
     return false;

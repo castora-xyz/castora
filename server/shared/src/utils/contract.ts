@@ -1,12 +1,13 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { abi } from './abi.js';
+import { castoraAbi, castoraPoolsManagerAbi } from './abi.js';
 import { Chain } from './index.js';
 import { logger } from './logger.js';
 
 export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const CONTRACT_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
 
 const monadTestnet = () => {
   if (!process.env.MONAD_TESTNET_RPC_URL) throw 'Set MONAD_TESTNET_RPC_URL in env';
@@ -40,14 +41,33 @@ export const getContractAddress = (chain: Chain) =>
     monadtestnet: CONTRACT_ADDRESS_MONAD
   }[chain]);
 
-export const readContract = async (chain: Chain, functionName: any, args?: any) => {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return await createPublicClient({ ...getConfig(chain) }).readContract({
-    address: getContractAddress(chain),
-    abi,
-    functionName,
-    args
-  });
+export const readCastoraContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
+  try {
+    return await createPublicClient({ ...getConfig(chain) }).readContract({
+      address: getContractAddress(chain),
+      abi: castoraAbi,
+      functionName,
+      args
+    });
+  } catch (e) {
+    logger.error(e, `Error at readCastoraContract call ${e}`);
+    throw e;
+  }
+};
+
+export const readPoolsManagerContract = async (chain: Chain, functionName: any, args?: any) => {
+  try {
+    // @ts-ignore
+    return await createPublicClient({ ...getConfig(chain) }).readContract({
+      address: POOLS_MANAGER_ADDRESS_MONAD,
+      abi: castoraPoolsManagerAbi,
+      functionName,
+      args
+    });
+  } catch (e) {
+    logger.error(e, `Error at readPoolsManagerContract call ${e}`);
+    throw e;
+  }
 };
 
 const showBalance = async (chain: Chain, address: `0x${string}`) => {
@@ -74,7 +94,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const prevBalance = await showBalance(chain, account.address);
     const { result, request } = await publicClient.simulateContract({
       address: getContractAddress(chain),
-      abi,
+      abi: castoraAbi,
       functionName,
       args,
       account

@@ -20,7 +20,7 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
 
   if (predictions.length != pool.noOfPredictions) {
     throw (
-      'Fatal: unmatching predictions length.' +
+      'FATAL: unmatching predictions length.' +
       ` pool ID: ${pool.poolId} pool.noOfPredictions (${pool.noOfPredictions}) ` +
       `doesn't equal all fetched predictions.length (${predictions.length});`
     );
