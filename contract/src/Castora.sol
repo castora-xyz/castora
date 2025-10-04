@@ -347,6 +347,140 @@ contract Castora is
     }
   }
 
+  /// Returns a paginated list of unique pools a user has joined and their predictions.
+  /// @param user The address of the user
+  /// @param offset The starting index (0-based) in the user's joined pools array
+  /// @param limit The maximum number of entries to return
+  /// @return uniquePools The array of unique Pool structs the user has joined
+  /// @return predictionsList The array of Prediction structs made by the user
+  /// @return poolIndexes The array mapping each prediction to its unique pool index
+  function getUserActivitiesOptimizedPaginated(address user, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
+  {
+    if (user == address(0)) revert InvalidAddress();
+
+    uint256 totalCount = noOfJoinedPoolsByAddresses[user];
+    if (totalCount == 0) return (new Pool[](0), new Prediction[](0), new uint256[](0));
+    if (offset >= totalCount) return (new Pool[](0), new Prediction[](0), new uint256[](0));
+
+    uint256 end = offset + limit;
+    if (end > totalCount) end = totalCount;
+    uint256 size = end > offset ? end - offset : 0;
+
+    // the recursive split into smaller chunks to avoid "stack too deep" errors
+    return _buildUserActivitiesData(user, offset, size);
+  }
+
+  /// Internal function to build user activities data
+  function _buildUserActivitiesData(address user, uint256 offset, uint256 size)
+    internal
+    view
+    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
+  {
+    predictionsList = new Prediction[](size);
+    poolIndexes = new uint256[](size);
+
+    uint256[] memory uniquePoolIds = new uint256[](size);
+    uint256 uniqueCount = _processActivitiesBatch(user, offset, size, uniquePoolIds, predictionsList, poolIndexes);
+
+    uniquePools = new Pool[](uniqueCount);
+    for (uint256 i = 0; i < uniqueCount; i++) {
+      uniquePools[i] = pools[uniquePoolIds[i]];
+    }
+  }
+
+  /// Internal function to process activities batch and return unique count
+  function _processActivitiesBatch(
+    address user,
+    uint256 offset,
+    uint256 size,
+    uint256[] memory uniquePoolIds,
+    Prediction[] memory predictionsList,
+    uint256[] memory poolIndexes
+  ) internal view returns (uint256) {
+    uint256[] memory firstOccurrence = new uint256[](size);
+    uint256[] memory batchOccurrences = new uint256[](size);
+    uint256 uniqueCount = 0;
+
+    for (uint256 i = 0; i < size; i++) {
+      uniqueCount = _processActivityEntry(
+        user, offset, i, uniqueCount, uniquePoolIds, firstOccurrence, batchOccurrences, predictionsList, poolIndexes
+      );
+    }
+
+    return uniqueCount;
+  }
+
+  /// Internal function to process a single activity entry
+  function _processActivityEntry(
+    address user,
+    uint256 offset,
+    uint256 entryIndex,
+    uint256 uniqueCount,
+    uint256[] memory uniquePoolIds,
+    uint256[] memory firstOccurrence,
+    uint256[] memory batchOccurrences,
+    Prediction[] memory predictionsList,
+    uint256[] memory poolIndexes
+  ) internal view returns (uint256) {
+    uint256 currentPoolId = joinedPoolIdsByAddresses[user][offset + entryIndex];
+    uint256 poolIndex = _findPoolIndex(uniquePoolIds, uniqueCount, currentPoolId);
+
+    if (poolIndex == uniqueCount) {
+      uniquePoolIds[uniqueCount] = currentPoolId;
+      firstOccurrence[uniqueCount] = _countPreOffsetOccurrences(user, offset, currentPoolId);
+      batchOccurrences[uniqueCount] = 0;
+      uniqueCount++;
+      poolIndex = uniqueCount - 1;
+    } else {
+      batchOccurrences[poolIndex]++;
+    }
+
+    _setPredictionForEntry(
+      user, currentPoolId, firstOccurrence[poolIndex] + batchOccurrences[poolIndex], entryIndex, predictionsList
+    );
+
+    poolIndexes[entryIndex] = poolIndex;
+    return uniqueCount;
+  }
+
+  /// Internal function to set prediction for an entry
+  function _setPredictionForEntry(
+    address user,
+    uint256 poolId,
+    uint256 predictionIndex,
+    uint256 entryIndex,
+    Prediction[] memory predictionsList
+  ) internal view {
+    uint256 predictionId = predictionIdsByAddresses[poolId][user][predictionIndex];
+    predictionsList[entryIndex] = predictions[poolId][predictionId];
+  }
+
+  /// Internal helper to find pool index
+  function _findPoolIndex(uint256[] memory uniquePoolIds, uint256 uniqueCount, uint256 poolId)
+    internal
+    pure
+    returns (uint256)
+  {
+    for (uint256 j = 0; j < uniqueCount; j++) {
+      if (uniquePoolIds[j] == poolId) return j;
+    }
+    return uniqueCount;
+  }
+
+  /// Internal helper to count occurrences of a pool before the offset
+  function _countPreOffsetOccurrences(address user, uint256 offset, uint256 poolId)
+    internal
+    view
+    returns (uint256 count)
+  {
+    for (uint256 k = 0; k < offset; k++) {
+      if (joinedPoolIdsByAddresses[user][k] == poolId) count++;
+    }
+  }
+
   /// Returns a hash of the provided `seeds`.
   function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
     return keccak256(

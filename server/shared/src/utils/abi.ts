@@ -316,6 +316,61 @@ export const abi = [
   },
   {
     type: 'function',
+    name: 'getUserActivitiesOptimizedPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'uniquePools',
+        type: 'tuple[]',
+        internalType: 'struct Pool[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct PoolSeeds',
+            components: [
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      },
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      },
+      { name: 'poolIndexes', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'getUserPredictionsPaginated',
     inputs: [
       { name: 'poolId', type: 'uint256', internalType: 'uint256' },

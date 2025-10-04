@@ -23,6 +23,37 @@
 - MON (0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53) 18 decimals
   - 0.2 MON, 0.5 MON, 1 MON, 1.5 MON, 2 MON, 2.5 MON, 5 MON, 10 MON.
 
+## Testnet Contracts CHANGELOGs 
+
+### Castora.sol
+
+- v5: Sat 5th Oct 2025
+  - Added getUserActivitiesPaginatedOptimized.
+
+- v4 : Thu 2nd Oct 2025
+  - Added Pagination Getters for Pools and Predictions.
+  - Used PoolsManager as Fee Collector to enable Pools Manager to share with fees with user created pools.
+
+- v3
+  - Added bulkPredict function.
+
+- v2
+  - Added claimWinningsBulk function.
+
+- v1
+  - Initial version.
+
+### CastoraPoolsManager.sol
+
+- v3 : Thu 2nd Oct 2025
+  - Fixed native token payout by checking main castora address in pay out token instead of address(this), that's the poolsManager contract itself.
+
+- v2 : Thu 2nd Oct 2025
+  - Added receive and fallback methods so that it can receive completePool's payout.
+
+- v1
+  - Initial version.
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
