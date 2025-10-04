@@ -78,6 +78,9 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock the Castora contract to return a pool ID
     vm.mockCall(
@@ -92,7 +95,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // User creates a pool
     vm.prank(user1);
-    uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken));
+    uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
 
     // Verify return value
     assertEq(poolId, expectedPoolId);
@@ -148,6 +151,9 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock the Castora contract to return sequential pool IDs
     vm.mockCall(
@@ -156,7 +162,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // User1 creates a pool
     vm.prank(user1);
-    uint256 returnedPoolId1 = poolsManager.createPool(validSeeds, address(creationFeeToken));
+    uint256 returnedPoolId1 = poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
     assertEq(returnedPoolId1, poolId1);
 
     // Mock for second pool
@@ -166,7 +172,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // User2 creates a pool
     vm.prank(user2);
-    uint256 returnedPoolId2 = poolsManager.createPool(validSeeds, address(creationFeeToken));
+    uint256 returnedPoolId2 = poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
     assertEq(returnedPoolId2, poolId2);
 
     // Verify global statistics
@@ -190,20 +196,23 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock for first pool
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(1));
 
     // User1 creates first pool
     vm.prank(user1);
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
 
     // Mock for second pool
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(2));
 
     // User1 creates second pool
     vm.prank(user1);
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
 
     // Verify global statistics (only 1 unique user)
     AllStats memory stats = poolsManager.getAllStats();
@@ -233,6 +242,9 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock the Castora contract
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(1));
@@ -244,7 +256,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // User creates a pool with ETH
     vm.prank(user1);
-    uint256 poolId = poolsManager.createPool{value: 1 ether}(validSeeds, address(poolsManager));
+    uint256 poolId = poolsManager.createPool{value: 1 ether}(validSeeds, address(poolsManager), 200, false);
 
     // Verify ETH transfer
     assertEq(user1.balance, initialBalance - 1 ether);
@@ -266,13 +278,13 @@ contract CastoraPoolsManagerUserTest is Test {
     // Attempt to create pool should fail
     vm.prank(user1);
     vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
   }
 
   function testCreatePoolFailsWithInvalidCreationFeeToken() public {
     vm.prank(user1);
     vm.expectRevert(InvalidAddress.selector);
-    poolsManager.createPool(validSeeds, address(0));
+    poolsManager.createPool(validSeeds, address(0), 200, false);
   }
 
   function testCreatePoolFailsWithDisallowedCreationFeeToken() public {
@@ -284,10 +296,13 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     vm.prank(user1);
     vm.expectRevert(CreationFeeTokenNotAllowed.selector);
-    poolsManager.createPool(validSeeds, disallowedToken);
+    poolsManager.createPool(validSeeds, disallowedToken, 200, false);
   }
 
   function testCreatePoolFailsWhenRulesValidationFails() public {
@@ -300,7 +315,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     vm.prank(user1);
     vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
   }
 
   function testCreatePoolFailsWithInsufficientNativeToken() public {
@@ -313,13 +328,16 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Give user1 some ETH but send insufficient amount
     vm.deal(user1, 10 ether);
 
     vm.prank(user1);
     vm.expectRevert(InsufficientCreationFeeValue.selector);
-    poolsManager.createPool{value: 0.5 ether}(validSeeds, address(poolsManager));
+    poolsManager.createPool{value: 0.5 ether}(validSeeds, address(poolsManager), 200, false);
   }
 
   function testCreatePoolFailsWithInsufficientERC20Allowance() public {
@@ -333,10 +351,13 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     vm.prank(user1);
     vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
   }
 
   function testCreatePoolFailsWhenCastoraCallFails() public {
@@ -345,6 +366,9 @@ contract CastoraPoolsManagerUserTest is Test {
       address(mockPoolsRules),
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
+    );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
     );
 
     // Mock the Castora contract to revert
@@ -356,7 +380,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     vm.prank(user1);
     vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
   }
 
   function testCreatePoolFailsForNonExistentPool() public {
@@ -375,13 +399,16 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock the Castora contract
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(1));
 
     // User creates a pool with zero fee
     vm.prank(user1);
-    uint256 poolId = poolsManager.createPool(validSeeds, zeroFeeToken);
+    uint256 poolId = poolsManager.createPool(validSeeds, zeroFeeToken, 200, false);
 
     // Verify pool creation
     assertEq(poolId, 1);
@@ -405,13 +432,16 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Give user1 some ETH but send too much
     vm.deal(user1, 10 ether);
 
     vm.prank(user1);
     vm.expectRevert(IncorrectCreationFeeValue.selector);
-    poolsManager.createPool{value: 2 ether}(validSeeds, address(poolsManager));
+    poolsManager.createPool{value: 2 ether}(validSeeds, address(poolsManager), 200, false);
   }
 
   function testCreatePoolComprehensiveGetters() public {
@@ -423,6 +453,9 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Mock the Castora contract to return a pool ID
     vm.mockCall(
@@ -431,7 +464,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // User creates a pool
     vm.prank(user1);
-    uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken));
+    uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
 
     // Test all getter functions for comprehensive coverage
 
@@ -482,6 +515,18 @@ contract CastoraPoolsManagerUserTest is Test {
     // Test getUserPoolCompletionFeesTokens (should be empty initially)
     address[] memory userCompletionTokens = poolsManager.getUserPoolCompletionFeesTokens(user1);
     assertEq(userCompletionTokens.length, 0);
+
+    // Test getUserCreatedPools
+    UserCreatedPool[] memory createdPools = poolsManager.getUserCreatedPools(userPoolIds);
+    assertEq(createdPools.length, 1);
+    assertEq(createdPools[0].multiplier, 200);
+    assertEq(createdPools[0].isUnlisted, false);
+
+    // Test getUserCreatedPools revert InvalidPoolId
+    uint256[] memory invalidIds = new uint256[](1);
+    invalidIds[0] = 10;
+    vm.expectRevert(InvalidPoolId.selector);
+    poolsManager.getUserCreatedPools(invalidIds);
   }
 
   function testCreatePoolPaginationGetters() public {
@@ -494,6 +539,9 @@ contract CastoraPoolsManagerUserTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
 
     // Create 5 pools
     for (uint256 i = 0; i < 5; i++) {
@@ -503,7 +551,7 @@ contract CastoraPoolsManagerUserTest is Test {
       );
 
       vm.prank(user1);
-      poolsManager.createPool(validSeeds, address(creationFeeToken));
+      poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
     }
 
     // Test getUserCreatedPoolIdsPaginated
@@ -520,7 +568,7 @@ contract CastoraPoolsManagerUserTest is Test {
     assertEq(secondPage[1], poolIds[4]);
 
     // Test getAllCreatedPoolIdsPaginated
-    uint256[] memory allPaginated = poolsManager.getAllCreatedPoolIdsPaginated(0, 10);   
+    uint256[] memory allPaginated = poolsManager.getAllCreatedPoolIdsPaginated(0, 10);
     assertEq(allPaginated.length, 5);
 
     // Test getAllUsersPaginated

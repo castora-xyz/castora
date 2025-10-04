@@ -200,6 +200,10 @@ struct UserCreatedPool {
   uint256 completionFeesAmount;
   /// Percentage of completion fees allocated to the creator
   uint256 completionFeesPercent;
+  /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
+  uint16 multiplier;
+  /// Whether the pool is should be visible in the UI
+  bool isUnlisted;
 }
 
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
@@ -243,9 +247,9 @@ contract CastoraPoolsManager is
   /// Keeps track of user addresses to array of claimable fees pool IDs
   mapping(address user => uint256[] poolIds) public userClaimableFeesPoolIds;
   /// Keeps track of tokens users have used as pool creation fees
-  mapping(address user => address[] tokens) userPoolCreationFeesTokens;
+  mapping(address user => address[] tokens) public userPoolCreationFeesTokens;
   /// Keeps track of tokens in which users have been awarded pool completion fees
-  mapping(address user => address[] tokens) userPoolCompletionFeesTokens;
+  mapping(address user => address[] tokens) public userPoolCompletionFeesTokens;
   /// Keeps track of user addresses to mapping of token addresses to paid creation fee token data
   mapping(address user => mapping(address token => UserCreationTokenFeesInfo info)) public userCreationTokenFeesInfo;
   /// Keeps track of user addresses to mapping of token addresses to claimable/claimed pool completion fee data
@@ -255,7 +259,7 @@ contract CastoraPoolsManager is
   /// Keeps track of pool IDs from non-users whose fees have been collected
   mapping(uint256 poolId => bool hasCollectedFees) public nonUserPoolHasCollectedFees;
   /// Efficient lookup for creation fee token existence
-  mapping(address token => bool exists) private creationFeesTokenExists;
+  mapping(address token => bool exists) public creationFeesTokenExists;
 
   /// Gets global settings
   /// @return config The AllConfig struct containing global settings
@@ -330,6 +334,17 @@ contract CastoraPoolsManager is
   function getUserCreatedPool(uint256 poolId) external view returns (UserCreatedPool memory pool) {
     if (userCreatedPools[poolId].creationTime == 0) revert InvalidPoolId();
     return userCreatedPools[poolId];
+  }
+
+  /// Gets created pool infos for the provided pool IDs
+  /// @param poolIds The array of pool IDs to query
+  /// @return pools The array of UserCreatedPool structs for the pools
+  function getUserCreatedPools(uint256[] memory poolIds) external view returns (UserCreatedPool[] memory pools) {
+    pools = new UserCreatedPool[](poolIds.length);
+    for (uint256 i = 0; i < poolIds.length; i++) {
+      if (userCreatedPools[poolIds[i]].creationTime == 0) revert InvalidPoolId();
+      pools[i] = userCreatedPools[poolIds[i]];
+    }
   }
 
   /// Gets all creation fee tokens
@@ -653,8 +668,10 @@ contract CastoraPoolsManager is
   /// @notice Creates a new pool with the provided seeds and creation fee token
   /// @param seeds The PoolSeeds struct containing pool parameters
   /// @param creationFeeToken The token to pay creation fees with
+  /// @param multiplier The multiplier for the pool
+  /// @param isUnlisted Whether the pool should be hidden in the UI
   /// @return poolId The ID of the newly created pool
-  function createPool(PoolSeeds memory seeds, address creationFeeToken)
+  function createPool(PoolSeeds memory seeds, address creationFeeToken, uint16 multiplier, bool isUnlisted)
     external
     payable
     nonReentrant
@@ -666,6 +683,9 @@ contract CastoraPoolsManager is
     // Validate pool seeds using the rules contract
     poolsRules().validateCreatePool(seeds);
 
+    // Ensure the multiplier is one of the allowed values
+    poolsRules().validateMultiplier(multiplier);
+
     // Check if creation fee token is allowed
     if (!creationFeesTokenInfos[creationFeeToken].isAllowed) revert CreationFeeTokenNotAllowed();
 
@@ -674,7 +694,7 @@ contract CastoraPoolsManager is
     poolId = castora().createPool(seeds);
 
     // Update statistics and user data
-    _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
+    _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount, multiplier, isUnlisted);
 
     emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
   }
@@ -701,11 +721,15 @@ contract CastoraPoolsManager is
   /// @param stakeToken The stake token from pool seeds
   /// @param creationFeeToken The token used for creation fees
   /// @param creationFeeAmount The amount of creation fees paid
+  /// @param multiplier The multiplier for the pool
+  /// @param isUnlisted Whether the pool should be hidden in the UI
   function _updatePoolCreationStats(
     uint256 poolId,
     address stakeToken,
     address creationFeeToken,
-    uint256 creationFeeAmount
+    uint256 creationFeeAmount,
+    uint16 multiplier,
+    bool isUnlisted
   ) internal {
     // Update user statistics if this is a new user
     if (userStats[msg.sender].nthUserCount == 0) {
@@ -748,7 +772,9 @@ contract CastoraPoolsManager is
       completionTime: 0,
       creatorClaimTime: 0,
       completionFeesAmount: 0,
-      completionFeesPercent: allConfig.completionPoolFeesSplitPercent
+      completionFeesPercent: allConfig.completionPoolFeesSplitPercent,
+      multiplier: multiplier,
+      isUnlisted: isUnlisted
     });
   }
 
@@ -829,7 +855,7 @@ contract CastoraPoolsManager is
   /// @param token Token address
   function _sendToCastoraFeeCollector(uint256 amount, address token) internal {
     if (amount == 0) return;
-      // native token payment is when the main castora is used
+    // native token payment is when the main castora is used
     if (token == allConfig.castora) {
       (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
       if (!isSuccess) revert UnsuccessfulFeeCollection();
@@ -862,7 +888,7 @@ contract CastoraPoolsManager is
     if (pool.completionFeesAmount == 0) revert ZeroAmountSpecified();
 
     // Transfer the fees
-      // native token payment is when the main castora is used
+    // native token payment is when the main castora is used
     if (pool.completionFeesToken == allConfig.castora) {
       (bool isSuccess,) = payable(msg.sender).call{value: pool.completionFeesAmount}('');
       if (!isSuccess) revert UnsuccessfulSendCompletionFees();

@@ -1114,4 +1114,509 @@ contract CastoraPoolsRulesTest is Test {
     assertEq(tokens.length, 1);
     assertEq(tokens[0], token2);
   }
+
+  // ========== MULTIPLIER VALIDATION TESTS ==========
+  function testUpdateAllowedPoolMultiplier() public {
+    uint16 multiplier = 5;
+
+    // Initially not allowed
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 0);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+
+    // Set to allowed
+    vm.expectEmit(true, false, false, true);
+    emit UpdatedAllowedPoolMultiplier(multiplier, true);
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+
+    assertTrue(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(multiplier));
+
+    // Set back to not allowed
+    vm.expectEmit(true, false, false, true);
+    emit UpdatedAllowedPoolMultiplier(multiplier, false);
+    rules.updateAllowedPoolMultiplier(multiplier, false);
+
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1); // Should remain in ever allowed
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0); // Should be removed from currently allowed
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(multiplier)); // Should still be marked as ever allowed
+  }
+
+  function testRevertUpdateAllowedPoolMultiplierNotOwner() public {
+    vm.prank(user);
+    vm.expectRevert();
+    rules.updateAllowedPoolMultiplier(5, true);
+  }
+
+  function testUpdateAllowedPoolMultiplierZeroValue() public {
+    uint16 multiplier = 0;
+
+    // Allow zero multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+
+    // Disallow zero multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, false);
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
+
+  function testUpdateAllowedPoolMultiplierMaxValue() public {
+    uint16 multiplier = type(uint16).max; // 65535
+
+    // Allow maximum multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+
+    // Disallow maximum multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, false);
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
+
+  function testUpdateAllowedPoolMultiplierSameValueTwice() public {
+    uint16 multiplier = 10;
+
+    // Allow multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+
+    // Allow same multiplier again - should not increase counts
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+  }
+
+  function testUpdateAllowedPoolMultiplierDisallowTwice() public {
+    uint16 multiplier = 10;
+
+    // Allow then disallow multiplier
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    rules.updateAllowedPoolMultiplier(multiplier, false);
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+
+    // Disallow same multiplier again - should not change counts
+    rules.updateAllowedPoolMultiplier(multiplier, false);
+    assertFalse(rules.allowedPoolMultipliers(multiplier));
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
+
+  function testValidateMultiplierSuccess() public {
+    uint16 multiplier = 3;
+
+    // Allow the multiplier first
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+
+    // Should not revert
+    rules.validateMultiplier(multiplier);
+  }
+
+  function testRevertValidateMultiplierNotAllowed() public {
+    uint16 multiplier = 7;
+
+    // Multiplier is not allowed by default
+    vm.expectRevert(InvalidPoolMultiplier.selector);
+    rules.validateMultiplier(multiplier);
+  }
+
+  function testRevertValidateMultiplierZero() public {
+    uint16 multiplier = 0;
+
+    // Zero multiplier not allowed by default
+    vm.expectRevert(InvalidPoolMultiplier.selector);
+    rules.validateMultiplier(multiplier);
+  }
+
+  function testRevertValidateMultiplierMaxValue() public {
+    uint16 multiplier = type(uint16).max;
+
+    // Max multiplier not allowed by default
+    vm.expectRevert(InvalidPoolMultiplier.selector);
+    rules.validateMultiplier(multiplier);
+  }
+
+  function testIsValidMultiplierAllowed() public {
+    uint16 multiplier = 4;
+
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.isValidMultiplier(multiplier));
+  }
+
+  function testIsValidMultiplierZero() public {
+    uint16 multiplier = 0;
+
+    // Zero is not allowed by default
+    assertFalse(rules.isValidMultiplier(multiplier));
+
+    // Allow zero and test again
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.isValidMultiplier(multiplier));
+  }
+
+  function testIsValidMultiplierMaxValue() public {
+    uint16 multiplier = type(uint16).max;
+
+    // Max value is not allowed by default
+    assertFalse(rules.isValidMultiplier(multiplier));
+
+    // Allow max value and test again
+    rules.updateAllowedPoolMultiplier(multiplier, true);
+    assertTrue(rules.isValidMultiplier(multiplier));
+  }
+
+  // ========== MULTIPLIER ARRAY MANAGEMENT TESTS ==========
+
+  function testTrackingEverAllowedPoolMultipliers() public {
+    uint16 mult1 = 2;
+    uint16 mult2 = 3;
+    uint16 mult3 = 5;
+
+    // Initially no multipliers should be tracked
+    assertEq(rules.everAllowedPoolMultipliersCount(), 0);
+
+    // Allow first multiplier
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(mult1));
+    assertEq(rules.everAllowedPoolMultipliers(0), mult1);
+
+    // Allow second multiplier
+    rules.updateAllowedPoolMultiplier(mult2, true);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(mult2));
+    assertEq(rules.everAllowedPoolMultipliers(1), mult2);
+
+    // Disallow first multiplier - should still be in ever allowed
+    rules.updateAllowedPoolMultiplier(mult1, false);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(mult1));
+
+    // Re-allow first multiplier - should not increase count
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+
+    // Allow third multiplier
+    rules.updateAllowedPoolMultiplier(mult3, true);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 3);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(mult3));
+    assertEq(rules.everAllowedPoolMultipliers(2), mult3);
+  }
+
+  function testTrackingCurrentlyAllowedPoolMultipliers() public {
+    uint16 mult1 = 2;
+    uint16 mult2 = 4;
+    uint16 mult3 = 10;
+
+    // Initially no multipliers should be currently allowed
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+
+    // Allow first multiplier
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult1);
+
+    // Allow second multiplier
+    rules.updateAllowedPoolMultiplier(mult2, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliers(1), mult2);
+
+    // Allow third multiplier
+    rules.updateAllowedPoolMultiplier(mult3, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 3);
+    assertEq(rules.currentlyAllowedPoolMultipliers(2), mult3);
+
+    // Disallow middle multiplier (mult2) - should be removed from currently allowed
+    rules.updateAllowedPoolMultiplier(mult2, false);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+    // mult3 should have moved to index 1
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult1);
+    assertEq(rules.currentlyAllowedPoolMultipliers(1), mult3);
+
+    // Re-allow mult2
+    rules.updateAllowedPoolMultiplier(mult2, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 3);
+    assertEq(rules.currentlyAllowedPoolMultipliers(2), mult2);
+
+    // Disallow all multipliers
+    rules.updateAllowedPoolMultiplier(mult1, false);
+    rules.updateAllowedPoolMultiplier(mult2, false);
+    rules.updateAllowedPoolMultiplier(mult3, false);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
+
+  function testArrayIndexManagementForPoolMultipliers() public {
+    uint16 mult1 = 2;
+    uint16 mult2 = 3;
+    uint16 mult3 = 5;
+    uint16 mult4 = 10;
+
+    // Add 4 multipliers
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    rules.updateAllowedPoolMultiplier(mult2, true);
+    rules.updateAllowedPoolMultiplier(mult3, true);
+    rules.updateAllowedPoolMultiplier(mult4, true);
+
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 4);
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult1);
+    assertEq(rules.currentlyAllowedPoolMultipliers(1), mult2);
+    assertEq(rules.currentlyAllowedPoolMultipliers(2), mult3);
+    assertEq(rules.currentlyAllowedPoolMultipliers(3), mult4);
+
+    // Remove mult2 (middle element)
+    rules.updateAllowedPoolMultiplier(mult2, false);
+
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 3);
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult1);
+    assertEq(rules.currentlyAllowedPoolMultipliers(1), mult4); // mult4 should have moved to position 1
+    assertEq(rules.currentlyAllowedPoolMultipliers(2), mult3);
+
+    // Verify that index mapping is correct for mult4
+    assertEq(rules.currentlyAllowedPoolMultiplierIndex(mult4), 1);
+    assertEq(rules.currentlyAllowedPoolMultiplierIndex(mult3), 2);
+
+    // Remove mult1 (first element)
+    rules.updateAllowedPoolMultiplier(mult1, false);
+
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult3); // mult3 should have moved to position 0
+    assertEq(rules.currentlyAllowedPoolMultipliers(1), mult4);
+
+    // Verify index mappings are updated
+    assertEq(rules.currentlyAllowedPoolMultiplierIndex(mult3), 0);
+    assertEq(rules.currentlyAllowedPoolMultiplierIndex(mult4), 1);
+  }
+
+  function testMultiplierArrayIndexRemovalEdgeCases() public {
+    uint16 mult = 7;
+
+    // Add and remove single multiplier
+    rules.updateAllowedPoolMultiplier(mult, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+
+    rules.updateAllowedPoolMultiplier(mult, false);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+
+    // Add two multipliers and remove the last one
+    uint16 mult1 = 2;
+    uint16 mult2 = 5;
+
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    rules.updateAllowedPoolMultiplier(mult2, true);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+
+    // Remove last element
+    rules.updateAllowedPoolMultiplier(mult2, false);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliers(0), mult1);
+  }
+
+  function testMultiplierDuplicateValuesEdgeCases() public {
+    uint16 mult = 3;
+
+    // Allow same multiplier multiple times - should only track once
+    rules.updateAllowedPoolMultiplier(mult, true);
+    rules.updateAllowedPoolMultiplier(mult, true);
+    rules.updateAllowedPoolMultiplier(mult, true);
+
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+    assertTrue(rules.hasEverBeenAllowedPoolMultiplier(mult));
+
+    // Disallow and re-allow - should not create duplicates
+    rules.updateAllowedPoolMultiplier(mult, false);
+    rules.updateAllowedPoolMultiplier(mult, true);
+
+    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+  }
+
+  function testMultiplierBoundaryValues() public {
+    uint16[] memory boundaryValues = new uint16[](5);
+    boundaryValues[0] = 0;
+    boundaryValues[1] = 1;
+    boundaryValues[2] = 2;
+    boundaryValues[3] = type(uint16).max - 1;
+    boundaryValues[4] = type(uint16).max;
+
+    for (uint256 i = 0; i < boundaryValues.length; i++) {
+      uint16 mult = boundaryValues[i];
+
+      // Test allowing boundary value
+      rules.updateAllowedPoolMultiplier(mult, true);
+      assertTrue(rules.allowedPoolMultipliers(mult));
+      assertTrue(rules.isValidMultiplier(mult));
+
+      // Should not revert when validating
+      rules.validateMultiplier(mult);
+
+      // Test disallowing boundary value
+      rules.updateAllowedPoolMultiplier(mult, false);
+      assertFalse(rules.allowedPoolMultipliers(mult));
+      assertFalse(rules.isValidMultiplier(mult));
+
+      // Should revert when validating
+      vm.expectRevert(InvalidPoolMultiplier.selector);
+      rules.validateMultiplier(mult);
+    }
+  }
+
+  function testMultiplierCommonValues() public {
+    uint16[] memory commonValues = new uint16[](5);
+    commonValues[0] = 2; // Common multiplier from README
+    commonValues[1] = 3; // Common multiplier from README
+    commonValues[2] = 4; // Common multiplier from README
+    commonValues[3] = 5; // Common multiplier from README
+    commonValues[4] = 10; // Common multiplier from README
+
+    for (uint256 i = 0; i < commonValues.length; i++) {
+      uint16 mult = commonValues[i];
+
+      // Initially not allowed
+      assertFalse(rules.isValidMultiplier(mult));
+
+      // Allow multiplier
+      rules.updateAllowedPoolMultiplier(mult, true);
+      assertTrue(rules.isValidMultiplier(mult));
+
+      // Validate should not revert
+      rules.validateMultiplier(mult);
+    }
+
+    // Verify all are tracked correctly
+    assertEq(rules.everAllowedPoolMultipliersCount(), 5);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 5);
+  }
+
+  function testMultiplierAfterUpgrade() public {
+    uint16 mult1 = 3;
+    uint16 mult2 = 7;
+
+    // Allow some multipliers before upgrade
+    rules.updateAllowedPoolMultiplier(mult1, true);
+    rules.updateAllowedPoolMultiplier(mult2, true);
+
+    // Verify tracking before upgrade
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+
+    // Disallow one multiplier
+    rules.updateAllowedPoolMultiplier(mult2, false);
+
+    // Verify state before upgrade
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+
+    // Deploy new implementation and upgrade
+    address newImpl = address(new CastoraPoolsRules());
+    rules.upgradeToAndCall(newImpl, '');
+
+    // Verify state is preserved after upgrade
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
+    assertTrue(rules.allowedPoolMultipliers(mult1));
+    assertFalse(rules.allowedPoolMultipliers(mult2));
+
+    // Verify functionality still works after upgrade
+    uint16 newMult = 15;
+    rules.updateAllowedPoolMultiplier(newMult, true);
+    assertEq(rules.everAllowedPoolMultipliersCount(), 3);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 2);
+  }
+
+  // ========== EDGE CASE STRESS TESTS ==========
+
+  function testMassMultiplierOperations() public {
+    // Add many multipliers at once
+    uint16[] memory multipliers = new uint16[](100);
+    for (uint16 i = 0; i < 100; i++) {
+      multipliers[i] = i + 1; // 1 to 100
+      rules.updateAllowedPoolMultiplier(multipliers[i], true);
+    }
+
+    assertEq(rules.everAllowedPoolMultipliersCount(), 100);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 100);
+
+    // Remove every other multiplier
+    for (uint16 i = 0; i < 100; i += 2) {
+      rules.updateAllowedPoolMultiplier(multipliers[i], false);
+    }
+
+    assertEq(rules.everAllowedPoolMultipliersCount(), 100);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 50);
+
+    // Verify remaining multipliers are still valid
+    for (uint16 i = 1; i < 100; i += 2) {
+      assertTrue(rules.isValidMultiplier(multipliers[i]));
+    }
+  }
+
+  function testRandomOrderMultiplierOperations() public {
+    uint16[] memory multipliers = new uint16[](10);
+    multipliers[0] = 50;
+    multipliers[1] = 1;
+    multipliers[2] = 100;
+    multipliers[3] = 25;
+    multipliers[4] = 75;
+    multipliers[5] = 10;
+    multipliers[6] = 90;
+    multipliers[7] = 5;
+    multipliers[8] = 95;
+    multipliers[9] = 15;
+
+    // Add in random order
+    for (uint256 i = 0; i < multipliers.length; i++) {
+      rules.updateAllowedPoolMultiplier(multipliers[i], true);
+    }
+
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 10);
+
+    // Remove in different order (remove indices 1, 3, 5, 7, 9)
+    uint256[] memory removeIndices = new uint256[](5);
+    removeIndices[0] = 1; // mult = 1
+    removeIndices[1] = 3; // mult = 25
+    removeIndices[2] = 5; // mult = 10
+    removeIndices[3] = 7; // mult = 5
+    removeIndices[4] = 9; // mult = 15
+
+    for (uint256 i = 0; i < removeIndices.length; i++) {
+      rules.updateAllowedPoolMultiplier(multipliers[removeIndices[i]], false);
+    }
+
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 5);
+
+    // Verify remaining multipliers
+    assertTrue(rules.isValidMultiplier(50));
+    assertTrue(rules.isValidMultiplier(100));
+    assertTrue(rules.isValidMultiplier(75));
+    assertTrue(rules.isValidMultiplier(90));
+    assertTrue(rules.isValidMultiplier(95));
+  }
+
+  function testGasOptimizationMultiplierArrayManagement() public {
+    uint16 mult1 = 2;
+    uint16 mult2 = 5;
+
+    // Test that removing and re-adding doesn't create gas issues
+    for (uint256 i = 0; i < 10; i++) {
+      rules.updateAllowedPoolMultiplier(mult1, true);
+      rules.updateAllowedPoolMultiplier(mult2, true);
+      rules.updateAllowedPoolMultiplier(mult1, false);
+      rules.updateAllowedPoolMultiplier(mult2, false);
+    }
+
+    // Should still have correct tracking
+    assertEq(rules.everAllowedPoolMultipliersCount(), 2);
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
 }
