@@ -735,4 +735,342 @@ contract CastoraPaginationTest is Test {
       assertEq(predictions[i].predictionId, i + 1);
     }
   }
+
+  // ========== Tests for getUserActivitiesOptimizedPaginated ==========
+
+  function testGetUserActivitiesOptimizedPaginatedInvalidAddress() public {
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserActivitiesOptimizedPaginated(address(0), 0, 5);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedNoUserActivities() public {
+    _createMultiplePools(2);
+
+    // User has made no predictions
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 5);
+
+    assertEq(pools.length, 0);
+    assertEq(predictions.length, 0);
+    assertEq(poolIndexes.length, 0);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedOffsetTooLarge() public {
+    _createMultiplePools(2);
+    _createMultiplePredictions(1, user1, 3);
+
+    // Offset beyond available activities (user1 has 3 activities total)
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 5, 5);
+
+    assertEq(pools.length, 0);
+    assertEq(predictions.length, 0);
+    assertEq(poolIndexes.length, 0);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedSingleActivity() public {
+    _createMultiplePools(1);
+    _createMultiplePredictions(1, user1, 1);
+
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 5);
+
+    assertEq(pools.length, 1);
+    assertEq(predictions.length, 1);
+    assertEq(poolIndexes.length, 1);
+
+    // Verify pool data
+    assertEq(pools[0].poolId, 1);
+    assertEq(pools[0].seeds.stakeAmount, 1000000);
+
+    // Verify prediction data
+    assertEq(predictions[0].predictionId, 1);
+    assertEq(predictions[0].predicter, user1);
+    assertEq(predictions[0].poolId, 1);
+
+    // Verify mapping
+    assertEq(poolIndexes[0], 0); // Points to first pool in unique pools array
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedMultipleActivitiesSamePool() public {
+    _createMultiplePools(1);
+    _createMultiplePredictions(1, user1, 5);
+
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    // assertEq(pools.length, 1); // Only one unique pool
+    assertEq(predictions.length, 5); // All 5 predictions
+    assertEq(poolIndexes.length, 5);
+
+    // Verify unique pool
+    assertEq(pools[0].poolId, 1);
+
+    // Verify all predictions are chronological
+    for (uint256 i = 0; i < 5; i++) {
+      assertEq(predictions[i].predictionId, i + 1);
+      assertEq(predictions[i].predicter, user1);
+      assertEq(predictions[i].poolId, 1);
+      assertEq(poolIndexes[i], 0); // All point to the same unique pool
+    }
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedMultiplePoolsSinglePredictionEach() public {
+    _createMultiplePools(3);
+    _createMultiplePredictions(1, user1, 1);
+
+    // Need different stake amounts for different pools
+    cusd.mint(user1, 1000001 + 1000002);
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 1000001 + 1000002);
+    castora.predict(2, 2000000); // Pool 2
+    castora.predict(3, 3000000); // Pool 3
+    vm.stopPrank();
+
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    assertEq(pools.length, 3); // Three unique pools
+    assertEq(predictions.length, 3); // Three predictions
+    assertEq(poolIndexes.length, 3);
+
+    // Verify chronological order (predictions made in order: pool1, pool2, pool3)
+    assertEq(predictions[0].poolId, 1);
+    assertEq(predictions[1].poolId, 2);
+    assertEq(predictions[2].poolId, 3);
+
+    // Verify pool indexes map correctly to unique pools array
+    assertEq(poolIndexes[0], 0); // First unique pool
+    assertEq(poolIndexes[1], 1); // Second unique pool
+    assertEq(poolIndexes[2], 2); // Third unique pool
+
+    // Verify unique pools are correct
+    assertEq(pools[0].poolId, 1);
+    assertEq(pools[1].poolId, 2);
+    assertEq(pools[2].poolId, 3);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedMixedPoolsAndPredictions() public {
+    _createMultiplePools(2);
+
+    // User1 makes 3 predictions in pool 1
+    _createMultiplePredictions(1, user1, 3);
+
+    // User1 makes 2 predictions in pool 2
+    cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 2000002);
+    castora.predict(2, 2000000);
+    castora.predict(2, 2010000);
+    vm.stopPrank();
+
+    // User1 makes 1 more prediction in pool 1
+    cusd.mint(user1, 1000000);
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 1000000);
+    castora.predict(1, 1040000);
+    vm.stopPrank();
+
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    assertEq(pools.length, 2); // Two unique pools
+    assertEq(predictions.length, 6); // Total 6 predictions
+    assertEq(poolIndexes.length, 6);
+
+    // Verify chronological order: pool1(3x), pool2(2x), pool1(1x)
+    assertEq(predictions[0].poolId, 1);
+    assertEq(predictions[1].poolId, 1);
+    assertEq(predictions[2].poolId, 1);
+    assertEq(predictions[3].poolId, 2);
+    assertEq(predictions[4].poolId, 2);
+    assertEq(predictions[5].poolId, 1);
+
+    // Verify pool indexes
+    assertEq(poolIndexes[0], 0); // Pool 1
+    assertEq(poolIndexes[1], 0); // Pool 1
+    assertEq(poolIndexes[2], 0); // Pool 1
+    assertEq(poolIndexes[3], 1); // Pool 2
+    assertEq(poolIndexes[4], 1); // Pool 2
+    assertEq(poolIndexes[5], 0); // Pool 1 again
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedWithPagination() public {
+    _createMultiplePools(2);
+
+    // Create 8 total activities across pools
+    _createMultiplePredictions(1, user1, 4);
+    cusd.mint(user1, 4000004); // Pool 2 stake amount * 4
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 4000004);
+    for (uint256 i = 0; i < 4; i++) {
+      castora.predict(2, 2000000 + i * 10000);
+    }
+    vm.stopPrank();
+
+    // Test first page (offset 0, limit 3)
+    (Pool[] memory pools1, Prediction[] memory predictions1, uint256[] memory poolIndexes1) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 3);
+
+    assertEq(pools1.length, 1); // Only pool 1 in first 3 activities
+    assertEq(predictions1.length, 3);
+    assertEq(poolIndexes1.length, 3);
+
+    for (uint256 i = 0; i < 3; i++) {
+      assertEq(predictions1[i].poolId, 1);
+      assertEq(poolIndexes1[i], 0);
+    }
+
+    // Test second page (offset 3, limit 3)
+    (Pool[] memory pools2, Prediction[] memory predictions2, uint256[] memory poolIndexes2) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 3, 3);
+
+    assertEq(pools2.length, 2); // Both pools appear in this range
+    assertEq(predictions2.length, 3);
+    assertEq(poolIndexes2.length, 3);
+
+    // Should be: pool1(1x), pool2(2x)
+    assertEq(predictions2[0].poolId, 1);
+    assertEq(predictions2[1].poolId, 2);
+    assertEq(predictions2[2].poolId, 2);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedLimitExceedsAvailable() public {
+    _createMultiplePools(1);
+    _createMultiplePredictions(1, user1, 3);
+
+    // Request more than available from offset 1
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 1, 10);
+
+    assertEq(pools.length, 1);
+    assertEq(predictions.length, 2); // Should only return 2 remaining activities
+    assertEq(poolIndexes.length, 2);
+
+    // Verify correct activities returned
+    assertEq(predictions[0].predictionId, 2);
+    assertEq(predictions[1].predictionId, 3);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedMultipleUsers() public {
+    _createMultiplePools(1);
+
+    // Multiple users make predictions in same pool
+    _createMultiplePredictions(1, user1, 2);
+    _createMultiplePredictions(1, user2, 3);
+    _createMultiplePredictions(1, user3, 1);
+
+    // Check user1's activities
+    (, Prediction[] memory predictions1,) = castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    assertEq(predictions1.length, 2);
+    for (uint256 i = 0; i < predictions1.length; i++) {
+      assertEq(predictions1[i].predicter, user1);
+    }
+
+    // Check user2's activities
+    (, Prediction[] memory predictions2,) = castora.getUserActivitiesOptimizedPaginated(user2, 0, 10);
+
+    assertEq(predictions2.length, 3);
+    for (uint256 i = 0; i < predictions2.length; i++) {
+      assertEq(predictions2[i].predicter, user2);
+    }
+
+    // Check user3's activities
+    (, Prediction[] memory predictions3,) = castora.getUserActivitiesOptimizedPaginated(user3, 0, 10);
+
+    assertEq(predictions3.length, 1);
+    assertEq(predictions3[0].predicter, user3);
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedWithBulkPredictions() public {
+    _createMultiplePools(1);
+
+    // Make regular predictions
+    _createMultiplePredictions(1, user1, 2);
+
+    // Make bulk predictions
+    cusd.mint(user1, 3000000);
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 3000000);
+    castora.bulkPredict(1, 77777, 3);
+    vm.stopPrank();
+
+    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
+      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    assertEq(pools.length, 1);
+    assertEq(predictions.length, 5); // 2 regular + 3 bulk
+    assertEq(poolIndexes.length, 5);
+
+    // Verify chronological order and correct data
+    for (uint256 i = 0; i < 2; i++) {
+      assertEq(predictions[i].predictionPrice, 1000000 + i * 10000); // Regular predictions
+    }
+    for (uint256 i = 2; i < 5; i++) {
+      assertEq(predictions[i].predictionPrice, 77777); // Bulk predictions
+    }
+  }
+
+  function testGetUserActivitiesOptimizedPaginatedComplexScenario() public {
+    _createMultiplePools(3);
+
+    // Complex activity pattern:
+    // Pool 1: 2 predictions
+    _createMultiplePredictions(1, user1, 2);
+
+    // Pool 3: 1 prediction (skipping pool 2)
+    cusd.mint(user1, 1000002); // Pool 3 stake amount
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 1000002);
+    castora.predict(3, 3000000);
+    vm.stopPrank();
+
+    // Pool 1: 1 more prediction
+    cusd.mint(user1, 1000000);
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 1000000);
+    castora.predict(1, 1030000);
+    vm.stopPrank();
+
+    // Pool 2: 2 predictions
+    cusd.mint(user1, 2000002);
+    vm.startPrank(user1);
+    cusd.approve(address(castora), 2000002);
+    castora.predict(2, 2000000);
+    castora.predict(2, 2010000);
+    vm.stopPrank();
+
+    (Pool[] memory pools, Prediction[] memory predictions,) = castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
+
+    assertEq(pools.length, 3); // Three unique pools used
+    assertEq(predictions.length, 6); // Total activities
+
+    // Verify chronological order: pool1(2x), pool3(1x), pool1(1x), pool2(2x)
+    uint256[] memory expectedPools = new uint256[](6);
+    expectedPools[0] = 1;
+    expectedPools[1] = 1;
+    expectedPools[2] = 3;
+    expectedPools[3] = 1;
+    expectedPools[4] = 2;
+    expectedPools[5] = 2;
+
+    for (uint256 i = 0; i < 6; i++) {
+      assertEq(predictions[i].poolId, expectedPools[i]);
+      assertEq(predictions[i].predicter, user1);
+    }
+
+    // Verify unique pools contain all used pools
+    bool foundPool1 = false;
+    bool foundPool2 = false;
+    bool foundPool3 = false;
+    for (uint256 i = 0; i < pools.length; i++) {
+      if (pools[i].poolId == 1) foundPool1 = true;
+      if (pools[i].poolId == 2) foundPool2 = true;
+      if (pools[i].poolId == 3) foundPool3 = true;
+    }
+    assertTrue(foundPool1);
+    assertTrue(foundPool2);
+    assertTrue(foundPool3);
+  }
 }

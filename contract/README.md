@@ -27,6 +27,9 @@
 
 ### Castora.sol
 
+- v5: Sat 5th Oct 2025
+  - Added getUserActivitiesPaginatedOptimized.
+
 - v4 : Thu 2nd Oct 2025
   - Added Pagination Getters for Pools and Predictions.
   - Used PoolsManager as Fee Collector to enable Pools Manager to share with fees with user created pools.
