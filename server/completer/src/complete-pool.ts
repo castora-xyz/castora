@@ -1,4 +1,4 @@
-import { fetchPool, Job, logger, queueJob } from '@castora/shared';
+import { fetchPool, Job, logger, queueJob, readPoolsManagerContract } from '@castora/shared';
 import { getSnapshotPrice } from './get-snapshot-price.js';
 import { rearchivePool } from './rearchive-pool.js';
 import { setWinners } from './set-winners.js';
@@ -41,8 +41,28 @@ export const completePool = async (job: Job): Promise<void> => {
     // refetching the pool here so that the winAmount and completionTime will now be valid
     pool = await fetchPool(chain, poolId);
 
-    // re-archiving to store the updated winner predictions off-chain for leaderboard updates.
-    await rearchivePool(chain, pool, splitResult);
+    // check if this is a community created pool, if so, add creator details to re-archival
+    let creatorDetails;
+    const isCommunity = await readPoolsManagerContract(chain, 'doesUserCreatedPoolExist', [poolId]);
+    if (isCommunity) {
+      const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
+      const { creator, completionFeesAmount } = userCreatedPool;
+      // completion fees token always match pool stake token
+      const creatorCompletionFees = pool.seeds.formatWinAmount(completionFeesAmount);
+      creatorDetails = { creator, creatorCompletionFees };
+    }
+
+    // re-archiving to store the updated winner predictions and creator info for notifications.
+    await rearchivePool(chain, pool, splitResult, creatorDetails);
+
+    // if is a community created pool, send telegram notification to the creator
+    if (isCommunity) {
+      await queueJob({
+        queueName: 'pool-creator-telegram-notifications',
+        jobName: 'notify-pool-creator-telegram',
+        jobData: { poolId, chain }
+      });
+    }
 
     // send telegram notifications to winners through redis
     await queueJob({

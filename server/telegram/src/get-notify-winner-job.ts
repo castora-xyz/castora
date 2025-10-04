@@ -1,7 +1,7 @@
 import { FieldValue, firestore, Job, logger, storage } from '@castora/shared';
 import { Bot } from 'grammy';
-import { notifyWinner } from './notify-winner.js';
 import { Pool } from './schemas.js';
+import { notifyWinner } from './telegram-notifiers.js';
 
 interface NotificationProgress {
   processed: number;
@@ -20,7 +20,7 @@ const isNotificationProgress = (value: any): value is NotificationProgress => {
 export const getNotifyWinnerJob = (bot: Bot) => {
   return async (job: Job<any, any, string>) => {
     const { poolId, chain } = job.data;
-    logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
+    logger.info(`Start processing Pool Winners Telegram Notifier job for poolId: ${poolId}, chain: ${chain}`);
 
     // Fetch the pool from the archive
     let pool: Pool;
@@ -96,6 +96,6 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       }
     }
 
-    logger.info(`\nJob for poolId: ${poolId}, chain: ${chain} completed successfully`);
+    logger.info(`\nPool Winners Telegram Notifier Job for poolId: ${poolId}, chain: ${chain} completed successfully`);
   };
 };

@@ -1,6 +1,7 @@
 import { logger, setWorker } from '@castora/shared';
 import { Bot } from 'grammy';
 import { completeTelegramAuth } from './complete-telegram-auth.js';
+import { getNotifyPoolCreatorJob } from './get-notify-pool-creator-job.js';
 import { getNotifyWinnerJob } from './get-notify-winner-job.js';
 
 if (!process.env.TELEGRAM_BOT_TOKEN) throw 'Set TELEGRAM_BOT_TOKEN';
@@ -8,5 +9,7 @@ const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
 bot.command('start', completeTelegramAuth);
 bot.start({ timeout: 0 });
 logger.info('😎 Telegram bot started and listening for start commands.');
+
+setWorker({ workerName: 'pool-creator-telegram-notifications', handler: getNotifyPoolCreatorJob(bot) });
 
 setWorker({ workerName: 'pool-winners-telegram-notifications', handler: getNotifyWinnerJob(bot) });

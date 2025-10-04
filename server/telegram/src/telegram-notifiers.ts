@@ -9,6 +9,53 @@ const shortenAddress = (str: string) => {
   return str.substring(0, 5) + '...' + str.split('').reverse().slice(0, 5).reverse().join('');
 };
 
+export const notifyPoolCreator = async (jobId: any, bot: Bot, pool: Pool): Promise<boolean> => {
+  const { poolId, chain, creator, creatorCompletionFees: gained } = pool;
+
+  // Check if the poolCreator has a Telegram ID
+  const userRef = firestore.doc(`/users/${creator}`);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) return false;
+  const userData = userSnap.data();
+  if (!userData || !userData.telegramId) return false;
+
+  // Send the notification
+  logger.info(`Notifying Creator of pool ${poolId} on ${chain}`);
+  try {
+    const creatorEsc = escapeChars(`(${shortenAddress(creator)})`);
+    const gainedEsc = escapeChars(`${gained}`);
+    const restMsgEsc = escapeChars(`from Fees of your Created Pool ${poolId}! Tap to go and claim your winnings now!`);
+
+    await bot.api.sendMessage(userData.telegramId, `🏆 You ${creatorEsc} just gained *${gainedEsc}* ${restMsgEsc}`, {
+      parse_mode: 'MarkdownV2',
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Claim Now!', url: `https://castora.xyz/pool/${poolId}` }]]
+      }
+    });
+    logger.info(`🏆 Notified Pool Creator: ${creator} who gained ${gained}`);
+  } catch (e) {
+    logger.error(
+      `❌ Failed to notify pool creator ${creator} who gained ${gained} on Telegram in Job ID ${jobId} for pool ${poolId} on chain ${chain}, error: ${e}`
+    );
+    return false;
+  }
+
+  // Record update stats for pool creator
+  await userRef.set(
+    {
+      lastTelegramNotifiedTime: FieldValue.serverTimestamp(),
+      totalTelegramNotifiedCount: FieldValue.increment(1),
+      perChainTelegramNotifiedCounts: {
+        [chain]: FieldValue.increment(1)
+      }
+    },
+    { merge: true }
+  );
+  logger.info(`📝 Incremented total and perChain telegram count for winner: ${creator}`);
+
+  return true;
+};
+
 export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: string): Promise<boolean> => {
   // Check if the winner has a Telegram ID
   const userRef = firestore.doc(`/users/${winner}`);
@@ -22,8 +69,7 @@ export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: str
   const count = pool.predictions.filter(({ predicter, isAWinner }) => predicter === winner && isAWinner).length;
   if (count === 0) {
     logger.error(
-      `FATAL: Got winner ${winner} who had no winner ` +
-        `predictions in pool: ${pool.poolId} on chain: ${pool.chain}`
+      `FATAL: Got winner ${winner} who had no winner ` + `predictions in pool: ${pool.poolId} on chain: ${pool.chain}`
     );
     return false;
   }

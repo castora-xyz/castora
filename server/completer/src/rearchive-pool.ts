@@ -6,8 +6,14 @@ import { ArchivedPool, Chain, Pool, SplitPredictionResult, storage } from '@cast
  * @param chain The chain to archive the pool on.
  * @param pool The updated pool to re-archive with its completion results
  * @param splitResults The results from setting winners.
+ * @param creatorDetails If this is a user created pool
  */
-export const rearchivePool = async (chain: Chain, pool: Pool, splitResults: SplitPredictionResult): Promise<void> => {
+export const rearchivePool = async (
+  chain: Chain,
+  pool: Pool,
+  splitResults: SplitPredictionResult,
+  creatorDetails?: { creator: string; creatorCompletionFees: string }
+): Promise<void> => {
   const { predictions, winnerAddressesUniqued, winnerPredictionIds } = splitResults;
 
   const archivalRef = storage.bucket().file(`archives/${chain}/pool-${pool.poolId}.json`);
@@ -18,7 +24,8 @@ export const rearchivePool = async (chain: Chain, pool: Pool, splitResults: Spli
         chain,
         pool,
         predictions,
-        results: { winnerAddressesUniqued, winnerPredictionIds }
+        results: { winnerAddressesUniqued, winnerPredictionIds },
+        ...(creatorDetails ? { ...creatorDetails } : {})
       }).toJSON()
     )
   );
