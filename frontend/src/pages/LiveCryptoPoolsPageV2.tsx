@@ -1,4 +1,4 @@
-import { FilterCryptoPools, PoolCard, PoolCardShimmer } from '@/components';
+import { cryptoPoolsType, FilterCryptoPools, PoolCard, PoolCardShimmer, PoolsPageIntro } from '@/components';
 import { useFilterCryptoPools, usePools, usePoolsShimmer } from '@/contexts';
 import { Pool } from '@/schemas';
 import { useEffect, useState } from 'react';
@@ -31,18 +31,8 @@ export const LiveCryptoPoolsPageV2 = () => {
 
   return (
     <>
-      <div className="w-full max-md:max-w-md max-w-screen-xl sticky top-20 z-10 bg-app-bg py-4 -mx-4 px-4">
-        <div className="text-sm mb-4 flex w-fit gap-4 text-text-subtitle">
-          <p className="py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle">
-            <span>Pools</span>
-          </p>
-          <p className="py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle">
-            <span>Crypto</span>
-          </p>
-
-          <FilterCryptoPools />
-        </div>
-      </div>
+      <PoolsPageIntro poolsPageType={cryptoPoolsType} filter={<FilterCryptoPools />} />
+      
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">
         {isFetchingLiveCrypto ? (
           Array.from(Array(shimmerCount).keys()).map((i) => <PoolCardShimmer key={i} />)

@@ -7,4 +7,5 @@ export * from './PoolCardShimmer';
 export * from './PoolDetailIntroBadge';
 export * from './PoolDetailPageShimmer';
 export * from './PoolDetailsInCards';
+export * from './PoolsPageIntro';
 export * from './TradingViewChart';
