@@ -4,7 +4,7 @@ export * from './FilterPools';
 export * from './JoinPoolForm';
 export * from './PoolCard';
 export * from './PoolCardShimmer';
-export * from './PoolDetailIntroBadge';
+export * from './PoolDetailPageIntro';
 export * from './PoolDetailPageShimmer';
 export * from './PoolDetailsInCards';
 export * from './PoolsPageIntro';

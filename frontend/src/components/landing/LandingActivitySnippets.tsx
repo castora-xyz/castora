@@ -86,7 +86,7 @@ export const LandingActivitySnippets = () => {
           </>
         ) : (
           snippets.map(({ pool, prediction }, i) => (
-            <Link key={i} to="/activity">
+            <Link key={i} to="/activity/predictions">
               <ActivityCard
                 key={i}
                 pool={pool}

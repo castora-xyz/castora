@@ -108,7 +108,7 @@ export const LeaderboardPage = () => {
 
   return (
     <div className="w-full max-md:max-w-lg max-w-screen-md mx-auto">
-      <div className="text-sm mb-4 flex w-fit gap-4 text-text-subtitle">
+      <div className="text-sm pt-6 mb-4 flex w-fit gap-4 text-text-subtitle">
         <p className="py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle">
           <span>Leaderboard</span>
         </p>

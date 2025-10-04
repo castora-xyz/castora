@@ -2,6 +2,7 @@ import { communityPoolsType, FilterCommunityPools, PoolCard, PoolCardShimmer, Po
 import { useFilterCommunityPools, usePools, usePoolsShimmer } from '@/contexts';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -36,24 +37,27 @@ export const LiveCommunityPoolsPage = () => {
         filter={
           <>
             <FilterCommunityPools />
-            {/* Create Pool Button */}
+            {/* Wide Screen Create Pool Button */}
             <Link
               to="/pools/community/create"
-              className="ml-auto py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
+              className="hidden md:block ml-auto py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
             >
               Create Pool
               <Ripple />
             </Link>
             {/* Mobile Create Button */}
-            {/* <div className="md:hidden flex justify-end mb-4">
+            <div className="md:hidden flex justify-end mb-4">
+              <Tooltip target=".create-pool" pt={{ root: { className: 'w-36' } }} />
               <Link
                 to="/pools/community/create"
-                className="fixed bottom-20 right-4 z-20 w-14 h-14 rounded-full bg-primary-default border-2 border-primary-lighter flex items-center justify-center shadow-lg p-ripple"
+                className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-primary-default border-2 border-primary-lighter flex items-center justify-center shadow-lg p-ripple"
               >
-                <span className="text-2xl text-white">+</span>
+                <span className="create-pool text-5xl text-white -mt-2.5" data-pr-tooltip="Create Pool">
+                  +
+                </span>
                 <Ripple />
               </Link>
-            </div> */}
+            </div>
           </>
         }
       />

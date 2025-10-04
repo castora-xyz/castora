@@ -9,16 +9,11 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { Link, useLocation } from 'react-router-dom';
 
-export const PoolDetailIntroBadge = ({ pool, pool: { seeds } }: { pool: Pool }) => {
+export const PoolDetailPageIntro = ({ pool, pool: { seeds } }: { pool: Pool }) => {
   const location = useLocation();
 
   return (
-    <div
-      className={
-        'w-full max-w-screen-xl mx-auto mb-4 text-text-subtitle flex flex-wrap gap-4' +
-        (seeds.status() === 'Completed' ? ' max-lg:max-w-lg' : '')
-      }
-    >
+    <div className="w-full pl-0 bg-app-bg p-6 text-sm flex flex-wrap gap-4 text-text-subtitle">
       <div className="text-sm py-2 px-5 flex gap-2 rounded-full w-fit border border-border-default dark:border-surface-subtle">
         <Tooltip target="#backwards" />
         <p id="backwards" data-pr-tooltip="Go Back" className="flex gap-2">
