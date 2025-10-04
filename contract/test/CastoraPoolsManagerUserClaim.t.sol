@@ -113,6 +113,9 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
       abi.encode()
     );
+    vm.mockCall(
+      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
+    );
   }
 
   function _createPoolForUser(address user, uint256 poolId) internal {
@@ -123,7 +126,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
     // User creates a pool
     vm.prank(user);
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
+    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
   }
 
   function _setupCompletedPool(uint256 poolId, uint256 /* totalFees */ ) internal {
@@ -513,7 +516,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     );
 
     vm.prank(user1);
-    poolsManager.createPool(differentSeeds, address(creationFeeToken));
+    poolsManager.createPool(differentSeeds, address(creationFeeToken), 200, false);
 
     // Process both pools
     uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
@@ -646,7 +649,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken));
+    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
 
     // Fund contract with ETH for fee distribution
     vm.deal(address(poolsManager), 10 ether);
@@ -692,7 +695,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       );
 
       vm.prank(user1);
-      poolsManager.createPool(ethSeeds, address(creationFeeToken));
+      poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
     }
 
     // Fund contract with ETH
@@ -738,7 +741,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken));
+    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
 
     // Update fee collector to the contract that rejects ETH
     poolsManager.setFeeCollector(rejectETHFeeCollector);
@@ -795,7 +798,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken));
+    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
 
     // Fund contract with ETH for fee distribution
     vm.deal(address(poolsManager), 10 ether);
@@ -838,7 +841,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       );
 
       vm.prank(user1);
-      poolsManager.createPool(ethSeeds, address(creationFeeToken));
+      poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
     }
 
     // Fund contract with ETH
@@ -892,7 +895,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     );
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken));
+    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
 
     // Update fee collector to the contract that rejects ETH
     poolsManager.setFeeCollector(rejectETHFeeCollector);

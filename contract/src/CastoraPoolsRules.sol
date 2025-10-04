@@ -8,6 +8,7 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import './Castora.sol';
 
 error InvalidPoolTimeInterval();
+error InvalidPoolMultiplier();
 error PredictionTokenNotAllowed();
 error StakeTokenNotAllowed();
 error StakeAmountNotAllowed();
@@ -20,6 +21,9 @@ event UpdatedAllowedPredictionToken(address indexed token, bool allowed);
 
 /// Emitted when a specific stake amount's allowed status is updated for a token.
 event UpdatedAllowedStakeAmount(address indexed token, uint256 amount, bool allowed);
+
+/// Emitted when a specific multiplier's allowed status is updated for a pool.
+event UpdatedAllowedPoolMultiplier(uint16 multiplier, bool allowed);
 
 /// Emitted when the required time interval for pool timing validation is updated.
 event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
@@ -64,6 +68,20 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   mapping(address => uint256) public currentlyAllowedStakeTokenIndex;
   /// Maps each currently allowed prediction token to its index in currentlyAllowedPredictionTokens (for efficient removal)
   mapping(address => uint256) public currentlyAllowedPredictionTokenIndex;
+  /// Maps allowed multipliers for pools, 2 decimal places (e.g. 150 = 1.5x)
+  mapping(uint16 => bool) public allowedPoolMultipliers; 
+  /// Tracks if a multiplier has ever been added to allowedPoolMultipliers (prevents duplicates)
+  mapping(uint16 => bool) public hasEverBeenAllowedPoolMultiplier;
+  /// Array of all multipliers that have ever been allowed
+  uint16[] public everAllowedPoolMultipliers;
+  /// Counter for the number of multipliers that have ever been allowed
+  uint256 public everAllowedPoolMultipliersCount;
+  /// Counter for the number of multipliers that are currently allowed
+  uint256 public currentlyAllowedPoolMultipliersCount;
+  /// Maps each currently allowed multiplier to its index in currentlyAllowedPoolMultipliers (for efficient removal)
+  mapping(uint16 => uint256) public currentlyAllowedPoolMultiplierIndex;
+  /// Array of multipliers that are currently allowed
+  uint16[] public currentlyAllowedPoolMultipliers;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -176,6 +194,44 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     emit UpdatedAllowedStakeAmount(token, amount, allowed);
   }
 
+  /// Set whether a specific multiplier is allowed for pools
+  /// @param multiplier The multiplier value
+  /// @param allowed Whether this multiplier is allowed
+  function updateAllowedPoolMultiplier(uint16 multiplier, bool allowed) external onlyOwner nonReentrant {
+    bool wasAllowed = allowedPoolMultipliers[multiplier];
+    allowedPoolMultipliers[multiplier] = allowed;
+
+    // Track in ever allowed array if this is the first time it's being allowed
+    if (allowed && !hasEverBeenAllowedPoolMultiplier[multiplier]) {
+      everAllowedPoolMultipliers.push(multiplier);
+      hasEverBeenAllowedPoolMultiplier[multiplier] = true;
+      everAllowedPoolMultipliersCount++;
+    }
+    // Update currently allowed arrays
+    if (allowed && !wasAllowed) {
+      // Adding to currently allowed
+      currentlyAllowedPoolMultiplierIndex[multiplier] = currentlyAllowedPoolMultipliers.length;
+      currentlyAllowedPoolMultipliers.push(multiplier);
+      currentlyAllowedPoolMultipliersCount++;
+    } else if (!allowed && wasAllowed) {
+      // Removing from currently allowed
+      uint256 indexToRemove = currentlyAllowedPoolMultiplierIndex[multiplier];
+      uint256 lastIndex = currentlyAllowedPoolMultipliers.length - 1;
+
+      if (indexToRemove != lastIndex) {
+        // Move the last element to the position of the element to remove
+        uint16 lastMultiplier = currentlyAllowedPoolMultipliers[lastIndex];
+        currentlyAllowedPoolMultipliers[indexToRemove] = lastMultiplier;
+        currentlyAllowedPoolMultiplierIndex[lastMultiplier] = indexToRemove;
+      }
+
+      currentlyAllowedPoolMultipliers.pop();
+      delete currentlyAllowedPoolMultiplierIndex[multiplier];
+      currentlyAllowedPoolMultipliersCount--;
+    }
+    emit UpdatedAllowedPoolMultiplier(multiplier, allowed);
+  }
+
   /// Validate pool timing rules
   /// @param windowCloseTime When the prediction window closes
   /// @param snapshotTime When the price snapshot is taken
@@ -204,6 +260,12 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param amount The stake amount
   function validateStakeAmount(address token, uint256 amount) external view {
     if (!allowedStakeAmounts[token][amount]) revert StakeAmountNotAllowed();
+  }
+
+  /// Validate that a pool multiplier is allowed
+  /// @param multiplier The pool multiplier
+  function validateMultiplier(uint16 multiplier) external view {
+    if (!allowedPoolMultipliers[multiplier]) revert InvalidPoolMultiplier();
   }
 
   /// Comprehensive validation for pool creation using PoolSeeds
@@ -252,6 +314,13 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @return true if amount is allowed, false otherwise
   function isValidStakeAmount(address token, uint256 amount) external view returns (bool) {
     return allowedStakeAmounts[token][amount];
+  }
+
+  /// Check if a pool multiplier is allowed without reverting
+  /// @param multiplier The pool multiplier
+  /// @return true if multiplier is allowed, false otherwise
+  function isValidMultiplier(uint16 multiplier) external view returns (bool) {  
+    return allowedPoolMultipliers[multiplier];
   }
 
   /// Comprehensive validation check for pool creation using PoolSeeds without reverting
