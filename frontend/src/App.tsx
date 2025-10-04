@@ -49,7 +49,10 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <Header />
       <main
         className={
-          'grow flex flex-col items-stretch' + (location.pathname === '/' ? '' : ' max-[414px]:px-4 px-8 pb-16')
+          'grow flex flex-col items-stretch' +
+          (location.pathname === '/' || location.pathname === '/pools/community/create'
+            ? ''
+            : ' max-[414px]:px-4 px-8 pb-16')
         }
       >
         {outlet}
