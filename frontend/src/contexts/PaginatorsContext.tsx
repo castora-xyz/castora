@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-export const rowsPerPageOptions = [10, 25, 50, 100, 250, 500];
+export const rowsPerPageOptions = [50, 100, 250, 500];
 
 interface PaginatorsContextProps {
   rowsPerPage: number;
@@ -18,7 +18,7 @@ const PaginatorsContext = createContext<PaginatorsContextProps>({
 
 export const PaginatorsProvider = ({ children }: { children: ReactNode }) => {
   const [rowsPerPage, setRowsPerPage] = useState(
-    Number(localStorage.getItem('rowsPerPage')) || 10
+    Number(localStorage.getItem('rowsPerPage')) || 50
   );
 
   const getLastPage = (total: number) => {

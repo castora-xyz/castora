@@ -44,10 +44,10 @@ export class Pool {
       this.seedsHash = input.seedsHash;
       this.creationTime = Number(input.creationTime);
       this.noOfPredictions = Number(input.noOfPredictions);
-      this.snapshotPriceOnChain = Number(input.snapshotPriceOnChain);
+      this.snapshotPriceOnChain = Number(input.snapshotPrice);
       this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));
       this.completionTime = Number(input.completionTime);
-      this.winAmountOnChain = Number(input.winAmountOnChain);
+      this.winAmountOnChain = Number(input.winAmount);
       this.winAmount = parseFloat(
         (Math.floor(this.winAmountOnChain / 0.95) / 10 ** this.seeds.stakeTokenDetails.decimals).toFixed(3)
       );
