@@ -14,6 +14,10 @@ service cloud.firestore {
     	allow get: if true;
     }
     
+   	match /chains/{document=**}/live/community {
+    	allow get: if true;
+    }
+    
     match /users/{userId} {
       allow get: if request.auth != null && request.auth.uid == userId;
     }

@@ -875,10 +875,19 @@ export const castoraPoolsManagerAbi = [
           { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
         ]
       },
-      { name: 'creationFeeToken', type: 'address', internalType: 'address' }
+      { name: 'creationFeeToken', type: 'address', internalType: 'address' },
+      { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+      { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
     ],
     outputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'payable'
+  },
+  {
+    type: 'function',
+    name: 'creationFeesTokenExists',
+    inputs: [{ name: 'token', type: 'address', internalType: 'address' }],
+    outputs: [{ name: 'exists', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
   },
   {
     type: 'function',
@@ -1122,7 +1131,9 @@ export const castoraPoolsManagerAbi = [
           { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
           { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
           { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' }
+          { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
         ]
       }
     ],
@@ -1137,6 +1148,33 @@ export const castoraPoolsManagerAbi = [
       { name: 'limit', type: 'uint256', internalType: 'uint256' }
     ],
     outputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getUserCreatedPools',
+    inputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    outputs: [
+      {
+        name: 'pools',
+        type: 'tuple[]',
+        internalType: 'struct UserCreatedPool[]',
+        components: [
+          { name: 'creator', type: 'address', internalType: 'address' },
+          { name: 'completionFeesToken', type: 'address', internalType: 'address' },
+          { name: 'creationFeesToken', type: 'address', internalType: 'address' },
+          { name: 'nthPoolCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'creationFeesAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
     stateMutability: 'view'
   },
   {
@@ -1397,7 +1435,9 @@ export const castoraPoolsManagerAbi = [
       { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
       { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
       { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
-      { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' }
+      { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
+      { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+      { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
     ],
     stateMutability: 'view'
   },
@@ -1422,6 +1462,26 @@ export const castoraPoolsManagerAbi = [
       { name: '', type: 'uint256', internalType: 'uint256' }
     ],
     outputs: [{ name: 'poolIds', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPoolCompletionFeesTokens',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokens', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPoolCreationFeesTokens',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokens', type: 'address', internalType: 'address' }],
     stateMutability: 'view'
   },
   {

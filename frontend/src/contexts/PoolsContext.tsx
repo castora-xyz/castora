@@ -185,18 +185,31 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const fetchLiveStocksPools = async () => {
-    setIsFetchingLiveStocks(true);
-    const fetched = await fetchMany(liveStocksPoolIds);
-    setLiveStocksPools(fetched);
-    setIsFetchingLiveStocks(false);
-  };
-
   const fetchLiveCryptoPools = async () => {
     setIsFetchingLiveCrypto(true);
     const fetched = await fetchMany(liveCryptoPoolIds);
     setLiveCryptoPools(fetched);
-    setIsFetchingLiveCrypto(false);
+    // Some how the extra 1 seconds prevents a UI blink of empty state
+    // probably setting the pools above takes a lot and setState is usually async
+    setTimeout(() => setIsFetchingLiveCrypto(false), 1000);
+  };
+
+  const fetchLiveStocksPools = async () => {
+    setIsFetchingLiveStocks(true);
+    const fetched = await fetchMany(liveStocksPoolIds);
+    setLiveStocksPools(fetched);
+    // Some how the extra 1 seconds prevents a UI blink of empty state
+    // probably setting the pools above takes a lot and setState is usually async
+    setTimeout(() => setIsFetchingLiveStocks(false), 1000);
+  };
+
+  const fetchLiveCommunityPools = async () => {
+    setIsFetchingLiveCommunity(true);
+    const fetched = await fetchMany(liveCommunityPoolIds);
+    setLiveCommunityPools(fetched);
+    // Some how the extra 1 seconds prevents a UI blink of empty state
+    // probably setting the pools above takes a lot and setState is usually async
+    setTimeout(() => setIsFetchingLiveCommunity(false), 1000);
   };
 
   const isValidPoolId = async (poolId: any) => {
@@ -257,25 +270,16 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    fetchLiveStocksPools();
-  }, [liveStocksPoolIds]);
-
-  useEffect(() => {
     fetchLiveCryptoPools();
   }, [liveCryptoPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/stocks`), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setLiveStocksPoolIds(data.poolIds);
-        }
-      } else {
-        setLiveStocksPoolIds([]);
-      }
-    });
-  }, [currentChain]);
+    fetchLiveStocksPools();
+  }, [liveStocksPoolIds]);
+
+  useEffect(() => {
+    fetchLiveCommunityPools();
+  }, [liveCommunityPoolIds]);
 
   useEffect(() => {
     return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/crypto`), (doc) => {
@@ -284,8 +288,28 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
           setLiveCryptoPoolIds(data.poolIds);
         }
-      } else {
-        setLiveCryptoPoolIds([]);
+      }
+    });
+  }, [currentChain]);
+
+  useEffect(() => {
+    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/stocks`), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if ('poolIds' in data && Array.isArray(data.poolIds)) {
+          setLiveStocksPoolIds(data.poolIds);
+        }
+      }
+    });
+  }, [currentChain]);
+
+  useEffect(() => {
+    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/community`), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if ('poolIds' in data && Array.isArray(data.poolIds)) {
+          setLiveCommunityPoolIds(data.poolIds);
+        }
       }
     });
   }, [currentChain]);
