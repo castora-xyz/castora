@@ -1,21 +1,20 @@
 import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
 import {
+  ActivityPage,
+  CreateCommunityPoolPage,
   LandingPage,
   LeaderboardPage,
-  LiveCryptoPoolsPage,
+  LiveCommunityPoolsPage,
   LiveCryptoPoolsPageV2,
   LiveStocksPoolsPage,
   LiveStocksPoolsPageV2,
-  LiveCommunityPoolsPage,
+  MyActivityCreatedPoolsPage,
   MyActivityPage,
-  MyPredictionsPage,
-  MyCreatedPoolsPage,
-  ActivityPage,
+  MyActivityPredictionsPage,
   NotFoundPage,
   PoolDetailPage,
-  PoolsPage,
-  CreateCommunityPoolPage
+  PoolsPage
 } from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
@@ -52,8 +51,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <Header />
       <main
         className={
-          'grow flex flex-col items-stretch' +
-          (location.pathname === '/' ? '' : ' max-[414px]:px-4 p-8 pb-16')
+          'grow flex flex-col items-stretch' + (location.pathname === '/' ? '' : ' max-[414px]:px-4 p-8 pb-16')
         }
       >
         {outlet}
@@ -67,11 +65,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route
-      path="/"
-      element={<Layout outlet={<Outlet />} />}
-      errorElement={<Layout outlet={<NotFoundPage />} />}
-    >
+    <Route path="/" element={<Layout outlet={<Outlet />} />} errorElement={<Layout outlet={<NotFoundPage />} />}>
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
         <Route path="pools" element={<PoolsPage />} />
@@ -84,8 +78,8 @@ const router = createBrowserRouter(
         <Route path="predictions" element={<MyActivityPage />} />
         <Route path="stocks" element={<LiveStocksPoolsPage />} />
         <Route path="activity" element={<ActivityPage />} />
-        <Route path="activity/predictions" element={<MyPredictionsPage />} />
-        <Route path="activity/created-pools" element={<MyCreatedPoolsPage />} />
+        <Route path="activity/predictions" element={<MyActivityPredictionsPage />} />
+        <Route path="activity/created-pools" element={<MyActivityCreatedPoolsPage />} />
       </Route>
     </Route>
   )

@@ -1,10 +1,11 @@
+import { createdPoolsActivityType, MyActivityPageIntro } from '@/components';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Ripple } from 'primereact/ripple';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 
-export const MyCreatedPoolsPage = () => {
+export const MyActivityCreatedPoolsPage = () => {
   const { isConnected } = useAccount();
   const { open: connectWallet } = useWeb3Modal();
 
@@ -14,9 +15,7 @@ export const MyCreatedPoolsPage = () => {
 
   return (
     <div className="w-full max-md:max-w-[600px] max-w-screen-xl mx-auto flex flex-col grow">
-      <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-        <span>My Created Pools</span>
-      </p>
+      <MyActivityPageIntro myActivityType={createdPoolsActivityType} />
 
       {!isConnected ? (
         <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">

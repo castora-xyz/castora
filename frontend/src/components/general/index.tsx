@@ -6,6 +6,7 @@ export * from './ConnectWalletButton';
 export * from './CountdownNumbers';
 export * from './Footer';
 export * from './Header';
+export * from './MyActivityPageIntro';
 export * from './SuccessIcon';
 export * from './TelegramNotificationButton';
 export * from './ToggleThemeButton';

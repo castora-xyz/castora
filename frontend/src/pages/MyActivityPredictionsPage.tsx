@@ -1,5 +1,5 @@
 import Wallet from '@/assets/wallet.svg?react';
-import { ActivityCard, ClaimAllButton } from '@/components/general';
+import { ActivityCard, ClaimAllButton, MyActivityPageIntro, predictionsActivityType } from '@/components/general';
 import { Activity, rowsPerPageOptions, useMyActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Paginator } from 'primereact/paginator';
@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import { useAccount } from 'wagmi';
 
-export const MyPredictionsPage = () => {
+export const MyActivityPredictionsPage = () => {
   const { isConnected } = useAccount();
   const {
     activityCount,
@@ -45,9 +45,20 @@ export const MyPredictionsPage = () => {
 
   return (
     <div className="w-full max-md:max-w-[584px] max-w-screen-xl mx-auto flex flex-col grow">
-      <p className="text-sm py-2 px-5 mb-4 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-        <span>My Predictions</span>
-      </p>
+      <MyActivityPageIntro
+        myActivityType={predictionsActivityType}
+        claimAll={
+          unclaimedWins.length > 1 ? (
+            <div className="w-fit ml-auto">
+              <ClaimAllButton
+                pools={unclaimedWins.map(({ pool }) => pool)}
+                predictions={unclaimedWins.map(({ prediction }) => prediction)}
+                onSuccess={fetchMyActivity}
+              />
+            </div>
+          ) : undefined
+        }
+      />
 
       {!isConnected ? (
         <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
@@ -79,22 +90,6 @@ export const MyPredictionsPage = () => {
         </div>
       ) : (
         <div className="w-full">
-          <div className="flex gap-4 justify-between flex-wrap items-center mb-4">
-            <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
-              My Activity
-            </p>
-
-            <div className="flex gap-3 items-center w-fit">
-              {unclaimedWins.length > 1 && (
-                <ClaimAllButton
-                  pools={unclaimedWins.map(({ pool }) => pool)}
-                  predictions={unclaimedWins.map(({ prediction }) => prediction)}
-                  onSuccess={fetchMyActivity}
-                />
-              )}
-            </div>
-          </div>
-
           {activityCount && currentPage !== null && (
             <Paginator
               first={rowsPerPage * currentPage}
@@ -133,8 +128,8 @@ export const MyPredictionsPage = () => {
           ) : (
             <div className="lg:grid lg:grid-cols-2 lg:gap-x-6">
               {isFetching
-                ? [1, 2, 3, 4, 5].map((i) => (
-                    <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full md:max-w-[600px]" />
+                ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
                   ))
                 : myActivities.map(({ pool, prediction }) => (
                     <ActivityCard
