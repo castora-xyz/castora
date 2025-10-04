@@ -1,23 +1,20 @@
 import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
 import {
-  ActivityPage,
   CreateCommunityPoolPage,
   LandingPage,
   LeaderboardPage,
   LiveCommunityPoolsPage,
-  LiveCryptoPoolsPageV2,
+  LiveCryptoPoolsPage,
   LiveStocksPoolsPage,
-  LiveStocksPoolsPageV2,
   MyActivityCreatedPoolsPage,
-  MyActivityPage,
   MyActivityPredictionsPage,
   NotFoundPage,
-  PoolDetailPage,
-  PoolsPage
+  PoolDetailPage
 } from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
+  Navigate,
   Outlet,
   Route,
   RouterProvider,
@@ -34,11 +31,12 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',
-      '/pools': 'Pools',
-      '/predictions': 'Predictions',
-      '/stocks': 'Stocks',
+      '/pools/crypto': 'Crypto Pools',
+      '/pools/stocks': 'Stocks Pools',
+      '/pools/community': 'Community Pools',
       '/leaderboard': 'Leaderboard',
-      '/activity': 'Activity'
+      '/activity/predictions': 'My Activity - Predictions',
+      '/activity/created-pools': 'My Activity - Created Pools'
     };
     let name = names[location.pathname];
     if (!name && location.pathname.startsWith('/pool/')) name = 'Pool Detail';
@@ -68,16 +66,16 @@ const router = createBrowserRouter(
     <Route path="/" element={<Layout outlet={<Outlet />} />} errorElement={<Layout outlet={<NotFoundPage />} />}>
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<PoolsPage />} />
-        <Route path="pools/crypto" element={<LiveCryptoPoolsPageV2 />} />
-        <Route path="pools/stocks" element={<LiveStocksPoolsPageV2 />} />
+        <Route path="pools" element={<Navigate to="pools/crypto" replace />} />
+        <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
+        <Route path="pools/stocks" element={<LiveStocksPoolsPage />} />
         <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
         <Route path="pools/community/create" element={<CreateCommunityPoolPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
-        <Route path="predictions" element={<MyActivityPage />} />
+        <Route path="predictions" element={<Navigate to="activity/predictions" replace />} />
         <Route path="stocks" element={<LiveStocksPoolsPage />} />
-        <Route path="activity" element={<ActivityPage />} />
+        <Route path="activity" element={<Navigate to="activity/predictions" replace />} />
         <Route path="activity/predictions" element={<MyActivityPredictionsPage />} />
         <Route path="activity/created-pools" element={<MyActivityCreatedPoolsPage />} />
       </Route>
