@@ -79,6 +79,11 @@ contract CastoraPoolsRulesTest is Test {
     rules.updateAllowedStakeToken(address(cusd), true);
   }
 
+  function testRevertUpdateAllowedStakeTokenAddressZero() public {
+    vm.expectRevert(InvalidAddress.selector);
+    rules.updateAllowedStakeToken(address(0), true);
+  }
+
   function testUpdateAllowedPredictionToken() public {
     // Initially not allowed
     assertFalse(rules.allowedPredictionTokens(address(cusd)));
@@ -108,6 +113,11 @@ contract CastoraPoolsRulesTest is Test {
     vm.prank(user);
     vm.expectRevert();
     rules.updateAllowedPredictionToken(address(cusd), true);
+  }
+
+  function testRevertUpdateAllowedPredictionTokenAddressZero() public {
+    vm.expectRevert(InvalidAddress.selector);
+    rules.updateAllowedPredictionToken(address(0), true);
   }
 
   function testUpdateAllowedStakeAmount() public {

@@ -109,6 +109,8 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param token The token address
   /// @param allowed Whether the token is allowed
   function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
+    if (token == address(0)) revert InvalidAddress();
+    
     bool wasAllowed = allowedStakeTokens[token];
     allowedStakeTokens[token] = allowed;
 
@@ -149,6 +151,8 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param token The token address
   /// @param allowed Whether the token is allowed
   function updateAllowedPredictionToken(address token, bool allowed) external onlyOwner nonReentrant {
+    if (token == address(0)) revert InvalidAddress();
+
     bool wasAllowed = allowedPredictionTokens[token];
     allowedPredictionTokens[token] = allowed;
 

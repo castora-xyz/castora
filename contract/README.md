@@ -66,6 +66,9 @@
 
 ### CastoraPoolsRules.sol
 
+- v3: Sun 5th Oct 2025
+  - Prevent setting address(0) as allowed stake or prediction token.
+
 - v2: Sat 4th Oct 2025
   - Add validations for pool multipliers
 

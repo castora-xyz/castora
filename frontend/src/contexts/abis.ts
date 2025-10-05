@@ -309,9 +309,46 @@ export const castoraAbi = [
   },
   {
     type: 'function',
+    name: 'getPredictionsForAddressPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predicter', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'getRoleAdmin',
     inputs: [{ name: 'role', type: 'bytes32', internalType: 'bytes32' }],
     outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getUnclaimedWinnerPredictionIdsForAddress',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predicter', type: 'address', internalType: 'address' }
+    ],
+    outputs: [{ name: 'unclaimedWinnerPredictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
     stateMutability: 'view'
   },
   {
