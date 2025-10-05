@@ -44,9 +44,7 @@ export const ClaimAllButton = ({
     }
     // this is to handle JS weird decimal additions like
     // 0.4 + 0.2 = 0.600000000000001
-    acc[tokenDetails.name].wins = parseFloat(
-      acc[tokenDetails.name].wins.toFixed(3)
-    );
+    acc[tokenDetails.name].wins = parseFloat(acc[tokenDetails.name].wins.toFixed(3));
     return acc;
   }, {} as Record<string, { wins: number; tokenDetails: Token }>);
 
@@ -58,7 +56,7 @@ export const ClaimAllButton = ({
     .map(([token, { wins, tokenDetails }]) => {
       const { decimals } = tokenDetails;
       // calling Math.floor is to avoid too many decimal places
-      const actuals = Math.floor(wins * 0.95 * 10 ** decimals) / 10 ** decimals;
+      const actuals = Math.trunc((Math.floor(wins * 0.95 * 10 ** decimals) / 10 ** decimals) * 1000) / 1000;
       return `${actuals} ${token}`;
     })
     .join(', ');
@@ -121,8 +119,7 @@ export const ClaimAllButton = ({
         unstyled={true}
         pt={{
           root: {
-            className:
-              'bg-app-bg mx-8 xs:mx-auto max-w-md p-6 rounded-2xl my-12'
+            className: 'bg-app-bg mx-8 xs:mx-auto max-w-md p-6 rounded-2xl my-12'
           },
           header: {
             className: isClaiming || explorerUrl ? 'hidden' : 'flex justify-end'
@@ -138,22 +135,13 @@ export const ClaimAllButton = ({
         ) : explorerUrl ? (
           <>
             <p className="pt-8"></p>
-            <SuccessIcon
-              child={<Coin3Fill className="w-8 h-8 fill-app-bg" />}
-            />
+            <SuccessIcon child={<Coin3Fill className="w-8 h-8 fill-app-bg" />} />
 
-            <p className="text-center text-xl mb-6 xs:px-4 sm:px-8">
-              You've claimed all rewards!
-            </p>
+            <p className="text-center text-xl mb-6 xs:px-4 sm:px-8">You've claimed all rewards!</p>
 
             <p className="mb-8 text-sm text-text-caption text-center flex items-center justify-center">
               <ExternalLink className="w-5 h-5 mr-1 fill-text-caption" />
-              <a
-                href={explorerUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="underline"
-              >
+              <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline">
                 View In Explorer
               </a>
             </p>
@@ -172,24 +160,14 @@ export const ClaimAllButton = ({
 
             <p className="text-center text-xl mb-6 px-8 sm:px-16">
               You won{' '}
-              <span
-                className={`font-bold ${
-                  Object.keys(winsMap).length > 1 ? ' block' : ''
-                }`}
-              >
-                {winsDisplay}
-              </span>
+              <span className={`font-bold ${Object.keys(winsMap).length > 1 ? ' block' : ''}`}>{winsDisplay}</span>
             </p>
 
             <div className="px-4 py-2 border-t border-border-default dark:border-surface-subtle border-l border-r rounded-t-2xl">
               {isInOnePool ? (
                 <div className="flex gap-2 flex-wrap items-center">
                   <p className="text-text-caption text-sm">
-                    Across{' '}
-                    <span className="font-bold">
-                      {predictions.length} Predictions
-                    </span>{' '}
-                    in
+                    Across <span className="font-bold">{predictions.length} Predictions</span> in
                   </p>
                   <p className="text-text-caption border border-border-default dark:border-surface-subtle py-1 px-3 rounded-full text-xs">
                     Pool ID: {pools[0].poolId}
@@ -197,14 +175,8 @@ export const ClaimAllButton = ({
                 </div>
               ) : (
                 <p className="text-text-caption">
-                  Across{' '}
-                  <span className="font-bold">
-                    {predictions.length} Predictions
-                  </span>{' '}
-                  in{' '}
-                  <span className="font-bold">
-                    {Object.keys(grouped).length} Pools
-                  </span>
+                  Across <span className="font-bold">{predictions.length} Predictions</span> in{' '}
+                  <span className="font-bold">{Object.keys(grouped).length} Pools</span>
                 </p>
               )}
             </div>
@@ -223,10 +195,7 @@ export const ClaimAllButton = ({
               ) : (
                 <div className="max-[414px]:flex max-[414px]:flex-col max-[414px]:gap-2 grid grid-cols-2 gap-y-3 gap-x-6">
                   {predictions.map(({ id, poolId }) => (
-                    <div
-                      className="flex gap-2"
-                      key={`Pool-${poolId} Prediction${id}`}
-                    >
+                    <div className="flex gap-2" key={`Pool-${poolId} Prediction${id}`}>
                       <p className="text-text-caption border border-border-default dark:border-surface-subtle bg-app-bg py-1 px-3 rounded-full text-xs">
                         Pool ID: {poolId}
                       </p>
