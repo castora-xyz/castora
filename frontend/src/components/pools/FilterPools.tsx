@@ -5,8 +5,12 @@ import {
   ALL_CRYPTO_STAKE_TOKENS,
   ALL_STATUSES,
   ALL_STOCK_PREDICTION_TOKENS,
+  ALL_COMMUNITY_PREDICTION_TOKENS,
+  ALL_COMMUNITY_STAKE_TOKENS,
+  ALL_COMMUNITY_MULTIPLIERS,
   useFilterCryptoPools,
   useFilterStockPools,
+  useFilterCommunityPools,
   useFirebase
 } from '@/contexts';
 import { Dialog } from 'primereact/dialog';
@@ -180,6 +184,85 @@ export const FilterCryptoPools = () => {
           current={stakeTokens}
           all={ALL_CRYPTO_STAKE_TOKENS}
           onClick={toggleStakeToken}
+        />
+      </Dialog>
+    </>
+  );
+};
+
+export const FilterCommunityPools = () => {
+  const { recordEvent } = useFirebase();
+  const [visible, setVisible] = useState(false);
+  const {
+    predictionTokens,
+    stakeTokens,
+    statuses,
+    multipliers,
+    togglePredictionToken,
+    toggleStakeToken,
+    toggleStatus,
+    toggleMultiplier
+  } = useFilterCommunityPools();
+
+  return (
+    <>
+      <button
+        className="outline-none p-ripple py-2 px-6 rounded-full border border-border-default dark:border-surface-subtle flex w-fit items-center"
+        onClick={() => setVisible(true)}
+      >
+        <Ripple />
+        <span className="text-text-subtitle">Filters</span>
+        <div className="relative">
+          <FilterList className="ml-2 w-4 h-4 fill-text-subtitle" />
+          <div className="absolute w-1.5 h-1.5 rounded-full bg-primary-default top-0.5 right-0"></div>
+        </div>
+      </button>
+
+      <Dialog
+        header="Filter Community Pools"
+        visible={visible}
+        onHide={() => {
+          recordEvent('filtered_community_pools', {
+            predictionTokens: JSON.stringify(predictionTokens),
+            stakeTokens: JSON.stringify(stakeTokens),
+            statuses: JSON.stringify(statuses),
+            multipliers: JSON.stringify(multipliers)
+          });
+          if (!visible) return;
+          setVisible(false);
+        }}
+        pt={{
+          root: { className: 'mx-8' },
+          header: { className: 'dark:bg-app-bg' },
+          content: { className: 'dark:bg-app-bg' }
+        }}
+      >
+        <FilterPoolsSection
+          title="Pair"
+          current={predictionTokens}
+          all={ALL_COMMUNITY_PREDICTION_TOKENS}
+          onClick={togglePredictionToken}
+        />
+
+        <FilterPoolsSection
+          title="Stake"
+          current={stakeTokens}
+          all={ALL_COMMUNITY_STAKE_TOKENS}
+          onClick={toggleStakeToken}
+        />
+
+        <FilterPoolsSection
+          title="Multiplier"
+          current={multipliers}
+          all={ALL_COMMUNITY_MULTIPLIERS}
+          onClick={toggleMultiplier}
+        />
+
+        <FilterPoolsSection
+          title="Status"
+          current={statuses}
+          all={ALL_STATUSES}
+          onClick={toggleStatus}
         />
       </Dialog>
     </>

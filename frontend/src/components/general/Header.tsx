@@ -1,6 +1,8 @@
 import { Ripple } from 'primereact/ripple';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ConnectWalletButton } from './ConnectWalletButton';
+import { MyActivityPagesMenu } from './MyActivityPagesMenu';
+import { PoolsPagesMenu } from './PoolsPagesMenu';
 import { TelegramNotificationsButton } from './TelegramNotificationButton';
 import { ToggleThemeButton } from './ToggleThemeButton';
 import Castora from '/assets/castora.png';
@@ -18,26 +20,17 @@ export const Header = () => {
         </h1>
 
         <nav className="max-md:hidden grow flex items-center font-medium lg:text-lg">
-          <NavLink
-            to="/pools"
-            className={({ isActive }) =>
-              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
-            }
-          >
-            Pools
-            <Ripple />
-          </NavLink>
-          <NavLink
-            to="/stocks"
-            className={({ isActive }) =>
-              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
-              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
-            }
-          >
-            Stocks
-            <Ripple />
-          </NavLink>
+          <PoolsPagesMenu placement="header">
+            <button
+              className={
+                'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
+                `${location.pathname.includes('/pools') ? 'text-primary-darker dark:text-primary-default' : ''}`
+              }
+            >
+              Pools
+              <Ripple />
+            </button>
+          </PoolsPagesMenu>
           <NavLink
             to="/leaderboard"
             className={({ isActive }) =>
@@ -48,21 +41,18 @@ export const Header = () => {
             Leaderboard
             <Ripple />
           </NavLink>
-          <NavLink
-            to="/activity"
-            className={({ isActive }) =>
-              'p-ripple py-1 px-4 lg:px-6 rounded-full  ' +
-              `${
-                isActive || location.pathname.includes('predictions')
-                  ? 'text-primary-darker dark:text-primary-default'
-                  : ''
-              }`
-            }
-          >
-            <span className="max-xl:hidden">My </span>
-            Activity
-            <Ripple />
-          </NavLink>
+          <MyActivityPagesMenu placement="header">
+            <button
+              className={
+                'p-ripple py-1 px-4 lg:px-6 rounded-full  ' +
+                `${location.pathname.includes('/activity') ? 'text-primary-darker dark:text-primary-default' : ''}`
+              }
+            >
+              <span className="max-xl:hidden">My </span>
+              Activity
+              <Ripple />
+            </button>
+          </MyActivityPagesMenu>
         </nav>
 
         <ConnectWalletButton />

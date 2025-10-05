@@ -1,13 +1,13 @@
 import Coin3Fill from '@/assets/coin-3-fill.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import { SuccessIcon } from '@/components';
-import { useMyActivity } from '@/contexts';
+import { useMyPredictActivity } from '@/contexts';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export const LandingClaimCard = () => {
-  const { isFetching, myActivities } = useMyActivity();
+  const { isFetching, myActivities } = useMyPredictActivity();
 
   const [explorerUrl, setExplorerUrl] = useState('');
 
@@ -18,12 +18,9 @@ export const LandingClaimCard = () => {
     }
 
     const filtered = myActivities.filter(
-      ({ prediction: { explorerUrl, isAWinner, claimWinningsTime } }) =>
-        explorerUrl && isAWinner && claimWinningsTime
+      ({ prediction: { explorerUrl, isAWinner, claimWinningsTime } }) => explorerUrl && isAWinner && claimWinningsTime
     );
-    setExplorerUrl(
-      filtered.length > 0 ? filtered[0].prediction.explorerUrl! : ''
-    );
+    setExplorerUrl(filtered.length > 0 ? filtered[0].prediction.explorerUrl! : '');
   }, [isFetching, myActivities]);
 
   return (
@@ -45,12 +42,7 @@ export const LandingClaimCard = () => {
         {explorerUrl ? (
           <>
             <ExternalLink className="w-5 h-5 mr-1 fill-text-caption" />
-            <a
-              href={explorerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
+            <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline">
               View In Explorer
             </a>
           </>

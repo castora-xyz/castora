@@ -4,8 +4,11 @@ out = "out"
 libs = ["lib"]
 ffi = true
 ast = true
+via_ir = true
 build_info = true
 extra_output = ["storageLayout"]
+optimizer = true
+optimizer_runs = 200
 
 [rpc_endpoints]
 monadtestnet = "${MONAD_TESTNET_RPC_URL}"

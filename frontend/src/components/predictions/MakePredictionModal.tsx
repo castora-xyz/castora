@@ -7,7 +7,7 @@ import {
   MAX_BULK_PREDICTIONS,
   useContract,
   useFirebase,
-  useMyActivity,
+  useMyPredictActivity,
   usePools,
   useTelegram
 } from '@/contexts';
@@ -36,7 +36,7 @@ export const MakePredictionModal = ({
   const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
   const { recordEvent } = useFirebase();
-  const { fetchMyActivity } = useMyActivity();
+  const { updateActivityCount } = useMyPredictActivity();
   const telegram = useTelegram();
 
   const [bulkCount, setBulkCount] = useState(2);
@@ -91,9 +91,10 @@ export const MakePredictionModal = ({
         reset();
       },
       complete: () => {
+        console.log('hi', successUrl);
         if (successUrl) setExplorerUrl(successUrl);
         setIsSuccess(!!successUrl);
-        fetchMyActivity();
+        updateActivityCount();
         handlePredictionSuccess();
         reset();
       }
@@ -120,14 +121,19 @@ export const MakePredictionModal = ({
       uiPredict();
     } else {
       // When staking with ERC20 token
-      const hadAllowee = await hasAllowance(stakeToken, stakeAmount());
+      const hadAllowee = await hasAllowance({ contract: 'castora', token: stakeToken, amount: stakeAmount() });
       setWalletSteps(hadAllowee ? 1 : 2);
       if (!hadAllowee) {
         setCurrentWalletStep(1);
         setLoadingTitle('Token Spend Approval');
         setLoadingBody('Submitting ...');
         let approvalTxHash: string;
-        approve(stakeToken, stakeAmount(), (hash) => (approvalTxHash = hash)).subscribe({
+        approve({
+          contract: 'castora',
+          token: stakeToken,
+          amount: stakeAmount(),
+          onSuccessCallback: (hash) => (approvalTxHash = hash)
+        }).subscribe({
           next: (status) => {
             if (status === 'submitted') {
               setLoadingBody('Approve Token Spend in Wallet');
@@ -163,15 +169,10 @@ export const MakePredictionModal = ({
     checkBalance();
 
     const connection = new PriceServiceConnection('https://hermes.pyth.network');
-    connection.subscribePriceFeedUpdates(
-      [seeds.predictionTokenDetails.pythPriceId],
-      (priceFeed) => {
-        const { price, expo } = priceFeed.getPriceUnchecked();
-        setCurrentPrice(
-          parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2))
-        );
-      }
-    );
+    connection.subscribePriceFeedUpdates([seeds.predictionTokenDetails.pythPriceId], (priceFeed) => {
+      const { price, expo } = priceFeed.getPriceUnchecked();
+      setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)));
+    });
     return () => connection.closeWebSocket();
   }, []);
 
@@ -228,28 +229,17 @@ export const MakePredictionModal = ({
         {walletSteps > 1 && (
           <div className="flex w-full justify-center items-center mx-auto mb-8">
             {Array.from(Array(walletSteps).keys()).map((i) => (
-              <div
-                key={i}
-                className={
-                  'flex justify-center items-center' + (i < walletSteps - 1 ? ' grow' : '')
-                }
-              >
+              <div key={i} className={'flex justify-center items-center' + (i < walletSteps - 1 ? ' grow' : '')}>
                 <p
                   className={
                     'w-8 h-8 flex justify-center items-center rounded-full mx-1 border border-primary-default ' +
-                    `${
-                      i <= currentWalletStep - 1
-                        ? 'bg-primary-default text-white'
-                        : 'text-primary-default'
-                    }`
+                    `${i <= currentWalletStep - 1 ? 'bg-primary-default text-white' : 'text-primary-default'}`
                   }
                 >
                   {i + 1}
                 </p>
 
-                {i < walletSteps - 1 && (
-                  <div className="block h-px bg-primary-default mx-px grow w-4"></div>
-                )}
+                {i < walletSteps - 1 && <div className="block h-px bg-primary-default mx-px grow w-4"></div>}
               </div>
             ))}
           </div>
@@ -276,9 +266,7 @@ export const MakePredictionModal = ({
       <div className="py-3 px-5 rounded-2xl border border-border-default dark:border-surface-subtle flex gap-8 flex-wrap justify-center items-stretch text-center mb-3 text-sm">
         <div>
           <p className="mb-2">Your Prediction</p>
-          <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">
-            ${price}
-          </p>
+          <p className="py-2 px-4 border border-border-default dark:border-surface-subtle rounded-full">${price}</p>
         </div>
         <div>
           <p className="mb-2">Current Price</p>
@@ -306,9 +294,7 @@ export const MakePredictionModal = ({
               }}
               value={bulkCount}
               onChange={(e) =>
-                setBulkCount(
-                  e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 2
-                )
+                setBulkCount(e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 2)
               }
               onValueChange={(e) => setBulkCount(e.value ?? 2)}
               showButtons
@@ -318,18 +304,14 @@ export const MakePredictionModal = ({
           </div>
           <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
             <li>
-              Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
-              predictions.
+              Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span> predictions.
             </li>
             <li>
               Each at
               <span className="font-bold text-base text-primary-default"> ${price} </span> Price.
             </li>
             <li>
-              Each for{' '}
-              <span className="font-bold text-base text-primary-default">
-                {seeds.displayStake()}{' '}
-              </span>
+              Each for <span className="font-bold text-base text-primary-default">{seeds.displayStake()} </span>
               stake.
             </li>
           </ul>
@@ -348,15 +330,12 @@ export const MakePredictionModal = ({
       <p className="mt-1 text-center">
         <span className="text-xs">Potential Winnings </span>
         <span className="text-sm font-bold text-primary-default">
-          (x{pool.multiplier()}):{' '}
-          {seeds.displayStake((mode === 'multiple' ? bulkCount : 1) * pool.multiplier())}
+          (x{pool.multiplier()}): {seeds.displayStake((mode === 'multiple' ? bulkCount : 1) * pool.multiplier())}
         </span>
       </p>
 
       {!hasEnoughBalance && (
-        <p className="text-xs text-center mt-4 text-errors-default">
-          Insufficient Balance. Please Top Up To Continue.
-        </p>
+        <p className="text-xs text-center mt-4 text-errors-default">Insufficient Balance. Please Top Up To Continue.</p>
       )}
     </>
   );

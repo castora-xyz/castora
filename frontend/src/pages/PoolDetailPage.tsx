@@ -3,7 +3,7 @@ import {
   JoinPoolForm,
   MyInPoolPredictions,
   MyInPoolPredsRef,
-  PoolDetailIntroBadge,
+  PoolDetailPageIntro,
   PoolDetailPageShimmer,
   PoolDetailsInCards,
   PredictionsDisplay,
@@ -130,7 +130,7 @@ export const PoolDetailPage = () => {
     now && ( // "now &&" is to always re-render the UI every second
       // This will be re-calling the seeds.methods() to get the control-flow.
       <>
-        <PoolDetailIntroBadge pool={pool} />
+        <PoolDetailPageIntro pool={pool} />
 
         <div className="sm:hidden">
           {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}

@@ -1,13 +1,13 @@
 import Trophy from '@/assets/trophy.svg?react';
 import { SuccessIcon } from '@/components';
-import { useMyActivity } from '@/contexts';
+import { useMyPredictActivity } from '@/contexts';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export const LandingWinCard = () => {
-  const { isFetching, myActivities } = useMyActivity();
+  const { isFetching, myActivities } = useMyPredictActivity();
 
   const [pool, setPool] = useState<Pool | null>(null);
 
@@ -18,8 +18,7 @@ export const LandingWinCard = () => {
     }
 
     const filtered = myActivities.filter(
-      ({ prediction: { isAWinner, claimWinningsTime } }) =>
-        isAWinner && !claimWinningsTime
+      ({ prediction: { isAWinner, claimWinningsTime } }) => isAWinner && !claimWinningsTime
     );
     setPool(filtered.length > 0 ? filtered[0].pool : null);
   }, [isFetching, myActivities]);
@@ -39,8 +38,7 @@ export const LandingWinCard = () => {
           </span>
         ) : (
           <span>
-            You can win <span className="font-bold">twice your stake</span> when
-            you make predictions
+            You can win <span className="font-bold">twice your stake</span> when you make predictions
           </span>
         )}
       </p>
@@ -62,9 +60,7 @@ export const LandingWinCard = () => {
           </p>
         </>
       ) : (
-        <p className="text-sm text-text-caption text-center mb-8">
-          Your predictions are always live on the explorer
-        </p>
+        <p className="text-sm text-text-caption text-center mb-8">Your predictions are always live on the explorer</p>
       )}
 
       <Link

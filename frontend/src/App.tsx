@@ -1,16 +1,20 @@
 import { BottomNav, Footer, Header } from '@/components';
 import { useFirebase } from '@/contexts';
 import {
+  CreateCommunityPoolPage,
   LandingPage,
   LeaderboardPage,
+  LiveCommunityPoolsPage,
   LiveCryptoPoolsPage,
   LiveStocksPoolsPage,
-  MyActivityPage,
+  MyActivityCreatedPoolsPage,
+  MyActivityPredictionsPage,
   NotFoundPage,
   PoolDetailPage
 } from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
+  Navigate,
   Outlet,
   Route,
   RouterProvider,
@@ -27,11 +31,12 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',
-      '/pools': 'Pools',
-      '/predictions': 'Predictions',
-      '/stocks': 'Stocks',
+      '/pools/crypto': 'Crypto Pools',
+      '/pools/stocks': 'Stocks Pools',
+      '/pools/community': 'Community Pools',
       '/leaderboard': 'Leaderboard',
-      '/activity': 'Activity'
+      '/activity/predictions': 'My Activity - Predictions',
+      '/activity/created-pools': 'My Activity - Created Pools'
     };
     let name = names[location.pathname];
     if (!name && location.pathname.startsWith('/pool/')) name = 'Pool Detail';
@@ -45,7 +50,9 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <main
         className={
           'grow flex flex-col items-stretch' +
-          (location.pathname === '/' ? '' : ' max-[414px]:px-4 p-8 pb-16')
+          (location.pathname === '/' || location.pathname === '/pools/community/create'
+            ? ''
+            : ' max-[414px]:px-4 px-8 pb-16')
         }
       >
         {outlet}
@@ -59,19 +66,21 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route
-      path="/"
-      element={<Layout outlet={<Outlet />} />}
-      errorElement={<Layout outlet={<NotFoundPage />} />}
-    >
+    <Route path="/" element={<Layout outlet={<Outlet />} />} errorElement={<Layout outlet={<NotFoundPage />} />}>
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<LiveCryptoPoolsPage />} />
+        <Route path="pools" element={<Navigate to="pools/crypto" replace />} />
+        <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
+        <Route path="pools/stocks" element={<LiveStocksPoolsPage />} />
+        <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
+        <Route path="pools/community/create" element={<CreateCommunityPoolPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
-        <Route path="predictions" element={<MyActivityPage />} />
+        <Route path="predictions" element={<Navigate to="activity/predictions" replace />} />
         <Route path="stocks" element={<LiveStocksPoolsPage />} />
-        <Route path="activity" element={<MyActivityPage />} />
+        <Route path="activity" element={<Navigate to="activity/predictions" replace />} />
+        <Route path="activity/predictions" element={<MyActivityPredictionsPage />} />
+        <Route path="activity/created-pools" element={<MyActivityCreatedPoolsPage />} />
       </Route>
     </Route>
   )

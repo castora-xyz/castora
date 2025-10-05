@@ -1,7 +1,8 @@
 import {
   ALL_STOCK_PREDICTION_TOKENS,
   FilterCryptoPoolsProps,
-  FilterStockPoolsProps
+  FilterStockPoolsProps,
+  FilterCommunityPoolsProps
 } from '@/contexts';
 import ms from 'ms';
 import { tokens } from './tokens';
@@ -269,6 +270,34 @@ export class PoolSeeds {
     if (!predictionTokens.includes(this.predictionTokenDetails.name)) {
       return false;
     }
+    return true;
+  }
+
+  /**
+   * Determines whether the community pool matches the current filter criteria.
+   * The filter criteria include pool statuses, prediction tokens, stake tokens, and multipliers.
+   *
+   * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
+   */
+  matchesFilterCommunity({
+    predictionTokens,
+    stakeTokens,
+    statuses,
+    multipliers
+  }: FilterCommunityPoolsProps): boolean {
+    if (!statuses.includes(this.status())) return false;
+
+    const { name: prdToken } = this.predictionTokenDetails;
+    const { name: stkToken } = this.stakeTokenDetails;
+    if (!predictionTokens.includes(prdToken)) return false;
+    if (!stakeTokens.includes(stkToken)) return false;
+
+    // For community pools, we need to determine the multiplier
+    // This would need to be implemented based on how community pools store their multiplier
+    // For now, we'll assume all community pools are 2x (this should be updated when the contract is ready)
+    const poolMultiplier = 'x2'; // This should come from the pool data
+    if (!multipliers.includes(poolMultiplier)) return false;
+
     return true;
   }
 }

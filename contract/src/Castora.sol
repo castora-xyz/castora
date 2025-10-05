@@ -7,6 +7,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import './IPoolCompletionHandler.sol';
 
 error AlreadyClaimedWinnings();
 error InsufficientStakeValue();
@@ -136,7 +137,7 @@ struct Pool {
 /// After snapshotTime, those whose predictedPrices are closest to the token's
 /// price are the winners of the {Pool}. They go with all the pool's money or
 /// rather they each go with almost twice of what they initially staked.
-/// @custom:oz-upgrades-unsafe-allow
+/// @custom:oz-upgrades-from build-info-ref:Castora
 contract Castora is
   Initializable,
   OwnableUpgradeable,
@@ -255,6 +256,291 @@ contract Castora is
     predictionIds = predictionIdsByAddresses[poolId][predicter];
   }
 
+  /// Returns the predictionIds of unclaimed winning predictions made by the participant with address
+  /// `predicter` in {Pool} with the provided `poolId`.
+  function getUnclaimedWinnerPredictionIdsForAddress(uint256 poolId, address predicter)
+    public
+    view
+    returns (uint256[] memory unclaimedWinnerPredictionIds)
+  {
+    if (predicter == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
+    uint256 unclaimedWinnerCount = 0;
+
+    for (uint256 i = 0; i < userPredictionIds.length; i++) {
+      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
+      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
+        unclaimedWinnerCount++;
+      }
+    }
+
+    unclaimedWinnerPredictionIds = new uint256[](unclaimedWinnerCount);
+    uint256 index = 0;
+    for (uint256 i = 0; i < userPredictionIds.length; i++) {
+      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
+      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
+        unclaimedWinnerPredictionIds[index] = userPredictionIds[i];
+        index++;
+      }
+    }
+  }
+
+  /// Returns the pools corresponding to the provided list of poolIds.
+  /// @param poolIds The array of poolIds to fetch
+  /// @return poolsList The array of Pool structs
+  function getPools(uint256[] memory poolIds) public view returns (Pool[] memory poolsList) {
+    poolsList = new Pool[](poolIds.length);
+    for (uint256 i = 0; i < poolIds.length; i++) {
+      if (poolIds[i] == 0 || poolIds[i] > noOfPools) revert InvalidPoolId();
+      poolsList[i] = pools[poolIds[i]];
+    }
+  }
+
+  /// Returns the predictions corresponding to the provided list of predictionIds in a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param predictionIds The array of predictionIds to fetch
+  /// @return predictionsList The array of Prediction structs
+  function getPredictions(uint256 poolId, uint256[] memory predictionIds)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    Pool storage pool = pools[poolId];
+    predictionsList = new Prediction[](predictionIds.length);
+    for (uint256 i = 0; i < predictionIds.length; i++) {
+      if (predictionIds[i] == 0 || predictionIds[i] > pool.noOfPredictions) revert InvalidPredictionId();
+      predictionsList[i] = predictions[poolId][predictionIds[i]];
+    }
+  }
+
+  /// Returns a paginated list of pools.
+  /// @param offset The starting index (1-based) of the pool list
+  /// @param limit The maximum number of pools to return
+  /// @return poolsList The array of Pool structs
+  function getPoolsPaginated(uint256 offset, uint256 limit) public view returns (Pool[] memory poolsList) {
+    if (offset == 0 || offset > noOfPools) revert InvalidPoolId();
+    uint256 end = offset + limit - 1;
+    if (end > noOfPools) end = noOfPools;
+    uint256 size = end >= offset ? end - offset + 1 : 0;
+    poolsList = new Pool[](size);
+    for (uint256 i = 0; i < size; i++) {
+      poolsList[i] = pools[offset + i];
+    }
+  }
+
+  /// Returns a paginated list of predictions for a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param offset The starting predictionId (1-based)
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getPoolPredictionsPaginated(uint256 poolId, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    Pool storage pool = pools[poolId];
+    if (offset == 0 || offset > pool.noOfPredictions) revert InvalidPredictionId();
+    uint256 end = offset + limit - 1;
+    if (end > pool.noOfPredictions) end = pool.noOfPredictions;
+    uint256 size = end >= offset ? end - offset + 1 : 0;
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][offset + i];
+    }
+  }
+
+  /// Returns a paginated list of predictions made by a user in a pool.
+  /// @param poolId The pool to fetch predictions from
+  /// @param user The address of the user
+  /// @param offset The starting index (0-based) in the user's predictions array
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getUserPredictionsPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][user];
+    uint256 total = userPredictionIds.length;
+    if (offset >= total) return new Prediction[](0);
+    uint256 end = offset + limit;
+    if (end > total) end = total;
+    uint256 size = end > offset ? end - offset : 0;
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
+    }
+  }
+
+  /// Returns a paginated list of predictions made by the participant with address
+  /// `predicter` in {Pool} with the provided `poolId`.
+  /// @param poolId The pool to fetch predictions from
+  /// @param predicter The address of the participant
+  /// @param offset The starting index (0-based) in the user's predictions array
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getPredictionsForAddressPaginated(uint256 poolId, address predicter, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (predicter == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
+    uint256 total = userPredictionIds.length;
+    if (offset >= total) return new Prediction[](0);
+
+    uint256 end = offset + limit;
+    if (end > total) end = total;
+    uint256 size = end > offset ? end - offset : 0;
+
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
+    }
+  }
+
+  /// Returns a paginated list of unique pools a user has joined and their predictions.
+  /// @param user The address of the user
+  /// @param offset The starting index (0-based) in the user's joined pools array
+  /// @param limit The maximum number of entries to return
+  /// @return uniquePools The array of unique Pool structs the user has joined
+  /// @return predictionsList The array of Prediction structs made by the user
+  /// @return poolIndexes The array mapping each prediction to its unique pool index
+  function getUserActivitiesOptimizedPaginated(address user, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
+  {
+    if (user == address(0)) revert InvalidAddress();
+
+    uint256 totalCount = noOfJoinedPoolsByAddresses[user];
+    if (totalCount == 0) return (new Pool[](0), new Prediction[](0), new uint256[](0));
+    if (offset >= totalCount) return (new Pool[](0), new Prediction[](0), new uint256[](0));
+
+    uint256 end = offset + limit;
+    if (end > totalCount) end = totalCount;
+    uint256 size = end > offset ? end - offset : 0;
+
+    // the recursive split into smaller chunks to avoid "stack too deep" errors
+    return _buildUserActivitiesData(user, offset, size);
+  }
+
+  /// Internal function to build user activities data
+  function _buildUserActivitiesData(address user, uint256 offset, uint256 size)
+    internal
+    view
+    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
+  {
+    predictionsList = new Prediction[](size);
+    poolIndexes = new uint256[](size);
+
+    uint256[] memory uniquePoolIds = new uint256[](size);
+    uint256 uniqueCount = _processActivitiesBatch(user, offset, size, uniquePoolIds, predictionsList, poolIndexes);
+
+    uniquePools = new Pool[](uniqueCount);
+    for (uint256 i = 0; i < uniqueCount; i++) {
+      uniquePools[i] = pools[uniquePoolIds[i]];
+    }
+  }
+
+  /// Internal function to process activities batch and return unique count
+  function _processActivitiesBatch(
+    address user,
+    uint256 offset,
+    uint256 size,
+    uint256[] memory uniquePoolIds,
+    Prediction[] memory predictionsList,
+    uint256[] memory poolIndexes
+  ) internal view returns (uint256) {
+    uint256[] memory firstOccurrence = new uint256[](size);
+    uint256[] memory batchOccurrences = new uint256[](size);
+    uint256 uniqueCount = 0;
+
+    for (uint256 i = 0; i < size; i++) {
+      uniqueCount = _processActivityEntry(
+        user, offset, i, uniqueCount, uniquePoolIds, firstOccurrence, batchOccurrences, predictionsList, poolIndexes
+      );
+    }
+
+    return uniqueCount;
+  }
+
+  /// Internal function to process a single activity entry
+  function _processActivityEntry(
+    address user,
+    uint256 offset,
+    uint256 entryIndex,
+    uint256 uniqueCount,
+    uint256[] memory uniquePoolIds,
+    uint256[] memory firstOccurrence,
+    uint256[] memory batchOccurrences,
+    Prediction[] memory predictionsList,
+    uint256[] memory poolIndexes
+  ) internal view returns (uint256) {
+    uint256 currentPoolId = joinedPoolIdsByAddresses[user][offset + entryIndex];
+    uint256 poolIndex = _findPoolIndex(uniquePoolIds, uniqueCount, currentPoolId);
+
+    if (poolIndex == uniqueCount) {
+      uniquePoolIds[uniqueCount] = currentPoolId;
+      firstOccurrence[uniqueCount] = _countPreOffsetOccurrences(user, offset, currentPoolId);
+      batchOccurrences[uniqueCount] = 0;
+      uniqueCount++;
+      poolIndex = uniqueCount - 1;
+    } else {
+      batchOccurrences[poolIndex]++;
+    }
+
+    _setPredictionForEntry(
+      user, currentPoolId, firstOccurrence[poolIndex] + batchOccurrences[poolIndex], entryIndex, predictionsList
+    );
+
+    poolIndexes[entryIndex] = poolIndex;
+    return uniqueCount;
+  }
+
+  /// Internal function to set prediction for an entry
+  function _setPredictionForEntry(
+    address user,
+    uint256 poolId,
+    uint256 predictionIndex,
+    uint256 entryIndex,
+    Prediction[] memory predictionsList
+  ) internal view {
+    uint256 predictionId = predictionIdsByAddresses[poolId][user][predictionIndex];
+    predictionsList[entryIndex] = predictions[poolId][predictionId];
+  }
+
+  /// Internal helper to find pool index
+  function _findPoolIndex(uint256[] memory uniquePoolIds, uint256 uniqueCount, uint256 poolId)
+    internal
+    pure
+    returns (uint256)
+  {
+    for (uint256 j = 0; j < uniqueCount; j++) {
+      if (uniquePoolIds[j] == poolId) return j;
+    }
+    return uniqueCount;
+  }
+
+  /// Internal helper to count occurrences of a pool before the offset
+  function _countPreOffsetOccurrences(address user, uint256 offset, uint256 poolId)
+    internal
+    view
+    returns (uint256 count)
+  {
+    for (uint256 k = 0; k < offset; k++) {
+      if (joinedPoolIdsByAddresses[user][k] == poolId) count++;
+    }
+  }
+
   /// Returns a hash of the provided `seeds`.
   function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
     return keccak256(
@@ -275,7 +561,7 @@ contract Castora is
     if (seeds.stakeToken == address(0)) revert InvalidAddress();
     if (seeds.stakeAmount == 0) revert ZeroAmountSpecified();
     if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
-    if (seeds.windowCloseTime > seeds.snapshotTime) revert InvalidPoolTimes();
+    if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
 
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
@@ -417,6 +703,16 @@ contract Castora is
     }
 
     emit CompletedPool(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
+
+    // As the feeCollector is now the CastoraPoolsManager contract, this main Castora needs to tell it
+    // to process the received fees to either send out to the main Castora fee collector address or split
+    // it with the user who created the pool. Checking for code length, confirms that it is a contract.
+    if (feeCollector.code.length > 0) {
+      // This try/catch method allows that failures in the processing doesn't fail this current running
+      // completePool method. Also, an external/off-chain process could trigger the processPoolCompletion
+      // if it failed from here.
+      try IPoolCompletionHandler(feeCollector).processPoolCompletion(poolId) {} catch {}
+    }
   }
 
   function _claimWinnings(uint256 poolId, uint256 predictionId) internal {

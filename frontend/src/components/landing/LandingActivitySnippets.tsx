@@ -1,14 +1,14 @@
-import { ActivityCard } from '@/components';
-import { Activity, CASTORA_ADDRESS_SEPOLIA, useMyActivity } from '@/contexts';
+import { ActivityPredictCard } from '@/components';
+import { ActivityPredict, CASTORA_ADDRESS_SEPOLIA, useMyPredictActivity } from '@/contexts';
 import { Pool, PoolSeeds, Prediction, USDC } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 
 export const LandingActivitySnippets = () => {
-  const { isFetching, myActivities } = useMyActivity();
+  const { isFetching, myActivities } = useMyPredictActivity();
 
-  const [snippets, setSnippets] = useState<Activity[]>([]);
+  const [snippets, setSnippets] = useState<ActivityPredict[]>([]);
 
   const next2HoursTimestamp = () => {
     const now = new Date();
@@ -16,9 +16,7 @@ export const LandingActivitySnippets = () => {
     const months = now.getMonth();
     const date = now.getDate();
     const hrs = new Date().getHours();
-    return Math.trunc(
-      new Date(yrs, months, date, hrs + 2, 0, 0).getTime() / 1000
-    );
+    return Math.trunc(new Date(yrs, months, date, hrs + 2, 0, 0).getTime() / 1000);
   };
 
   const defaultActivity = () => ({
@@ -69,12 +67,7 @@ export const LandingActivitySnippets = () => {
 
       <div className="invisible opacity-0 py-48 md:hidden">
         {snippets.map(({ pool, prediction }, i) => (
-          <ActivityCard
-            key={i}
-            pool={pool}
-            prediction={prediction}
-            isInLandingPage={true}
-          />
+          <ActivityPredictCard key={i} pool={pool} prediction={prediction} isInLandingPage={true} />
         ))}
       </div>
 
@@ -86,13 +79,8 @@ export const LandingActivitySnippets = () => {
           </>
         ) : (
           snippets.map(({ pool, prediction }, i) => (
-            <Link key={i} to="/activity">
-              <ActivityCard
-                key={i}
-                pool={pool}
-                prediction={prediction}
-                isInLandingPage={true}
-              />
+            <Link key={i} to="/activity/predictions">
+              <ActivityPredictCard key={i} pool={pool} prediction={prediction} isInLandingPage={true} />
             </Link>
           ))
         )}

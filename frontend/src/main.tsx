@@ -2,10 +2,12 @@ import { App } from '@/App.tsx';
 import {
   AuthProvider,
   ContractProvider,
+  FilterCommunityPoolsProvider,
   FilterCryptoPoolsProvider,
   FilterStockPoolsProvider,
   FirebaseProvider,
-  MyActivityProvider,
+  MyCreateActivityProvider,
+  MyPredictActivityProvider,
   PaginatorsProvider,
   PoolsProvider,
   PoolsShimmerProvider,
@@ -36,13 +38,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <ContractProvider>
                           <FilterCryptoPoolsProvider>
                             <FilterStockPoolsProvider>
-                              <PoolsProvider>
-                                <PoolsShimmerProvider>
-                                  <MyActivityProvider>
-                                    <App />
-                                  </MyActivityProvider>
-                                </PoolsShimmerProvider>
-                              </PoolsProvider>
+                              <FilterCommunityPoolsProvider>
+                                <PoolsProvider>
+                                  <PoolsShimmerProvider>
+                                    <MyPredictActivityProvider>
+                                      <MyCreateActivityProvider>
+                                        <App />
+                                      </MyCreateActivityProvider>
+                                    </MyPredictActivityProvider>
+                                  </PoolsShimmerProvider>
+                                </PoolsProvider>
+                              </FilterCommunityPoolsProvider>
                             </FilterStockPoolsProvider>
                           </FilterCryptoPoolsProvider>
                         </ContractProvider>
