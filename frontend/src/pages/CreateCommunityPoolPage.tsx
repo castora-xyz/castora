@@ -2,7 +2,7 @@ import Globe from '@/assets/globe.svg?react';
 import Link from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import { CountdownNumbers, CreatePoolModal } from '@/components';
-import { allowedCreatorPredTokens, CreatePoolForm, useFirebase } from '@/contexts';
+import { allowedCreatorPredTokens, CreatePoolForm, useFirebase, useToast } from '@/contexts';
 import { tokens } from '@/schemas';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
@@ -53,6 +53,7 @@ export const CreateCommunityPoolPage = () => {
   const { isConnected } = useAccount();
   const { open: connectWallet } = useWeb3Modal();
   const { recordEvent } = useFirebase();
+  const { toastError } = useToast();
   const [form, setForm] = useState<CreatePoolForm>({ ...formDefaults });
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -122,7 +123,10 @@ export const CreateCommunityPoolPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasAttemptedSubmit(true);
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toastError('Kindly Fix the Form Errors');
+      return;
+    }
 
     if (!isConnected) connectWallet();
     else {

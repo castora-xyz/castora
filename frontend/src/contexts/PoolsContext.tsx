@@ -74,7 +74,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const { chain: currentChain } = useAccount();
   const cache = useCache();
   const [defaultChain] = useChains();
-  const { castoraAddress, readContract, writeContract } = useContract();
+  const { castoraAddress, poolsManagerAddress, readContract, writeContract } = useContract();
   const { firestore, recordEvent } = useFirebase();
   const { toastError, toastSuccess } = useToast();
 
@@ -91,7 +91,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const getChain = () => currentChain ?? defaultChain;
   const getChainName = () => ({ [monadTestnet.id]: 'monadtestnet' }[getChain().id]);
 
-  const convertCreateForm = (form: CreatePoolForm) => {
+  const getCreateFormArgs = (form: CreatePoolForm) => {
     if (!allowedCreatorPredTokens.includes(form.predictionToken)) throw 'Invalid predictionToken';
     if (form.stakeToken != 'MON') throw 'Invalid stakeToken';
     if (!form.windowCloseTime) throw 'Invalid windowCloseTime';
@@ -105,7 +105,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         windowCloseTime: Math.trunc(form.windowCloseTime.getTime() / 1000),
         snapshotTime: Math.trunc(form.snapshotTime.getTime() / 1000)
       },
-      castoraAddress,
+      poolsManagerAddress,
       +form.multiplier.substring(1) * 100,
       form.visibility == 'unlisted'
     ];
@@ -118,7 +118,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
       writeContract({
         contract: 'pools-manager',
         functionName: 'createPool',
-        args: convertCreateForm(form),
+        args: getCreateFormArgs(form),
+        value: 10e18,
         onSuccessCallback: (hash, rawPoolId) => {
           txHash = hash;
           poolId = Number(rawPoolId);
@@ -321,12 +322,10 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         next: subscriber.next.bind(subscriber),
         error: subscriber.error.bind(subscriber),
         complete: async () => {
-          console.log('hi')
           if (!txHash) {
             subscriber.error('Transaction Failed');
             return;
           }
-          console.log(txHash)
 
           subscriber.next('finalizing');
           recordEvent(`${bulkCount ? 'bulk_' : ''}predicted`, {
@@ -334,7 +333,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
             predictionIds
           });
           const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
-          console.log(explorerUrl)
           toastSuccess('Prediction Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();

@@ -135,12 +135,23 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         if (`${e}`.toLowerCase().includes('rejected')) {
           bs.error('Transaction Rejected');
         } else {
+          console.error(e);
+          
+          if (e?.cause?.metaMessages) {
+            const matched = `${e.cause.metaMessages[0]}`.match(/Error:\s*([A-Za-z0-9_]+)\(\)/);
+            const reverted = matched ? matched[1] : null;
+            if (reverted) {
+              toastError(reverted);
+              bs.error(reverted);
+              return;
+            }
+          }
+
           toastError(
             `${e}`.toLowerCase().includes('failed to fetch')
               ? 'Network Error'
               : e['shortMessage'] ?? e['details'] ?? e['message'] ?? `${e}`
           );
-          console.error(e);
           bs.error(e);
         }
       }
