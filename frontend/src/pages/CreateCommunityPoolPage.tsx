@@ -1,5 +1,10 @@
+import ArrowRight from '@/assets/arrow-right.svg?react';
+import Globe from '@/assets/globe.svg?react';
+import Link from '@/assets/link.svg?react';
+import Timer from '@/assets/timer.svg?react';
 import { tokens } from '@/schemas';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
+import ms from 'ms';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
@@ -25,6 +30,31 @@ const formDefaults = {
   snapshotTime: null,
   multiplier: 'x2',
   visibility: 'unlisted'
+};
+
+import { CountdownNumbers } from '@/components';
+import { Tooltip } from 'primereact/tooltip';
+
+const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
+  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
+  const [diff, setDiff] = useState(timestamp - now);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Math.trunc(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [now]);
+
+  useEffect(() => {
+    setDiff(timestamp - now);
+  }, [now, timestamp]);
+
+  return (
+    <div className="py-1.5 px-4 mb-4 font-medium rounded-full w-fit text-sm sm:text-md border  border-primary-lighter bg-primary-subtle text-primary-darker">
+      {diff <= 0 ? <>00h : 00m : 00s</> : <CountdownNumbers timestamp={timestamp} />}
+    </div>
+  );
 };
 
 export const CreateCommunityPoolPage = () => {
@@ -173,13 +203,13 @@ export const CreateCommunityPoolPage = () => {
   }
 
   return (
-    <div className="flex flex-col justify-center grow bg-surface-subtle pt-20 pb-28">
-      <div className="w-full max-w-xl mx-auto px-4">
-        <div className="bg-app-bg rounded-3xl p-8 border border-border-default dark:border-surface-subtle">
+    <div className="flex flex-col justify-center grow bg-surface-subtle px-4 sm:px-8 pt-20 pb-28">
+      <div className="bg-app-bg w-full max-lg:max-w-xl lg:max-w-screen-lg mx-auto px-4 sm:px-8 lg:px-10 lg:pt-12 lg:pb-24 rounded-3xl py-8 border border-border-default dark:border-surface-subtle lg:flex">
+        <div className="lg:mr-20">
           <h1 className="text-3xl font-bold mb-2 text-text-title">Create Community Pool</h1>
           <p className="text-text-subtitle mb-8">Create a custom pool for anyone in the community to join.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 lg:w-[414px]">
             {/* Prediction Token */}
             <div>
               <label className="block text-sm font-medium mb-2 text-text-title">Prediction Pair (Token) *</label>
@@ -346,17 +376,108 @@ export const CreateCommunityPoolPage = () => {
                 }}
               />
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Creating Pool...' : isConnected ? 'Create Pool' : 'Connect Wallet to Create Pool'}
-              <Ripple />
-            </button>
           </form>
+        </div>
+
+        <div className="mt-10 lg:w-max">
+          <div className="lg:w-80">
+            <h2 className="text-2xl mb-6 text-text-title">Preview</h2>
+
+            <div className="border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-sm mb-12">
+              <div className="flex justify-between">
+                <div className="flex p-2 pl-4 mb-4 rounded-full items-center  bg-surface-subtle w-fit">
+                  <div className="text-sm md:text-md">Pool ID: ---</div>
+                  <div className={'ml-6 text-xs md:text-sm p-2 px-4 rounded-full  bg-success-default text-white'}>
+                    Open
+                  </div>
+                </div>
+
+                <div>
+                  <Tooltip target="#preview-pool-life" />
+                  {!form.windowCloseTime ? (
+                    <Timer
+                      id="preview-pool-life"
+                      className="w-5 h-5 mt-1 -mr-1 fill-primary-default"
+                      data-pr-tooltip="Pool Life"
+                    />
+                  ) : (
+                    <span
+                      id="preview-pool-life"
+                      className="text-sm text-primary-default mt-1 inline-block"
+                      data-pr-tooltip="Pool Life"
+                    >
+                      {ms(form.windowCloseTime.getTime() - Date.now())}
+                    </span>
+                  )}
+
+                  <Tooltip target="#preview-pool-visibility" />
+                  {form.visibility == 'unlisted' ? (
+                    <Link
+                      id="preview-pool-visibility"
+                      className="mt-5 w-5 h-5 -mr-1 text-primary-default"
+                      data-pr-tooltip="Unlisted"
+                    />
+                  ) : (
+                    <Globe
+                      id="preview-pool-visibility"
+                      className="mt-5 w-5 h-5 -mr-1 text-primary-default"
+                      data-pr-tooltip="Public"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 items-start mb-4">
+                {form.predictionToken ? (
+                  <img src={`/assets/${form.predictionToken.toLowerCase()}.png`} className="w-8 h-8 rounded-full" />
+                ) : (
+                  <div className='w-8 h-8 rounded-full bg-surface-subtle'></div>
+                )}
+                <div className="font-medium text-2xl text-text-title">
+                  {!!form.predictionToken ? form.predictionToken : '---'}/USD
+                </div>
+              </div>
+
+              <div className="font-medium text-xs md:text-sm text-text-subtitle mb-2">Pool Closes In</div>
+
+              <CountdownBadgePreview
+                timestamp={form.windowCloseTime ? Math.trunc(form.windowCloseTime.getTime() / 1000) : 0}
+              />
+
+              <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
+                <span className="mr-4">Entry Fee</span>
+                {form.stakeToken && form.stakeAmount && (
+                  <div className="flex w-fit items-center -mt-1">
+                    <img src={`/assets/${form.stakeToken.toLowerCase()}.png`} className="w-6 h-6 rounded-full mr-2" />
+                    <span>{form.stakeAmount + ' ' + form.stakeToken}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-12">
+                <span className="mr-4">Multiplier</span>
+                <span className="font-bold text-base -mt-1">{form.multiplier}</span>
+              </div>
+
+              <div className="w-full mt-5 py-2 px-4 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle flex items-center justify-center p-ripple">
+                Join Pool
+                <ArrowRight className="w-4 h-4 ml-2 fill-text-body" />
+                <Ripple />
+              </div>
+            </div>
+
+            <div className="lg:pt-8 lg:flex lg:justify-center">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="w-full lg:max-w-80 lg:-mr-24 py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Creating Pool...' : 'Create Pool'}
+                <Ripple />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

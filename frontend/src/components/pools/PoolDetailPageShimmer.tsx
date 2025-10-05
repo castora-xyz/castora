@@ -2,7 +2,7 @@ import { Breathing } from 'react-shimmer';
 
 export const PoolDetailPageShimmer = () => {
   return (
-    <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex grow">
+    <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex grow pt-12">
       <div className="mb-8 lg:mb-px lg:mr-8 lg:grow lg:basis-1/2">
         <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full max-lg:max-w-lg max-lg:mx-auto">
           <Breathing className="grow w-full min-h-72 rounded-[24px]" />
