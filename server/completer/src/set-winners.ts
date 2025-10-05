@@ -7,13 +7,25 @@ import { getSplittedPredictions } from './get-splitted-predictions.js';
  * Computes the winner predictions in the provided pool.
  *
  * Specifically, this method does the following:
- *  * Calculates the winner predictions.
+ *  * Fetches archived predictions for the pool.
+ *  * Validates the number of predictions.
+ *  * Calculates the number of winners based on the multiplier.
+ *  * Determines the winning predictions.
+ *  * Calculates the win amount for each winner.
  *  * Sets the winners by calling completePool in the contract.
  *
  * @param chain The chain to fetch the pool from.
- * @param pool The pool in which to compute its winners
+ * @param pool The pool in which to compute its winners.
+ * @param snapshotPrice The price snapshot used for winner calculation.
+ * @param multiplier The multiplier used to determine number of winners.
+ * @returns The result containing winner prediction IDs.
  */
-export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number): Promise<SplitPredictionResult> => {
+export const setWinners = async (
+  chain: Chain,
+  pool: Pool,
+  snapshotPrice: number,
+  multiplier: PoolMultiplier
+): Promise<SplitPredictionResult> => {
   logger.info('\nFetching Predictions from Archive ... ');
   const predictions = await fetchArchivedPredictions(chain, pool.poolId);
   logger.info(`Fetched all ${predictions.length} predictions.`);
@@ -26,9 +38,6 @@ export const setWinners = async (chain: Chain, pool: Pool, snapshotPrice: number
     );
   }
 
-  let multiplier: PoolMultiplier = 2;
-  if (pool.poolId == 3000) multiplier = 10;
-  if (pool.poolId == 5000) multiplier = 5;
   const noOfWinners = getNoOfWinners(pool.noOfPredictions, multiplier);
   logger.info(`\nnoOfWinners: ${noOfWinners}`);
 

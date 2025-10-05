@@ -1,4 +1,5 @@
 import { fetchPool, Job, logger, queueJob, readPoolsManagerContract } from '@castora/shared';
+import { PoolMultiplier } from './get-no-of-winners.js';
 import { getSnapshotPrice } from './get-snapshot-price.js';
 import { rearchivePool } from './rearchive-pool.js';
 import { setWinners } from './set-winners.js';
@@ -36,21 +37,34 @@ export const completePool = async (job: Job): Promise<void> => {
     const snapshotPrice = await getSnapshotPrice(pool, chain);
     logger.info(`Got Snapshot Price: ${snapshotPrice}`);
 
-    const splitResult = await setWinners(chain, pool, snapshotPrice);
-
-    // refetching the pool here so that the winAmount and completionTime will now be valid
-    pool = await fetchPool(chain, poolId);
-
-    // check if this is a community created pool, if so, add creator details to re-archival
+    // Check if this is a community created pool and use accompanying data
     let creatorDetails;
+    let multiplier: PoolMultiplier = 2;
     const isCommunity = await readPoolsManagerContract(chain, 'doesUserCreatedPoolExist', [poolId]);
+
+    // if this is a community created pool, extract creator details to re-archival
+    // also extract the right pool multiplier to apply
     if (isCommunity) {
+      logger.info('Community Created Pool found, gathering extra data ...');
       const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
-      const { creator, completionFeesAmount } = userCreatedPool;
+      const { creator, completionFeesAmount, multiplier: multiplierRaw } = userCreatedPool;
       // completion fees token always match pool stake token
       const creatorCompletionFees = pool.seeds.formatWinAmount(completionFeesAmount);
       creatorDetails = { creator, creatorCompletionFees };
+      // multiplier is store in contract with 2 decimal places
+      multiplier = (multiplierRaw / 100) as PoolMultiplier;
+      logger.info(
+        `Have noted pool creator ${creator}, their completion fees ${creatorCompletionFees}` +
+          ` and the pool multiplier ${multiplier}`
+      );
+    } else {
+      logger.info('Not a Community Created Pool, proceeding to split result ...');             
     }
+
+    const splitResult = await setWinners(chain, pool, snapshotPrice, multiplier);
+
+    // refetching the pool here so that the winAmount and completionTime will now be valid
+    pool = await fetchPool(chain, poolId);
 
     // re-archiving to store the updated winner predictions and creator info for notifications.
     await rearchivePool(chain, pool, splitResult, creatorDetails);

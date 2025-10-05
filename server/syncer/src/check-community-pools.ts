@@ -68,7 +68,7 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
   // If we are still here, then contract retrieved is greater than last handled and there are new pools
   // Retrieve all the new pool IDs from the poolsManager contract
   const newPoolIds = await readPoolsManagerContract(chain, 'getAllCreatedPoolIdsPaginated', [
-    lastHandledNth + 1,
+    lastHandledNth,
     noOfUserCreatedPools - lastHandledNth
   ]);
 
@@ -126,7 +126,9 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
       // b. post their unlisting jobs
       // we will use the same time interval between the windowCloseTime and snapshotTime as the time interval
       // for the completed pool to stay in the community listings, like the difference will serve as delay.
-      const delay = (snapshotTime - windowCloseTime) * 1000;
+      let delay = (snapshotTime - windowCloseTime) * 1000;
+      // if the times are the same, the delay should be a minute after snapshot time
+      if (delay === 0) delay = (snapshotTime - now) * 1000 + 60000;
       await queueJob({
         queueName: 'community-pools-unlister',
         jobName: 'unlist-community-pool',
