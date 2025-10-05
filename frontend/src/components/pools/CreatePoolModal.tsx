@@ -3,7 +3,15 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Telegram from '@/assets/telegram-plain.svg?react';
 import { SuccessIcon } from '@/components';
-import { CreatePoolForm, useContract, useFirebase, usePools, useTelegram, useToast } from '@/contexts';
+import {
+  CreatePoolForm,
+  useContract,
+  useFirebase,
+  useMyCreateActivity,
+  usePools,
+  useTelegram,
+  useToast
+} from '@/contexts';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,11 +27,13 @@ export const CreatePoolModal = ({
   handleClose: () => void;
   handleCreationSuccess: () => void;
 }) => {
+  // left the unused extracts here for create with ERC20 token as fees
   const { approve, balance, poolsManagerAddress, castoraAddress, hasAllowance } = useContract();
   const { create } = usePools();
   const { recordEvent } = useFirebase();
   const navigate = useNavigate();
   const { toastInfo } = useToast();
+  const { updateActivityCount } = useMyCreateActivity();
 
   const telegram = useTelegram();
 
@@ -76,8 +86,7 @@ export const CreatePoolModal = ({
         if (successUrl) setExplorerUrl(successUrl);
         if (poolId) setCreatedPoolId(poolId);
         setIsSuccess(!!successUrl);
-        // TODO: Update the created pools activity count
-        // updateActivityCount();
+        updateActivityCount();
         handleCreationSuccess();
         reset();
       }
@@ -287,7 +296,7 @@ export const CreatePoolModal = ({
 
       <p className="mt-1 text-center">
         <span className="text-xs">You Gain: </span>
-        <span className="text-sm font-bold text-primary-default">50% Pool Fees</span>
+        <span className="text-sm font-bold text-primary-default">30% Pool Fees</span>
       </p>
 
       {!hasEnoughBalance && (

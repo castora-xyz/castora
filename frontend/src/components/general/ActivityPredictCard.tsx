@@ -15,13 +15,11 @@ export const ActivityPredictCard = ({
   pool: { poolId, seeds, snapshotPrice, completionTime },
   prediction,
   prediction: { explorerUrl, id: predictionId, isAWinner, price: predictionPrice, time },
-  isInLandingPage = false,
-  refresh
+  isInLandingPage = false
 }: {
   pool: Pool;
   prediction: Prediction;
   isInLandingPage?: boolean;
-  refresh?: () => void;
 }) => {
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const location = useLocation();
@@ -150,7 +148,7 @@ export const ActivityPredictCard = ({
               Unlucky
             </p>
           ) : !!completionTime && isAWinner ? (
-            <ClaimPredictButton pool={pool} prediction={prediction} onSuccess={refresh ?? (() => {})} />
+            <ClaimPredictButton pool={pool} prediction={prediction} />
           ) : (
             <></>
           )}

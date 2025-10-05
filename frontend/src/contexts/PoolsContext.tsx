@@ -21,6 +21,14 @@ export interface CreatePoolForm {
 }
 
 interface PoolsContextProps {
+  claimPoolCompletionFees: (
+    poolId: number,
+    onSuccessCallback?: (explorerUrl: string) => void
+  ) => Observable<WriteContractPoolStatus>;
+  claimPoolCompletionFeesBulk: (
+    poolIds: number[],
+    onSuccessCallback?: (explorerUrl: string) => void
+  ) => Observable<WriteContractPoolStatus>;
   claimWinnings: (
     poolId: number,
     predictionId: number,
@@ -54,6 +62,8 @@ interface PoolsContextProps {
 }
 
 const PoolsContext = createContext<PoolsContextProps>({
+  claimPoolCompletionFees: () => new Observable(),
+  claimPoolCompletionFeesBulk: () => new Observable(),
   claimWinnings: () => new Observable(),
   claimWinningsBulk: () => new Observable(),
   create: () => new Observable(),
@@ -138,6 +148,62 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
           const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Creation Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallBack && onSuccessCallBack(explorerUrl, poolId);
+          subscriber.complete();
+        }
+      });
+    });
+  };
+
+  const claimPoolCompletionFees = (poolId: number, onSuccessCallback?: (explorerUrl: string) => void) => {
+    return new Observable<WriteContractPoolStatus>((subscriber) => {
+      let txHash: string;
+      writeContract({
+        contract: 'pools-manager',
+        functionName: 'claimPoolCompletionFees',
+        args: [BigInt(poolId)],
+        onSuccessCallback: (hash) => (txHash = hash)
+      }).subscribe({
+        next: subscriber.next.bind(subscriber),
+        error: subscriber.error.bind(subscriber),
+        complete: async () => {
+          if (!txHash) {
+            subscriber.error('Transaction Failed');
+            return;
+          }
+
+          subscriber.next('finalizing');
+          recordEvent('claimed_pool_completion_fees', { poolId });
+          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          toastSuccess('Withdrawal Successful', 'View Transaction on Explorer', explorerUrl);
+          onSuccessCallback && onSuccessCallback(explorerUrl);
+          subscriber.complete();
+        }
+      });
+    });
+  };
+
+  const claimPoolCompletionFeesBulk = (poolIds: number[], onSuccessCallback?: (explorerUrl: string) => void) => {
+    return new Observable<WriteContractPoolStatus>((subscriber) => {
+      let txHash: string;
+      writeContract({
+        contract: 'pools-manager',
+        functionName: 'claimPoolCompletionFeesBulk',
+        args: [poolIds.map((i) => BigInt(i))],
+        onSuccessCallback: (hash) => (txHash = hash)
+      }).subscribe({
+        next: subscriber.next.bind(subscriber),
+        error: subscriber.error.bind(subscriber),
+        complete: async () => {
+          if (!txHash) {
+            subscriber.error('Transaction Failed');
+            return;
+          }
+
+          subscriber.next('finalizing');
+          recordEvent('claimed_winnings_bulk', { poolIds });
+          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          toastSuccess('Bulk Withdrawals Successful', 'View Transaction on Explorer', explorerUrl);
+          onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
         }
       });
@@ -316,7 +382,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         onSuccessCallback: (hash, result) => {
           txHash = hash;
           predictionIds = Array.isArray(result) ? result.map(Number) : [Number(result)];
-          console.log(predictionIds)
+          console.log(predictionIds);
         }
       }).subscribe({
         next: subscriber.next.bind(subscriber),
@@ -389,6 +455,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PoolsContext.Provider
       value={{
+        claimPoolCompletionFees,
+        claimPoolCompletionFeesBulk,
         claimWinnings,
         claimWinningsBulk,
         create,

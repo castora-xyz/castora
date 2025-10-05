@@ -3,23 +3,16 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { SuccessIcon } from '@/components';
-import { useFirebase, usePools } from '@/contexts';
+import { useFirebase, useMyPredictActivity, usePools } from '@/contexts';
 import { Pool, Prediction, Token } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
 
-export const ClaimAllPredictButton = ({
-  pools,
-  predictions,
-  onSuccess
-}: {
-  pools: Pool[];
-  predictions: Prediction[];
-  onSuccess: () => void;
-}) => {
+export const ClaimAllPredictButton = ({ pools, predictions }: { pools: Pool[]; predictions: Prediction[] }) => {
   const { recordEvent } = useFirebase();
   const { claimWinningsBulk } = usePools();
+  const { fetchMyActivity } = useMyPredictActivity();
 
   const [explorerUrl, setExplorerUrl] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
@@ -92,7 +85,7 @@ export const ClaimAllPredictButton = ({
     document.body.classList.remove('overflow-hidden');
     setIsShowingModal(false);
     recordEvent('closed_claim_bulk_modal', { isInOnePool });
-    if (explorerUrl) onSuccess();
+    if (explorerUrl) fetchMyActivity();
   };
 
   const openModal = () => {

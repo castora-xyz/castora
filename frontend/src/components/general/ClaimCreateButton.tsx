@@ -3,29 +3,25 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { SuccessIcon } from '@/components';
-import { useFirebase, useMyPredictActivity, usePools } from '@/contexts';
-import { Pool, Prediction } from '@/schemas';
+import { useFirebase, useMyCreateActivity, usePools } from '@/contexts';
+import { Pool, UserCreatedPool } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export const ClaimPredictButton = ({
-  pool: {
-    poolId,
-    seeds: { snapshotTime, stakeTokenDetails },
-    completionTime,
-    winAmount
-  },
-  prediction: { id: predictionId, isAWinner, claimWinningsTime }
+export const ClaimCreateButton = ({
+  pool: { poolId },
+  userCreated,
+  userCreated: { creatorClaimTime, completionFeesAmount }
 }: {
   pool: Pool;
-  prediction: Prediction;
+  userCreated: UserCreatedPool;
 }) => {
   const { isConnected } = useAccount();
   const { recordEvent } = useFirebase();
-  const { claimWinnings } = usePools();
-  const { fetchMyActivity } = useMyPredictActivity();
+  const { claimPoolCompletionFees } = usePools();
+  const { fetchMyActivity, updateUnclaimed } = useMyCreateActivity();
 
   const [explorerUrl, setExplorerUrl] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
@@ -40,7 +36,7 @@ export const ClaimPredictButton = ({
   const claim = () => {
     setIsClaiming(true);
     setLoadingText('Checking ...');
-    claimWinnings(poolId, predictionId, setExplorerUrl).subscribe({
+    claimPoolCompletionFees(poolId, setExplorerUrl).subscribe({
       next: (status) => {
         if (status === 'submitted') {
           setLoadingText('Sign Withdrawal Transaction in Wallet');
@@ -58,23 +54,22 @@ export const ClaimPredictButton = ({
   const closeModal = () => {
     document.body.classList.remove('overflow-hidden');
     setIsShowingModal(false);
-    recordEvent('closed_claim_modal', { poolId, predictionId });
-    if (explorerUrl) fetchMyActivity();
+    recordEvent('closed_claim_from_created_modal', { poolId });
+    if (explorerUrl) {
+      fetchMyActivity();
+      updateUnclaimed();
+    }
   };
-
-  const now = () => Math.trunc(Date.now() / 1000);
 
   const openModal = () => {
     setIsShowingModal(true);
     document.body.classList.add('overflow-hidden');
-    recordEvent('opened_claim_modal', { poolId, predictionId });
+    recordEvent('opened_claim_from_created_modal', { poolId });
   };
 
-  if (!isConnected || now() < snapshotTime || !completionTime || !isAWinner) {
-    return <></>;
-  }
+  if (!isConnected || !completionFeesAmount) return <></>;
 
-  if (!!claimWinningsTime) {
+  if (!!creatorClaimTime) {
     return (
       <button
         className="py-pt px-4 rounded-full bg-surface-disabled border-2 border-surface-subtle font-medium text-text-disabled"
@@ -142,28 +137,12 @@ export const ClaimPredictButton = ({
           <>
             <SuccessIcon child={<Trophy className="w-8 h-8 fill-app-bg" />} />
 
-            <p className="text-center text-xl mb-6 px-8 sm:px-16">
-              You won{' '}
-              <span className="font-bold">
-                {winAmount} {stakeTokenDetails.name}
-              </span>
+            <p className="text-center text-xl mb-4 px-8 sm:px-12">
+              You gained <span className="font-bold">{userCreated.getGainedDisplay()}</span>
             </p>
 
-            <p className="flex flex-wrap gap-4 text-sm p-1 pl-4 mb-2 rounded-full items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
-              <span>Pool Fee</span>
-              <span className="font-medium ml-4 p-1 px-5 rounded-full text-primary-darker dark:text-primary-default border border-border-default dark:border-surface-subtle">
-                5%
-              </span>
-            </p>
-
-            <p className="flex flex-wrap gap-4 text-sm p-1 pl-4 mb-8 rounded-full items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
-              <span>Claimable</span>
-              <span className="font-medium p-1 px-3 rounded-full text-primary-darker dark:text-primary-default border border-border-default dark:border-surface-subtle">
-                {/*calling Math.floor is to avoid too many decimal places*/}
-                {Math.floor(winAmount * 0.95 * 10 ** stakeTokenDetails.decimals) /
-                  10 ** stakeTokenDetails.decimals}{' '}
-                {stakeTokenDetails.name}
-              </span>
+            <p className="flex flex-wrap gap-4 text-sm p-1 pl-4 mb-6 rounded-full items-center w-fit mx-auto border border-border-default dark:border-surface-subtle">
+              That's 30% of Pool Fees
             </p>
 
             <button

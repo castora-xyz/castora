@@ -58,7 +58,6 @@ export const MyActivityPredictionsPage = () => {
               <ClaimAllPredictButton
                 pools={unclaimedWins.map(({ pool }) => pool)}
                 predictions={unclaimedWins.map(({ prediction }) => prediction)}
-                onSuccess={fetchMyActivity}
               />
             </div>
           ) : undefined
@@ -137,12 +136,7 @@ export const MyActivityPredictionsPage = () => {
                     <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
                   ))
                 : myActivities.map(({ pool, prediction }) => (
-                    <ActivityPredictCard
-                      key={pool.poolId + ' ' + prediction.id}
-                      pool={pool}
-                      prediction={prediction}
-                      refresh={fetchMyActivity}
-                    />
+                    <ActivityPredictCard key={pool.poolId + ' ' + prediction.id} pool={pool} prediction={prediction} />
                   ))}
             </div>
           )}
