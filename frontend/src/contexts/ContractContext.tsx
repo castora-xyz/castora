@@ -1,5 +1,5 @@
 import { useToast } from '@/contexts/ToastContext';
-import { castoraAbi, erc20Abi } from '@/contexts/abis';
+import { castoraAbi, castoraPoolsManagerAbi, erc20Abi } from '@/contexts/abis';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -9,32 +9,42 @@ import { useAccount, useChains, useWalletClient } from 'wagmi';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
-// const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
+export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
 
+export type ChoiceContract = 'castora' | 'pools-manager';
 export type WriteContractStatus = 'initializing' | 'submitted' | 'waiting';
 
 interface ContractContextProps {
-  approve: (
-    token: any,
-    amount: number,
-    onSuccessCallback?: (txHash: string) => void
-  ) => Observable<WriteContractStatus>;
+  approve: (props: {
+    token: any;
+    amount: number;
+    contract: ChoiceContract;
+    onSuccessCallback?: (txHash: string) => void;
+  }) => Observable<WriteContractStatus>;
+
   balance: (token: any) => Promise<number | null>;
+
   castoraAddress: `0x${string}`;
-  hasAllowance: (token: any, amount: number) => Promise<boolean>;
-  readContract: (functionName: string, args?: any[]) => Promise<any>;
-  writeContract: (
-    functionName: string,
-    args?: any[],
-    value?: number | undefined,
-    onSuccessCallback?: (txHash: string, result: any) => void
-  ) => Observable<WriteContractStatus>;
+  poolsManagerAddress: `0x${string}`;
+
+  hasAllowance: (props: { token: any; amount: number; contract: ChoiceContract }) => Promise<boolean>;
+
+  readContract: (props: { functionName: string; contract: ChoiceContract; args?: any[] }) => Promise<any>;
+
+  writeContract: (props: {
+    functionName: string;
+    contract: ChoiceContract;
+    args?: any[];
+    value?: number | undefined;
+    onSuccessCallback?: (txHash: string, result: any) => void;
+  }) => Observable<WriteContractStatus>;
 }
 
 const ContractContext = createContext<ContractContextProps>({
   approve: () => new Observable(),
   balance: async () => null,
   castoraAddress: '0x0',
+  poolsManagerAddress: '0x0',
   hasAllowance: async () => false,
   readContract: async () => null,
   writeContract: () => new Observable()
@@ -68,7 +78,6 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
 
   const read = async (address: any, abi: any, functionName: string, args: any[] = []) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 220));
       return await publicClient().readContract({
         address,
         abi,
@@ -95,7 +104,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     functionName: string,
     args: any[] = [],
     value?: number | undefined,
-    onSuccessCallBack?: (txHash: string, result: any) => void
+    onSuccessCallback?: (txHash: string, result: any) => void
   ) => {
     const bs = new BehaviorSubject<WriteContractStatus>('initializing');
     (async () => {
@@ -120,7 +129,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         const hash = await walletClient.data!.writeContract(request);
         bs.next('waiting');
         await publicClient().waitForTransactionReceipt({ hash });
-        onSuccessCallBack && onSuccessCallBack(hash, result);
+        onSuccessCallback && onSuccessCallback(hash, result);
         bs.complete();
       } catch (e: any) {
         if (`${e}`.toLowerCase().includes('rejected')) {
@@ -139,8 +148,19 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     return bs.asObservable();
   };
 
-  const approve = (token: any, amount: number, onSuccessCallback?: (txHash: string) => void) => {
-    return write(token, erc20Abi, 'approve', [getCastoraAddress(), BigInt(amount)], undefined, onSuccessCallback);
+  const approve = ({
+    token,
+    amount,
+    contract,
+    onSuccessCallback
+  }: {
+    token: any;
+    amount: number;
+    contract: ChoiceContract;
+    onSuccessCallback?: (txHash: string) => void;
+  }) => {
+    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+    return write(token, erc20Abi, 'approve', [target, BigInt(amount)], undefined, onSuccessCallback);
   };
 
   const balance = async (token: any) => {
@@ -157,25 +177,56 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const hasAllowance = async (token: any, amount: number) => {
+  const hasAllowance = async ({
+    token,
+    amount,
+    contract
+  }: {
+    token: any;
+    amount: number;
+    contract: ChoiceContract;
+  }) => {
     if (!isConnected) return false;
     try {
-      return Number(await read(token, erc20Abi, 'allowance', [address, getCastoraAddress()])) >= amount;
+      const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+      return Number(await read(token, erc20Abi, 'allowance', [address, target])) >= amount;
     } catch (e) {
       console.error(e);
       return false;
     }
   };
 
-  const readContract = async (functionName: string, args: any[] = []) =>
-    read(getCastoraAddress(), castoraAbi, functionName, args);
+  const readContract = async ({
+    contract,
+    functionName,
+    args
+  }: {
+    functionName: string;
+    contract: ChoiceContract;
+    args?: any[];
+  }) => {
+    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+    const abi = contract == 'castora' ? castoraAbi : castoraPoolsManagerAbi;
+    return read(target, abi, functionName, args);
+  };
 
-  const writeContract = (
-    functionName: string,
-    args: any[] = [],
-    value?: number | undefined,
-    onSuccessCallBack?: (txHash: string, result: any) => void
-  ) => write(getCastoraAddress(), castoraAbi, functionName, args, value, onSuccessCallBack);
+  const writeContract = ({
+    contract,
+    functionName,
+    args,
+    value,
+    onSuccessCallback
+  }: {
+    functionName: string;
+    contract: ChoiceContract;
+    args?: any[];
+    value?: number | undefined;
+    onSuccessCallback?: (txHash: string, result: any) => void;
+  }) => {
+    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+    const abi = contract == 'castora' ? castoraAbi : castoraPoolsManagerAbi;
+    return write(target, abi, functionName, args, value, onSuccessCallback);
+  };
 
   useEffect(() => {
     setCastoraAddress(getCastoraAddress());
@@ -187,6 +238,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         approve,
         balance,
         castoraAddress,
+        poolsManagerAddress: POOLS_MANAGER_ADDRESS_MONAD,
         hasAllowance,
         readContract,
         writeContract

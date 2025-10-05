@@ -1,28 +1,21 @@
-import ArrowRight from '@/assets/arrow-right.svg?react';
 import Globe from '@/assets/globe.svg?react';
 import Link from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
+import { CountdownNumbers, CreatePoolModal } from '@/components';
+import { allowedCreatorPredTokens, CreatePoolForm, useFirebase } from '@/contexts';
 import { tokens } from '@/schemas';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
 import { Calendar } from 'primereact/calendar';
+import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
 import { Ripple } from 'primereact/ripple';
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-interface CreatePoolForm {
-  predictionToken: string;
-  stakeToken: string;
-  stakeAmount: string;
-  windowCloseTime: Date | null;
-  snapshotTime: Date | null;
-  multiplier: string;
-  visibility: string;
-}
-
-const formDefaults = {
+const formDefaults: CreatePoolForm = {
   predictionToken: '',
   stakeToken: 'MON',
   stakeAmount: '1',
@@ -31,9 +24,6 @@ const formDefaults = {
   multiplier: 'x2',
   visibility: 'unlisted'
 };
-
-import { CountdownNumbers } from '@/components';
-import { Tooltip } from 'primereact/tooltip';
 
 const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
@@ -58,14 +48,14 @@ const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
 };
 
 export const CreateCommunityPoolPage = () => {
+  const [isShowingModal, setIsShowingModal] = useState(false);
+  const [showModalHeading, setShowModalHeading] = useState(true);
   const { isConnected } = useAccount();
   const { open: connectWallet } = useWeb3Modal();
+  const { recordEvent } = useFirebase();
   const [form, setForm] = useState<CreatePoolForm>({ ...formDefaults });
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [createdPoolId, setCreatedPoolId] = useState<string>('');
   const windowCloseRef = useRef<Calendar>(null);
   const snapshotRef = useRef<Calendar>(null);
 
@@ -90,7 +80,7 @@ export const CreateCommunityPoolPage = () => {
   ];
 
   const predictionTokenOptions = tokens
-    .filter((t) => ['BTC', 'ETH', 'SOL', 'HYPE', 'PUMP'].includes(t.name))
+    .filter((t) => allowedCreatorPredTokens.includes(t.name))
     .map((token) => ({
       label: `${token.name} - ${token.fullName}`,
       value: token.name
@@ -112,7 +102,7 @@ export const CreateCommunityPoolPage = () => {
     if (!f.visibility) newErrors.visibility = 'Required';
 
     if (f.windowCloseTime && f.snapshotTime) {
-      if (f.windowCloseTime >= f.snapshotTime) {
+      if (f.snapshotTime < f.windowCloseTime) {
         newErrors.snapshotTime = 'Snapshot time must be after window close time';
       }
       if (f.windowCloseTime <= new Date()) {
@@ -132,27 +122,13 @@ export const CreateCommunityPoolPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasAttemptedSubmit(true);
-
-    if (!isConnected) {
-      connectWallet();
-      return;
-    }
-
     if (!validateForm()) return;
 
-    setIsSubmitting(true);
-
-    try {
-      // TODO: Implement actual pool creation logic
-      // This would involve calling the smart contract
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
-
-      setCreatedPoolId('12345'); // This would come from the contract
-      setShowSuccess(true);
-    } catch (error) {
-      console.error('Error creating pool:', error);
-    } finally {
-      setIsSubmitting(false);
+    if (!isConnected) connectWallet();
+    else {
+      document.body.classList.add('overflow-hidden');
+      setIsShowingModal(true);
+      recordEvent(`opened_create_pool_modal`);
     }
   };
 
@@ -164,43 +140,12 @@ export const CreateCommunityPoolPage = () => {
     return newDate;
   };
 
-  if (showSuccess) {
-    return (
-      <div className="flex flex-col justify-center items-center grow py-20">
-        <div className="w-full max-w-md mx-auto px-4">
-          <div className="bg-app-bg rounded-3xl p-8 text-center border border-border-default dark:border-surface-subtle">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-6">
-              <span className="text-2xl text-green-600 dark:text-green-400">✓</span>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-text-title">Pool Created Successfully!</h1>
-            <p className="text-text-subtitle mb-6">
-              Your community pool has been created with ID: <span className="font-mono font-bold">{createdPoolId}</span>
-            </p>
-            <div className="space-y-3">
-              <a
-                href={`/pool/${createdPoolId}`}
-                className="block w-full py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple"
-              >
-                View Pool
-                <Ripple />
-              </a>
-              <button
-                onClick={() => {
-                  setShowSuccess(false);
-                  setForm({ ...formDefaults });
-                  setHasAttemptedSubmit(false);
-                }}
-                className="block w-full py-3 px-6 rounded-full border border-border-default dark:border-surface-subtle text-text-subtitle font-medium p-ripple"
-              >
-                Create Another Pool
-                <Ripple />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const closeModal = ({ reset }: { reset: boolean }) => {
+    document.body.classList.remove('overflow-hidden');
+    setIsShowingModal(false);
+    recordEvent('closed_create_pool_modal');
+    if (reset) setShowModalHeading(true);
+  };
 
   return (
     <div className="flex flex-col justify-center grow bg-surface-subtle px-4 sm:px-8 pt-20 pb-28">
@@ -208,6 +153,21 @@ export const CreateCommunityPoolPage = () => {
         <div className="lg:mr-20">
           <h1 className="text-3xl font-bold mb-2 text-text-title">Create Community Pool</h1>
           <p className="text-text-subtitle mb-8">Create a custom pool for anyone in the community to join.</p>
+
+          <div className="lg:hidden">
+            <h2 className="text-2xl mb-2 text-text-title">How it Works</h2>
+
+            <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-12 list-disc sm:text-lg">
+              <li>
+                Pay
+                <span className="font-bold"> 10 MON </span> to create a pool.
+              </li>
+              <li>
+                Gain <span className="font-bold">50% </span>of Pool Fees at settlement.
+              </li>
+              <li>Withdraw your gains at anytime.</li>
+            </ul>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 lg:w-[414px]">
             {/* Prediction Token */}
@@ -380,8 +340,22 @@ export const CreateCommunityPoolPage = () => {
         </div>
 
         <div className="mt-10 lg:w-max">
+          <div className="lg:block hidden">
+            <h2 className="text-2xl mb-2 text-text-title">How it Works</h2>
+            <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-8 list-disc text-lg px-8">
+              <li>
+                Pay
+                <span className="font-bold"> 10 MON </span> to create a pool.
+              </li>
+              <li>
+                Gain <span className="font-bold">50% </span>of Pool Fees at settlement.
+              </li>
+              <li>Withdraw your gains at anytime.</li>
+            </ul>
+          </div>
+
           <div className="lg:w-80">
-            <h2 className="text-2xl mb-6 text-text-title">Preview</h2>
+            <h2 className="text-2xl mb-3 text-text-title">Preview</h2>
 
             <div className="border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-sm mb-12">
               <div className="flex justify-between">
@@ -394,7 +368,7 @@ export const CreateCommunityPoolPage = () => {
 
                 <div>
                   <Tooltip target="#preview-pool-life" />
-                  {!form.windowCloseTime ? (
+                  {!form.windowCloseTime || form.windowCloseTime.getTime() < Date.now() ? (
                     <Timer
                       id="preview-pool-life"
                       className="w-5 h-5 mt-1 -mr-1 fill-primary-default"
@@ -431,7 +405,7 @@ export const CreateCommunityPoolPage = () => {
                 {form.predictionToken ? (
                   <img src={`/assets/${form.predictionToken.toLowerCase()}.png`} className="w-8 h-8 rounded-full" />
                 ) : (
-                  <div className='w-8 h-8 rounded-full bg-surface-subtle'></div>
+                  <div className="w-8 h-8 rounded-full bg-surface-subtle"></div>
                 )}
                 <div className="font-medium text-2xl text-text-title">
                   {!!form.predictionToken ? form.predictionToken : '---'}/USD
@@ -454,32 +428,51 @@ export const CreateCommunityPoolPage = () => {
                 )}
               </div>
 
-              <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-12">
+              <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-4">
                 <span className="mr-4">Multiplier</span>
                 <span className="font-bold text-base -mt-1">{form.multiplier}</span>
               </div>
-
-              <div className="w-full mt-5 py-2 px-4 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle flex items-center justify-center p-ripple">
-                Join Pool
-                <ArrowRight className="w-4 h-4 ml-2 fill-text-body" />
-                <Ripple />
-              </div>
             </div>
 
-            <div className="lg:pt-8 lg:flex lg:justify-center">
+            <div className="lg:flex lg:justify-center">
               <button
                 type="submit"
-                disabled={isSubmitting}
                 onClick={handleSubmit}
                 className="w-full lg:max-w-80 lg:-mr-24 py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creating Pool...' : 'Create Pool'}
+                Create Pool
                 <Ripple />
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog
+        visible={isShowingModal}
+        onHide={() => closeModal({ reset: false })}
+        unstyled={true}
+        header={<h4 className="font-medium text-xl text-text-title mr-2">Summary</h4>}
+        pt={{
+          root: {
+            className: 'bg-app-bg mx-8 xs:mx-auto max-w-sm p-6 rounded-2xl'
+          },
+          header: {
+            className: showModalHeading ? 'flex justify-between mb-4' : 'hidden'
+          },
+          mask: { className: 'bg-black/50 dark:bg-white/20' }
+        }}
+      >
+        <CreatePoolModal
+          form={form}
+          handleShowHeading={setShowModalHeading}
+          handleClose={() => closeModal({ reset: true })}
+          handleCreationSuccess={() => {
+            setForm({ ...formDefaults });
+            setHasAttemptedSubmit(false);
+          }}
+        />
+      </Dialog>
     </div>
   );
 };

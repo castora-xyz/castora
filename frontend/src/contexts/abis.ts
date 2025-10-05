@@ -1713,6 +1713,89 @@ export const castoraPoolsManagerAbi = [
   { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
   { type: 'error', name: 'UnsuccessfulSendCompletionFees', inputs: [] },
   { type: 'error', name: 'WithdrawFailed', inputs: [] },
+  { type: 'error', name: 'ZeroAmountSpecified', inputs: [] },
+  { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
+  {
+    type: 'error',
+    name: 'ERC1967InvalidImplementation',
+    inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
+  { type: 'error', name: 'FailedCall', inputs: [] },
+  { type: 'error', name: 'InvalidAddress', inputs: [] },
+  { type: 'error', name: 'InvalidInitialization', inputs: [] },
+  { type: 'error', name: 'InvalidPoolMultiplier', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimeInterval', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
+  { type: 'error', name: 'NotInitializing', inputs: [] },
+  { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
+  {
+    type: 'error',
+    name: 'OwnableUnauthorizedAccount',
+    inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'PredictionTokenNotAllowed', inputs: [] },
+  { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
+  { type: 'error', name: 'StakeAmountNotAllowed', inputs: [] },
+  { type: 'error', name: 'StakeTokenNotAllowed', inputs: [] },
+  { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
+  {
+    type: 'error',
+    name: 'UUPSUnsupportedProxiableUUID',
+    inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
+  },
+
+  { type: 'error', name: 'AccessControlBadConfirmation', inputs: [] },
+  {
+    type: 'error',
+    name: 'AccessControlUnauthorizedAccount',
+    inputs: [
+      { name: 'account', type: 'address', internalType: 'address' },
+      { name: 'neededRole', type: 'bytes32', internalType: 'bytes32' }
+    ]
+  },
+  { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
+  { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
+  {
+    type: 'error',
+    name: 'ERC1967InvalidImplementation',
+    inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
+  { type: 'error', name: 'FailedCall', inputs: [] },
+  { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
+  { type: 'error', name: 'InvalidAddress', inputs: [] },
+  { type: 'error', name: 'InvalidInitialization', inputs: [] },
+  { type: 'error', name: 'InvalidPoolId', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
+  { type: 'error', name: 'InvalidPredictionId', inputs: [] },
+  { type: 'error', name: 'InvalidWinnersCount', inputs: [] },
+  { type: 'error', name: 'NoPredictionsInPool', inputs: [] },
+  { type: 'error', name: 'NotAWinner', inputs: [] },
+  { type: 'error', name: 'NotInitializing', inputs: [] },
+  { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
+  { type: 'error', name: 'NotYourPrediction', inputs: [] },
+  { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
+  {
+    type: 'error',
+    name: 'OwnableUnauthorizedAccount',
+    inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'PoolAlreadyCompleted', inputs: [] },
+  { type: 'error', name: 'PoolExistsAlready', inputs: [] },
+  { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
+  { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
+  { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
+  {
+    type: 'error',
+    name: 'UUPSUnsupportedProxiableUUID',
+    inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
+  },
+  { type: 'error', name: 'UnmatchingPoolsAndPredictions', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulStaking', inputs: [] },
+  { type: 'error', name: 'WindowHasClosed', inputs: [] },
   { type: 'error', name: 'ZeroAmountSpecified', inputs: [] }
 ] as const;
 

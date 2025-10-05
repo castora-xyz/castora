@@ -59,7 +59,11 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
     // Only show loading if requested or if there is no previous data
     if (showLoading || noOfJoinedPools === null) setIsFetching(true);
 
-    const count = await readContract('noOfJoinedPoolsByAddresses', [address]);
+    const count = await readContract({
+      contract: 'castora',
+      functionName: 'noOfJoinedPoolsByAddresses',
+      args: [address]
+    });
     if (count !== null) {
       if (noOfJoinedPools == Number(count)) setIsFetching(false);
       setNoOfJoinedPools(Number(count));
@@ -78,14 +82,18 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
 
     setIsFetching(true);
     let start = (page + 1) * rows - rows;
-    const raw = await readContract('getUserActivitiesOptimizedPaginated', [address, start, rows]);
+    const raw = await readContract({
+      contract: 'castora',
+      functionName: 'getUserActivitiesOptimizedPaginated',
+      args: [address, start, rows]
+    });
     if (raw) {
       const pools = raw[0].map((p: any) => new Pool(p));
       const activities: Activity[] = raw[1].map((p: any, i: number) => ({
         pool: pools[raw[2][i]],
         prediction: new Prediction(p)
       }));
-      setMyActivities(activities);
+      setMyActivities([...activities.reverse()]);
       setHasError(false);
     } else {
       setHasError(true);

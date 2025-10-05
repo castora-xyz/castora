@@ -1,5 +1,6 @@
 export * from './CompletedPoolDisplay';
 export * from './CountdownBadge';
+export * from './CreatePoolModal';
 export * from './FilterPools';
 export * from './JoinPoolForm';
 export * from './PoolCard';

@@ -52,9 +52,11 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
 
       setIsFetchingIds(showLoading);
 
-      const fetched = (await readContract('getPredictionIdsForAddress', [BigInt(pool.poolId), address!])) as
-        | bigint[]
-        | null;
+      const fetched = (await readContract({
+        contract: 'castora',
+        functionName: 'getPredictionIdsForAddress',
+        args: [BigInt(pool.poolId), address!]
+      })) as bigint[] | null;
 
       // if silently fetching, don't update on error
       if (!showLoading && !fetched) {
