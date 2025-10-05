@@ -9,7 +9,7 @@ import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
 
-export const ClaimAllButton = ({
+export const ClaimAllPredictButton = ({
   pools,
   predictions,
   onSuccess

@@ -10,7 +10,7 @@ import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export const ClaimButton = ({
+export const ClaimPredictButton = ({
   pool: {
     poolId,
     seeds: { snapshotTime, stakeTokenDetails },

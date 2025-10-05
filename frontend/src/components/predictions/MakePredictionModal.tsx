@@ -3,7 +3,14 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Telegram from '@/assets/telegram-plain.svg?react';
 import { CountdownNumbers, PredictionMode, SuccessIcon } from '@/components';
-import { MAX_BULK_PREDICTIONS, useContract, useFirebase, useMyActivity, usePools, useTelegram } from '@/contexts';
+import {
+  MAX_BULK_PREDICTIONS,
+  useContract,
+  useFirebase,
+  useMyPredictActivity,
+  usePools,
+  useTelegram
+} from '@/contexts';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { InputNumber } from 'primereact/inputnumber';
@@ -29,7 +36,7 @@ export const MakePredictionModal = ({
   const { approve, balance, castoraAddress, hasAllowance } = useContract();
   const { predict } = usePools();
   const { recordEvent } = useFirebase();
-  const { updateActivityCount } = useMyActivity();
+  const { updateActivityCount } = useMyPredictActivity();
   const telegram = useTelegram();
 
   const [bulkCount, setBulkCount] = useState(2);

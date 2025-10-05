@@ -1,6 +1,11 @@
 import Wallet from '@/assets/wallet.svg?react';
-import { ActivityCard, ClaimAllButton, MyActivityPageIntro, predictionsActivityType } from '@/components/general';
-import { Activity, rowsPerPageOptions, useMyActivity } from '@/contexts';
+import {
+  ActivityPredictCard,
+  ClaimAllPredictButton,
+  MyActivityPageIntro,
+  predictionsActivityType
+} from '@/components/general';
+import { ActivityPredict, rowsPerPageOptions, useMyPredictActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
@@ -21,9 +26,9 @@ export const MyActivityPredictionsPage = () => {
     rowsPerPage,
     setRowsPerPage,
     updateCurrentPage
-  } = useMyActivity();
+  } = useMyPredictActivity();
   const { open: connectWallet } = useWeb3Modal();
-  const [unclaimedWins, setUnclaimedWins] = useState<Activity[]>([]);
+  const [unclaimedWins, setUnclaimedWins] = useState<ActivityPredict[]>([]);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
   useEffect(() => {
@@ -50,7 +55,7 @@ export const MyActivityPredictionsPage = () => {
         claimAll={
           unclaimedWins.length > 1 ? (
             <div className="w-fit ml-auto">
-              <ClaimAllButton
+              <ClaimAllPredictButton
                 pools={unclaimedWins.map(({ pool }) => pool)}
                 predictions={unclaimedWins.map(({ prediction }) => prediction)}
                 onSuccess={fetchMyActivity}
@@ -132,7 +137,7 @@ export const MyActivityPredictionsPage = () => {
                     <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
                   ))
                 : myActivities.map(({ pool, prediction }) => (
-                    <ActivityCard
+                    <ActivityPredictCard
                       key={pool.poolId + ' ' + prediction.id}
                       pool={pool}
                       prediction={prediction}

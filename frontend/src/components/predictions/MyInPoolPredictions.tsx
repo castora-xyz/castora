@@ -1,8 +1,8 @@
 import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { ClaimAllButton, ClaimButton } from '@/components';
-import { useContract, useMyActivity, usePredictions } from '@/contexts';
+import { ClaimAllPredictButton, ClaimPredictButton } from '@/components';
+import { useContract, useMyPredictActivity, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Accordion, AccordionTab } from 'primereact/accordion';
@@ -25,7 +25,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
   ({ pool, pool: { seeds, completionTime } }, ref) => {
     const { isConnected, address, chain: currentChain } = useAccount();
     const { readContract } = useContract();
-    const { fetchMyActivity } = useMyActivity();
+    const { fetchMyActivity } = useMyPredictActivity();
     const retrieve = usePredictions();
     const [ids, setIds] = useState<bigint[] | null>(null);
     const [isExpanded, setIsExpanded] = useState(true);
@@ -161,7 +161,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
           <h3 className="font-medium text-xl text-text-subtitle">My Predictions</h3>
 
           {pool.completionTime > 0 && unclaimedWins.length > 1 && (
-            <ClaimAllButton
+            <ClaimAllPredictButton
               pools={Array.from(Array(unclaimedWins.length)).map((_) => pool)}
               predictions={unclaimedWins}
               onSuccess={() => {
@@ -286,7 +286,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
                               <Trophy className="fill-white w-4 h-4 mr-1" />
                               Won
                             </p>
-                            <ClaimButton
+                            <ClaimPredictButton
                               pool={pool}
                               prediction={prediction}
                               onSuccess={() => {

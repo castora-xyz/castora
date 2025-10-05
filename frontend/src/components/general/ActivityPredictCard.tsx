@@ -2,7 +2,7 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { ClaimButton, CountdownNumbers } from '@/components';
+import { ClaimPredictButton, CountdownNumbers } from '@/components';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
@@ -10,17 +10,11 @@ import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-export const ActivityCard = ({
+export const ActivityPredictCard = ({
   pool,
   pool: { poolId, seeds, snapshotPrice, completionTime },
   prediction,
-  prediction: {
-    explorerUrl,
-    id: predictionId,
-    isAWinner,
-    price: predictionPrice,
-    time
-  },
+  prediction: { explorerUrl, id: predictionId, isAWinner, price: predictionPrice, time },
   isInLandingPage = false,
   refresh
 }: {
@@ -33,10 +27,7 @@ export const ActivityCard = ({
   const location = useLocation();
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setNow(Math.trunc(Date.now() / 1000)),
-      1000
-    );
+    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
     return () => clearInterval(interval);
   }, [now]);
 
@@ -52,10 +43,7 @@ export const ActivityCard = ({
         <div className="flex flex-wrap justify-start items-center gap-3">
           <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-flex items-center gap-1">
             {seeds.predictionTokenDetails.img && (
-              <img
-                src={`/assets/${seeds.predictionTokenDetails.img}.png`}
-                className="w-3 h-3 rounded-full"
-              />
+              <img src={`/assets/${seeds.predictionTokenDetails.img}.png`} className="w-3 h-3 rounded-full" />
             )}
             {seeds.pairName()}
           </p>
@@ -93,11 +81,7 @@ export const ActivityCard = ({
               Pool ID: {poolId}
             </p>
           ) : (
-            <Link
-              to={`/pool/${poolId}`}
-              className="p-ripple rounded-full"
-              state={{ from: location }}
-            >
+            <Link to={`/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
               <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
                 Pool ID: {poolId}
               </p>
@@ -150,11 +134,7 @@ export const ActivityCard = ({
               <p
                 className={
                   'py-1 px-4 rounded-full text-sm w-fit ' +
-                  `${
-                    isAWinner
-                      ? 'text-success-darker bg-success-subtle'
-                      : 'text-errors-darker bg-errors-subtle'
-                  }`
+                  `${isAWinner ? 'text-success-darker bg-success-subtle' : 'text-errors-darker bg-errors-subtle'}`
                 }
               >
                 Mine: ${predictionPrice}
@@ -170,11 +150,7 @@ export const ActivityCard = ({
               Unlucky
             </p>
           ) : !!completionTime && isAWinner ? (
-            <ClaimButton
-              pool={pool}
-              prediction={prediction}
-              onSuccess={refresh ?? (() => {})}
-            />
+            <ClaimPredictButton pool={pool} prediction={prediction} onSuccess={refresh ?? (() => {})} />
           ) : (
             <></>
           )}

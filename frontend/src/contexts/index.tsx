@@ -4,7 +4,7 @@ export * from './CacheContext';
 export * from './ContractContext';
 export * from './FilterPoolsContext';
 export * from './FirebaseContext';
-export * from './MyActivityContext';
+export * from './MyPredictActivityContext';
 export * from './PaginatorsContext';
 export * from './PoolsContext';
 export * from './PoolsShimmerContext';

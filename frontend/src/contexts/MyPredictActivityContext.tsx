@@ -3,12 +3,12 @@ import { Pool, Prediction } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-export interface Activity {
+export interface ActivityPredict {
   pool: Pool;
   prediction: Prediction;
 }
 
-interface MyActivityContextProps {
+interface MyPredictActivityContextProps {
   activityCount: number | null;
   currentPage: number | null;
   fetchMyActivity: (page?: number, rows?: number) => void;
@@ -16,12 +16,12 @@ interface MyActivityContextProps {
   hasError: boolean;
   rowsPerPage: number;
   setRowsPerPage: (value: number) => void;
-  myActivities: Activity[];
+  myActivities: ActivityPredict[];
   updateActivityCount: () => void;
   updateCurrentPage: (value: number) => void;
 }
 
-const MyActivityContext = createContext<MyActivityContextProps>({
+const MyPredictActivityContext = createContext<MyPredictActivityContextProps>({
   activityCount: null,
   currentPage: null,
   fetchMyActivity: () => {},
@@ -34,9 +34,9 @@ const MyActivityContext = createContext<MyActivityContextProps>({
   updateCurrentPage: () => {}
 });
 
-export const useMyActivity = () => useContext(MyActivityContext);
+export const useMyPredictActivity = () => useContext(MyPredictActivityContext);
 
-export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
+export const MyPredictActivityProvider = ({ children }: { children: ReactNode }) => {
   const { address, chain: currentChain } = useAccount();
   const { readContract } = useContract();
   const [rowsPerPage, setRowsPerPage] = useState(
@@ -50,7 +50,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const [noOfJoinedPools, setNoOfJoinedPools] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
-  const [myActivities, setMyActivities] = useState<Activity[]>([]);
+  const [myActivities, setMyActivities] = useState<ActivityPredict[]>([]);
   const [hasError, setHasError] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -89,7 +89,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
     });
     if (raw) {
       const pools = raw[0].map((p: any) => new Pool(p));
-      const activities: Activity[] = raw[1].map((p: any, i: number) => ({
+      const activities: ActivityPredict[] = raw[1].map((p: any, i: number) => ({
         pool: pools[raw[2][i]],
         prediction: new Prediction(p)
       }));
@@ -138,7 +138,7 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <MyActivityContext.Provider
+    <MyPredictActivityContext.Provider
       value={{
         activityCount: noOfJoinedPools,
         currentPage,
@@ -153,6 +153,6 @@ export const MyActivityProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-    </MyActivityContext.Provider>
+    </MyPredictActivityContext.Provider>
   );
 };
