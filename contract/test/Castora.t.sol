@@ -834,6 +834,41 @@ contract CastoraTest is Test {
     assertEq(prevUserBal + 1900000, cusd.balanceOf(user));
   }
 
+  function testGetUnclaimedWinnerPredictionIdsForAddress() public {
+    castora.createPool(seedsErc20Stake);
+    cusd.mint(user, 20000000);
+    vm.prank(user);
+    cusd.approve(address(castora), 20000000);
+    vm.prank(user);
+    castora.bulkPredict(1, 0, 10);
+
+    vm.warp(block.timestamp + 1200);
+    uint256[] memory winnerPredictions = new uint256[](5);
+    winnerPredictions[0] = 1;
+    winnerPredictions[1] = 2;
+    winnerPredictions[2] = 3;
+    winnerPredictions[3] = 4;
+    winnerPredictions[4] = 5;
+    castora.completePool(1, 0, 5, 950000, winnerPredictions);
+
+    uint256[] memory unclaimedWinners = castora.getUnclaimedWinnerPredictionIdsForAddress(1, user);
+    assertEq(unclaimedWinners.length, 5);
+    for (uint256 i = 0; i < 5; i++) {
+      assertEq(unclaimedWinners[i], i + 1); // IDs 1 to 5
+    }
+
+    // Claim 2 winnings then expect unclaimed to return the other 3
+    vm.prank(user);
+    castora.claimWinnings(1, 1);
+    vm.prank(user);
+    castora.claimWinnings(1, 3);
+    unclaimedWinners = castora.getUnclaimedWinnerPredictionIdsForAddress(1, user);
+    assertEq(unclaimedWinners.length, 3);
+    assertEq(unclaimedWinners[0], 2); 
+    assertEq(unclaimedWinners[1], 4);
+    assertEq(unclaimedWinners[2], 5);
+  }
+
   function testRevertZeroPredictionsCountBulkPredict() public {
     castora.createPool(seedsErc20Stake);
     vm.prank(user);

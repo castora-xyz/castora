@@ -31,7 +31,10 @@
 
 ### Castora.sol
 
-- v5: Sat 5th Oct 2025
+- v6: Sun 5th Oct 2025
+  - Added getPredictionsForAddressPaginated and getUnclaimedWinnerPredictionIdsForAddress
+
+- v5: Sat 4th Oct 2025
   - Added getUserActivitiesPaginatedOptimized.
 
 - v4 : Thu 2nd Oct 2025

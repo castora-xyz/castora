@@ -256,6 +256,37 @@ contract Castora is
     predictionIds = predictionIdsByAddresses[poolId][predicter];
   }
 
+  /// Returns the predictionIds of unclaimed winning predictions made by the participant with address
+  /// `predicter` in {Pool} with the provided `poolId`.
+  function getUnclaimedWinnerPredictionIdsForAddress(uint256 poolId, address predicter)
+    public
+    view
+    returns (uint256[] memory unclaimedWinnerPredictionIds)
+  {
+    if (predicter == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
+    uint256 unclaimedWinnerCount = 0;
+
+    for (uint256 i = 0; i < userPredictionIds.length; i++) {
+      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
+      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
+        unclaimedWinnerCount++;
+      }
+    }
+
+    unclaimedWinnerPredictionIds = new uint256[](unclaimedWinnerCount);
+    uint256 index = 0;
+    for (uint256 i = 0; i < userPredictionIds.length; i++) {
+      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
+      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
+        unclaimedWinnerPredictionIds[index] = userPredictionIds[i];
+        index++;
+      }
+    }
+  }
+
   /// Returns the pools corresponding to the provided list of poolIds.
   /// @param poolIds The array of poolIds to fetch
   /// @return poolsList The array of Pool structs
@@ -341,6 +372,35 @@ contract Castora is
     uint256 end = offset + limit;
     if (end > total) end = total;
     uint256 size = end > offset ? end - offset : 0;
+    predictionsList = new Prediction[](size);
+    for (uint256 i = 0; i < size; i++) {
+      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
+    }
+  }
+
+  /// Returns a paginated list of predictions made by the participant with address
+  /// `predicter` in {Pool} with the provided `poolId`.
+  /// @param poolId The pool to fetch predictions from
+  /// @param predicter The address of the participant
+  /// @param offset The starting index (0-based) in the user's predictions array
+  /// @param limit The maximum number of predictions to return
+  /// @return predictionsList The array of Prediction structs
+  function getPredictionsForAddressPaginated(uint256 poolId, address predicter, uint256 offset, uint256 limit)
+    public
+    view
+    returns (Prediction[] memory predictionsList)
+  {
+    if (predicter == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+
+    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
+    uint256 total = userPredictionIds.length;
+    if (offset >= total) return new Prediction[](0);
+
+    uint256 end = offset + limit;
+    if (end > total) end = total;
+    uint256 size = end > offset ? end - offset : 0;
+
     predictionsList = new Prediction[](size);
     for (uint256 i = 0; i < size; i++) {
       predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
