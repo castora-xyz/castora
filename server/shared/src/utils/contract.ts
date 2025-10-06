@@ -83,7 +83,13 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
   return balance;
 };
 
-export const writeContract = async (chain: Chain, functionName: any, args: any, errorContext: string) => {
+export const writeContract = async (
+  chain: Chain,
+  functionName: any,
+  args: any,
+  errorContext: string,
+  useExtraGas = false
+) => {
   let outcome;
 
   try {
@@ -99,9 +105,19 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
       args,
       account
     });
+
+    let estimatedGas;
+    if (useExtraGas) {
+      estimatedGas = await publicClient.estimateContractGas(request);
+      logger.info(`Will use extra estimated gas: ${estimatedGas} * 2.5`);
+    }
+
     outcome = result;
     const walletClient = createWalletClient({ account, ...config });
-    const hash = await walletClient.writeContract(request);
+    const hash = await walletClient.writeContract({
+      ...request,
+      ...(useExtraGas && estimatedGas ? { gas: (estimatedGas * 5n) / 2n } : {})
+    });
 
     logger.info(`Transaction Hash: ${hash}`);
     logger.info('Waiting for On-Chain Confirmation ...');
@@ -112,6 +128,8 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const balanceDiffs = formatEther(newBalance - prevBalance);
     logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
   } catch (e) {
+    if (Object.keys(e as any).includes('abi')) delete (e as any).abi;
+
     logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 
     if (`${e}`.includes('TransactionReceiptNotFoundError')) {

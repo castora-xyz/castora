@@ -67,7 +67,8 @@ export const setWinners = async (
       BigInt(winAmount),
       splitted.winnerPredictionIdsBigInts
     ],
-    `Complete Pool ${pool.poolId} on chain ${chain}`
+    `Complete Pool ${pool.poolId} on chain ${chain}`,
+    true
   );
   logger.info(`Called Complete Pool for poolId: ${pool.poolId}`);
 

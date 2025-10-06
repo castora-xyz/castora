@@ -47,9 +47,9 @@ export const completePool = async (job: Job): Promise<void> => {
     if (isCommunity) {
       logger.info('Community Created Pool found, gathering extra data ...');
       const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
-      const { creator, completionFeesAmount, multiplier: multiplierRaw } = userCreatedPool;
+      const { creator, completionFeesAmount: amt, multiplier: multiplierRaw } = userCreatedPool;
       // completion fees token always match pool stake token
-      const creatorCompletionFees = pool.seeds.formatWinAmount(completionFeesAmount);
+      const creatorCompletionFees = pool.seeds.formatWinAmount(Number(amt));
       creatorDetails = { creator, creatorCompletionFees };
       // multiplier is store in contract with 2 decimal places
       multiplier = (multiplierRaw / 100) as PoolMultiplier;
@@ -58,7 +58,7 @@ export const completePool = async (job: Job): Promise<void> => {
           ` and the pool multiplier ${multiplier}`
       );
     } else {
-      logger.info('Not a Community Created Pool, proceeding to split result ...');             
+      logger.info('Not a Community Created Pool, proceeding to split result ...');
     }
 
     const splitResult = await setWinners(chain, pool, snapshotPrice, multiplier);
@@ -76,6 +76,7 @@ export const completePool = async (job: Job): Promise<void> => {
         jobName: 'notify-pool-creator-telegram',
         jobData: { poolId, chain }
       });
+      logger.info('Posted job to notify pool creator via telegram');
     }
 
     // send telegram notifications to winners through redis
