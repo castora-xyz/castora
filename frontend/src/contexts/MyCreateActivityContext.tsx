@@ -116,6 +116,12 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
   };
 
   const fetchMyActivity = async (page = currentPage, rows = rowsPerPage) => {
+    if (noOfPoolsCreated === 0) {
+      setMyActivities([]);
+      setIsFetching(false);
+      return;
+    }
+
     if (!noOfPoolsCreated || page === null || !address) return;
 
     setIsFetching(true);

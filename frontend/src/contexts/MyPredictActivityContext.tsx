@@ -78,6 +78,12 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
   };
 
   const fetchMyActivity = async (page = currentPage, rows = rowsPerPage) => {
+    if (noOfJoinedPools === 0) {
+      setMyActivities([]);
+      setIsFetching(false);
+      return;
+    }
+
     if (!noOfJoinedPools || page === null || !address) return;
 
     setIsFetching(true);
