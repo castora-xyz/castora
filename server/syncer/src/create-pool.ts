@@ -34,7 +34,8 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
         queueName: 'pool-archiver',
         jobName: 'archive-pool',
         jobData: { poolId, chain },
-        delay: (seeds.windowCloseTime - now) * 1000
+        // 10 seconds after windowCloseTime to allow for transaction finality for last minute predictions
+        delay: (seeds.windowCloseTime - now) * 1000 + 10000 
       });
       logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
 
