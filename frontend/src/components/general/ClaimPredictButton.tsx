@@ -17,10 +17,12 @@ export const ClaimPredictButton = ({
     completionTime,
     winAmount
   },
-  prediction: { id: predictionId, isAWinner, claimWinningsTime }
+  prediction: { id: predictionId, isAWinner, claimWinningsTime },
+  onCloseModal
 }: {
   pool: Pool;
   prediction: Prediction;
+  onCloseModal?: () => void;
 }) => {
   const { isConnected } = useAccount();
   const { recordEvent } = useFirebase();
@@ -59,7 +61,10 @@ export const ClaimPredictButton = ({
     document.body.classList.remove('overflow-hidden');
     setIsShowingModal(false);
     recordEvent('closed_claim_modal', { poolId, predictionId });
-    if (explorerUrl) fetchMyActivity();
+    if (explorerUrl) {
+      onCloseModal?.();
+      fetchMyActivity();
+    }
   };
 
   const now = () => Math.trunc(Date.now() / 1000);

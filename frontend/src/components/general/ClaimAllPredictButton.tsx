@@ -9,7 +9,15 @@ import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
 
-export const ClaimAllPredictButton = ({ pools, predictions }: { pools: Pool[]; predictions: Prediction[] }) => {
+export const ClaimAllPredictButton = ({
+  pools,
+  predictions,
+  onCloseModal
+}: {
+  pools: Pool[];
+  predictions: Prediction[];
+  onCloseModal?: () => void;
+}) => {
   const { recordEvent } = useFirebase();
   const { claimWinningsBulk } = usePools();
   const { fetchMyActivity } = useMyPredictActivity();
@@ -85,7 +93,10 @@ export const ClaimAllPredictButton = ({ pools, predictions }: { pools: Pool[]; p
     document.body.classList.remove('overflow-hidden');
     setIsShowingModal(false);
     recordEvent('closed_claim_bulk_modal', { isInOnePool });
-    if (explorerUrl) fetchMyActivity();
+    if (explorerUrl) {
+      onCloseModal?.();
+      fetchMyActivity();
+    }
   };
 
   const openModal = () => {

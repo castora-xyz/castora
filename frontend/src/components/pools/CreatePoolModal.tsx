@@ -28,7 +28,8 @@ export const CreatePoolModal = ({
   handleCreationSuccess: () => void;
 }) => {
   // left the unused extracts here for create with ERC20 token as fees
-  const { approve, balance, poolsManagerAddress, castoraAddress, hasAllowance } = useContract();
+  // const { approve, balance, poolsManagerAddress, castoraAddress, hasAllowance } = useContract();
+  const { balance, castoraAddress } = useContract();
   const { create } = usePools();
   const { recordEvent } = useFirebase();
   const navigate = useNavigate();

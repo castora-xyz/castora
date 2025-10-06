@@ -164,10 +164,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
             <ClaimAllPredictButton
               pools={Array.from(Array(unclaimedWins.length)).map((_) => pool)}
               predictions={unclaimedWins}
-              onSuccess={() => {
-                fetchMyPredictions();
-                fetchMyActivity();
-              }}
+              onCloseModal={() => fetchMyPredictions()}
             />
           )}
         </div>
@@ -289,10 +286,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
                             <ClaimPredictButton
                               pool={pool}
                               prediction={prediction}
-                              onSuccess={() => {
-                                fetchMyPredictions();
-                                fetchMyActivity();
-                              }}
+                              onCloseModal={() => fetchMyPredictions()}
                             />
                           </div>
                         ) : (
