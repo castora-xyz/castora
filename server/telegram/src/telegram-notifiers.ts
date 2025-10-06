@@ -24,15 +24,20 @@ export const notifyPoolCreator = async (jobId: any, bot: Bot, pool: Pool): Promi
   try {
     const creatorEsc = escapeChars(`(${shortenAddress(creator)})`);
     const gainedEsc = escapeChars(`${gained}`);
-    const restMsgEsc = escapeChars(`from Fees of your Created Pool ${poolId}! Tap to go and claim your winnings now!`);
+    const poolEsc = escapeChars(`Created Pool ${poolId}!`);
+    const restMsgEsc = escapeChars('Tap to go and claim your winnings now!');
 
-    await bot.api.sendMessage(userData.telegramId, `🏆 You ${creatorEsc} just gained *${gainedEsc}* ${restMsgEsc}`, {
-      parse_mode: 'MarkdownV2',
-      reply_markup: {
-        inline_keyboard: [[{ text: 'Claim Now!', url: `https://castora.xyz/pool/${poolId}` }]]
+    await bot.api.sendMessage(
+      userData.telegramId,
+      `💰💰 You ${creatorEsc} just gained *${gainedEsc}* from Fees of your *${poolEsc}* ${restMsgEsc}`,
+      {
+        parse_mode: 'MarkdownV2',
+        reply_markup: {
+          inline_keyboard: [[{ text: 'Claim Now!', url: `https://castora.xyz/pool/${poolId}` }]]
+        }
       }
-    });
-    logger.info(`🏆 Notified Pool Creator: ${creator} who gained ${gained}`);
+    );
+    logger.info(`💰💰 Notified Pool Creator: ${creator} who gained ${gained}`);
   } catch (e) {
     logger.error(
       `❌ Failed to notify pool creator ${creator} who gained ${gained} on Telegram in Job ID ${jobId} for pool ${poolId} on chain ${chain}, error: ${e}`

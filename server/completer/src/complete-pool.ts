@@ -38,7 +38,8 @@ export const completePool = async (job: Job): Promise<void> => {
     logger.info(`Got Snapshot Price: ${snapshotPrice}`);
 
     // Check if this is a community created pool and use accompanying data
-    let creatorDetails;
+    let creator: string | undefined;
+    let creatorCompletionFees: string | undefined;
     let multiplier: PoolMultiplier = 2;
     const isCommunity = await readPoolsManagerContract(chain, 'doesUserCreatedPoolExist', [poolId]);
 
@@ -47,7 +48,29 @@ export const completePool = async (job: Job): Promise<void> => {
     if (isCommunity) {
       logger.info('Community Created Pool found, gathering extra data ...');
       const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
-      const { creator, completionFeesAmount: amt, multiplier: multiplierRaw } = userCreatedPool;
+      creator = userCreatedPool.creator;
+
+      // multiplier is store in contract with 2 decimal places
+      multiplier = (Number(userCreatedPool.multiplier) / 100) as PoolMultiplier;
+      logger.info(
+        `Have noted pool creator ${creator} and their pool multiplier ${multiplier}. Proceeding to split result ...`
+      );
+    } else {
+      logger.info('Not a Community Created Pool, proceeding to split result ...');
+    }
+
+    // Make on-chain call for completion
+    const splitResult = await setWinners(chain, pool, snapshotPrice, multiplier);
+
+    // refetching the pool here so that the winAmount and completionTime will now be valid
+    pool = await fetchPool(chain, poolId);
+
+    // Refetch and compute the creator completion fees if this is a community created pool
+    // can only do this at this point as it is set only after on chain pool completion
+    if (isCommunity) {
+      const { completionFeesAmount: amt } = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [
+        poolId
+      ])) as any;
 
       // completion fees token always match pool stake token
       const { decimals, name } = pool.seeds.getStakeTokenDetails();
@@ -57,26 +80,12 @@ export const completePool = async (job: Job): Promise<void> => {
       // Otherwise, round to 3 decimal places
       const gained =
         gainedRaw < 0.003 && gainedRaw > 0 ? parseFloat(gainedRaw.toPrecision(3)) : Math.trunc(gainedRaw * 1000) / 1000;
-      const creatorCompletionFees = `${gained} ${name}`;
-      creatorDetails = { creator, creatorCompletionFees };
-      
-      // multiplier is store in contract with 2 decimal places
-      multiplier = (multiplierRaw / 100) as PoolMultiplier;
-      logger.info(
-        `Have noted pool creator ${creator}, their completion fees ${creatorCompletionFees}` +
-          ` and the pool multiplier ${multiplier}`
-      );
-    } else {
-      logger.info('Not a Community Created Pool, proceeding to split result ...');
+      creatorCompletionFees = `${gained} ${name}`;
+      logger.info(`Have retrieved and noted pool creator completion fees ${creatorCompletionFees}`);
     }
 
-    const splitResult = await setWinners(chain, pool, snapshotPrice, multiplier);
-
-    // refetching the pool here so that the winAmount and completionTime will now be valid
-    pool = await fetchPool(chain, poolId);
-
     // re-archiving to store the updated winner predictions and creator info for notifications.
-    await rearchivePool(chain, pool, splitResult, creatorDetails);
+    await rearchivePool(chain, pool, splitResult, creator, creatorCompletionFees);
 
     // if is a community created pool, send telegram notification to the creator
     if (isCommunity) {

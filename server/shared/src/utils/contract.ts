@@ -129,6 +129,7 @@ export const writeContract = async (
     logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
   } catch (e) {
     if (Object.keys(e as any).includes('abi')) delete (e as any).abi;
+    if (Object.keys(e as any).includes('args')) delete (e as any).args;
 
     logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 

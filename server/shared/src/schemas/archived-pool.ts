@@ -12,14 +12,16 @@ export class ArchivedPool {
   pool: Pool;
   predictions: Prediction[];
   results?: PoolResults | undefined;
-  creatorDetails?: { creator: string; creatorCompletionFees: string } | undefined;
+  creator?: string | undefined;
+  creatorCompletionFees?: string | undefined;
 
   constructor(input: any) {
     this.chain = input['chain'];
     this.pool = input['pool'];
     this.predictions = input['predictions'];
     if (input['results']) this.results = input['results'];
-    if (input['creatorDetails']) this.creatorDetails = input['creatorDetails'];
+    if (input['creator']) this.creator = input['creator'];
+    if (input['creatorCompletionFees']) this.creatorCompletionFees = input['creatorCompletionFees'];
   }
 
   toJSON() {
@@ -28,7 +30,8 @@ export class ArchivedPool {
       pool: this.pool.toJSON(),
       predictions: this.predictions.map((p) => p.toJson()),
       ...(this.results ? { results: this.results } : {}),
-      ...(this.creatorDetails ? { creatorDetails: this.creatorDetails } : {})
+      ...(this.creator ? { creator: this.creator } : {}),
+      ...(this.creatorCompletionFees ? { creatorCompletionFees: this.creatorCompletionFees } : {})
     };
   }
 }

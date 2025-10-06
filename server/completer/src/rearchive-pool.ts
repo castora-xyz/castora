@@ -12,7 +12,8 @@ export const rearchivePool = async (
   chain: Chain,
   pool: Pool,
   splitResults: SplitPredictionResult,
-  creatorDetails?: { creator: string; creatorCompletionFees: string }
+  creator?: string,
+  creatorCompletionFees?: string
 ): Promise<void> => {
   const { predictions, winnerAddressesUniqued, winnerPredictionIds } = splitResults;
 
@@ -25,7 +26,8 @@ export const rearchivePool = async (
         pool,
         predictions,
         results: { winnerAddressesUniqued, winnerPredictionIds },
-        ...(creatorDetails ? { ...creatorDetails } : {})
+        ...(creator ? { creator } : {}),
+        ...(creatorCompletionFees ? { creatorCompletionFees } : {})
       }).toJSON()
     )
   );
