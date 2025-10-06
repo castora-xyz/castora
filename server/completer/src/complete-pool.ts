@@ -48,9 +48,18 @@ export const completePool = async (job: Job): Promise<void> => {
       logger.info('Community Created Pool found, gathering extra data ...');
       const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
       const { creator, completionFeesAmount: amt, multiplier: multiplierRaw } = userCreatedPool;
+
       // completion fees token always match pool stake token
-      const creatorCompletionFees = pool.seeds.formatWinAmount(Number(amt));
+      const { decimals, name } = pool.seeds.getStakeTokenDetails();
+      const gainedRaw = Number(amt) / 10 ** decimals;
+
+      // If the amount is less than 0.01, keep up to the first three non-zero decimal places
+      // Otherwise, round to 3 decimal places
+      const gained =
+        gainedRaw < 0.003 && gainedRaw > 0 ? parseFloat(gainedRaw.toPrecision(3)) : Math.trunc(gainedRaw * 1000) / 1000;
+      const creatorCompletionFees = `${gained} ${name}`;
       creatorDetails = { creator, creatorCompletionFees };
+      
       // multiplier is store in contract with 2 decimal places
       multiplier = (multiplierRaw / 100) as PoolMultiplier;
       logger.info(

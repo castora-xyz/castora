@@ -34,18 +34,6 @@ export class PoolSeeds {
   }
 
   /**
-   * The display of winAmount with token name in notifications
-   */
-  formatWinAmount(amount: number): string {
-    try {
-      const { decimals, name } = this.getStakeTokenDetails();
-      return `${amount / 10 ** decimals} ${name}`;
-    } catch (_) {
-      return '';
-    }
-  }
-
-  /**
    * Returns info about the prediction token
    */
   getPredictionTokenDetails(): Token {

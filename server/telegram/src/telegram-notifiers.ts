@@ -76,8 +76,10 @@ export const notifyWinner = async (jobId: any, bot: Bot, pool: Pool, winner: str
 
   // Compute the amount won by the winner.
   // the division by 0.95 below is to obtain the amount without 5% fees applied
-  // the amount is also ensured to be rounded to 2 decimal places
-  const won = Math.trunc((pool.winAmount / 0.95) * count * 100) / 100;
+  const wonRaw = (pool.winAmount / 0.95) * count;
+  // If the amount is less than 0.01, keep up to the first three non-zero decimal places
+  // Otherwise, round to 3 decimal places
+  const won = wonRaw < 0.003 && wonRaw > 0 ? parseFloat(wonRaw.toPrecision(3)) : Math.trunc(wonRaw * 1000) / 1000;
 
   // Send the notification
   try {
