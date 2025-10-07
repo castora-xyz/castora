@@ -1,4 +1,5 @@
 import { PoolSeeds } from './pool-seeds';
+import { UserCreatedPool } from './user-created-pool';
 
 /**
  * Where participants make predictions.
@@ -20,40 +21,24 @@ export class Pool {
   winAmountOnChain: number;
   noOfWinners: number;
   noOfClaimedWinnings: number;
+  userCreated: UserCreatedPool | undefined;
 
   constructor(input: any) {
-    if (Array.isArray(input)) {
-      this.poolId = Number(input[0]);
-      this.seeds = input[1] instanceof PoolSeeds ? input[1] : new PoolSeeds(input[1]);
-      this.seedsHash = input[2];
-      this.creationTime = Number(input[3]);
-      this.noOfPredictions = Number(input[4]);
-      this.snapshotPriceOnChain = Number(input[5]);
-      this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));
-      this.completionTime = Number(input[6]);
-      this.winAmountOnChain = Number(input[7]);
-      // calling Math.floor is to avoid too many decimal places
-      this.winAmount = parseFloat(
-        (Math.floor(this.winAmountOnChain / 0.95) / 10 ** this.seeds.stakeTokenDetails.decimals).toFixed(3)
-      );
-      this.noOfWinners = Number(input[8]);
-      this.noOfClaimedWinnings = Number(input[9]);
-    } else {
-      this.poolId = Number(input.poolId);
-      this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds);
-      this.seedsHash = input.seedsHash;
-      this.creationTime = Number(input.creationTime);
-      this.noOfPredictions = Number(input.noOfPredictions);
-      this.snapshotPriceOnChain = Number(input.snapshotPrice);
-      this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));
-      this.completionTime = Number(input.completionTime);
-      this.winAmountOnChain = Number(input.winAmount);
-      this.winAmount = parseFloat(
-        (Math.floor(this.winAmountOnChain / 0.95) / 10 ** this.seeds.stakeTokenDetails.decimals).toFixed(3)
-      );
-      this.noOfWinners = Number(input.noOfWinners);
-      this.noOfClaimedWinnings = Number(input.noOfClaimedWinnings);
-    }
+    this.poolId = Number(input.poolId);
+    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds);
+    this.seedsHash = input.seedsHash;
+    this.creationTime = Number(input.creationTime);
+    this.noOfPredictions = Number(input.noOfPredictions);
+    this.snapshotPriceOnChain = Number(input.snapshotPrice);
+    this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));
+    this.completionTime = Number(input.completionTime);
+    this.winAmountOnChain = Number(input.winAmount);
+    this.winAmount = parseFloat(
+      (Math.floor(this.winAmountOnChain / 0.95) / 10 ** this.seeds.stakeTokenDetails.decimals).toFixed(3)
+    );
+    this.noOfWinners = Number(input.noOfWinners);
+    this.noOfClaimedWinnings = Number(input.noOfClaimedWinnings);
+    if (input.userCreated) this.userCreated = new UserCreatedPool(input.userCreated);
   }
 
   /**
@@ -69,6 +54,7 @@ export class Pool {
   multiplier() {
     if (this.poolId === 3000) return 10;
     if (this.poolId === 5000) return 5;
+    if (this.userCreated) return this.userCreated.multiplier;
     return 2;
   }
 

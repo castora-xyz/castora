@@ -1,5 +1,5 @@
-import { WriteContractStatus, useCache, useContract, useFirebase, useToast } from '@/contexts';
-import { Pool, PoolSeeds, tokens } from '@/schemas';
+import { WriteContractStatus, useContract, useFirebase, useToast } from '@/contexts';
+import { Pool, tokens } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
@@ -82,11 +82,10 @@ export const usePools = () => useContext(PoolsContext);
 
 export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const { chain: currentChain } = useAccount();
-  const cache = useCache();
   const [defaultChain] = useChains();
   const { castoraAddress, poolsManagerAddress, readContract, writeContract } = useContract();
   const { firestore, recordEvent } = useFirebase();
-  const { toastError, toastSuccess } = useToast();
+  const { toastSuccess } = useToast();
 
   const [isFetchingLiveStocks, setIsFetchingLiveStocks] = useState(true);
   const [isFetchingLiveCrypto, setIsFetchingLiveCrypto] = useState(true);
@@ -277,48 +276,43 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchOne = async (poolId: number) => {
-    try {
-      const key = `chain::${getChain().id}::pool::${poolId}`;
-      let pool = await cache.retrieve(key);
-      if (pool) {
-        // Necessary to restore callable methods on retrieved instance
-        pool = Object.setPrototypeOf(pool, Pool.prototype);
-        pool.seeds = Object.setPrototypeOf(pool.seeds, PoolSeeds.prototype);
-        return pool;
-      }
+    if (!(await isValidPoolId(poolId))) return null;
+    const raw1 = await readContract({ contract: 'castora', functionName: 'getPool', args: [BigInt(poolId)] });
+    if (!raw1) return null;
 
-      if (!(await isValidPoolId(poolId))) return null;
-      const raw = await readContract({ contract: 'castora', functionName: 'getPool', args: [BigInt(poolId)] });
-      if (!raw) return null;
-
-      pool = new Pool(raw);
-      if (pool.completionTime > 0) await cache.save(key, pool);
-      return pool;
-    } catch (error) {
-      console.error(error);
-      toastError(`${error}`);
-      return null;
+    let raw2: any;
+    const isUserCreated = await readContract({
+      contract: 'pools-manager',
+      functionName: 'doesUserCreatedPoolExist',
+      args: [BigInt(poolId)]
+    });
+    if (isUserCreated) {
+      raw2 = await readContract({
+        contract: 'pools-manager',
+        functionName: 'getUserCreatedPool',
+        args: [BigInt(poolId)]
+      });
+      if (!raw2) raw2 = {};
     }
+
+    return new Pool({ ...raw1, userCreated: raw2 });
   };
 
-  const fetchMany = async (poolIds: number[]) => {
-    try {
-      const fetched = [];
-      const raw = await readContract({ contract: 'castora', functionName: 'getPools', args: [poolIds] });
-      if (!raw) return [];
+  const fetchMany = async (poolIds: number[], includeUserCreateds = false) => {
+    const raw1 = await readContract({ contract: 'castora', functionName: 'getPools', args: [poolIds] });
+    if (!raw1) return [];
 
-      for (let i = 0; i < raw.length; i++) {
-        const pool = new Pool(raw[i]);
-        if (pool.completionTime > 0) await cache.save(`chain::${getChain().id}::pool::${poolIds[i]}`, pool);
-        fetched.push(pool);
-      }
-
-      return fetched;
-    } catch (error) {
-      console.error(error);
-      toastError(`${error}`);
-      return [];
+    let raw2;
+    if (includeUserCreateds) {
+      raw2 = await readContract({ contract: 'pools-manager', functionName: 'getUserCreatedPools', args: [poolIds] });
+      if (!raw2) return [];
     }
+
+    const fetched = [];
+    for (let i = 0; i < raw1.length; i++) {
+      fetched.push(new Pool({ ...raw1[i], ...(includeUserCreateds ? { userCreated: raw2[i] } : {}) }));
+    }
+    return fetched;
   };
 
   const fetchLiveCryptoPools = async () => {
@@ -341,7 +335,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchLiveCommunityPools = async () => {
     setIsFetchingLiveCommunity(true);
-    const fetched = await fetchMany(liveCommunityPoolIds);
+    const fetched = await fetchMany(liveCommunityPoolIds, true);
     setLiveCommunityPools(fetched);
     // Some how the extra 1 seconds prevents a UI blink of empty state
     // probably setting the pools above takes a lot and setState is usually async

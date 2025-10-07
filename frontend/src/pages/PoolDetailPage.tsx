@@ -1,6 +1,7 @@
 import {
   CompletedPoolDisplay,
   JoinPoolForm,
+  MyInCreatedPoolDisplay,
   MyInPoolPredictions,
   MyInPoolPredsRef,
   PoolDetailPageIntro,
@@ -133,6 +134,10 @@ export const PoolDetailPage = () => {
         <PoolDetailPageIntro pool={pool} />
 
         <div className="sm:hidden">
+          <MyInCreatedPoolDisplay pool={pool} />
+        </div>
+
+        <div className="sm:hidden">
           {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
         </div>
 
@@ -154,6 +159,10 @@ export const PoolDetailPage = () => {
               'max-lg:max-w-2xl max-lg:mx-auto lg:grow lg:basis-1/' + (pool.seeds.status() !== 'Completed' ? '3' : '2')
             }
           >
+            <div className="max-sm:hidden">
+              <MyInCreatedPoolDisplay pool={pool} />
+            </div>
+
             <div className={now > pool.seeds.windowCloseTime ? 'max-sm:hidden' : ''}>
               {pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} ref={myInPoolPredsRef} />}
             </div>

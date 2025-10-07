@@ -3,6 +3,7 @@ export * from './CountdownBadge';
 export * from './CreatePoolModal';
 export * from './FilterPools';
 export * from './JoinPoolForm';
+export * from './MyInCreatedPoolDisplay';
 export * from './PoolCard';
 export * from './PoolCardShimmer';
 export * from './PoolDetailPageIntro';

@@ -1,57 +1,24 @@
-import { openDB } from 'idb';
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState
-} from 'react';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
 
-interface CacheContextProps {
-  retrieve: (key: string) => Promise<any>;
-  save: (key: string, value: any) => Promise<void>;
-}
+interface CacheContextProps {}
 
 export const useCache = () => useContext(CacheContext);
 
-const CacheContext = createContext<CacheContextProps>({
-  retrieve: async () => {},
-  save: async () => {}
-});
+const CacheContext = createContext<CacheContextProps>({});
 
 export const CacheProvider = ({ children }: { children: ReactNode }) => {
-  const [db, setDb] = useState<any>(null);
-
   useEffect(() => {
-    const useDb = async () => {
-      if (!('indexedDB' in window)) return null;
-      const db = await openDB('castora', 1, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains('cache')) {
-            db.createObjectStore('cache');
-          }
-        }
-      });
-      setDb(db);
+    const clearDb = async () => {
+      if ('indexedDB' in window) {
+        const dbs = await indexedDB.databases();
+        dbs.forEach((database) => {
+          if (database.name === 'castora') indexedDB.deleteDatabase('castora');
+        });
+      }
     };
 
-    useDb();
+    clearDb();
   }, []);
 
-  const retrieve = async (key: string) => {
-    return db ? await db.get('cache', key) : null;
-  };
-
-  const save = async (key: string, value: any) => {
-    if (db) {
-      const tx = db.transaction('cache', 'readwrite');
-      await Promise.all([tx.store.put(value, key), tx.done]);
-    }
-  };
-
-  return (
-    <CacheContext.Provider value={{ retrieve, save }}>
-      {children}
-    </CacheContext.Provider>
-  );
+  return <CacheContext.Provider value={{}}>{children}</CacheContext.Provider>;
 };

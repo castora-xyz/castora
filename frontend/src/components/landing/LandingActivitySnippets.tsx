@@ -20,23 +20,23 @@ export const LandingActivitySnippets = () => {
   };
 
   const defaultActivity = () => ({
-    pool: new Pool([
-      0,
-      new PoolSeeds({
+    pool: new Pool({
+      poolId: 0,
+      seeds: new PoolSeeds({
         predictionToken: CASTORA_ADDRESS_SEPOLIA,
         stakeToken: USDC,
         stakeAmount: 10000000,
         windowCloseTime: next2HoursTimestamp() - 15 * 60,
         snapshotTime: next2HoursTimestamp()
       }),
-      '0x',
-      Math.trunc(new Date().getTime() / 1000),
-      0,
-      0,
-      0,
-      0,
-      0
-    ]),
+      seedsHash: '0x',
+      creationTime: Math.trunc(new Date().getTime() / 1000),
+      snapshotPrice: 0,
+      completionTime: 0,
+      winAmount: 0,
+      noOfWinners: 0,
+      noOfClaimedWinnings: 0
+    }),
     prediction: new Prediction({
       poolId: 0,
       predicter: '0x',

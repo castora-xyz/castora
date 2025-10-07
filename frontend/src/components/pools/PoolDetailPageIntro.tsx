@@ -2,6 +2,7 @@ import Bolt from '@/assets/bolt.svg?react';
 import Briefcase from '@/assets/briefcase.svg?react';
 import ChevronRight from '@/assets/chevron-right.svg?react';
 import InfoCircle from '@/assets/info-circle.svg?react';
+import LinkIcon from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { Pool } from '@/schemas';
@@ -9,7 +10,7 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { Link, useLocation } from 'react-router-dom';
 
-export const PoolDetailPageIntro = ({ pool, pool: { seeds } }: { pool: Pool }) => {
+export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { pool: Pool }) => {
   const location = useLocation();
 
   return (
@@ -85,6 +86,20 @@ export const PoolDetailPageIntro = ({ pool, pool: { seeds } }: { pool: Pool }) =
             >
               <InfoCircle className="stroke-primary-default w-4 h-4" />
               <span className="mr-1">{seeds.status()}</span>
+            </p>
+          </>
+        )}
+
+        {userCreated && userCreated.isUnlisted && (
+          <>
+            <Tooltip target="#pool-visibility" />
+            <p
+              id="pool-visibility"
+              className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
+              data-pr-tooltip="Visibility"
+            >
+              <LinkIcon className="text-primary-default w-4 h-4" />
+              <span className="mr-1">Unlisted</span>
             </p>
           </>
         )}
