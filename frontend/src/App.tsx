@@ -69,16 +69,16 @@ const router = createBrowserRouter(
     <Route path="/" element={<Layout outlet={<Outlet />} />} errorElement={<Layout outlet={<NotFoundPage />} />}>
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<Navigate to="pools/crypto" replace />} />
+        <Route path="pools" element={<Navigate to="crypto" replace />} />
         <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
         <Route path="pools/stocks" element={<LiveStocksPoolsPage />} />
         <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
         <Route path="pools/community/create" element={<CreateCommunityPoolPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
-        <Route path="predictions" element={<Navigate to="activity/predictions" replace />} />
+        <Route path="predictions" element={<Navigate to="/activity/predictions" />} />
         <Route path="stocks" element={<LiveStocksPoolsPage />} />
-        <Route path="activity" element={<Navigate to="activity/predictions" replace />} />
+        <Route path="activity" element={<Navigate to="predictions" replace />} />
         <Route path="activity/predictions" element={<MyActivityPredictionsPage />} />
         <Route path="activity/created-pools" element={<MyActivityCreatedPoolsPage />} />
       </Route>
