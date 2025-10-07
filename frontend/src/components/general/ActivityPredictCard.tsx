@@ -11,12 +11,14 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const ActivityPredictCard = ({
+  count,
   pool,
   pool: { poolId, seeds, snapshotPrice, completionTime },
   prediction,
   prediction: { explorerUrl, id: predictionId, isAWinner, price: predictionPrice, time },
   isInLandingPage = false
 }: {
+  count: number;
   pool: Pool;
   prediction: Prediction;
   isInLandingPage?: boolean;
@@ -39,6 +41,8 @@ export const ActivityPredictCard = ({
     >
       <div className="flex flex-wrap justify-between gap-4 mb-4">
         <div className="flex flex-wrap justify-start items-center gap-3">
+          <p className="text-text-caption text-sm -mt-1">#{count}</p>
+
           <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-flex items-center gap-1">
             {seeds.predictionTokenDetails.img && (
               <img src={`/assets/${seeds.predictionTokenDetails.img}.png`} className="w-3 h-3 rounded-full" />

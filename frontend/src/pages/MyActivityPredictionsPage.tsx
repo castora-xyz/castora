@@ -135,8 +135,13 @@ export const MyActivityPredictionsPage = () => {
                 ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
                   ))
-                : myActivities.map(({ pool, prediction }) => (
-                    <ActivityPredictCard key={pool.poolId + ' ' + prediction.id} pool={pool} prediction={prediction} />
+                : myActivities.map(({ pool, prediction }, i, total) => (
+                    <ActivityPredictCard
+                      count={currentPage! * rowsPerPage + total.length - i}
+                      key={pool.poolId + ' ' + prediction.id}
+                      pool={pool}
+                      prediction={prediction}
+                    />
                   ))}
             </div>
           )}

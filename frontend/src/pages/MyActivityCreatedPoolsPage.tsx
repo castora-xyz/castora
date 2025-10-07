@@ -105,8 +105,13 @@ export const MyActivityCreatedPoolsPage = () => {
                 ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
                   ))
-                : myActivities.map(({ pool, userCreated }) => (
-                    <ActivityCreateCard key={pool.poolId} pool={pool} userCreated={userCreated} />
+                : myActivities.map(({ pool, userCreated }, i, total) => (
+                    <ActivityCreateCard
+                      count={currentPage! * rowsPerPage + total.length - i}
+                      key={pool.poolId}
+                      pool={pool}
+                      userCreated={userCreated}
+                    />
                   ))}
             </div>
           )}

@@ -13,11 +13,13 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const ActivityCreateCard = ({
+  count,
   pool,
   pool: { poolId, seeds, noOfPredictions },
   userCreated,
   userCreated: { creationTime, completionTime, completionFeesAmount, multiplier, isUnlisted }
 }: {
+  count: number;
   pool: Pool;
   userCreated: UserCreatedPool;
 }) => {
@@ -33,6 +35,8 @@ export const ActivityCreateCard = ({
     <div className="border-2 border-surface-subtle rounded-2xl pt-3 sm:pt-4 pb-5 px-4 sm:px-6 mb-6 gap-4">
       <div className="flex flex-wrap justify-between gap-4 mb-4">
         <div className="flex flex-wrap justify-start items-center gap-3">
+          <p className="text-text-caption text-sm -mt-1">#{count}</p>
+
           <p className="text-xs bg-surface-subtle py-1 px-2 rounded-full w-fit inline-flex items-center gap-1">
             {seeds.predictionTokenDetails.img && (
               <img src={`/assets/${seeds.predictionTokenDetails.img}.png`} className="w-3 h-3 rounded-full" />
