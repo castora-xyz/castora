@@ -19,15 +19,15 @@ export const rearchivePool = async (
 
   const archivalRef = storage.bucket().file(`archives/${chain}/pool-${pool.poolId}.json`);
 
+  if (creator) pool.creator = creator;
+  if (creatorCompletionFees) pool.creatorCompletionFees = creatorCompletionFees;
   await archivalRef.save(
     JSON.stringify(
       new ArchivedPool({
         chain,
         pool,
         predictions,
-        results: { winnerAddressesUniqued, winnerPredictionIds },
-        ...(creator ? { creator } : {}),
-        ...(creatorCompletionFees ? { creatorCompletionFees } : {})
+        results: { winnerAddressesUniqued, winnerPredictionIds }
       }).toJSON()
     )
   );

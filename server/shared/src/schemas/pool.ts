@@ -18,6 +18,8 @@ export class Pool {
   winAmount: number;
   noOfWinners: number;
   noOfClaimedWinnings: number;
+  creator: string | undefined;
+  creatorCompletionFees: string | undefined;
 
   constructor(input: any) {
     this.poolId = Number(input[0]);
@@ -43,7 +45,9 @@ export class Pool {
       snapshotPrice: this.snapshotPrice,
       completionTime: this.completionTime,
       winAmount: this.winAmount / 10 ** decimals,
-      noOfWinners: this.noOfWinners
+      noOfWinners: this.noOfWinners,
+      ...(this.creator ? { creator: this.creator } : {}),
+      ...(this.creator ? { creatorCompletionFees: this.creatorCompletionFees } : {})
     };
   }
 }

@@ -24,8 +24,8 @@ export class Pool {
   constructor(input: any) {
     this.json = input;
     this.chain = input['chain'];
-    this.creator = input['creator'] ?? '';
-    this.creatorCompletionFees = input['creatorCompletionFees'] ?? '';
+    this.creator = input['pool']['creator'] ?? '';
+    this.creatorCompletionFees = input['pool']['creatorCompletionFees'] ?? '';
     this.poolId = Number(input['pool']['poolId']);
     this.stakeToken = input['pool']['seeds']['stakeToken'];
     this.hasNotifiedCreatorOnTelegram = input['pool']['hasNotifiedCreatorOnTelegram'] ?? false;
