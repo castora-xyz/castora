@@ -103,7 +103,8 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
       queueName: 'pool-archiver',
       jobName: 'archive-pool',
       jobData: { chain, poolId },
-      delay: (windowCloseTime - now) * 1000
+      // 10 seconds after windowCloseTime to allow for transaction finality for last minute predictions
+      delay: (windowCloseTime - now) * 1000 + 10000
     });
     logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
 

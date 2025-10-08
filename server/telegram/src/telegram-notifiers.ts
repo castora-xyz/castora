@@ -15,9 +15,15 @@ export const notifyPoolCreator = async (jobId: any, bot: Bot, pool: Pool): Promi
   // Check if the poolCreator has a Telegram ID
   const userRef = firestore.doc(`/users/${creator}`);
   const userSnap = await userRef.get();
-  if (!userSnap.exists) return false;
+  if (!userSnap.exists) {
+    logger.info(`Pool Creator ${creator} hasn't linked their Telegram. Ending ...`);
+    return false;
+  }
   const userData = userSnap.data();
-  if (!userData || !userData.telegramId) return false;
+  if (!userData || !userData.telegramId) {
+    logger.info(`Pool Creator ${creator} hasn't linked their Telegram. Ending ...`);
+    return false;
+  }
 
   // Send the notification
   logger.info(`Notifying Creator of pool ${poolId} on ${chain}`);

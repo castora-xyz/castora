@@ -14,7 +14,7 @@ export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { po
   const location = useLocation();
 
   return (
-    <div className="w-full pl-0 bg-app-bg p-6 text-sm flex flex-wrap gap-4 text-text-subtitle">
+    <div className="w-full pl-0 bg-app-bg p-6 text-sm max-w-screen-xl mx-auto flex flex-wrap gap-4 text-text-subtitle">
       <div className="text-sm py-2 px-5 flex gap-2 rounded-full w-fit border border-border-default dark:border-surface-subtle">
         <Tooltip target="#backwards" />
         <p id="backwards" data-pr-tooltip="Go Back" className="flex gap-2">

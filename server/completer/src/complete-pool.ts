@@ -71,6 +71,7 @@ export const completePool = async (job: Job): Promise<void> => {
       const { completionFeesAmount: amt } = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [
         poolId
       ])) as any;
+      logger.info(`Have retrieved pool creator completion fees raw amount ${amt}`);
 
       // completion fees token always match pool stake token
       const { decimals, name } = pool.seeds.getStakeTokenDetails();
@@ -81,7 +82,7 @@ export const completePool = async (job: Job): Promise<void> => {
       const gained =
         gainedRaw < 0.003 && gainedRaw > 0 ? parseFloat(gainedRaw.toPrecision(3)) : Math.trunc(gainedRaw * 1000) / 1000;
       creatorCompletionFees = `${gained} ${name}`;
-      logger.info(`Have retrieved and noted pool creator completion fees ${creatorCompletionFees}`);
+      logger.info(`Have computed and noted pool creator completion fees ${creatorCompletionFees}`);
     }
 
     // re-archiving to store the updated winner predictions and creator info for notifications.
@@ -101,7 +102,14 @@ export const completePool = async (job: Job): Promise<void> => {
     await queueJob({
       queueName: 'pool-winners-telegram-notifications',
       jobName: 'notify-winners-telegram',
-      jobData: { poolId, chain }
+      jobData: { poolId, chain },
+      // the delay is to allow for the pool creator notification to be sent first
+      // this helps with allowing the archived pool to have been updated with
+      // hasMarkedCreatorNotifiedOnTelegram before winners notification job is processed,
+      // otherwise there will be a race condition where the JSON
+      // file is updated by the winners notification job but with a stale absent
+      // hasMarkedCreatorNotifiedOnTelegram value
+      ...(isCommunity && { delay: 10000 })
     });
 
     logger.info('Posted job to notify winners via telegram');

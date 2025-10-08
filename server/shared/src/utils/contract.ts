@@ -136,6 +136,9 @@ export const writeContract = async (
     if (`${e}`.includes('TransactionReceiptNotFoundError')) {
       // Surprisingly, this receipt not found error happens when
       // the transaction succeeded, so we don't rethrow to not stop execution
+      // but we wait 10 seconds to allow the transaction to be mined
+      logger.info('Waiting 10 seconds to allow transaction to be mined ...');
+      await new Promise((resolve) => setTimeout(resolve, 10000));
     } else {
       throw e;
     }
