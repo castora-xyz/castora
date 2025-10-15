@@ -12,7 +12,7 @@ contract UpdateCompletionFeesSplitPercent is Script {
     uint16 newSplitPercent = 3000; // vm.envUint('NEW_COMPLETION_FEES_SPLIT_PERCENT');
 
     CastoraPoolsManager poolsManager = CastoraPoolsManager(payable(poolsManagerAddress));
-    poolsManager.setCompletionPoolFeesSplitPercent(newSplitPercent);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(newSplitPercent);
 
     console.log('Updated completion fees split percent to: ', newSplitPercent);
     vm.stopBroadcast();

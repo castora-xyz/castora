@@ -93,33 +93,33 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.setFeeCollector(address(0));
   }
 
-  // ========== setCompletionPoolFeesSplitPercent Tests ==========
+  // ========== setCreatorPoolCompletionFeesSplitPercent Tests ==========
 
-  function testSetCompletionPoolFeesSplitPercent() public {
+  function testSetCreatorPoolCompletionFeesSplitPercent() public {
     uint256 oldPercentage = poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent;
     uint16 newPercentage = 3000; // 30%
-    poolsManager.setCompletionPoolFeesSplitPercent(newPercentage);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(newPercentage);
     assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, newPercentage);
     assertEq(oldPercentage, 5000); // Default 50%
 
     // Test 0%
-    poolsManager.setCompletionPoolFeesSplitPercent(0);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(0);
     assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 0);
 
     // Test 100%
-    poolsManager.setCompletionPoolFeesSplitPercent(10000);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(10000);
     assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 10000);
   }
 
   function testRevertInvalidSplitFeesPercent() public {
     vm.expectRevert(InvalidSplitFeesPercent.selector);
-    poolsManager.setCompletionPoolFeesSplitPercent(10001); // > 100%
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(10001); // > 100%
   }
 
-  function testRevertWhenNotOwnerSetCompletionPoolFeesSplitPercent() public {
+  function testRevertWhenNotOwnerSetCreatorPoolCompletionFeesSplitPercent() public {
     vm.prank(user);
     vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.setCompletionPoolFeesSplitPercent(3000);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(3000);
   }
 
   // ========== setCreationFees Tests ==========

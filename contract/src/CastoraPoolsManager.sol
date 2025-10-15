@@ -425,11 +425,11 @@ contract CastoraPoolsManager is
 
   /// Updates the completion pool fees split percent
   /// @param _percentage Split percentage with 2 decimal places (10000 = 100%)
-  function setCompletionPoolFeesSplitPercent(uint16 _percentage) external onlyOwner nonReentrant {
+  function setCreatorPoolCompletionFeesSplitPercent(uint16 _percentage) external onlyOwner nonReentrant {
     if (_percentage > 10000) revert InvalidSplitFeesPercent();
     uint256 oldPercentage = allConfig.creatorPoolCompletionFeesSplitPercent;
     allConfig.creatorPoolCompletionFeesSplitPercent = _percentage;
-    emit SetCompletionPoolFeesSplitPercent(oldPercentage, _percentage);
+    emit SetCreatorPoolCompletionFeesSplitPercent(oldPercentage, _percentage);
   }
 
   /// Allows a token for creation fees. Also records the token in the creation array,

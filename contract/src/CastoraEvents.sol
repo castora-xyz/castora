@@ -63,7 +63,7 @@ contract CastoraEvents {
   /// Emitted when the completion pool fees split percentage is updated
   /// @param oldPercentage The previous split percentage
   /// @param newPercentage The new split percentage
-  event SetCompletionPoolFeesSplitPercent(uint256 oldPercentage, uint256 newPercentage);
+  event SetCreatorPoolCompletionFeesSplitPercent(uint256 oldPercentage, uint256 newPercentage);
 
   /// Emitted when a token is allowed for creation fees
   /// @param token The token address that was allowed
