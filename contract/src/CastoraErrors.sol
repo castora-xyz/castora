@@ -11,6 +11,7 @@ contract CastoraErrors {
   error InsufficientCreationFeeValue();
   error InsufficientStakeValue();
   error InvalidAddress();
+  error InvalidPoolFeesPercent();
   error InvalidPoolId();
   error InvalidPoolTimes();
   error InvalidPoolTimeInterval();

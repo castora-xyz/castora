@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IAccessControl} from '@openzeppelin/contracts/access/IAccessControl.sol';
 import {IERC20Errors} from '@openzeppelin/contracts/interfaces/draft-IERC6093.sol';
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
@@ -10,6 +11,7 @@ import {Test} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
@@ -38,6 +40,7 @@ contract MockNonHandlerContract {}
 
 contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
+  CastoraPoolsRules poolsRules;
   cUSD cusd;
   address owner;
   address feeCollector;
@@ -58,23 +61,41 @@ contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
     failingHandler = new MockFailingHandler();
     nonHandlerContract = new MockNonHandlerContract();
 
+    poolsRules = CastoraPoolsRules(makeAddr('poolsRules'));
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
-    castora.initialize(feeCollector);
+    castora.initialize(feeCollector, address(poolsRules));
 
     seedsErc20Stake = PoolSeeds({
       predictionToken: address(cusd),
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: block.timestamp + 1200,
-      windowCloseTime: block.timestamp + 900
+      windowCloseTime: block.timestamp + 900,
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
     seedsNativeStake = PoolSeeds({
       predictionToken: address(cusd),
       stakeToken: address(castora),
       stakeAmount: 1e16,
       snapshotTime: block.timestamp + 1200,
-      windowCloseTime: block.timestamp + 900
+      windowCloseTime: block.timestamp + 900,
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
+
+    vm.mockCall(
+      address(poolsRules),
+      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, seedsErc20Stake),
+      abi.encode()
+    );
+    vm.mockCall(
+      address(poolsRules),
+      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, seedsNativeStake),
+      abi.encode()
+    );
   }
 
   function testDeployment() public view {
@@ -127,6 +148,8 @@ contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
     address newFeeCollector = makeAddr('newFeeCollector');
 
     // Test successful fee collector change
+    vm.expectEmit(true, true, false, false);
+    emit SetFeeCollector(feeCollector, newFeeCollector);
     castora.setFeeCollector(newFeeCollector);
     assertEq(castora.feeCollector(), newFeeCollector);
 
@@ -140,6 +163,26 @@ contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
     castora.setFeeCollector(newFeeCollector);
   }
 
+  function testSetPoolsRules() public {
+    address newPoolsRules = makeAddr('newPoolsRules');
+    vm.expectEmit(true, true, false, false);
+    emit SetPoolsRulesInCastora(address(poolsRules), newPoolsRules);
+    castora.setPoolsRules(newPoolsRules);
+    assertEq(castora.poolsRules(), newPoolsRules);
+  }
+
+  function testRevertWhenNotOwnerSetPoolsRules() public {
+    address newPoolsRules = makeAddr('newPoolsRules');
+    vm.prank(user);
+    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+    castora.setPoolsRules(newPoolsRules);
+  }
+
+  function testRevertZeroAddressSetPoolsRules() public {
+    vm.expectRevert(InvalidAddress.selector);
+    castora.setPoolsRules(address(0));
+  }
+
   receive() external payable {}
 
   function testRevertWhenNotAdminCreatePool() public {
@@ -148,68 +191,14 @@ contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
     castora.createPool(seedsErc20Stake);
   }
 
-  function testRevertWithInvalidTokensCreatePool() public {
-    vm.expectRevert(InvalidAddress.selector);
-    castora.createPool(
-      PoolSeeds({
-        predictionToken: address(0), // invalid prediction token
-        stakeToken: address(cusd), // valid stake token
-        stakeAmount: 1000000,
-        snapshotTime: block.timestamp + 1200,
-        windowCloseTime: block.timestamp + 900
-      })
+  function testRevertInvalidSeedsCreatePool() public {
+    vm.mockCallRevert(
+      address(poolsRules),
+      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, seedsErc20Stake),
+      abi.encode(StakeTokenNotAllowed.selector)
     );
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.createPool(
-      PoolSeeds({
-        predictionToken: address(cusd), // valid prediction token
-        stakeToken: address(0), // invalid stake token
-        stakeAmount: 1000000,
-        snapshotTime: block.timestamp + 1200,
-        windowCloseTime: block.timestamp + 900
-      })
-    );
-  }
-
-  function testRevertZeroStakeCreatePool() public {
-    vm.expectRevert(ZeroAmountSpecified.selector);
-    castora.createPool(
-      PoolSeeds({
-        predictionToken: address(cusd),
-        stakeToken: address(cusd),
-        stakeAmount: 0, // zero stake amount
-        snapshotTime: block.timestamp + 1200,
-        windowCloseTime: block.timestamp + 900
-      })
-    );
-  }
-
-  function testRevertPastWindowCloseCreatePool() public {
-    vm.warp(2000);
-    vm.expectRevert(WindowHasClosed.selector);
-    castora.createPool(
-      PoolSeeds({
-        predictionToken: address(cusd),
-        stakeToken: address(cusd),
-        stakeAmount: 1000000,
-        snapshotTime: block.timestamp + 1200,
-        windowCloseTime: block.timestamp - 900 // subtraction for past time
-      })
-    );
-  }
-
-  function testRevertWrongPoolTimesCreatePool() public {
-    vm.expectRevert(InvalidPoolTimes.selector);
-    castora.createPool(
-      PoolSeeds({
-        predictionToken: address(cusd),
-        stakeToken: address(cusd),
-        stakeAmount: 1000000,
-        snapshotTime: block.timestamp + 900, // snapshot before windowClose
-        windowCloseTime: block.timestamp + 1200
-      })
-    );
+    vm.expectRevert(StakeTokenNotAllowed.selector);
+    castora.createPool(seedsErc20Stake);
   }
 
   function testRevertPoolExistsAlreadyCreatePool() public {

@@ -10,6 +10,7 @@ import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/ut
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraPoolsRules} from './CastoraPoolsRules.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 import {IPoolCompletionHandler} from './IPoolCompletionHandler.sol';
 
@@ -34,6 +35,8 @@ contract Castora is
 
   /// An address to which all winner fees are sent to.
   address public feeCollector;
+  /// Address for CastoraPoolsRules contract
+  address public poolsRules;
   /// Keeps tracks of the total number of pools that have ever been created.
   uint256 public noOfPools;
   /// Keeps track of the total number of predictions that have ever been made.
@@ -73,8 +76,9 @@ contract Castora is
     _disableInitializers();
   }
 
-  function initialize(address feeCollector_) public initializer {
+  function initialize(address feeCollector_, address poolsRules_) public initializer {
     feeCollector = feeCollector_;
+    poolsRules = poolsRules_;
     __Ownable_init(msg.sender);
     __AccessControl_init();
     __ReentrancyGuard_init();
@@ -88,7 +92,18 @@ contract Castora is
   /// Sets the address of the `feeCollector` to the provided `newFeeCollector`.
   function setFeeCollector(address newFeeCollector) public onlyOwner {
     if (newFeeCollector == address(0)) revert InvalidAddress();
+    address oldFeeCollector = feeCollector;
     feeCollector = newFeeCollector;
+    emit SetFeeCollector(oldFeeCollector, newFeeCollector);
+  }
+
+  /// Sets the CastoraPoolsRules contract address
+  /// @param _poolsRules The new CastoraPoolsRules contract address
+  function setPoolsRules(address _poolsRules) external onlyOwner {
+    if (_poolsRules == address(0)) revert InvalidAddress();
+    address oldPoolsRules = poolsRules;
+    poolsRules = _poolsRules;
+    emit SetPoolsRulesInCastora(oldPoolsRules, _poolsRules);
   }
 
   /// Grants the {ADMIN_ROLE} to the provided `admin` address.
@@ -424,7 +439,12 @@ contract Castora is
   function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
     return keccak256(
       abi.encodePacked(
-        seeds.predictionToken, seeds.stakeToken, seeds.stakeAmount, seeds.windowCloseTime, seeds.snapshotTime
+        seeds.predictionToken,
+        seeds.stakeToken,
+        seeds.stakeAmount,
+        seeds.windowCloseTime,
+        seeds.snapshotTime,
+        seeds.multiplier
       )
     );
   }
@@ -436,12 +456,7 @@ contract Castora is
   ///
   /// Emits a {CreatedPool} event.
   function createPool(PoolSeeds memory seeds) public onlyRole(ADMIN_ROLE) nonReentrant returns (uint256) {
-    if (seeds.predictionToken == address(0)) revert InvalidAddress();
-    if (seeds.stakeToken == address(0)) revert InvalidAddress();
-    if (seeds.stakeAmount == 0) revert ZeroAmountSpecified();
-    if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
-    if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
-
+    CastoraPoolsRules(poolsRules).validateCreatePool(seeds);
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
 

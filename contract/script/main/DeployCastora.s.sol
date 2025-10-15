@@ -9,7 +9,10 @@ contract DeployCastora is Script {
   function run() public {
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
     address proxy = Upgrades.deployUUPSProxy(
-      'Castora.sol', abi.encodeCall(Castora.initialize, (vm.envAddress('FEE_COLLECTOR_ADDRESS')))
+      'Castora.sol',
+      abi.encodeCall(
+        Castora.initialize, (vm.envAddress('FEE_COLLECTOR_ADDRESS'), vm.envAddress('FEE_COLLECTOR_ADDRESS'))
+      )
     );
     console.log('Deployed Castora at: ', proxy);
     vm.stopBroadcast();

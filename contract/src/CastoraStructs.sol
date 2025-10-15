@@ -42,6 +42,12 @@ contract CastoraStructs {
     /// The timestamp at which no other participant can join this pool.
     /// This must be before or the same as snapshotTime.
     uint256 windowCloseTime;
+    /// Percentage of win amount per winner prediction collected as fees
+    uint16 feesPercent;
+    // /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
+    uint16 multiplier;
+    // /// Whether the pool is should be visible in the UI
+    bool isUnlisted;
   }
 
   /// @title A pool is where participants make predictions.
@@ -79,8 +85,6 @@ contract CastoraStructs {
   struct AllConfig {
     /// Address for main castora contract
     address castora;
-    /// Address for CastoraPoolsRules contract
-    address poolsRules;
     /// Address for fee collection
     address feeCollector;
     /// Split percentage for completion pool fees (with 2 decimal places: 10000 = 100%)
@@ -201,9 +205,5 @@ contract CastoraStructs {
     uint256 completionFeesAmount;
     /// Percentage of completion fees allocated to the creator
     uint16 creatorCompletionFeesPercent;
-    /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
-    uint16 multiplier;
-    /// Whether the pool is should be visible in the UI
-    bool isUnlisted;
   }
 }

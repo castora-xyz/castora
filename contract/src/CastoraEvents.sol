@@ -45,6 +45,9 @@ contract CastoraEvents {
   /// Emitted when the required time interval for pool timing validation is updated.
   event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
 
+  /// Emitted when the current pool fees percentage from winnings is updated.
+  event UpdatedCurrentPoolFeesPercent(uint16 oldPercent, uint16 newPercent);
+
   /// Emitted when the Castora contract address is updated
   /// @param oldCastora The previous Castora contract address
   /// @param newCastora The new Castora contract address
@@ -53,7 +56,7 @@ contract CastoraEvents {
   /// Emitted when the CastoraPoolsRules contract address is updated
   /// @param oldPoolsRules The previous CastoraPoolsRules contract address
   /// @param newPoolsRules The new CastoraPoolsRules contract address
-  event SetPoolsRulesInPoolsManager(address indexed oldPoolsRules, address indexed newPoolsRules);
+  event SetPoolsRulesInCastora(address indexed oldPoolsRules, address indexed newPoolsRules);
 
   /// Emitted when the fee collector address is updated
   /// @param oldFeeCollector The previous fee collector address

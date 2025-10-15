@@ -11,7 +11,6 @@ import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Castora} from './Castora.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
-import {CastoraPoolsRules} from './CastoraPoolsRules.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
@@ -81,11 +80,6 @@ contract CastoraPoolsManager is
   /// Returns the Castora contract instance.
   function castora() internal view returns (Castora) {
     return Castora(payable(allConfig.castora));
-  }
-
-  /// Returns the CastoraPoolsRules contract instance.
-  function poolsRules() internal view returns (CastoraPoolsRules) {
-    return CastoraPoolsRules(allConfig.poolsRules);
   }
 
   /// Gets global statistics
@@ -363,20 +357,14 @@ contract CastoraPoolsManager is
 
   /// Sets up this smart contract when it is deployed.
   /// @param castora_ The address of the main Castora contract.
-  /// @param poolsRules_ The address of the CastoraPoolsRules contract.
   /// @param feeCollector_ The address that will collect pool completion fees for Castora.
   /// @param splitPercent_ The split percentage for completion pool fees (10000 = 100%).
-  function initialize(address castora_, address poolsRules_, address feeCollector_, uint16 splitPercent_)
-    public
-    initializer
-  {
+  function initialize(address castora_, address feeCollector_, uint16 splitPercent_) public initializer {
     if (castora_ == address(0)) revert InvalidAddress();
-    if (poolsRules_ == address(0)) revert InvalidAddress();
     if (feeCollector_ == address(0)) revert InvalidAddress();
     if (splitPercent_ > 10000) revert InvalidSplitFeesPercent();
 
     allConfig.castora = castora_;
-    allConfig.poolsRules = poolsRules_;
     allConfig.feeCollector = feeCollector_;
     allConfig.creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
@@ -403,15 +391,6 @@ contract CastoraPoolsManager is
     address oldCastora = allConfig.castora;
     allConfig.castora = _castora;
     emit SetCastoraInPoolsManager(oldCastora, _castora);
-  }
-
-  /// Sets the CastoraPoolsRules contract address
-  /// @param _poolsRules The new CastoraPoolsRules contract address
-  function setPoolsRules(address _poolsRules) external onlyOwner {
-    if (_poolsRules == address(0)) revert InvalidAddress();
-    address oldPoolsRules = allConfig.poolsRules;
-    allConfig.poolsRules = _poolsRules;
-    emit SetPoolsRulesInPoolsManager(oldPoolsRules, _poolsRules);
   }
 
   /// Sets the fee collector address
@@ -465,10 +444,8 @@ contract CastoraPoolsManager is
   /// @notice Creates a new pool with the provided seeds and creation fee token
   /// @param seeds The PoolSeeds struct containing pool parameters
   /// @param creationFeeToken The token to pay creation fees with
-  /// @param multiplier The multiplier for the pool
-  /// @param isUnlisted Whether the pool should be hidden in the UI
   /// @return poolId The ID of the newly created pool
-  function createPool(PoolSeeds memory seeds, address creationFeeToken, uint16 multiplier, bool isUnlisted)
+  function createPool(PoolSeeds memory seeds, address creationFeeToken)
     external
     payable
     nonReentrant
@@ -476,12 +453,6 @@ contract CastoraPoolsManager is
     returns (uint256 poolId)
   {
     if (creationFeeToken == address(0)) revert InvalidAddress();
-
-    // Validate pool seeds using the rules contract
-    poolsRules().validateCreatePool(seeds);
-
-    // Ensure the multiplier is one of the allowed values
-    poolsRules().validateMultiplier(multiplier);
 
     // Check if creation fee token is allowed
     if (!creationFeesTokenInfos[creationFeeToken].isAllowed) revert CreationFeeTokenNotAllowed();
@@ -492,7 +463,7 @@ contract CastoraPoolsManager is
     poolId = castora().createPool(seeds);
 
     // Update statistics and user data
-    _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount, multiplier, isUnlisted);
+    _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
 
     emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
   }
@@ -519,15 +490,11 @@ contract CastoraPoolsManager is
   /// @param stakeToken The stake token from pool seeds
   /// @param creationFeeToken The token used for creation fees
   /// @param creationFeeAmount The amount of creation fees paid
-  /// @param multiplier The multiplier for the pool
-  /// @param isUnlisted Whether the pool should be hidden in the UI
   function _updatePoolCreationStats(
     uint256 poolId,
     address stakeToken,
     address creationFeeToken,
-    uint256 creationFeeAmount,
-    uint16 multiplier,
-    bool isUnlisted
+    uint256 creationFeeAmount
   ) internal {
     // Update user statistics if this is a new user
     if (userStats[msg.sender].nthUserCount == 0) {
@@ -570,9 +537,7 @@ contract CastoraPoolsManager is
       completionTime: 0,
       creatorClaimTime: 0,
       completionFeesAmount: 0,
-      creatorCompletionFeesPercent: allConfig.creatorPoolCompletionFeesSplitPercent,
-      multiplier: multiplier,
-      isUnlisted: isUnlisted
+      creatorCompletionFeesPercent: allConfig.creatorPoolCompletionFeesSplitPercent
     });
   }
 

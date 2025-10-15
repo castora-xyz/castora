@@ -34,7 +34,10 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: 1200 * 300, // Multiple of 5 minutes, later than window close
-      windowCloseTime: 1000 * 300 // Multiple of 5 minutes
+      windowCloseTime: 1000 * 300, // Multiple of 5 minutes
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
 
     // Initialize invalid pool seeds for testing
@@ -43,7 +46,10 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: 1000 * 300, // Earlier than window close
-      windowCloseTime: 1200 * 300 // Later than snapshot time
+      windowCloseTime: 1200 * 300, // Later than snapshot time
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
   }
 
@@ -403,6 +409,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
     rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+    rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
 
     // Should not revert
     rules.validateCreatePool(validSeeds);
@@ -452,7 +459,10 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: 1200 * 300 + 120, // Not on 5-min interval
-      windowCloseTime: 1000 * 300 // On 5-min interval
+      windowCloseTime: 1000 * 300, // On 5-min interval
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
 
     // Set up all allowances
@@ -469,6 +479,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
     rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+    rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
 
     assertTrue(rules.isValidCreatePool(validSeeds));
   }
@@ -513,7 +524,10 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: 1200 * 300 + 120, // Not on 5-min interval
-      windowCloseTime: 1000 * 300 // On 5-min interval
+      windowCloseTime: 1000 * 300, // On 5-min interval
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
 
     // Set up all allowances

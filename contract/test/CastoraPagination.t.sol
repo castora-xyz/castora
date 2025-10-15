@@ -6,11 +6,13 @@ import {Test} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
+  CastoraPoolsRules poolsRules;
   cUSD cusd;
   address owner;
   address feeCollector;
@@ -31,16 +33,19 @@ contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     user3 = makeAddr('user3');
 
     cusd = new cUSD();
-
+    poolsRules = CastoraPoolsRules(makeAddr('poolsRules'));
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
-    castora.initialize(feeCollector);
+    castora.initialize(feeCollector, makeAddr('poolsRules'));
 
     seedsErc20Stake = PoolSeeds({
       predictionToken: address(cusd),
       stakeToken: address(cusd),
       stakeAmount: 1000000,
       snapshotTime: block.timestamp + 1200,
-      windowCloseTime: block.timestamp + 900
+      windowCloseTime: block.timestamp + 900,
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
 
     seedsNativeStake = PoolSeeds({
@@ -48,8 +53,22 @@ contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, 
       stakeToken: address(castora),
       stakeAmount: 1e16,
       snapshotTime: block.timestamp + 1200,
-      windowCloseTime: block.timestamp + 900
+      windowCloseTime: block.timestamp + 900,
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
+
+    vm.mockCall(
+      address(poolsRules),
+      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, seedsErc20Stake),
+      abi.encode()
+    );
+    vm.mockCall(
+      address(poolsRules),
+      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, seedsNativeStake),
+      abi.encode()
+    );
   }
 
   // Helper function to create multiple pools
@@ -60,7 +79,10 @@ contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, 
         stakeToken: address(cusd),
         stakeAmount: 1000000 + i, // Different stake amounts to make pools unique
         snapshotTime: block.timestamp + 1200 + i,
-        windowCloseTime: block.timestamp + 900 + i
+        windowCloseTime: block.timestamp + 900 + i,
+        feesPercent: 500,
+        multiplier: 200,
+        isUnlisted: false
       });
       castora.createPool(seeds);
     }

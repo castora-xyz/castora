@@ -35,6 +35,12 @@ contract CastoraPoolsRules is
   uint256 public currentlyAllowedStakeTokensCount;
   /// Counter for the number of prediction tokens that are currently allowed
   uint256 public currentlyAllowedPredictionTokensCount;
+  /// Counter for the number of multipliers that have ever been allowed
+  uint256 public everAllowedPoolMultipliersCount;
+  /// Counter for the number of multipliers that are currently allowed
+  uint256 public currentlyAllowedPoolMultipliersCount;
+  /// Current Pool Fees Percentage from winnings, 2 decimal places
+  uint16 public currentPoolFeesPercent;
   /// Array of all stake tokens that have ever been allowed
   address[] public everAllowedStakeTokens;
   /// Array of all prediction tokens that have ever been allowed
@@ -43,6 +49,10 @@ contract CastoraPoolsRules is
   address[] public currentlyAllowedStakeTokens;
   /// Array of prediction tokens that are currently allowed
   address[] public currentlyAllowedPredictionTokens;
+  /// Array of all multipliers that have ever been allowed
+  uint16[] public everAllowedPoolMultipliers;
+  /// Array of multipliers that are currently allowed
+  uint16[] public currentlyAllowedPoolMultipliers;
   /// Tracks which tokens are allowed for staking
   mapping(address => bool) public allowedStakeTokens;
   /// Tracks which tokens are allowed for predictions
@@ -61,16 +71,8 @@ contract CastoraPoolsRules is
   mapping(uint16 => bool) public allowedPoolMultipliers;
   /// Tracks if a multiplier has ever been added to allowedPoolMultipliers (prevents duplicates)
   mapping(uint16 => bool) public hasEverBeenAllowedPoolMultiplier;
-  /// Array of all multipliers that have ever been allowed
-  uint16[] public everAllowedPoolMultipliers;
-  /// Counter for the number of multipliers that have ever been allowed
-  uint256 public everAllowedPoolMultipliersCount;
-  /// Counter for the number of multipliers that are currently allowed
-  uint256 public currentlyAllowedPoolMultipliersCount;
   /// Maps each currently allowed multiplier to its index in currentlyAllowedPoolMultipliers (for efficient removal)
   mapping(uint16 => uint256) public currentlyAllowedPoolMultiplierIndex;
-  /// Array of multipliers that are currently allowed
-  uint16[] public currentlyAllowedPoolMultipliers;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -82,6 +84,7 @@ contract CastoraPoolsRules is
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     requiredTimeInterval = 5 * 60; // 5 minutes default
+    currentPoolFeesPercent = 500; // 5%
   }
 
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -92,6 +95,15 @@ contract CastoraPoolsRules is
     uint256 oldInterval = requiredTimeInterval;
     requiredTimeInterval = newInterval;
     emit UpdatedRequiredTimeInterval(oldInterval, newInterval);
+  }
+
+  /// Update the current pool fees percent from winnings
+  /// @param newPercent The new pool fees percent to 2 decimal places
+  function updateCurrentPoolFeesPercent(uint16 newPercent) external onlyOwner nonReentrant {
+    if (newPercent > 10000) revert InvalidSplitFeesPercent();
+    uint16 oldPoolFeesPercent = currentPoolFeesPercent;
+    currentPoolFeesPercent = newPercent;
+    emit UpdatedCurrentPoolFeesPercent(oldPoolFeesPercent, newPercent);
   }
 
   /// Set whether a stake token is allowed
@@ -261,6 +273,12 @@ contract CastoraPoolsRules is
     if (!allowedPoolMultipliers[multiplier]) revert InvalidPoolMultiplier();
   }
 
+  /// Validate that the pool fees percent is coorect
+  /// @param percent The fees percent
+  function validatePoolFeesPercent(uint16 percent) external view {
+    if (currentPoolFeesPercent != percent) revert InvalidPoolFeesPercent();
+  }
+
   /// Comprehensive validation for pool creation using PoolSeeds
   /// @param seeds The PoolSeeds struct containing all pool parameters
   function validateCreatePool(PoolSeeds memory seeds) external view {
@@ -272,6 +290,8 @@ contract CastoraPoolsRules is
       requiredTimeInterval != 0
         && (seeds.windowCloseTime % requiredTimeInterval != 0 || seeds.snapshotTime % requiredTimeInterval != 0)
     ) revert InvalidPoolTimeInterval();
+    if (currentPoolFeesPercent != seeds.feesPercent) revert InvalidPoolFeesPercent();
+    if (!allowedPoolMultipliers[seeds.multiplier]) revert InvalidPoolMultiplier();
   }
 
   /// Check if pool timing rules are valid without reverting
@@ -316,6 +336,13 @@ contract CastoraPoolsRules is
     return allowedPoolMultipliers[multiplier];
   }
 
+  /// Check if the pool fees percent is coorect
+  /// @param percent The fees percent
+  /// @return true if percent is correct, false otherwise
+  function isValidPoolFeesPercent(uint16 percent) external view returns (bool) {
+    return currentPoolFeesPercent == percent;
+  }
+
   /// Comprehensive validation check for pool creation using PoolSeeds without reverting
   /// @param seeds The PoolSeeds struct containing all pool parameters
   /// @return true if all validations pass, false otherwise
@@ -328,6 +355,8 @@ contract CastoraPoolsRules is
       requiredTimeInterval != 0
         && (seeds.windowCloseTime % requiredTimeInterval != 0 || seeds.snapshotTime % requiredTimeInterval != 0)
     ) return false;
+    if (currentPoolFeesPercent != seeds.feesPercent) return false;
+    if (!allowedPoolMultipliers[seeds.multiplier]) return false;
     return true;
   }
 
