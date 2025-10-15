@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
@@ -10,6 +11,7 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import './IPoolCompletionHandler.sol';
 
 error AlreadyClaimedWinnings();
+error IncorrectStakeValue();
 error InsufficientStakeValue();
 error InvalidAddress();
 error InvalidPoolId();
@@ -25,7 +27,6 @@ error PoolExistsAlready();
 error PoolNotYetCompleted();
 error UnsuccessfulFeeCollection();
 error UnsuccessfulSendWinnings();
-error UnsuccessfulStaking();
 error WindowHasClosed();
 error ZeroAmountSpecified();
 error UnmatchingPoolsAndPredictions();
@@ -145,6 +146,8 @@ contract Castora is
   ReentrancyGuardUpgradeable,
   UUPSUpgradeable
 {
+  using SafeERC20 for IERC20;
+
   /// An address to which all winner fees are sent to.
   address public feeCollector;
   /// Keeps tracks of the total number of pools that have ever been created.
@@ -181,9 +184,10 @@ contract Castora is
   /// Keeps track of total ever claimed amount per token.
   mapping(address => uint256) public totalClaimedWinningsAmounts;
 
-  fallback() external payable {}
-
-  receive() external payable {}
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
 
   function initialize(address feeCollector_) public initializer {
     feeCollector = feeCollector_;
@@ -213,15 +217,6 @@ contract Castora is
   function revokeAdminRole(address admin) public onlyOwner {
     if (admin == address(0)) revert InvalidAddress();
     _revokeRole(ADMIN_ROLE, admin);
-  }
-
-  /// Withdraws the specified `amount` of the provided `token` to the {owner}.
-  /// If the provided `token` is this contract's address, ETH is withdrawn.
-  function withdraw(address token, uint256 amount) public onlyOwner {
-    if (token == address(0)) revert InvalidAddress();
-    if (amount == 0) revert ZeroAmountSpecified();
-    if (token == address(this)) (payable(owner()).call{value: amount}(''));
-    else IERC20(token).transfer(owner(), amount);
   }
 
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
@@ -594,10 +589,9 @@ contract Castora is
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount) revert InsufficientStakeValue();
+      if (msg.value > seeds.stakeAmount) revert IncorrectStakeValue();
     } else {
-      if (!IERC20(seeds.stakeToken).transferFrom(msg.sender, address(this), seeds.stakeAmount)) {
-        revert UnsuccessfulStaking();
-      }
+      IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount);
     }
 
     totalNoOfPredictions += 1;
@@ -643,9 +637,7 @@ contract Castora is
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
     } else {
-      if (!IERC20(seeds.stakeToken).transferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount)) {
-        revert UnsuccessfulStaking();
-      }
+      IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount);
     }
 
     firstPredictionId = pool.noOfPredictions + 1;
@@ -686,13 +678,12 @@ contract Castora is
     if (winAmount == 0) revert ZeroAmountSpecified();
 
     uint256 fees = (pool.seeds.stakeAmount * pool.noOfPredictions) - (winAmount * noOfWinners);
-    bool isSuccess = false;
     if (pool.seeds.stakeToken == address(this)) {
-      (isSuccess,) = payable(feeCollector).call{value: fees}('');
+      (bool isSuccess,) = payable(feeCollector).call{value: fees}('');
+      if (!isSuccess) revert UnsuccessfulFeeCollection();
     } else {
-      isSuccess = IERC20(pool.seeds.stakeToken).transfer(feeCollector, fees);
+      IERC20(pool.seeds.stakeToken).safeTransfer(feeCollector, fees);
     }
-    if (!isSuccess) revert UnsuccessfulFeeCollection();
 
     pool.snapshotPrice = snapshotPrice;
     pool.completionTime = block.timestamp;
@@ -729,13 +720,12 @@ contract Castora is
     if (!prediction.isAWinner) revert NotAWinner();
     if (prediction.claimedWinningsTime != 0) revert AlreadyClaimedWinnings();
 
-    bool isSuccess = false;
     if (pool.seeds.stakeToken == address(this)) {
-      (isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
+      (bool isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
+      if (!isSuccess) revert UnsuccessfulSendWinnings();
     } else {
-      isSuccess = IERC20(pool.seeds.stakeToken).transfer(prediction.predicter, pool.winAmount);
+      IERC20(pool.seeds.stakeToken).safeTransfer(prediction.predicter, pool.winAmount);
     }
-    if (!isSuccess) revert UnsuccessfulSendWinnings();
 
     totalNoOfClaimedWinningsPredictions += 1;
     totalClaimedWinningsAmounts[pool.seeds.stakeToken] += pool.winAmount;

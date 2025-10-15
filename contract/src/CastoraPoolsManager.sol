@@ -21,7 +21,6 @@ error NotYourPool();
 error PoolCompletionAlreadyProcessed();
 error UnsuccessfulCreationFeeCollection();
 error UnsuccessfulSendCompletionFees();
-error WithdrawFailed();
 
 /// Emitted when the Castora contract address is updated
 /// @param oldCastora The previous Castora contract address
@@ -73,6 +72,11 @@ event IssuedCompletionFees(uint256 indexed poolId, address indexed completionFee
 /// @param token The token being claimed
 /// @param amount The amount being claimed
 event ClaimedCompletionFees(uint256 indexed poolId, address indexed user, address indexed token, uint256 amount);
+
+/// Emitted when the Pools Manager contract receives native token funds
+/// @param sender The address that sent the money
+/// @param amount The amount received
+event ReceivedWasCalled(address indexed sender, uint256 amount);
 
 /// Tracks global settings
 struct AllConfig {
@@ -541,9 +545,9 @@ contract CastoraPoolsManager is
     }
   }
 
-  fallback() external payable {}
-
-  receive() external payable {}
+  receive() external payable {
+    emit ReceivedWasCalled(msg.sender, msg.value);
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -651,20 +655,6 @@ contract CastoraPoolsManager is
     emit DisallowedCreationFees(_token);
   }
 
-  /// Withdraws the specified `amount` of the provided `token` to the {owner}.
-  /// If the provided `token` is this contract's address, ETH is withdrawn.
-  function withdraw(address token, uint256 amount) public onlyOwner nonReentrant {
-    if (token == address(0)) revert InvalidAddress();
-    if (amount == 0) revert ZeroAmountSpecified();
-
-    if (token == address(this)) {
-      (bool isSuccess,) = payable(owner()).call{value: amount}('');
-      if (!isSuccess) revert WithdrawFailed();
-    } else {
-      IERC20(token).safeTransfer(owner(), amount);
-    }
-  }
-
   /// @notice Creates a new pool with the provided seeds and creation fee token
   /// @param seeds The PoolSeeds struct containing pool parameters
   /// @param creationFeeToken The token to pay creation fees with
@@ -691,6 +681,7 @@ contract CastoraPoolsManager is
 
     // Collect creation fee and create pool
     uint256 creationFeeAmount = _collectCreationFee(creationFeeToken);
+    _sendToCastoraFeeCollectorInCreate(creationFeeAmount, creationFeeToken);
     poolId = castora().createPool(seeds);
 
     // Update statistics and user data
@@ -796,7 +787,7 @@ contract CastoraPoolsManager is
     if (userPool.creator == address(0)) {
       if (nonUserPoolHasCollectedFees[poolId]) revert PoolCompletionAlreadyProcessed();
 
-      _sendToCastoraFeeCollector(totalFees, pool.seeds.stakeToken);
+      _sendToCastoraFeeCollectorInComplete(totalFees, pool.seeds.stakeToken);
       nonUserPoolHasCollectedFees[poolId] = true;
       return;
     }
@@ -810,7 +801,9 @@ contract CastoraPoolsManager is
     uint256 castoraShare = totalFees - userShare;
 
     // payout Castora's share to fee collector
-    if (castoraShare > 0) _sendToCastoraFeeCollector(castoraShare, pool.seeds.stakeToken);
+    if (castoraShare > 0) {
+      _sendToCastoraFeeCollectorInComplete(castoraShare, pool.seeds.stakeToken);
+    }
 
     // update state for user's share payout. user will come and claim themselves
     if (userShare > 0) _updatePoolCompletionStats(poolId, userPool.creator, pool.seeds.stakeToken, userShare);
@@ -853,7 +846,21 @@ contract CastoraPoolsManager is
   /// @notice Sends fees to castora fee collector
   /// @param amount Amount to send
   /// @param token Token address
-  function _sendToCastoraFeeCollector(uint256 amount, address token) internal {
+  function _sendToCastoraFeeCollectorInCreate(uint256 amount, address token) internal {
+    if (amount == 0) return;
+    // native token payment is when the main castora is used
+    if (token == address(this)) {
+      (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
+      if (!isSuccess) revert UnsuccessfulFeeCollection();
+    } else {
+      IERC20(token).safeTransfer(allConfig.feeCollector, amount);
+    }
+  }
+
+  /// @notice Sends fees to castora fee collector
+  /// @param amount Amount to send
+  /// @param token Token address
+  function _sendToCastoraFeeCollectorInComplete(uint256 amount, address token) internal {
     if (amount == 0) return;
     // native token payment is when the main castora is used
     if (token == allConfig.castora) {

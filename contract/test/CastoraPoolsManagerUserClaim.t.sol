@@ -144,6 +144,15 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.warp(block.timestamp + 1600);
   }
 
+  function testReceivingOfNativeTokens() public {
+    vm.deal(user1, 1 ether);
+    vm.prank(user1);
+
+    vm.expectEmit(true, false, false, true);
+    emit ReceivedWasCalled(user1, 1 ether);
+    (payable(poolsManager).call{value: 1 ether}(''));
+  }
+
   // ========== PROCESS POOL COMPLETION TESTS ==========
 
   function testProcessPoolCompletionUserCreatedPool() public {

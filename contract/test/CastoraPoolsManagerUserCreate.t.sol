@@ -102,7 +102,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // Verify token transfer
     assertEq(creationFeeToken.balanceOf(user1), initialBalance - CREATION_FEE_AMOUNT);
-    assertEq(creationFeeToken.balanceOf(address(poolsManager)), CREATION_FEE_AMOUNT);
+    assertEq(creationFeeToken.balanceOf(feeCollector), CREATION_FEE_AMOUNT);
 
     // Verify global statistics
     AllStats memory stats = poolsManager.getAllStats();
@@ -260,7 +260,7 @@ contract CastoraPoolsManagerUserTest is Test {
 
     // Verify ETH transfer
     assertEq(user1.balance, initialBalance - 1 ether);
-    assertEq(address(poolsManager).balance, 1 ether);
+    assertEq(feeCollector.balance, 1 ether);
 
     // Verify pool creation
     assertEq(poolId, 1);

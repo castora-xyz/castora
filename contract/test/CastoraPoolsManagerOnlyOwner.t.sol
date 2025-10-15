@@ -268,68 +268,6 @@ contract CastoraPoolsManagerOnlyOwnerTest is Test {
     poolsManager.disallowCreationFees(address(cusd));
   }
 
-  // ========== withdraw Tests ==========
-
-  function testWithdrawERC20() public {
-    uint256 withdrawAmount = 100000 * 10 ** 6;
-    uint256 ownerBalanceBefore = cusd.balanceOf(owner);
-    uint256 contractBalanceBefore = cusd.balanceOf(address(poolsManager));
-
-    poolsManager.withdraw(address(cusd), withdrawAmount);
-
-    assertEq(cusd.balanceOf(owner), ownerBalanceBefore + withdrawAmount);
-    assertEq(cusd.balanceOf(address(poolsManager)), contractBalanceBefore - withdrawAmount);
-  }
-
-  function testWithdrawETH() public {
-    uint256 withdrawAmount = 1 ether;
-    uint256 ownerBalanceBefore = owner.balance;
-    uint256 contractBalanceBefore = address(poolsManager).balance;
-
-    poolsManager.withdraw(address(poolsManager), withdrawAmount);
-
-    assertEq(owner.balance, ownerBalanceBefore + withdrawAmount);
-    assertEq(address(poolsManager).balance, contractBalanceBefore - withdrawAmount);
-  }
-
-  function testRevertWithdrawZeroAddress() public {
-    vm.expectRevert(InvalidAddress.selector);
-    poolsManager.withdraw(address(0), 1000);
-  }
-
-  function testRevertWithdrawZeroAmount() public {
-    vm.expectRevert(ZeroAmountSpecified.selector);
-    poolsManager.withdraw(address(cusd), 0);
-  }
-
-  function testRevertWhenNotOwnerWithdraw() public {
-    vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.withdraw(address(cusd), 1000);
-  }
-
-  function testRevertWithdrawFailedETH() public {
-    // Create a contract that rejects ETH
-    RejectETH rejectContract = new RejectETH();
-
-    // Change owner to the reject contract
-    poolsManager.transferOwnership(address(rejectContract));
-
-    // Attempt withdrawal should fail
-    vm.prank(address(rejectContract));
-    vm.expectRevert(WithdrawFailed.selector);
-    poolsManager.withdraw(address(poolsManager), 1 ether);
-  }
-
-  function testRevertWithdrawFailedERC20() public {
-    // Mock the transfer function to return false
-    vm.mockCall(address(cusd), abi.encodeWithSelector(IERC20.transfer.selector, owner, 500), abi.encode(false));
-
-    // Attempt withdrawal should fail
-    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(cusd)));
-    poolsManager.withdraw(address(cusd), 500);
-  }
-
   // ========== pause/unpause Tests ==========
 
   function testPauseUnpause() public {

@@ -137,36 +137,6 @@ contract CastoraTest is Test {
 
   receive() external payable {}
 
-  function testWithdraw() public {
-    // Test ERC20 withdrawal
-    cusd.mint(address(castora), 1000000);
-    uint256 prevOwnerCusdBal = cusd.balanceOf(address(this));
-    castora.withdraw(address(cusd), 500000);
-    assertEq(cusd.balanceOf(address(this)), prevOwnerCusdBal + 500000);
-    assertEq(cusd.balanceOf(address(castora)), 500000);
-
-    // Test native token withdrawal
-    deal(address(castora), 1 ether);
-    uint256 prevCastoraEthBal = address(castora).balance;
-    uint256 prevOwnerEthBal = address(this).balance;
-    castora.withdraw(address(castora), 0.5 ether);
-    assertEq(address(castora).balance, prevCastoraEthBal - 0.5 ether);
-    assertEq(address(this).balance, prevOwnerEthBal + 0.5 ether);
-
-    // Test revert with zero address
-    vm.expectRevert(InvalidAddress.selector);
-    castora.withdraw(address(0), 1000);
-
-    // Test revert with zero amount
-    vm.expectRevert(ZeroAmountSpecified.selector);
-    castora.withdraw(address(cusd), 0);
-
-    // Test revert when not owner
-    vm.prank(user);
-    vm.expectRevert();
-    castora.withdraw(address(cusd), 1000);
-  }
-
   function testRevertWhenNotAdminCreatePool() public {
     vm.prank(user);
     vm.expectPartialRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
@@ -341,7 +311,7 @@ contract CastoraTest is Test {
     );
 
     vm.prank(user);
-    vm.expectRevert(UnsuccessfulStaking.selector);
+    vm.expectPartialRevert(SafeERC20.SafeERC20FailedOperation.selector);
     castora.predict(1, 0);
   }
 
@@ -356,7 +326,7 @@ contract CastoraTest is Test {
     );
 
     vm.prank(user);
-    vm.expectRevert(UnsuccessfulStaking.selector);
+    vm.expectPartialRevert(SafeERC20.SafeERC20FailedOperation.selector);
     castora.bulkPredict(1, 0, 3);
   }
 
@@ -481,7 +451,7 @@ contract CastoraTest is Test {
     castora.completePool(1, 0, 1, 0, new uint256[](1));
   }
 
-  function testRevertUnsuccessfulFeeCollectionCompletePool() public {
+  function testRevertFailedERC20CompletePool() public {
     // Test ERC20 fee collection failure
     castora.createPool(seedsErc20Stake);
     cusd.mint(user, 1000000);
@@ -501,7 +471,7 @@ contract CastoraTest is Test {
     uint256[] memory winnerPredictions = new uint256[](1);
     winnerPredictions[0] = 1;
 
-    vm.expectRevert(UnsuccessfulFeeCollection.selector);
+    vm.expectPartialRevert(SafeERC20.SafeERC20FailedOperation.selector);
     castora.completePool(1, 0, 1, 950000, winnerPredictions);
   }
 
@@ -648,7 +618,7 @@ contract CastoraTest is Test {
     castora.claimWinnings(1, 2); // testing prediction 2 as it isn't a winner
   }
 
-  function testRevertUnsuccessfulSendWinningsClaimWinnings() public {
+  function testRevertSafeERC20FailureClaimWinnings() public {
     // Test ERC20 winnings transfer failure
     castora.createPool(seedsErc20Stake);
     cusd.mint(user, 1000000);
@@ -666,7 +636,7 @@ contract CastoraTest is Test {
     vm.mockCall(address(cusd), abi.encodeWithSelector(IERC20.transfer.selector, user, 950000), abi.encode(false));
 
     vm.prank(user);
-    vm.expectRevert(UnsuccessfulSendWinnings.selector);
+    vm.expectPartialRevert(SafeERC20.SafeERC20FailedOperation.selector);
     castora.claimWinnings(1, 1);
   }
 
@@ -864,7 +834,7 @@ contract CastoraTest is Test {
     castora.claimWinnings(1, 3);
     unclaimedWinners = castora.getUnclaimedWinnerPredictionIdsForAddress(1, user);
     assertEq(unclaimedWinners.length, 3);
-    assertEq(unclaimedWinners[0], 2); 
+    assertEq(unclaimedWinners[0], 2);
     assertEq(unclaimedWinners[1], 4);
     assertEq(unclaimedWinners[2], 5);
   }
