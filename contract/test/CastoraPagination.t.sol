@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
-import 'forge-std/Test.sol';
-import '../src/Castora.sol';
-import '../src/cUSD.sol';
+import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {Test} from 'forge-std/Test.sol';
+import {Castora} from '../src/Castora.sol';
+import {CastoraErrors} from '../src/CastoraErrors.sol';
+import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraStructs} from '../src/CastoraStructs.sol';
+import {cUSD} from '../src/cUSD.sol';
 
-contract CastoraPaginationTest is Test {
+contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
   cUSD cusd;
   address owner;

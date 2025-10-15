@@ -1,136 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import './IPoolCompletionHandler.sol';
-
-error AlreadyClaimedWinnings();
-error IncorrectStakeValue();
-error InsufficientStakeValue();
-error InvalidAddress();
-error InvalidPoolId();
-error InvalidPoolTimes();
-error InvalidPredictionId();
-error InvalidWinnersCount();
-error NoPredictionsInPool();
-error NotAWinner();
-error NotYetSnapshotTime();
-error NotYourPrediction();
-error PoolAlreadyCompleted();
-error PoolExistsAlready();
-error PoolNotYetCompleted();
-error UnsuccessfulFeeCollection();
-error UnsuccessfulSendWinnings();
-error WindowHasClosed();
-error ZeroAmountSpecified();
-error UnmatchingPoolsAndPredictions();
-
-/// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
-event CreatedPool(uint256 indexed poolId, bytes32 indexed seedsHash);
-
-/// Emitted when a participant (with `predicter` address) joins a {Pool}
-/// with matching `poolId` with the new `predictionId` for a
-/// `predictionPrice`.
-event Predicted(
-  uint256 indexed poolId, uint256 indexed predictionId, address indexed predicter, uint256 predictionPrice
-);
-
-/// Emitted when the {Pool} with `poolId` obtains what the price
-/// (`snapshotPrice`) of the `predictionToken` was at `snapshotTime`.
-event CompletedPool(
-  uint256 indexed poolId, uint256 snapshotTime, uint256 snapshotPrice, uint256 winAmount, uint256 noOfWinners
-);
-
-/// Emitted when the address of predicter (now a `winner`) that made the
-/// {Prediction} with `predictionId` in a {Pool} with `poolId` claims
-/// the `awardedAmount` of the `stakeToken` for their initial `stakeAmount`.
-event ClaimedWinnings(
-  uint256 indexed poolId,
-  uint256 indexed predictionId,
-  address indexed winner,
-  address stakeToken,
-  uint256 stakedAmount,
-  uint256 wonAmount
-);
-
-/// Holds information about a given prediction in a pool.
-struct Prediction {
-  /// The address of the person who made this prediction.
-  address predicter;
-  /// The numeric id of the pool in which this prediction was made.
-  uint256 poolId;
-  /// The numeric id of this prediction in the pool. It matches
-  /// the nth prediction that was made in this pool.
-  uint256 predictionId;
-  /// The price that this predicter proposed when staking. It takes into
-  /// account the decimals of the {PoolSeeds.predictionToken}.
-  uint256 predictionPrice;
-  /// The timestamp at which this prediction was made.
-  uint256 predictionTime;
-  /// When the predicter claimed their winnings.
-  uint256 claimedWinningsTime;
-  /// Whether this prediction was among the first half closest
-  /// to the {PoolSeeds.predictionToken}'s price as of
-  /// {PoolSeeds.snapshotTime}.
-  bool isAWinner;
-}
-
-/// Holds information about the properties of a given pool.
-/// Uniquely identifies a pool alongside the pool's unique numeric poolId.
-struct PoolSeeds {
-  /// The token whose price is been predicted in this pool.
-  address predictionToken;
-  /// The token that all participants in this pool must stake to make
-  /// their predictions. It could be the same or different from the
-  /// predictionToken.
-  address stakeToken;
-  /// The amount of the stakeToken that all participants must stake
-  /// when predicting. It takes into account the stakeToken's decimals.
-  uint256 stakeAmount;
-  /// The timestamp for which pool participants speculate what the price
-  /// of the predictionToken will be.
-  uint256 snapshotTime;
-  /// The timestamp at which no other participant can join this pool.
-  /// This must be before or the same as snapshotTime.
-  uint256 windowCloseTime;
-}
-
-/// @title A pool is where participants make predictions.
-/// @notice A pool is uniquely identified by its numeric poolId and
-/// seeds struct. At the point when a pool is created, the poolId
-/// corresponds to the current {noOfPools}.
-struct Pool {
-  /// The numeric id of this pool. It matches the nth pool that was ever
-  /// created.
-  uint256 poolId;
-  /// Details about constants of this pool.
-  PoolSeeds seeds;
-  /// A hash of the {seeds}. Helps with fetching a poolId.
-  bytes32 seedsHash;
-  /// When this pool was created.
-  uint256 creationTime;
-  /// Keeps track of the sum of predictions that were made in this pool.
-  uint256 noOfPredictions;
-  /// The price of {seeds-predictionToken} as of
-  /// {seeds-snapshotTime}.
-  uint256 snapshotPrice;
-  /// When the {snapshotPrice} of this pool was taken.
-  uint256 completionTime;
-  /// The amount of the {seeds-stakeToken} that is winners claim.
-  /// It is almost equal to twice of the {seeds-stakeAmount}.
-  /// It takes into account the decimals of {seeds-stakeToken}.
-  uint256 winAmount;
-  /// The number of {winnerPredictions}. Helps in analysis.
-  uint256 noOfWinners;
-  /// The number of {claimedWinningsPredictions}. Helps in analysis.
-  uint256 noOfClaimedWinnings;
-}
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {CastoraErrors} from './CastoraErrors.sol';
+import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraStructs} from './CastoraStructs.sol';
+import {IPoolCompletionHandler} from './IPoolCompletionHandler.sol';
 
 /// @title Rewards participants' accuracy in predicting prices of tokens.
 /// @notice Participants predict what the price of a predictionToken will be at
@@ -140,6 +21,9 @@ struct Pool {
 /// rather they each go with almost twice of what they initially staked.
 /// @custom:oz-upgrades-from build-info-ref:Castora
 contract Castora is
+  CastoraErrors,
+  CastoraEvents,
+  CastoraStructs,
   Initializable,
   OwnableUpgradeable,
   AccessControlUpgradeable,

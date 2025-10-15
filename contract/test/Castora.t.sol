@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/interfaces/draft-IERC6093.sol';
-import '@openzeppelin/contracts/access/IAccessControl.sol';
-import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
-import 'forge-std/Test.sol';
-import '../src/Castora.sol';
-import '../src/cUSD.sol';
+import {IAccessControl} from '@openzeppelin/contracts/access/IAccessControl.sol';
+import {IERC20Errors} from '@openzeppelin/contracts/interfaces/draft-IERC6093.sol';
+import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Test} from 'forge-std/Test.sol';
+import {Castora} from '../src/Castora.sol';
+import {CastoraErrors} from '../src/CastoraErrors.sol';
+import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraStructs} from '../src/CastoraStructs.sol';
+import {cUSD} from '../src/cUSD.sol';
 
 contract MockSuccessfulHandler {
   bool public wasProcessPoolCompletionCalled;
@@ -31,7 +36,7 @@ contract MockFailingHandler {
 
 contract MockNonHandlerContract {}
 
-contract CastoraTest is Test {
+contract CastoraTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
   cUSD cusd;
   address owner;

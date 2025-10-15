@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'forge-std/Test.sol';
-import '../src/CastoraPoolsManager.sol';
-import '../src/cUSD.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Test} from 'forge-std/Test.sol';
+import {Castora} from '../src/Castora.sol';
+import {CastoraErrors} from '../src/CastoraErrors.sol';
+import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
+import {CastoraStructs} from '../src/CastoraStructs.sol';
+import {cUSD} from '../src/cUSD.sol';
 
 contract RejectETH {
   receive() external payable {
@@ -14,7 +19,7 @@ contract RejectETH {
   }
 }
 
-contract CastoraPoolsManagerOnlyOwnerTest is Test {
+contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraPoolsManager poolsManager;
   cUSD cusd;
   cUSD altToken;

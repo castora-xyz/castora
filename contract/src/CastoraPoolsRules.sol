@@ -1,32 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import './Castora.sol';
-
-error InvalidPoolTimeInterval();
-error InvalidPoolMultiplier();
-error PredictionTokenNotAllowed();
-error StakeTokenNotAllowed();
-error StakeAmountNotAllowed();
-
-/// Emitted when a stake token's allowed status is updated.
-event UpdatedAllowedStakeToken(address indexed token, bool allowed);
-
-/// Emitted when a prediction token's allowed status is updated.
-event UpdatedAllowedPredictionToken(address indexed token, bool allowed);
-
-/// Emitted when a specific stake amount's allowed status is updated for a token.
-event UpdatedAllowedStakeAmount(address indexed token, uint256 amount, bool allowed);
-
-/// Emitted when a specific multiplier's allowed status is updated for a pool.
-event UpdatedAllowedPoolMultiplier(uint16 multiplier, bool allowed);
-
-/// Emitted when the required time interval for pool timing validation is updated.
-event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {CastoraErrors} from './CastoraErrors.sol';
+import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraStructs} from './CastoraStructs.sol';
 
 /// @title CastoraPoolsRules - Pool Creation and Validation Rules for Castora
 /// @notice This upgradeable contract manages validation rules and permissions for pool creation in the Castora protocol.
@@ -35,7 +16,15 @@ event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
 /// @dev The contract is upgradeable using UUPS pattern and includes comprehensive validation functions
 /// that can either revert on failure or return boolean results for integration flexibility.
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsRules
-contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract CastoraPoolsRules is
+  CastoraErrors,
+  CastoraEvents,
+  CastoraStructs,
+  Initializable,
+  OwnableUpgradeable,
+  UUPSUpgradeable,
+  ReentrancyGuardUpgradeable
+{
   /// Required time interval in seconds for pool timing validation
   uint256 public requiredTimeInterval;
   /// Counter for the number of stake tokens that have ever been allowed
@@ -69,7 +58,7 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// Maps each currently allowed prediction token to its index in currentlyAllowedPredictionTokens (for efficient removal)
   mapping(address => uint256) public currentlyAllowedPredictionTokenIndex;
   /// Maps allowed multipliers for pools, 2 decimal places (e.g. 150 = 1.5x)
-  mapping(uint16 => bool) public allowedPoolMultipliers; 
+  mapping(uint16 => bool) public allowedPoolMultipliers;
   /// Tracks if a multiplier has ever been added to allowedPoolMultipliers (prevents duplicates)
   mapping(uint16 => bool) public hasEverBeenAllowedPoolMultiplier;
   /// Array of all multipliers that have ever been allowed
@@ -110,7 +99,7 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// @param allowed Whether the token is allowed
   function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
     if (token == address(0)) revert InvalidAddress();
-    
+
     bool wasAllowed = allowedStakeTokens[token];
     allowedStakeTokens[token] = allowed;
 
@@ -323,7 +312,7 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// Check if a pool multiplier is allowed without reverting
   /// @param multiplier The pool multiplier
   /// @return true if multiplier is allowed, false otherwise
-  function isValidMultiplier(uint16 multiplier) external view returns (bool) {  
+  function isValidMultiplier(uint16 multiplier) external view returns (bool) {
     return allowedPoolMultipliers[multiplier];
   }
 

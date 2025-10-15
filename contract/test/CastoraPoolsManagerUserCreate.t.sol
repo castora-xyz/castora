@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'forge-std/Test.sol';
-import '../src/CastoraPoolsManager.sol';
-import '../src/Castora.sol';
-import '../src/CastoraPoolsRules.sol';
-import '../src/cUSD.sol';
+import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Test} from 'forge-std/Test.sol';
+import {Castora} from '../src/Castora.sol';
+import {CastoraErrors} from '../src/CastoraErrors.sol';
+import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
+import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
+import {CastoraStructs} from '../src/CastoraStructs.sol';
+import {cUSD} from '../src/cUSD.sol';
 
-contract CastoraPoolsManagerUserTest is Test {
+contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraPoolsManager poolsManager;
   Castora mockCastora;
   CastoraPoolsRules mockPoolsRules;

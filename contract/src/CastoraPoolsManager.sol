@@ -1,217 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import './Castora.sol';
-import './CastoraPoolsRules.sol';
-
-error AlreadyClaimedCompletionFees();
-error IncorrectCreationFeeValue();
-error InsufficientCreationFeeValue();
-error InvalidSplitFeesPercent();
-error CreationFeeTokenAlreadyDisallowed();
-error CreationFeeTokenNotAllowed();
-error NotYourPool();
-error PoolCompletionAlreadyProcessed();
-error UnsuccessfulCreationFeeCollection();
-error UnsuccessfulSendCompletionFees();
-
-/// Emitted when the Castora contract address is updated
-/// @param oldCastora The previous Castora contract address
-/// @param newCastora The new Castora contract address
-event SetCastora(address indexed oldCastora, address indexed newCastora);
-
-/// Emitted when the CastoraPoolsRules contract address is updated
-/// @param oldPoolsRules The previous CastoraPoolsRules contract address
-/// @param newPoolsRules The new CastoraPoolsRules contract address
-event SetPoolsRules(address indexed oldPoolsRules, address indexed newPoolsRules);
-
-/// Emitted when the fee collector address is updated
-/// @param oldFeeCollector The previous fee collector address
-/// @param newFeeCollector The new fee collector address
-event SetFeeCollector(address indexed oldFeeCollector, address indexed newFeeCollector);
-
-/// Emitted when the completion pool fees split percentage is updated
-/// @param oldPercentage The previous split percentage
-/// @param newPercentage The new split percentage
-event SetCompletionPoolFeesSplitPercent(uint256 oldPercentage, uint256 newPercentage);
-
-/// Emitted when a token is allowed for creation fees
-/// @param token The token address that was allowed
-/// @param amount The fee amount set for this token
-event SetCreationFees(address indexed token, uint256 amount);
-
-/// Emitted when a token is disallowed for creation fees
-/// @param token The token address that was disallowed
-event DisallowedCreationFees(address indexed token);
-
-/// Emitted when a pool is created
-/// @param poolId The ID of the created pool
-/// @param creator The address of the pool creator
-/// @param creationFeesToken The token used for creation fees
-/// @param creationFeesAmount The amount paid for creation fees
-event UserHasCreatedPool(
-  uint256 indexed poolId, address indexed creator, address indexed creationFeesToken, uint256 creationFeesAmount
-);
-
-/// Emitted when a pool created by a user is completed and the claims are set
-/// @param poolId The ID of the completed pool
-/// @param completionFeesToken The token used for completion fees
-/// @param completionFeesAmount The users allocation they won
-event IssuedCompletionFees(uint256 indexed poolId, address indexed completionFeesToken, uint256 completionFeesAmount);
-
-/// Emitted when completion fees are claimed
-/// @param poolId The ID of the pool
-/// @param user The address claiming the fees
-/// @param token The token being claimed
-/// @param amount The amount being claimed
-event ClaimedCompletionFees(uint256 indexed poolId, address indexed user, address indexed token, uint256 amount);
-
-/// Emitted when the Pools Manager contract receives native token funds
-/// @param sender The address that sent the money
-/// @param amount The amount received
-event ReceivedWasCalled(address indexed sender, uint256 amount);
-
-/// Tracks global settings
-struct AllConfig {
-  /// Address for main castora contract
-  address castora;
-  /// Address for CastoraPoolsRules contract
-  address poolsRules;
-  /// Address for fee collection
-  address feeCollector;
-  /// Split percentage for completion pool fees (with 4 decimal places: 10000 = 100%)
-  uint256 completionPoolFeesSplitPercent;
-  /// Reserved field for future use
-  address reserved1;
-  /// Reserved field for future use
-  address reserved2;
-  /// Reserved field for future use
-  uint256 reserved3;
-  /// Reserved field for future use
-  uint256 reserved4;
-  /// Reserved field for future use
-  uint256 reserved5;
-}
-
-/// Tracks global activity info
-struct AllStats {
-  /// Total number of unique users who have created pools
-  uint256 noOfUsers;
-  /// Total number of pools created across all users
-  uint256 noOfUserCreatedPools;
-  /// Total number of paid pool creations
-  uint256 noOfUserPaidPoolCreations;
-  /// Total number of pools with claimable completion fees
-  uint256 noOfClaimableFeesPools;
-  /// Total number of pools where completion fees have been claimed
-  uint256 noOfClaimedFeesPools;
-  /// Total number of unique tokens used for creation fees
-  uint256 noOfCreationFeesTokens;
-  /// Total number of unique tokens used for completion fees
-  uint256 noOfCompletionFeesTokens;
-  /// Reserved field for future use
-  uint256 reserved1;
-  /// Reserved field for future use
-  uint256 reserved2;
-  /// Reserved field for future use
-  uint256 reserved3;
-}
-
-/// Tracks creation fee token details and usage statistics
-struct CreationFeesTokenInfo {
-  /// Whether the token is allowed for creation fees
-  bool isAllowed;
-  /// The fee amount required for this token
-  uint256 amount;
-  /// Total number of times this token has been used for creation fees
-  uint256 totalUseCount;
-  /// Total amount of this token collected as creation fees
-  uint256 totalAmountUsed;
-}
-
-/// Tracks completion fee token details and usage statistics
-struct CompletionFeesTokenInfo {
-  /// Total number of times this token has been used for completion fees
-  uint256 totalUseCount;
-  /// Total amount of this token rewarded as completion fees
-  uint256 totalAmountIssued;
-  /// Total amount of this token claimed from completion fees
-  uint256 totalAmountClaimed;
-}
-
-/// Tracks info about user activity
-struct UserStats {
-  /// The sequential number of when this user first created a pool
-  uint256 nthUserCount;
-  /// Total number of pools created by this user
-  uint256 noOfPoolsCreated;
-  /// Total number of times this user paid pool creation fees
-  uint256 noOfPaidCreationFeesPools;
-  /// Total number of pools where this user has claimable completion fees
-  uint256 noOfClaimableCompletionFeesPools;
-  /// Total number of pools where this user has claimed completion fees
-  uint256 noOfClaimedCompletionFeesPools;
-  /// Number of different tokens this user has used for creation fees
-  uint256 noOfCreationFeeTokens;
-  /// Number of different tokens this user has received as completion fees
-  uint256 noOfCompletionFeeTokens;
-}
-
-/// Tracks info about token used during pool creation for the user
-struct UserCreationTokenFeesInfo {
-  /// Total amount of this token the user has paid for creation fees
-  uint256 amount;
-  /// Number of times the user has paid creation fees with this token
-  uint256 count;
-}
-
-/// Tracks info about a token used during pool completion for the user
-struct UserCompletionTokenFeesInfo {
-  /// Amount of this token the user can claim as completion fees
-  uint256 claimableAmount;
-  /// Amount of this token the user has already claimed as completion fees
-  uint256 claimedAmount;
-  /// Number of times the user has received completion fees in this token
-  uint256 count;
-}
-
-/// Tracks created pool information
-struct UserCreatedPool {
-  /// Address of the user who created the pool
-  address creator;
-  /// Token address used for completion fees reward
-  address completionFeesToken;
-  /// Token address used for creation fees payment
-  address creationFeesToken;
-  /// Sequential number of this pool for the creator
-  uint256 nthPoolCount;
-  /// Timestamp when the pool was created
-  uint256 creationTime;
-  /// Amount of creation fees paid for this pool
-  uint256 creationFeesAmount;
-  /// Timestamp when the pool was completed
-  uint256 completionTime;
-  /// Timestamp when the creator claimed their completion fees
-  uint256 creatorClaimTime;
-  /// Amount of completion fees awarded for this pool
-  uint256 completionFeesAmount;
-  /// Percentage of completion fees allocated to the creator
-  uint256 completionFeesPercent;
-  /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
-  uint16 multiplier;
-  /// Whether the pool is should be visible in the UI
-  bool isUnlisted;
-}
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {Castora} from './Castora.sol';
+import {CastoraErrors} from './CastoraErrors.sol';
+import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraPoolsRules} from './CastoraPoolsRules.sol';
+import {CastoraStructs} from './CastoraStructs.sol';
 
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
 contract CastoraPoolsManager is
+  CastoraErrors,
+  CastoraEvents,
+  CastoraStructs,
   Initializable,
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
@@ -546,7 +353,7 @@ contract CastoraPoolsManager is
   }
 
   receive() external payable {
-    emit ReceivedWasCalled(msg.sender, msg.value);
+    emit ReceiveWasCalled(msg.sender, msg.value);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -595,7 +402,7 @@ contract CastoraPoolsManager is
     if (_castora == address(0)) revert InvalidAddress();
     address oldCastora = allConfig.castora;
     allConfig.castora = _castora;
-    emit SetCastora(oldCastora, _castora);
+    emit SetCastoraInPoolsManager(oldCastora, _castora);
   }
 
   /// Sets the CastoraPoolsRules contract address
@@ -604,7 +411,7 @@ contract CastoraPoolsManager is
     if (_poolsRules == address(0)) revert InvalidAddress();
     address oldPoolsRules = allConfig.poolsRules;
     allConfig.poolsRules = _poolsRules;
-    emit SetPoolsRules(oldPoolsRules, _poolsRules);
+    emit SetPoolsRulesInPoolsManager(oldPoolsRules, _poolsRules);
   }
 
   /// Sets the fee collector address
