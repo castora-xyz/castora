@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.25;
+pragma solidity 0.8.30;
 
 import '@openzeppelin/contracts/interfaces/draft-IERC6093.sol';
 import '@openzeppelin/contracts/access/IAccessControl.sol';

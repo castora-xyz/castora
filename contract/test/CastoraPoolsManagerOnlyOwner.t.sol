@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.25;
+pragma solidity 0.8.30;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
@@ -329,7 +329,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is Test {
 
   // ========== setPoolsRules Tests ==========
 
-  function testSetPoolsRules() public {
+  function testSetPoolsRulesInPoolsManager() public {
     address newPoolsRules = makeAddr('newPoolsRules');
     address oldPoolsRules = poolsManager.getAllConfig().poolsRules;
     poolsManager.setPoolsRules(newPoolsRules);
@@ -337,14 +337,14 @@ contract CastoraPoolsManagerOnlyOwnerTest is Test {
     assertEq(oldPoolsRules, poolsRules);
   }
 
-  function testRevertWhenNotOwnerSetPoolsRules() public {
+  function testRevertWhenNotOwnerSetPoolsRulesInPoolsManager() public {
     address newPoolsRules = makeAddr('newPoolsRules');
     vm.prank(user);
     vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
     poolsManager.setPoolsRules(newPoolsRules);
   }
 
-  function testRevertZeroAddressSetPoolsRules() public {
+  function testRevertZeroAddressSetPoolsRulesInPoolsManager() public {
     vm.expectRevert(InvalidAddress.selector);
     poolsManager.setPoolsRules(address(0));
   }
