@@ -366,7 +366,7 @@ contract CastoraPoolsManager is
   /// @param poolsRules_ The address of the CastoraPoolsRules contract.
   /// @param feeCollector_ The address that will collect pool completion fees for Castora.
   /// @param splitPercent_ The split percentage for completion pool fees (10000 = 100%).
-  function initialize(address castora_, address poolsRules_, address feeCollector_, uint256 splitPercent_)
+  function initialize(address castora_, address poolsRules_, address feeCollector_, uint16 splitPercent_)
     public
     initializer
   {
@@ -378,7 +378,7 @@ contract CastoraPoolsManager is
     allConfig.castora = castora_;
     allConfig.poolsRules = poolsRules_;
     allConfig.feeCollector = feeCollector_;
-    allConfig.completionPoolFeesSplitPercent = splitPercent_;
+    allConfig.creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
     __Ownable_init(msg.sender);
     __UUPSUpgradeable_init();
@@ -424,11 +424,11 @@ contract CastoraPoolsManager is
   }
 
   /// Updates the completion pool fees split percent
-  /// @param _percentage Split percentage with 4 decimal places (10000 = 100%)
-  function setCompletionPoolFeesSplitPercent(uint256 _percentage) external onlyOwner nonReentrant {
+  /// @param _percentage Split percentage with 2 decimal places (10000 = 100%)
+  function setCompletionPoolFeesSplitPercent(uint16 _percentage) external onlyOwner nonReentrant {
     if (_percentage > 10000) revert InvalidSplitFeesPercent();
-    uint256 oldPercentage = allConfig.completionPoolFeesSplitPercent;
-    allConfig.completionPoolFeesSplitPercent = _percentage;
+    uint256 oldPercentage = allConfig.creatorPoolCompletionFeesSplitPercent;
+    allConfig.creatorPoolCompletionFeesSplitPercent = _percentage;
     emit SetCompletionPoolFeesSplitPercent(oldPercentage, _percentage);
   }
 
@@ -570,7 +570,7 @@ contract CastoraPoolsManager is
       completionTime: 0,
       creatorClaimTime: 0,
       completionFeesAmount: 0,
-      completionFeesPercent: allConfig.completionPoolFeesSplitPercent,
+      creatorCompletionFeesPercent: allConfig.creatorPoolCompletionFeesSplitPercent,
       multiplier: multiplier,
       isUnlisted: isUnlisted
     });
@@ -604,7 +604,7 @@ contract CastoraPoolsManager is
     if (userPool.completionTime != 0) revert PoolCompletionAlreadyProcessed();
 
     // compute user's share and castora's share
-    uint256 userShare = (totalFees * userPool.completionFeesPercent) / 10000;
+    uint256 userShare = (totalFees * userPool.creatorCompletionFeesPercent) / 10000;
     uint256 castoraShare = totalFees - userShare;
 
     // payout Castora's share to fee collector

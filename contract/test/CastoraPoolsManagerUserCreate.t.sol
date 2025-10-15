@@ -25,7 +25,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
   address user1;
   address user2;
   address feeCollector;
-  uint256 constant SPLIT_PERCENT = 5000; // 50%
+  uint16 constant SPLIT_PERCENT = 5000; // 50%
   uint256 constant CREATION_FEE_AMOUNT = 100 * 10 ** 6; // 100 tokens with 6 decimals
 
   PoolSeeds validSeeds;
@@ -126,7 +126,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userPool.completionFeesToken, address(stakeToken));
     assertEq(userPool.nthPoolCount, 1);
     assertEq(userPool.creationFeesAmount, CREATION_FEE_AMOUNT);
-    assertEq(userPool.completionFeesPercent, SPLIT_PERCENT);
+    assertEq(userPool.creatorCompletionFeesPercent, SPLIT_PERCENT);
     assertTrue(userPool.creationTime > 0);
     assertEq(userPool.completionTime, 0);
     assertEq(userPool.creatorClaimTime, 0);
@@ -476,7 +476,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(config.castora, address(mockCastora));
     assertEq(config.poolsRules, address(mockPoolsRules));
     assertEq(config.feeCollector, feeCollector);
-    assertEq(config.completionPoolFeesSplitPercent, SPLIT_PERCENT);
+    assertEq(config.creatorPoolCompletionFeesSplitPercent, SPLIT_PERCENT);
 
     // Test getAllStats
     AllStats memory stats = poolsManager.getAllStats();

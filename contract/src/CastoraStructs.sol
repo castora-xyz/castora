@@ -83,8 +83,8 @@ contract CastoraStructs {
     address poolsRules;
     /// Address for fee collection
     address feeCollector;
-    /// Split percentage for completion pool fees (with 4 decimal places: 10000 = 100%)
-    uint256 completionPoolFeesSplitPercent;
+    /// Split percentage for completion pool fees (with 2 decimal places: 10000 = 100%)
+    uint16 creatorPoolCompletionFeesSplitPercent;
     /// Reserved field for future use
     address reserved1;
     /// Reserved field for future use
@@ -200,7 +200,7 @@ contract CastoraStructs {
     /// Amount of completion fees awarded for this pool
     uint256 completionFeesAmount;
     /// Percentage of completion fees allocated to the creator
-    uint256 completionFeesPercent;
+    uint16 creatorCompletionFeesPercent;
     /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
     uint16 multiplier;
     /// Whether the pool is should be visible in the UI

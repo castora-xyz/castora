@@ -34,7 +34,7 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
   address user3;
   address feeCollector;
   address rejectETHFeeCollector;
-  uint256 constant SPLIT_PERCENT = 5000; // 50%
+  uint16 constant SPLIT_PERCENT = 5000; // 50%
   uint256 constant CREATION_FEE_AMOUNT = 100 * 10 ** 6; // 100 tokens with 6 decimals
   uint256 constant STAKE_AMOUNT = 1000000; // 1 token with 6 decimals
   uint256 constant NUM_PREDICTIONS = 10;

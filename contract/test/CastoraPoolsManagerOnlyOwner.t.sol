@@ -29,7 +29,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
   address feeCollector;
   address user;
   address newFeeCollector;
-  uint256 splitFeesPercent;
+  uint16 splitFeesPercent;
 
   function setUp() public {
     owner = address(this);
@@ -96,19 +96,19 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
   // ========== setCompletionPoolFeesSplitPercent Tests ==========
 
   function testSetCompletionPoolFeesSplitPercent() public {
-    uint256 oldPercentage = poolsManager.getAllConfig().completionPoolFeesSplitPercent;
-    uint256 newPercentage = 3000; // 30%
+    uint256 oldPercentage = poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent;
+    uint16 newPercentage = 3000; // 30%
     poolsManager.setCompletionPoolFeesSplitPercent(newPercentage);
-    assertEq(poolsManager.getAllConfig().completionPoolFeesSplitPercent, newPercentage);
+    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, newPercentage);
     assertEq(oldPercentage, 5000); // Default 50%
 
     // Test 0%
     poolsManager.setCompletionPoolFeesSplitPercent(0);
-    assertEq(poolsManager.getAllConfig().completionPoolFeesSplitPercent, 0);
+    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 0);
 
     // Test 100%
     poolsManager.setCompletionPoolFeesSplitPercent(10000);
-    assertEq(poolsManager.getAllConfig().completionPoolFeesSplitPercent, 10000);
+    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 10000);
   }
 
   function testRevertInvalidSplitFeesPercent() public {
