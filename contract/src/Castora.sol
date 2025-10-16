@@ -46,10 +46,6 @@ contract Castora is
   /// Specifies the role that allow perculiar addresses to call the
   /// {takeSnapshot} function.
   bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
-  /// Maximum decimal points for prediction prices.
-  uint8 public constant PREDICTION_DECIMALS = 8;
-  /// Maximum decimal points for prediction prices.
-  uint8 public constant WINNER_FEE_PERCENT = 5;
   /// All pools that were ever created against their poolIds.
   mapping(uint256 => Pool) public pools;
   /// All poolIds against the hash of their seeds. Helps when there is a
