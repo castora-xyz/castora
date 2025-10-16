@@ -102,7 +102,7 @@ contract CastoraStructs {
   }
 
   /// Tracks global activity info
-  struct AllStats {
+  struct AllUserCreatedPoolStats {
     /// Total number of unique users who have created pools
     uint256 noOfUsers;
     /// Total number of pools created across all users
@@ -147,7 +147,7 @@ contract CastoraStructs {
     uint256 totalAmountClaimed;
   }
 
-  /// Tracks info about user activity
+  /// Tracks info about user activity in Pools Manager
   struct UserCreatedPoolStats {
     /// The sequential number of when this user first created a pool
     uint256 nthUserCount;

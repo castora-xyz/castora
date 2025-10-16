@@ -172,7 +172,7 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     assertEq(userPool.completionFeesAmount, userShare);
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimableFeesPools, 1);
     assertEq(stats.noOfCompletionFeesTokens, 1);
 
@@ -290,7 +290,7 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     assertEq(userPool.creatorClaimTime, block.timestamp);
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimedFeesPools, 1);
     assertEq(stats.noOfClaimableFeesPools, 0);
 
@@ -418,7 +418,7 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     }
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimedFeesPools, 3);
     assertEq(stats.noOfClaimableFeesPools, 0);
 

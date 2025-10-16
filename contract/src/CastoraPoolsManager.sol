@@ -29,7 +29,7 @@ contract CastoraPoolsManager is
   /// Global settings for core logic
   AllConfig public allConfig;
   /// Global statistics for all pools and users
-  AllStats public allStats;
+  AllUserCreatedPoolStats public allStats;
   /// Array of users who have created pools
   address[] public users;
   /// Array of all created pool IDs
@@ -83,8 +83,8 @@ contract CastoraPoolsManager is
   }
 
   /// Gets global statistics
-  /// @return stats The AllStats struct containing global activity information
-  function getAllStats() external view returns (AllStats memory stats) {
+  /// @return stats The AllUserCreatedPoolStats struct containing global activity information
+  function getAllStats() external view returns (AllUserCreatedPoolStats memory stats) {
     return allStats;
   }
 

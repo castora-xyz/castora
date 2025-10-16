@@ -95,7 +95,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(creationFeeToken.balanceOf(feeCollector), CREATION_FEE_AMOUNT);
 
     // Verify global statistics
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfUsers, 1);
     assertEq(stats.noOfUserCreatedPools, 1);
 
@@ -156,7 +156,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(returnedPoolId2, poolId2);
 
     // Verify global statistics
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfUsers, 2);
     assertEq(stats.noOfUserCreatedPools, 2);
 
@@ -185,7 +185,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     poolsManager.createPool(validSeeds, address(creationFeeToken));
 
     // Verify global statistics (only 1 unique user)
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfUsers, 1);
     assertEq(stats.noOfUserCreatedPools, 2);
 
@@ -351,7 +351,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(config.creatorPoolCompletionFeesSplitPercent, SPLIT_PERCENT);
 
     // Test getAllStats
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfUsers, 1);
     assertEq(stats.noOfUserCreatedPools, 1);
     assertEq(stats.noOfCreationFeesTokens, 1);

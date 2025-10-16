@@ -130,7 +130,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     assertEq(tokenInfo.totalAmountUsed, 0);
 
     // Check initial stats
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfCreationFeesTokens, 0);
 
     poolsManager.setCreationFees(address(cusd), feeAmount);
@@ -158,7 +158,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.setCreationFees(address(cusd), initialAmount);
 
     // Check initial state
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfCreationFeesTokens, 1);
 
     // Update fees for same token
@@ -190,7 +190,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     assertEq(altTokenInfo.amount, altAmount);
 
     // Check counter
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfCreationFeesTokens, 2);
 
     // Check array
