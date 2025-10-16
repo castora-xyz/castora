@@ -100,7 +100,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(stats.noOfUserCreatedPools, 1);
 
     // Verify user statistics
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.nthUserCount, 1);
     assertEq(userStats.noOfPoolsCreated, 1);
     assertEq(userStats.noOfPaidCreationFeesPools, 1);
@@ -161,11 +161,11 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(stats.noOfUserCreatedPools, 2);
 
     // Verify user1 is the 1st user
-    UserStats memory user1Stats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory user1Stats = poolsManager.getUserStats(user1);
     assertEq(user1Stats.nthUserCount, 1);
 
     // Verify user2 is the 2nd user
-    UserStats memory user2Stats = poolsManager.getUserStats(user2);
+    UserCreatedPoolStats memory user2Stats = poolsManager.getUserStats(user2);
     assertEq(user2Stats.nthUserCount, 2);
   }
 
@@ -190,7 +190,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(stats.noOfUserCreatedPools, 2);
 
     // Verify user statistics
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.nthUserCount, 1); // Still the 1st user
     assertEq(userStats.noOfPoolsCreated, 2); // But created 2 pools
     assertEq(userStats.noOfPaidCreationFeesPools, 2);
@@ -310,7 +310,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(poolId, 1);
 
     // Verify user statistics for zero fee
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.noOfPaidCreationFeesPools, 0); // No paid fees since it was zero
 
     // Verify user created pool details

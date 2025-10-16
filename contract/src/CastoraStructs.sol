@@ -148,7 +148,7 @@ contract CastoraStructs {
   }
 
   /// Tracks info about user activity
-  struct UserStats {
+  struct UserCreatedPoolStats {
     /// The sequential number of when this user first created a pool
     uint256 nthUserCount;
     /// Total number of pools created by this user

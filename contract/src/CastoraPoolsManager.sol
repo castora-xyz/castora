@@ -47,7 +47,7 @@ contract CastoraPoolsManager is
   /// Keeps track of token addresses to info about being rewarded for pool completion
   mapping(address token => CompletionFeesTokenInfo info) public completionFeesTokenInfos;
   /// Keeps track of user addresses to their activity info
-  mapping(address user => UserStats stats) public userStats;
+  mapping(address user => UserCreatedPoolStats stats) public userStats;
   /// Keeps track of user addresses to array of created pool IDs
   mapping(address user => uint256[] poolIds) public userCreatedPoolIds;
   /// Keeps track of user addresses to array of paid created pool IDs
@@ -104,8 +104,8 @@ contract CastoraPoolsManager is
 
   /// Gets user statistics
   /// @param user The user address to query
-  /// @return stats The UserStats struct for the user
-  function getUserStats(address user) external view returns (UserStats memory stats) {
+  /// @return stats The UserCreatedPoolStats struct for the user
+  function getUserStats(address user) external view returns (UserCreatedPoolStats memory stats) {
     return userStats[user];
   }
 
