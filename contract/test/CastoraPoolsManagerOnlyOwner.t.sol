@@ -71,9 +71,9 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
   // ========== setFeeCollector Tests ==========
 
   function testSetFeeCollector() public {
-    address oldFeeCollector = poolsManager.getAllConfig().feeCollector;
+    address oldFeeCollector = poolsManager.feeCollector();
     poolsManager.setFeeCollector(newFeeCollector);
-    assertEq(poolsManager.getAllConfig().feeCollector, newFeeCollector);
+    assertEq(poolsManager.feeCollector(), newFeeCollector);
     assertEq(oldFeeCollector, feeCollector);
   }
 
@@ -91,19 +91,19 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
   // ========== setCreatorPoolCompletionFeesSplitPercent Tests ==========
 
   function testSetCreatorPoolCompletionFeesSplitPercent() public {
-    uint256 oldPercentage = poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent;
+    uint256 oldPercentage = poolsManager.creatorPoolCompletionFeesSplitPercent();
     uint16 newPercentage = 3000; // 30%
     poolsManager.setCreatorPoolCompletionFeesSplitPercent(newPercentage);
-    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, newPercentage);
+    assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), newPercentage);
     assertEq(oldPercentage, 5000); // Default 50%
 
     // Test 0%
     poolsManager.setCreatorPoolCompletionFeesSplitPercent(0);
-    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 0);
+    assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), 0);
 
     // Test 100%
     poolsManager.setCreatorPoolCompletionFeesSplitPercent(10000);
-    assertEq(poolsManager.getAllConfig().creatorPoolCompletionFeesSplitPercent, 10000);
+    assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), 10000);
   }
 
   function testRevertInvalidSplitFeesPercent() public {
@@ -309,9 +309,9 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
 
   function testSetCastora() public {
     address newCastora = makeAddr('newCastora');
-    address oldCastora = poolsManager.getAllConfig().castora;
+    address oldCastora = poolsManager.castora();
     poolsManager.setCastora(newCastora);
-    assertEq(poolsManager.getAllConfig().castora, newCastora);
+    assertEq(poolsManager.castora(), newCastora);
     assertEq(oldCastora, castora);
   }
 

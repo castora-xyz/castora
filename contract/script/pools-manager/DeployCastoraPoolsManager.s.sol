@@ -15,9 +15,7 @@ contract DeployCastoraPoolsManager is Script {
 
     address proxy = Upgrades.deployUUPSProxy(
       'CastoraPoolsManager.sol',
-      abi.encodeCall(
-        CastoraPoolsManager.initialize, (castoraAddress, feeCollectorAddress, splitPercent)
-      )
+      abi.encodeCall(CastoraPoolsManager.initialize, (castoraAddress, feeCollectorAddress, splitPercent))
     );
 
     console.log('Deployed CastoraPoolsManager at: ', proxy);

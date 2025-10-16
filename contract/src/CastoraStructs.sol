@@ -81,25 +81,6 @@ contract CastoraStructs {
     uint256 noOfClaimedWinnings;
   }
 
-  /// Tracks global settings
-  struct AllConfig {
-    /// Address for main castora contract
-    address castora;
-    /// Address for fee collection
-    address feeCollector;
-    /// Split percentage for completion pool fees (with 2 decimal places: 10000 = 100%)
-    uint16 creatorPoolCompletionFeesSplitPercent;
-    /// Reserved field for future use
-    address reserved1;
-    /// Reserved field for future use
-    address reserved2;
-    /// Reserved field for future use
-    uint256 reserved3;
-    /// Reserved field for future use
-    uint256 reserved4;
-    /// Reserved field for future use
-    uint256 reserved5;
-  }
 
   /// Tracks global activity info
   struct AllUserCreatedPoolStats {
@@ -117,12 +98,6 @@ contract CastoraStructs {
     uint256 noOfCreationFeesTokens;
     /// Total number of unique tokens used for completion fees
     uint256 noOfCompletionFeesTokens;
-    /// Reserved field for future use
-    uint256 reserved1;
-    /// Reserved field for future use
-    uint256 reserved2;
-    /// Reserved field for future use
-    uint256 reserved3;
   }
 
   /// Tracks creation fee token details and usage statistics

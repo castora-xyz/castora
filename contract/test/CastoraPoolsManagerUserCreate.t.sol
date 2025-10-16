@@ -343,12 +343,9 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken));
 
     // Test all getter functions for comprehensive coverage
-
-    // Test getAllConfig
-    AllConfig memory config = poolsManager.getAllConfig();
-    assertEq(config.castora, address(mockCastora));
-    assertEq(config.feeCollector, feeCollector);
-    assertEq(config.creatorPoolCompletionFeesSplitPercent, SPLIT_PERCENT);
+    assertEq(poolsManager.castora(), address(mockCastora));
+    assertEq(poolsManager.feeCollector(), feeCollector);
+    assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), SPLIT_PERCENT);
 
     // Test getAllStats
     AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();

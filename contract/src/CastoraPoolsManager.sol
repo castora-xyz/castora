@@ -26,8 +26,12 @@ contract CastoraPoolsManager is
 {
   using SafeERC20 for IERC20;
 
-  /// Global settings for core logic
-  AllConfig public allConfig;
+  /// Address for main castora contract
+  address public castora;
+  /// Address for fee collection
+  address public feeCollector;
+  /// Split percentage for completion pool fees (with 2 decimal places: 10000 = 100%)
+  uint16 public creatorPoolCompletionFeesSplitPercent;
   /// Global statistics for all pools and users
   AllUserCreatedPoolStats public allStats;
   /// Array of users who have created pools
@@ -70,17 +74,6 @@ contract CastoraPoolsManager is
   mapping(uint256 poolId => bool hasCollectedFees) public nonUserPoolHasCollectedFees;
   /// Efficient lookup for creation fee token existence
   mapping(address token => bool exists) public creationFeesTokenExists;
-
-  /// Gets global settings
-  /// @return config The AllConfig struct containing global settings
-  function getAllConfig() external view returns (AllConfig memory config) {
-    return allConfig;
-  }
-
-  /// Returns the Castora contract instance.
-  function castora() internal view returns (Castora) {
-    return Castora(payable(allConfig.castora));
-  }
 
   /// Gets global statistics
   /// @return stats The AllUserCreatedPoolStats struct containing global activity information
@@ -364,9 +357,9 @@ contract CastoraPoolsManager is
     if (feeCollector_ == address(0)) revert InvalidAddress();
     if (splitPercent_ > 10000) revert InvalidSplitFeesPercent();
 
-    allConfig.castora = castora_;
-    allConfig.feeCollector = feeCollector_;
-    allConfig.creatorPoolCompletionFeesSplitPercent = splitPercent_;
+    castora = castora_;
+    feeCollector = feeCollector_;
+    creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
     __Ownable_init(msg.sender);
     __UUPSUpgradeable_init();
@@ -388,8 +381,8 @@ contract CastoraPoolsManager is
   /// @param _castora The new Castora contract address
   function setCastora(address _castora) external onlyOwner {
     if (_castora == address(0)) revert InvalidAddress();
-    address oldCastora = allConfig.castora;
-    allConfig.castora = _castora;
+    address oldCastora = castora;
+    castora = _castora;
     emit SetCastoraInPoolsManager(oldCastora, _castora);
   }
 
@@ -397,8 +390,8 @@ contract CastoraPoolsManager is
   /// @param _feeCollector The new fee collector address
   function setFeeCollector(address _feeCollector) external onlyOwner {
     if (_feeCollector == address(0)) revert InvalidAddress();
-    address oldFeeCollector = allConfig.feeCollector;
-    allConfig.feeCollector = _feeCollector;
+    address oldFeeCollector = feeCollector;
+    feeCollector = _feeCollector;
     emit SetFeeCollector(oldFeeCollector, _feeCollector);
   }
 
@@ -406,8 +399,8 @@ contract CastoraPoolsManager is
   /// @param _percentage Split percentage with 2 decimal places (10000 = 100%)
   function setCreatorPoolCompletionFeesSplitPercent(uint16 _percentage) external onlyOwner nonReentrant {
     if (_percentage > 10000) revert InvalidSplitFeesPercent();
-    uint256 oldPercentage = allConfig.creatorPoolCompletionFeesSplitPercent;
-    allConfig.creatorPoolCompletionFeesSplitPercent = _percentage;
+    uint256 oldPercentage = creatorPoolCompletionFeesSplitPercent;
+    creatorPoolCompletionFeesSplitPercent = _percentage;
     emit SetCreatorPoolCompletionFeesSplitPercent(oldPercentage, _percentage);
   }
 
@@ -460,7 +453,7 @@ contract CastoraPoolsManager is
     // Collect creation fee and create pool
     uint256 creationFeeAmount = _collectCreationFee(creationFeeToken);
     _sendToCastoraFeeCollectorInCreate(creationFeeAmount, creationFeeToken);
-    poolId = castora().createPool(seeds);
+    poolId = Castora(castora).createPool(seeds);
 
     // Update statistics and user data
     _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
@@ -537,7 +530,7 @@ contract CastoraPoolsManager is
       completionTime: 0,
       creatorClaimTime: 0,
       completionFeesAmount: 0,
-      creatorCompletionFeesPercent: allConfig.creatorPoolCompletionFeesSplitPercent
+      creatorCompletionFeesPercent: creatorPoolCompletionFeesSplitPercent
     });
   }
 
@@ -545,7 +538,7 @@ contract CastoraPoolsManager is
   /// @param poolId The pool ID that was completed
   function processPoolCompletion(uint256 poolId) external nonReentrant {
     // Verify pool is completed in main Castora
-    Pool memory pool = castora().getPool(poolId);
+    Pool memory pool = Castora(castora).getPool(poolId);
     if (pool.completionTime == 0) revert PoolNotYetCompleted();
 
     // Get the total fees. Following is Same logic as is in Castora.completePool
@@ -622,10 +615,10 @@ contract CastoraPoolsManager is
     if (amount == 0) return;
     // native token payment is when the main castora is used
     if (token == address(this)) {
-      (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
+      (bool isSuccess,) = payable(feeCollector).call{value: amount}('');
       if (!isSuccess) revert UnsuccessfulFeeCollection();
     } else {
-      IERC20(token).safeTransfer(allConfig.feeCollector, amount);
+      IERC20(token).safeTransfer(feeCollector, amount);
     }
   }
 
@@ -635,11 +628,11 @@ contract CastoraPoolsManager is
   function _sendToCastoraFeeCollectorInComplete(uint256 amount, address token) internal {
     if (amount == 0) return;
     // native token payment is when the main castora is used
-    if (token == allConfig.castora) {
-      (bool isSuccess,) = payable(allConfig.feeCollector).call{value: amount}('');
+    if (token == castora) {
+      (bool isSuccess,) = payable(feeCollector).call{value: amount}('');
       if (!isSuccess) revert UnsuccessfulFeeCollection();
     } else {
-      IERC20(token).safeTransfer(allConfig.feeCollector, amount);
+      IERC20(token).safeTransfer(feeCollector, amount);
     }
   }
 
@@ -668,7 +661,7 @@ contract CastoraPoolsManager is
 
     // Transfer the fees
     // native token payment is when the main castora is used
-    if (pool.completionFeesToken == allConfig.castora) {
+    if (pool.completionFeesToken == castora) {
       (bool isSuccess,) = payable(msg.sender).call{value: pool.completionFeesAmount}('');
       if (!isSuccess) revert UnsuccessfulSendCompletionFees();
     } else {
