@@ -167,13 +167,13 @@ contract CastoraPoolsRules is
     // Update currently allowed arrays
     if (allowed && !wasAllowed) {
       // Adding to currently allowed
-      currentlyAllowedPredictionTokenIndex[token] = currentlyAllowedPredictionTokens.length;
+      currentlyAllowedPredictionTokenIndex[token] = currentlyAllowedPredictionTokensCount;
       currentlyAllowedPredictionTokens.push(token);
       currentlyAllowedPredictionTokensCount++;
     } else if (!allowed && wasAllowed) {
       // Removing from currently allowed
       uint256 indexToRemove = currentlyAllowedPredictionTokenIndex[token];
-      uint256 lastIndex = currentlyAllowedPredictionTokens.length - 1;
+      uint256 lastIndex = currentlyAllowedPredictionTokensCount - 1;
 
       if (indexToRemove != lastIndex) {
         // Move the last element to the position of the element to remove
@@ -215,13 +215,13 @@ contract CastoraPoolsRules is
     // Update currently allowed arrays
     if (allowed && !wasAllowed) {
       // Adding to currently allowed
-      currentlyAllowedPoolMultiplierIndex[multiplier] = currentlyAllowedPoolMultipliers.length;
+      currentlyAllowedPoolMultiplierIndex[multiplier] = currentlyAllowedPoolMultipliersCount;
       currentlyAllowedPoolMultipliers.push(multiplier);
       currentlyAllowedPoolMultipliersCount++;
     } else if (!allowed && wasAllowed) {
       // Removing from currently allowed
       uint256 indexToRemove = currentlyAllowedPoolMultiplierIndex[multiplier];
-      uint256 lastIndex = currentlyAllowedPoolMultipliers.length - 1;
+      uint256 lastIndex = currentlyAllowedPoolMultipliersCount - 1;
 
       if (indexToRemove != lastIndex) {
         // Move the last element to the position of the element to remove

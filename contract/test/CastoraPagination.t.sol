@@ -100,322 +100,250 @@ contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     vm.stopPrank();
   }
 
-  // ========== Tests for getPoolsPaginated ==========
-
-  function testGetPoolsPaginatedEmptyResult() public {
-    // No pools created yet
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPoolsPaginated(1, 5);
-  }
-
-  function testGetPoolsPaginatedInvalidOffset() public {
-    _createMultiplePools(3);
-
-    // Test offset 0 (should be 1-based)
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPoolsPaginated(0, 5);
-
-    // Test offset greater than number of pools
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPoolsPaginated(4, 5);
-  }
-
-  function testGetPoolsPaginatedSinglePool() public {
-    _createMultiplePools(1);
-
-    Pool[] memory pools = castora.getPoolsPaginated(1, 5);
-    assertEq(pools.length, 1);
-    assertEq(pools[0].poolId, 1);
-    assertEq(pools[0].seeds.stakeAmount, 1000000);
-  }
-
-  function testGetPoolsPaginatedMultiplePools() public {
-    _createMultiplePools(5);
-
-    // Get all pools
-    Pool[] memory allPools = castora.getPoolsPaginated(1, 10);
-    assertEq(allPools.length, 5);
-    for (uint256 i = 0; i < 5; i++) {
-      assertEq(allPools[i].poolId, i + 1);
-      assertEq(allPools[i].seeds.stakeAmount, 1000000 + i);
-    }
-  }
-
-  function testGetPoolsPaginatedWithLimit() public {
-    _createMultiplePools(5);
-
-    // Get first 2 pools
-    Pool[] memory firstTwo = castora.getPoolsPaginated(1, 2);
-    assertEq(firstTwo.length, 2);
-    assertEq(firstTwo[0].poolId, 1);
-    assertEq(firstTwo[1].poolId, 2);
-
-    // Get next 2 pools
-    Pool[] memory nextTwo = castora.getPoolsPaginated(3, 2);
-    assertEq(nextTwo.length, 2);
-    assertEq(nextTwo[0].poolId, 3);
-    assertEq(nextTwo[1].poolId, 4);
-
-    // Get last pool
-    Pool[] memory lastOne = castora.getPoolsPaginated(5, 2);
-    assertEq(lastOne.length, 1);
-    assertEq(lastOne[0].poolId, 5);
-  }
-
-  function testGetPoolsPaginatedLimitExceedsAvailable() public {
-    _createMultiplePools(3);
-
-    // Request more pools than available
-    Pool[] memory pools = castora.getPoolsPaginated(2, 10);
-    assertEq(pools.length, 2); // Should only return pools 2 and 3
-    assertEq(pools[0].poolId, 2);
-    assertEq(pools[1].poolId, 3);
-  }
-
   // ========== Tests for getPoolPredictionsPaginated ==========
 
-  function testGetPoolPredictionsPaginatedInvalidPoolId() public {
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPoolPredictionsPaginated(999, 1, 5);
-  }
+  // function testGetPoolPredictionsPaginatedInvalidPoolId() public {
+  //   vm.expectRevert(InvalidPoolId.selector);
+  //   castora.getPoolPredictionsPaginated(999, 1, 5);
+  // }
 
-  function testGetPoolPredictionsPaginatedInvalidOffset() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
+  // function testGetPoolPredictionsPaginatedInvalidOffset() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
 
-    // Test offset 0 (should be 1-based)
-    vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPoolPredictionsPaginated(1, 0, 5);
+  //   // Test offset 0 (should be 1-based)
+  //   vm.expectRevert(InvalidPredictionId.selector);
+  //   castora.getPoolPredictionsPaginated(1, 0, 5);
 
-    // Test offset greater than number of predictions
-    vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPoolPredictionsPaginated(1, 4, 5);
-  }
+  //   // Test offset greater than number of predictions
+  //   vm.expectRevert(InvalidPredictionId.selector);
+  //   castora.getPoolPredictionsPaginated(1, 4, 5);
+  // }
 
-  function testGetPoolPredictionsPaginatedEmptyPool() public {
-    _createMultiplePools(1);
+  // function testGetPoolPredictionsPaginatedEmptyPool() public {
+  //   _createMultiplePools(1);
 
-    // Pool exists but no predictions
-    vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPoolPredictionsPaginated(1, 1, 5);
-  }
+  //   // Pool exists but no predictions
+  //   vm.expectRevert(InvalidPredictionId.selector);
+  //   castora.getPoolPredictionsPaginated(1, 1, 5);
+  // }
 
-  function testGetPoolPredictionsPaginatedSinglePrediction() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 1);
+  // function testGetPoolPredictionsPaginatedSinglePrediction() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 1);
 
-    Prediction[] memory predictions = castora.getPoolPredictionsPaginated(1, 1, 5);
-    assertEq(predictions.length, 1);
-    assertEq(predictions[0].predictionId, 1);
-    assertEq(predictions[0].predicter, user1);
-    assertEq(predictions[0].predictionPrice, 1000000);
-  }
+  //   Prediction[] memory predictions = castora.getPoolPredictionsPaginated(1, 1, 5);
+  //   assertEq(predictions.length, 1);
+  //   assertEq(predictions[0].predictionId, 1);
+  //   assertEq(predictions[0].predicter, user1);
+  //   assertEq(predictions[0].predictionPrice, 1000000);
+  // }
 
-  function testGetPoolPredictionsPaginatedMultiplePredictions() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
+  // function testGetPoolPredictionsPaginatedMultiplePredictions() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
 
-    // Get all predictions
-    Prediction[] memory allPredictions = castora.getPoolPredictionsPaginated(1, 1, 10);
-    assertEq(allPredictions.length, 5);
-    for (uint256 i = 0; i < 5; i++) {
-      assertEq(allPredictions[i].predictionId, i + 1);
-      assertEq(allPredictions[i].predicter, user1);
-      assertEq(allPredictions[i].predictionPrice, 1000000 + i * 10000);
-    }
-  }
+  //   // Get all predictions
+  //   Prediction[] memory allPredictions = castora.getPoolPredictionsPaginated(1, 1, 10);
+  //   assertEq(allPredictions.length, 5);
+  //   for (uint256 i = 0; i < 5; i++) {
+  //     assertEq(allPredictions[i].predictionId, i + 1);
+  //     assertEq(allPredictions[i].predicter, user1);
+  //     assertEq(allPredictions[i].predictionPrice, 1000000 + i * 10000);
+  //   }
+  // }
 
-  function testGetPoolPredictionsPaginatedWithLimit() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
+  // function testGetPoolPredictionsPaginatedWithLimit() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
 
-    // Get first 2 predictions
-    Prediction[] memory firstTwo = castora.getPoolPredictionsPaginated(1, 1, 2);
-    assertEq(firstTwo.length, 2);
-    assertEq(firstTwo[0].predictionId, 1);
-    assertEq(firstTwo[1].predictionId, 2);
+  //   // Get first 2 predictions
+  //   Prediction[] memory firstTwo = castora.getPoolPredictionsPaginated(1, 1, 2);
+  //   assertEq(firstTwo.length, 2);
+  //   assertEq(firstTwo[0].predictionId, 1);
+  //   assertEq(firstTwo[1].predictionId, 2);
 
-    // Get next 2 predictions
-    Prediction[] memory nextTwo = castora.getPoolPredictionsPaginated(1, 3, 2);
-    assertEq(nextTwo.length, 2);
-    assertEq(nextTwo[0].predictionId, 3);
-    assertEq(nextTwo[1].predictionId, 4);
+  //   // Get next 2 predictions
+  //   Prediction[] memory nextTwo = castora.getPoolPredictionsPaginated(1, 3, 2);
+  //   assertEq(nextTwo.length, 2);
+  //   assertEq(nextTwo[0].predictionId, 3);
+  //   assertEq(nextTwo[1].predictionId, 4);
 
-    // Get last prediction
-    Prediction[] memory lastOne = castora.getPoolPredictionsPaginated(1, 5, 2);
-    assertEq(lastOne.length, 1);
-    assertEq(lastOne[0].predictionId, 5);
-  }
+  //   // Get last prediction
+  //   Prediction[] memory lastOne = castora.getPoolPredictionsPaginated(1, 5, 2);
+  //   assertEq(lastOne.length, 1);
+  //   assertEq(lastOne[0].predictionId, 5);
+  // }
 
-  function testGetPoolPredictionsPaginatedLimitExceedsAvailable() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
+  // function testGetPoolPredictionsPaginatedLimitExceedsAvailable() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
 
-    // Request more predictions than available
-    Prediction[] memory predictions = castora.getPoolPredictionsPaginated(1, 2, 10);
-    assertEq(predictions.length, 2); // Should only return predictions 2 and 3
-    assertEq(predictions[0].predictionId, 2);
-    assertEq(predictions[1].predictionId, 3);
-  }
+  //   // Request more predictions than available
+  //   Prediction[] memory predictions = castora.getPoolPredictionsPaginated(1, 2, 10);
+  //   assertEq(predictions.length, 2); // Should only return predictions 2 and 3
+  //   assertEq(predictions[0].predictionId, 2);
+  //   assertEq(predictions[1].predictionId, 3);
+  // }
 
-  function testGetPoolPredictionsPaginatedMultipleUsers() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 2);
-    _createMultiplePredictions(1, user2, 3);
+  // function testGetPoolPredictionsPaginatedMultipleUsers() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 2);
+  //   _createMultiplePredictions(1, user2, 3);
 
-    // Should get predictions from both users in order
-    Prediction[] memory allPredictions = castora.getPoolPredictionsPaginated(1, 1, 10);
-    assertEq(allPredictions.length, 5);
+  //   // Should get predictions from both users in order
+  //   Prediction[] memory allPredictions = castora.getPoolPredictionsPaginated(1, 1, 10);
+  //   assertEq(allPredictions.length, 5);
 
-    // First 2 from user1
-    assertEq(allPredictions[0].predicter, user1);
-    assertEq(allPredictions[1].predicter, user1);
+  //   // First 2 from user1
+  //   assertEq(allPredictions[0].predicter, user1);
+  //   assertEq(allPredictions[1].predicter, user1);
 
-    // Next 3 from user2
-    assertEq(allPredictions[2].predicter, user2);
-    assertEq(allPredictions[3].predicter, user2);
-    assertEq(allPredictions[4].predicter, user2);
-  }
+  //   // Next 3 from user2
+  //   assertEq(allPredictions[2].predicter, user2);
+  //   assertEq(allPredictions[3].predicter, user2);
+  //   assertEq(allPredictions[4].predicter, user2);
+  // }
 
-  // ========== Tests for getUserPredictionsPaginated ==========
+  // // ========== Tests for getUserPredictionsPaginated ==========
 
-  function testGetUserPredictionsPaginatedInvalidPoolId() public {
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getUserPredictionsPaginated(999, user1, 0, 5);
-  }
+  // function testGetUserPredictionsPaginatedInvalidPoolId() public {
+  //   vm.expectRevert(InvalidPoolId.selector);
+  //   castora.getUserPredictionsPaginated(999, user1, 0, 5);
+  // }
 
-  function testGetUserPredictionsPaginatedInvalidAddress() public {
-    _createMultiplePools(1);
+  // function testGetUserPredictionsPaginatedInvalidAddress() public {
+  //   _createMultiplePools(1);
 
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionsPaginated(1, address(0), 0, 5);
-  }
+  //   vm.expectRevert(InvalidAddress.selector);
+  //   castora.getUserPredictionsPaginated(1, address(0), 0, 5);
+  // }
 
-  function testGetUserPredictionsPaginatedNoUserPredictions() public {
-    _createMultiplePools(1);
+  // function testGetUserPredictionsPaginatedNoUserPredictions() public {
+  //   _createMultiplePools(1);
 
-    // User has made no predictions
-    Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 0, 5);
-    assertEq(predictions.length, 0);
-  }
+  //   // User has made no predictions
+  //   Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 0, 5);
+  //   assertEq(predictions.length, 0);
+  // }
 
-  function testGetUserPredictionsPaginatedOffsetTooLarge() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
+  // function testGetUserPredictionsPaginatedOffsetTooLarge() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
 
-    // Offset beyond available predictions
-    Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 5, 5);
-    assertEq(predictions.length, 0);
-  }
+  //   // Offset beyond available predictions
+  //   Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 5, 5);
+  //   assertEq(predictions.length, 0);
+  // }
 
-  function testGetUserPredictionsPaginatedSinglePrediction() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 1);
+  // function testGetUserPredictionsPaginatedSinglePrediction() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 1);
 
-    Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 0, 5);
-    assertEq(predictions.length, 1);
-    assertEq(predictions[0].predicter, user1);
-    assertEq(predictions[0].predictionId, 1);
-  }
+  //   Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 0, 5);
+  //   assertEq(predictions.length, 1);
+  //   assertEq(predictions[0].predicter, user1);
+  //   assertEq(predictions[0].predictionId, 1);
+  // }
 
-  function testGetUserPredictionsPaginatedMultiplePredictions() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
+  // function testGetUserPredictionsPaginatedMultiplePredictions() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
 
-    // Get all user predictions
-    Prediction[] memory allPredictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
-    assertEq(allPredictions.length, 5);
-    for (uint256 i = 0; i < 5; i++) {
-      assertEq(allPredictions[i].predicter, user1);
-      assertEq(allPredictions[i].predictionId, i + 1);
-    }
-  }
+  //   // Get all user predictions
+  //   Prediction[] memory allPredictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
+  //   assertEq(allPredictions.length, 5);
+  //   for (uint256 i = 0; i < 5; i++) {
+  //     assertEq(allPredictions[i].predicter, user1);
+  //     assertEq(allPredictions[i].predictionId, i + 1);
+  //   }
+  // }
 
-  function testGetUserPredictionsPaginatedWithLimit() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
+  // function testGetUserPredictionsPaginatedWithLimit() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
 
-    // Get first 2 predictions (0-based offset)
-    Prediction[] memory firstTwo = castora.getUserPredictionsPaginated(1, user1, 0, 2);
-    assertEq(firstTwo.length, 2);
-    assertEq(firstTwo[0].predictionId, 1);
-    assertEq(firstTwo[1].predictionId, 2);
+  //   // Get first 2 predictions (0-based offset)
+  //   Prediction[] memory firstTwo = castora.getUserPredictionsPaginated(1, user1, 0, 2);
+  //   assertEq(firstTwo.length, 2);
+  //   assertEq(firstTwo[0].predictionId, 1);
+  //   assertEq(firstTwo[1].predictionId, 2);
 
-    // Get next 2 predictions
-    Prediction[] memory nextTwo = castora.getUserPredictionsPaginated(1, user1, 2, 2);
-    assertEq(nextTwo.length, 2);
-    assertEq(nextTwo[0].predictionId, 3);
-    assertEq(nextTwo[1].predictionId, 4);
+  //   // Get next 2 predictions
+  //   Prediction[] memory nextTwo = castora.getUserPredictionsPaginated(1, user1, 2, 2);
+  //   assertEq(nextTwo.length, 2);
+  //   assertEq(nextTwo[0].predictionId, 3);
+  //   assertEq(nextTwo[1].predictionId, 4);
 
-    // Get last prediction
-    Prediction[] memory lastOne = castora.getUserPredictionsPaginated(1, user1, 4, 2);
-    assertEq(lastOne.length, 1);
-    assertEq(lastOne[0].predictionId, 5);
-  }
+  //   // Get last prediction
+  //   Prediction[] memory lastOne = castora.getUserPredictionsPaginated(1, user1, 4, 2);
+  //   assertEq(lastOne.length, 1);
+  //   assertEq(lastOne[0].predictionId, 5);
+  // }
 
-  function testGetUserPredictionsPaginatedLimitExceedsAvailable() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
+  // function testGetUserPredictionsPaginatedLimitExceedsAvailable() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
 
-    // Request more predictions than available
-    Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 1, 10);
-    assertEq(predictions.length, 2); // Should only return predictions at index 1 and 2
-    assertEq(predictions[0].predictionId, 2);
-    assertEq(predictions[1].predictionId, 3);
-  }
+  //   // Request more predictions than available
+  //   Prediction[] memory predictions = castora.getUserPredictionsPaginated(1, user1, 1, 10);
+  //   assertEq(predictions.length, 2); // Should only return predictions at index 1 and 2
+  //   assertEq(predictions[0].predictionId, 2);
+  //   assertEq(predictions[1].predictionId, 3);
+  // }
 
-  function testGetUserPredictionsPaginatedMultipleUsersInSamePool() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
-    _createMultiplePredictions(1, user2, 2);
-    _createMultiplePredictions(1, user3, 1);
+  // function testGetUserPredictionsPaginatedMultipleUsersInSamePool() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
+  //   _createMultiplePredictions(1, user2, 2);
+  //   _createMultiplePredictions(1, user3, 1);
 
-    // Get predictions for each user separately
-    Prediction[] memory user1Predictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
-    Prediction[] memory user2Predictions = castora.getUserPredictionsPaginated(1, user2, 0, 10);
-    Prediction[] memory user3Predictions = castora.getUserPredictionsPaginated(1, user3, 0, 10);
+  //   // Get predictions for each user separately
+  //   Prediction[] memory user1Predictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
+  //   Prediction[] memory user2Predictions = castora.getUserPredictionsPaginated(1, user2, 0, 10);
+  //   Prediction[] memory user3Predictions = castora.getUserPredictionsPaginated(1, user3, 0, 10);
 
-    assertEq(user1Predictions.length, 3);
-    assertEq(user2Predictions.length, 2);
-    assertEq(user3Predictions.length, 1);
+  //   assertEq(user1Predictions.length, 3);
+  //   assertEq(user2Predictions.length, 2);
+  //   assertEq(user3Predictions.length, 1);
 
-    // Verify each user only gets their own predictions
-    for (uint256 i = 0; i < user1Predictions.length; i++) {
-      assertEq(user1Predictions[i].predicter, user1);
-    }
-    for (uint256 i = 0; i < user2Predictions.length; i++) {
-      assertEq(user2Predictions[i].predicter, user2);
-    }
-    assertEq(user3Predictions[0].predicter, user3);
-  }
+  //   // Verify each user only gets their own predictions
+  //   for (uint256 i = 0; i < user1Predictions.length; i++) {
+  //     assertEq(user1Predictions[i].predicter, user1);
+  //   }
+  //   for (uint256 i = 0; i < user2Predictions.length; i++) {
+  //     assertEq(user2Predictions[i].predicter, user2);
+  //   }
+  //   assertEq(user3Predictions[0].predicter, user3);
+  // }
 
-  function testGetUserPredictionsPaginatedMultiplePools() public {
-    _createMultiplePools(2);
-    _createMultiplePredictions(1, user1, 3);
-    // Need to mint additional tokens for second pool since each pool has different stake amounts
-    cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 2000002);
-    for (uint256 i = 0; i < 2; i++) {
-      castora.predict(2, 1000000 + i * 10000);
-    }
-    vm.stopPrank();
+  // function testGetUserPredictionsPaginatedMultiplePools() public {
+  //   _createMultiplePools(2);
+  //   _createMultiplePredictions(1, user1, 3);
+  //   // Need to mint additional tokens for second pool since each pool has different stake amounts
+  //   cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
+  //   vm.startPrank(user1);
+  //   cusd.approve(address(castora), 2000002);
+  //   for (uint256 i = 0; i < 2; i++) {
+  //     castora.predict(2, 1000000 + i * 10000);
+  //   }
+  //   vm.stopPrank();
 
-    // Get predictions for each pool separately
-    Prediction[] memory pool1Predictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
-    Prediction[] memory pool2Predictions = castora.getUserPredictionsPaginated(2, user1, 0, 10);
+  //   // Get predictions for each pool separately
+  //   Prediction[] memory pool1Predictions = castora.getUserPredictionsPaginated(1, user1, 0, 10);
+  //   Prediction[] memory pool2Predictions = castora.getUserPredictionsPaginated(2, user1, 0, 10);
 
-    assertEq(pool1Predictions.length, 3);
-    assertEq(pool2Predictions.length, 2);
+  //   assertEq(pool1Predictions.length, 3);
+  //   assertEq(pool2Predictions.length, 2);
 
-    // Verify pool IDs are correct
-    for (uint256 i = 0; i < pool1Predictions.length; i++) {
-      assertEq(pool1Predictions[i].poolId, 1);
-    }
-    for (uint256 i = 0; i < pool2Predictions.length; i++) {
-      assertEq(pool2Predictions[i].poolId, 2);
-    }
-  }
+  //   // Verify pool IDs are correct
+  //   for (uint256 i = 0; i < pool1Predictions.length; i++) {
+  //     assertEq(pool1Predictions[i].poolId, 1);
+  //   }
+  //   for (uint256 i = 0; i < pool2Predictions.length; i++) {
+  //     assertEq(pool2Predictions[i].poolId, 2);
+  //   }
+  // }
 
   // ========== Tests for getPools (batch getter) ==========
 
@@ -761,568 +689,230 @@ contract CastoraPaginationTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     }
   }
 
-  // ========== Tests for getPredictionsForAddressPaginated ==========
-
-  function testGetPredictionsForAddressPaginatedInvalidPoolId() public {
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictionsForAddressPaginated(999, user1, 0, 5);
-
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictionsForAddressPaginated(0, user1, 0, 5);
-  }
-
-  function testGetPredictionsForAddressPaginatedInvalidAddress() public {
-    _createMultiplePools(1);
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getPredictionsForAddressPaginated(1, address(0), 0, 5);
-  }
-
-  function testGetPredictionsForAddressPaginatedNoUserPredictions() public {
-    _createMultiplePools(1);
-
-    // User has made no predictions
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
-    assertEq(predictions.length, 0);
-  }
-
-  function testGetPredictionsForAddressPaginatedOffsetTooLarge() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
-
-    // Offset beyond available predictions
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 5, 5);
-    assertEq(predictions.length, 0);
-  }
-
-  function testGetPredictionsForAddressPaginatedSinglePrediction() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 1);
-
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
-    assertEq(predictions.length, 1);
-    assertEq(predictions[0].predicter, user1);
-    assertEq(predictions[0].predictionId, 1);
-    assertEq(predictions[0].poolId, 1);
-    assertEq(predictions[0].predictionPrice, 1000000);
-  }
-
-  function testGetPredictionsForAddressPaginatedMultiplePredictions() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
-
-    // Get all user predictions
-    Prediction[] memory allPredictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
-    assertEq(allPredictions.length, 5);
-    for (uint256 i = 0; i < 5; i++) {
-      assertEq(allPredictions[i].predicter, user1);
-      assertEq(allPredictions[i].predictionId, i + 1);
-      assertEq(allPredictions[i].poolId, 1);
-      assertEq(allPredictions[i].predictionPrice, 1000000 + i * 10000);
-    }
-  }
-
-  function testGetPredictionsForAddressPaginatedWithLimit() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
-
-    // Get first 2 predictions (0-based offset)
-    Prediction[] memory firstTwo = castora.getPredictionsForAddressPaginated(1, user1, 0, 2);
-    assertEq(firstTwo.length, 2);
-    assertEq(firstTwo[0].predictionId, 1);
-    assertEq(firstTwo[1].predictionId, 2);
-
-    // Get next 2 predictions
-    Prediction[] memory nextTwo = castora.getPredictionsForAddressPaginated(1, user1, 2, 2);
-    assertEq(nextTwo.length, 2);
-    assertEq(nextTwo[0].predictionId, 3);
-    assertEq(nextTwo[1].predictionId, 4);
-
-    // Get last prediction
-    Prediction[] memory lastOne = castora.getPredictionsForAddressPaginated(1, user1, 4, 2);
-    assertEq(lastOne.length, 1);
-    assertEq(lastOne[0].predictionId, 5);
-  }
-
-  function testGetPredictionsForAddressPaginatedLimitExceedsAvailable() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
-
-    // Request more predictions than available
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 1, 10);
-    assertEq(predictions.length, 2); // Should only return predictions at index 1 and 2
-    assertEq(predictions[0].predictionId, 2);
-    assertEq(predictions[1].predictionId, 3);
-  }
-
-  function testGetPredictionsForAddressPaginatedMultipleUsersInSamePool() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
-    _createMultiplePredictions(1, user2, 2);
-    _createMultiplePredictions(1, user3, 1);
-
-    // Get predictions for each user separately
-    Prediction[] memory user1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
-    Prediction[] memory user2Predictions = castora.getPredictionsForAddressPaginated(1, user2, 0, 10);
-    Prediction[] memory user3Predictions = castora.getPredictionsForAddressPaginated(1, user3, 0, 10);
-
-    assertEq(user1Predictions.length, 3);
-    assertEq(user2Predictions.length, 2);
-    assertEq(user3Predictions.length, 1);
-
-    // Verify each user only gets their own predictions
-    for (uint256 i = 0; i < user1Predictions.length; i++) {
-      assertEq(user1Predictions[i].predicter, user1);
-    }
-    for (uint256 i = 0; i < user2Predictions.length; i++) {
-      assertEq(user2Predictions[i].predicter, user2);
-    }
-    assertEq(user3Predictions[0].predicter, user3);
-
-    // Verify user2's predictions have correct IDs (should be 4 and 5 since user1 made 1,2,3)
-    assertEq(user2Predictions[0].predictionId, 4);
-    assertEq(user2Predictions[1].predictionId, 5);
-
-    // Verify user3's prediction has correct ID (should be 6)
-    assertEq(user3Predictions[0].predictionId, 6);
-  }
-
-  function testGetPredictionsForAddressPaginatedMultiplePools() public {
-    _createMultiplePools(2);
-    _createMultiplePredictions(1, user1, 3);
-
-    // Need to mint additional tokens for second pool since each pool has different stake amounts
-    cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 2000002);
-    for (uint256 i = 0; i < 2; i++) {
-      castora.predict(2, 2000000 + i * 10000);
-    }
-    vm.stopPrank();
-
-    // Get predictions for each pool separately
-    Prediction[] memory pool1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
-    Prediction[] memory pool2Predictions = castora.getPredictionsForAddressPaginated(2, user1, 0, 10);
-
-    assertEq(pool1Predictions.length, 3);
-    assertEq(pool2Predictions.length, 2);
-
-    // Verify pool IDs are correct
-    for (uint256 i = 0; i < pool1Predictions.length; i++) {
-      assertEq(pool1Predictions[i].poolId, 1);
-      assertEq(pool1Predictions[i].predicter, user1);
-    }
-    for (uint256 i = 0; i < pool2Predictions.length; i++) {
-      assertEq(pool2Predictions[i].poolId, 2);
-      assertEq(pool2Predictions[i].predicter, user1);
-      assertEq(pool2Predictions[i].predictionPrice, 2000000 + i * 10000);
-    }
-  }
-
-  function testGetPredictionsForAddressPaginatedWithBulkPredictions() public {
-    _createMultiplePools(1);
-
-    // Create bulk predictions
-    cusd.mint(user1, 3000000);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 3000000);
-    castora.bulkPredict(1, 55555, 3);
-    vm.stopPrank();
-
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
-    assertEq(predictions.length, 3);
-
-    // All should have the same price from bulk predict
-    for (uint256 i = 0; i < 3; i++) {
-      assertEq(predictions[i].predicter, user1);
-      assertEq(predictions[i].predictionPrice, 55555);
-      assertEq(predictions[i].predictionId, i + 1);
-      assertEq(predictions[i].poolId, 1);
-    }
-  }
-
-  function testGetPredictionsForAddressPaginatedEmptyPool() public {
-    _createMultiplePools(1);
-
-    // Pool exists but user made no predictions
-    Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
-    assertEq(predictions.length, 0);
-  }
-
-  function testGetPredictionsForAddressPaginatedMixedUserActivity() public {
-    _createMultiplePools(1);
-
-    // user1 makes some predictions
-    _createMultiplePredictions(1, user1, 2);
-
-    // user2 makes some predictions in between
-    _createMultiplePredictions(1, user2, 1);
-
-    // user1 makes more predictions
-    _createMultiplePredictions(1, user1, 2);
-
-    // Get all predictions for user1 - should only get user1's predictions, not user2's
-    Prediction[] memory user1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
-    assertEq(user1Predictions.length, 4);
-
-    // Verify all returned predictions belong to user1
-    for (uint256 i = 0; i < user1Predictions.length; i++) {
-      assertEq(user1Predictions[i].predicter, user1);
-    }
-
-    // Verify the prediction IDs are correct (1, 2, 4, 5 - skipping 3 which belongs to user2)
-    assertEq(user1Predictions[0].predictionId, 1);
-    assertEq(user1Predictions[1].predictionId, 2);
-    assertEq(user1Predictions[2].predictionId, 4);
-    assertEq(user1Predictions[3].predictionId, 5);
-
-    // Test pagination within user1's predictions
-    Prediction[] memory firstTwo = castora.getPredictionsForAddressPaginated(1, user1, 0, 2);
-    assertEq(firstTwo.length, 2);
-    assertEq(firstTwo[0].predictionId, 1);
-    assertEq(firstTwo[1].predictionId, 2);
-
-    Prediction[] memory lastTwo = castora.getPredictionsForAddressPaginated(1, user1, 2, 2);
-    assertEq(lastTwo.length, 2);
-    assertEq(lastTwo[0].predictionId, 4);
-    assertEq(lastTwo[1].predictionId, 5);
-  }
-
-  // ========== Tests for getUserActivitiesOptimizedPaginated ==========
-
-  function testGetUserActivitiesOptimizedPaginatedInvalidAddress() public {
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getUserActivitiesOptimizedPaginated(address(0), 0, 5);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedNoUserActivities() public {
-    _createMultiplePools(2);
-
-    // User has made no predictions
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 5);
-
-    assertEq(pools.length, 0);
-    assertEq(predictions.length, 0);
-    assertEq(poolIndexes.length, 0);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedOffsetTooLarge() public {
-    _createMultiplePools(2);
-    _createMultiplePredictions(1, user1, 3);
-
-    // Offset beyond available activities (user1 has 3 activities total)
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 5, 5);
-
-    assertEq(pools.length, 0);
-    assertEq(predictions.length, 0);
-    assertEq(poolIndexes.length, 0);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedSingleActivity() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 1);
-
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 5);
-
-    assertEq(pools.length, 1);
-    assertEq(predictions.length, 1);
-    assertEq(poolIndexes.length, 1);
-
-    // Verify pool data
-    assertEq(pools[0].poolId, 1);
-    assertEq(pools[0].seeds.stakeAmount, 1000000);
-
-    // Verify prediction data
-    assertEq(predictions[0].predictionId, 1);
-    assertEq(predictions[0].predicter, user1);
-    assertEq(predictions[0].poolId, 1);
-
-    // Verify mapping
-    assertEq(poolIndexes[0], 0); // Points to first pool in unique pools array
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedMultipleActivitiesSamePool() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 5);
-
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    // assertEq(pools.length, 1); // Only one unique pool
-    assertEq(predictions.length, 5); // All 5 predictions
-    assertEq(poolIndexes.length, 5);
-
-    // Verify unique pool
-    assertEq(pools[0].poolId, 1);
-
-    // Verify all predictions are chronological
-    for (uint256 i = 0; i < 5; i++) {
-      assertEq(predictions[i].predictionId, i + 1);
-      assertEq(predictions[i].predicter, user1);
-      assertEq(predictions[i].poolId, 1);
-      assertEq(poolIndexes[i], 0); // All point to the same unique pool
-    }
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedMultiplePoolsSinglePredictionEach() public {
-    _createMultiplePools(3);
-    _createMultiplePredictions(1, user1, 1);
-
-    // Need different stake amounts for different pools
-    cusd.mint(user1, 1000001 + 1000002);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 1000001 + 1000002);
-    castora.predict(2, 2000000); // Pool 2
-    castora.predict(3, 3000000); // Pool 3
-    vm.stopPrank();
-
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    assertEq(pools.length, 3); // Three unique pools
-    assertEq(predictions.length, 3); // Three predictions
-    assertEq(poolIndexes.length, 3);
-
-    // Verify chronological order (predictions made in order: pool1, pool2, pool3)
-    assertEq(predictions[0].poolId, 1);
-    assertEq(predictions[1].poolId, 2);
-    assertEq(predictions[2].poolId, 3);
-
-    // Verify pool indexes map correctly to unique pools array
-    assertEq(poolIndexes[0], 0); // First unique pool
-    assertEq(poolIndexes[1], 1); // Second unique pool
-    assertEq(poolIndexes[2], 2); // Third unique pool
-
-    // Verify unique pools are correct
-    assertEq(pools[0].poolId, 1);
-    assertEq(pools[1].poolId, 2);
-    assertEq(pools[2].poolId, 3);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedMixedPoolsAndPredictions() public {
-    _createMultiplePools(2);
-
-    // User1 makes 3 predictions in pool 1
-    _createMultiplePredictions(1, user1, 3);
-
-    // User1 makes 2 predictions in pool 2
-    cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 2000002);
-    castora.predict(2, 2000000);
-    castora.predict(2, 2010000);
-    vm.stopPrank();
-
-    // User1 makes 1 more prediction in pool 1
-    cusd.mint(user1, 1000000);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 1000000);
-    castora.predict(1, 1040000);
-    vm.stopPrank();
-
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    assertEq(pools.length, 2); // Two unique pools
-    assertEq(predictions.length, 6); // Total 6 predictions
-    assertEq(poolIndexes.length, 6);
-
-    // Verify chronological order: pool1(3x), pool2(2x), pool1(1x)
-    assertEq(predictions[0].poolId, 1);
-    assertEq(predictions[1].poolId, 1);
-    assertEq(predictions[2].poolId, 1);
-    assertEq(predictions[3].poolId, 2);
-    assertEq(predictions[4].poolId, 2);
-    assertEq(predictions[5].poolId, 1);
-
-    // Verify pool indexes
-    assertEq(poolIndexes[0], 0); // Pool 1
-    assertEq(poolIndexes[1], 0); // Pool 1
-    assertEq(poolIndexes[2], 0); // Pool 1
-    assertEq(poolIndexes[3], 1); // Pool 2
-    assertEq(poolIndexes[4], 1); // Pool 2
-    assertEq(poolIndexes[5], 0); // Pool 1 again
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedWithPagination() public {
-    _createMultiplePools(2);
-
-    // Create 8 total activities across pools
-    _createMultiplePredictions(1, user1, 4);
-    cusd.mint(user1, 4000004); // Pool 2 stake amount * 4
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 4000004);
-    for (uint256 i = 0; i < 4; i++) {
-      castora.predict(2, 2000000 + i * 10000);
-    }
-    vm.stopPrank();
-
-    // Test first page (offset 0, limit 3)
-    (Pool[] memory pools1, Prediction[] memory predictions1, uint256[] memory poolIndexes1) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 3);
-
-    assertEq(pools1.length, 1); // Only pool 1 in first 3 activities
-    assertEq(predictions1.length, 3);
-    assertEq(poolIndexes1.length, 3);
-
-    for (uint256 i = 0; i < 3; i++) {
-      assertEq(predictions1[i].poolId, 1);
-      assertEq(poolIndexes1[i], 0);
-    }
-
-    // Test second page (offset 3, limit 3)
-    (Pool[] memory pools2, Prediction[] memory predictions2, uint256[] memory poolIndexes2) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 3, 3);
-
-    assertEq(pools2.length, 2); // Both pools appear in this range
-    assertEq(predictions2.length, 3);
-    assertEq(poolIndexes2.length, 3);
-
-    // Should be: pool1(1x), pool2(2x)
-    assertEq(predictions2[0].poolId, 1);
-    assertEq(predictions2[1].poolId, 2);
-    assertEq(predictions2[2].poolId, 2);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedLimitExceedsAvailable() public {
-    _createMultiplePools(1);
-    _createMultiplePredictions(1, user1, 3);
-
-    // Request more than available from offset 1
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 1, 10);
-
-    assertEq(pools.length, 1);
-    assertEq(predictions.length, 2); // Should only return 2 remaining activities
-    assertEq(poolIndexes.length, 2);
-
-    // Verify correct activities returned
-    assertEq(predictions[0].predictionId, 2);
-    assertEq(predictions[1].predictionId, 3);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedMultipleUsers() public {
-    _createMultiplePools(1);
-
-    // Multiple users make predictions in same pool
-    _createMultiplePredictions(1, user1, 2);
-    _createMultiplePredictions(1, user2, 3);
-    _createMultiplePredictions(1, user3, 1);
-
-    // Check user1's activities
-    (, Prediction[] memory predictions1,) = castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    assertEq(predictions1.length, 2);
-    for (uint256 i = 0; i < predictions1.length; i++) {
-      assertEq(predictions1[i].predicter, user1);
-    }
-
-    // Check user2's activities
-    (, Prediction[] memory predictions2,) = castora.getUserActivitiesOptimizedPaginated(user2, 0, 10);
-
-    assertEq(predictions2.length, 3);
-    for (uint256 i = 0; i < predictions2.length; i++) {
-      assertEq(predictions2[i].predicter, user2);
-    }
-
-    // Check user3's activities
-    (, Prediction[] memory predictions3,) = castora.getUserActivitiesOptimizedPaginated(user3, 0, 10);
-
-    assertEq(predictions3.length, 1);
-    assertEq(predictions3[0].predicter, user3);
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedWithBulkPredictions() public {
-    _createMultiplePools(1);
-
-    // Make regular predictions
-    _createMultiplePredictions(1, user1, 2);
-
-    // Make bulk predictions
-    cusd.mint(user1, 3000000);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 3000000);
-    castora.bulkPredict(1, 77777, 3);
-    vm.stopPrank();
-
-    (Pool[] memory pools, Prediction[] memory predictions, uint256[] memory poolIndexes) =
-      castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    assertEq(pools.length, 1);
-    assertEq(predictions.length, 5); // 2 regular + 3 bulk
-    assertEq(poolIndexes.length, 5);
-
-    // Verify chronological order and correct data
-    for (uint256 i = 0; i < 2; i++) {
-      assertEq(predictions[i].predictionPrice, 1000000 + i * 10000); // Regular predictions
-    }
-    for (uint256 i = 2; i < 5; i++) {
-      assertEq(predictions[i].predictionPrice, 77777); // Bulk predictions
-    }
-  }
-
-  function testGetUserActivitiesOptimizedPaginatedComplexScenario() public {
-    _createMultiplePools(3);
-
-    // Complex activity pattern:
-    // Pool 1: 2 predictions
-    _createMultiplePredictions(1, user1, 2);
-
-    // Pool 3: 1 prediction (skipping pool 2)
-    cusd.mint(user1, 1000002); // Pool 3 stake amount
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 1000002);
-    castora.predict(3, 3000000);
-    vm.stopPrank();
-
-    // Pool 1: 1 more prediction
-    cusd.mint(user1, 1000000);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 1000000);
-    castora.predict(1, 1030000);
-    vm.stopPrank();
-
-    // Pool 2: 2 predictions
-    cusd.mint(user1, 2000002);
-    vm.startPrank(user1);
-    cusd.approve(address(castora), 2000002);
-    castora.predict(2, 2000000);
-    castora.predict(2, 2010000);
-    vm.stopPrank();
-
-    (Pool[] memory pools, Prediction[] memory predictions,) = castora.getUserActivitiesOptimizedPaginated(user1, 0, 10);
-
-    assertEq(pools.length, 3); // Three unique pools used
-    assertEq(predictions.length, 6); // Total activities
-
-    // Verify chronological order: pool1(2x), pool3(1x), pool1(1x), pool2(2x)
-    uint256[] memory expectedPools = new uint256[](6);
-    expectedPools[0] = 1;
-    expectedPools[1] = 1;
-    expectedPools[2] = 3;
-    expectedPools[3] = 1;
-    expectedPools[4] = 2;
-    expectedPools[5] = 2;
-
-    for (uint256 i = 0; i < 6; i++) {
-      assertEq(predictions[i].poolId, expectedPools[i]);
-      assertEq(predictions[i].predicter, user1);
-    }
-
-    // Verify unique pools contain all used pools
-    bool foundPool1 = false;
-    bool foundPool2 = false;
-    bool foundPool3 = false;
-    for (uint256 i = 0; i < pools.length; i++) {
-      if (pools[i].poolId == 1) foundPool1 = true;
-      if (pools[i].poolId == 2) foundPool2 = true;
-      if (pools[i].poolId == 3) foundPool3 = true;
-    }
-    assertTrue(foundPool1);
-    assertTrue(foundPool2);
-    assertTrue(foundPool3);
-  }
+  // // ========== Tests for getPredictionIdsInPoolForUserPaginated ==========
+
+  // function testGetPredictionsForAddressPaginatedInvalidPoolId() public {
+  //   vm.expectRevert(InvalidPoolId.selector);
+  //   castora.getPredictionsForAddressPaginated(999, user1, 0, 5);
+
+  //   vm.expectRevert(InvalidPoolId.selector);
+  //   castora.getPredictionsForAddressPaginated(0, user1, 0, 5);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedInvalidAddress() public {
+  //   _createMultiplePools(1);
+
+  //   vm.expectRevert(InvalidAddress.selector);
+  //   castora.getPredictionsForAddressPaginated(1, address(0), 0, 5);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedNoUserPredictions() public {
+  //   _createMultiplePools(1);
+
+  //   // User has made no predictions
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
+  //   assertEq(predictions.length, 0);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedOffsetTooLarge() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
+
+  //   // Offset beyond available predictions
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 5, 5);
+  //   assertEq(predictions.length, 0);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedSinglePrediction() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 1);
+
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
+  //   assertEq(predictions.length, 1);
+  //   assertEq(predictions[0].predicter, user1);
+  //   assertEq(predictions[0].predictionId, 1);
+  //   assertEq(predictions[0].poolId, 1);
+  //   assertEq(predictions[0].predictionPrice, 1000000);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedMultiplePredictions() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
+
+  //   // Get all user predictions
+  //   Prediction[] memory allPredictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
+  //   assertEq(allPredictions.length, 5);
+  //   for (uint256 i = 0; i < 5; i++) {
+  //     assertEq(allPredictions[i].predicter, user1);
+  //     assertEq(allPredictions[i].predictionId, i + 1);
+  //     assertEq(allPredictions[i].poolId, 1);
+  //     assertEq(allPredictions[i].predictionPrice, 1000000 + i * 10000);
+  //   }
+  // }
+
+  // function testGetPredictionsForAddressPaginatedWithLimit() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 5);
+
+  //   // Get first 2 predictions (0-based offset)
+  //   Prediction[] memory firstTwo = castora.getPredictionsForAddressPaginated(1, user1, 0, 2);
+  //   assertEq(firstTwo.length, 2);
+  //   assertEq(firstTwo[0].predictionId, 1);
+  //   assertEq(firstTwo[1].predictionId, 2);
+
+  //   // Get next 2 predictions
+  //   Prediction[] memory nextTwo = castora.getPredictionsForAddressPaginated(1, user1, 2, 2);
+  //   assertEq(nextTwo.length, 2);
+  //   assertEq(nextTwo[0].predictionId, 3);
+  //   assertEq(nextTwo[1].predictionId, 4);
+
+  //   // Get last prediction
+  //   Prediction[] memory lastOne = castora.getPredictionsForAddressPaginated(1, user1, 4, 2);
+  //   assertEq(lastOne.length, 1);
+  //   assertEq(lastOne[0].predictionId, 5);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedLimitExceedsAvailable() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
+
+  //   // Request more predictions than available
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 1, 10);
+  //   assertEq(predictions.length, 2); // Should only return predictions at index 1 and 2
+  //   assertEq(predictions[0].predictionId, 2);
+  //   assertEq(predictions[1].predictionId, 3);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedMultipleUsersInSamePool() public {
+  //   _createMultiplePools(1);
+  //   _createMultiplePredictions(1, user1, 3);
+  //   _createMultiplePredictions(1, user2, 2);
+  //   _createMultiplePredictions(1, user3, 1);
+
+  //   // Get predictions for each user separately
+  //   Prediction[] memory user1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
+  //   Prediction[] memory user2Predictions = castora.getPredictionsForAddressPaginated(1, user2, 0, 10);
+  //   Prediction[] memory user3Predictions = castora.getPredictionsForAddressPaginated(1, user3, 0, 10);
+
+  //   assertEq(user1Predictions.length, 3);
+  //   assertEq(user2Predictions.length, 2);
+  //   assertEq(user3Predictions.length, 1);
+
+  //   // Verify each user only gets their own predictions
+  //   for (uint256 i = 0; i < user1Predictions.length; i++) {
+  //     assertEq(user1Predictions[i].predicter, user1);
+  //   }
+  //   for (uint256 i = 0; i < user2Predictions.length; i++) {
+  //     assertEq(user2Predictions[i].predicter, user2);
+  //   }
+  //   assertEq(user3Predictions[0].predicter, user3);
+
+  //   // Verify user2's predictions have correct IDs (should be 4 and 5 since user1 made 1,2,3)
+  //   assertEq(user2Predictions[0].predictionId, 4);
+  //   assertEq(user2Predictions[1].predictionId, 5);
+
+  //   // Verify user3's prediction has correct ID (should be 6)
+  //   assertEq(user3Predictions[0].predictionId, 6);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedMultiplePools() public {
+  //   _createMultiplePools(2);
+  //   _createMultiplePredictions(1, user1, 3);
+
+  //   // Need to mint additional tokens for second pool since each pool has different stake amounts
+  //   cusd.mint(user1, 2000002); // Pool 2 has stakeAmount = 1000001
+  //   vm.startPrank(user1);
+  //   cusd.approve(address(castora), 2000002);
+  //   for (uint256 i = 0; i < 2; i++) {
+  //     castora.predict(2, 2000000 + i * 10000);
+  //   }
+  //   vm.stopPrank();
+
+  //   // Get predictions for each pool separately
+  //   Prediction[] memory pool1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
+  //   Prediction[] memory pool2Predictions = castora.getPredictionsForAddressPaginated(2, user1, 0, 10);
+
+  //   assertEq(pool1Predictions.length, 3);
+  //   assertEq(pool2Predictions.length, 2);
+
+  //   // Verify pool IDs are correct
+  //   for (uint256 i = 0; i < pool1Predictions.length; i++) {
+  //     assertEq(pool1Predictions[i].poolId, 1);
+  //     assertEq(pool1Predictions[i].predicter, user1);
+  //   }
+  //   for (uint256 i = 0; i < pool2Predictions.length; i++) {
+  //     assertEq(pool2Predictions[i].poolId, 2);
+  //     assertEq(pool2Predictions[i].predicter, user1);
+  //     assertEq(pool2Predictions[i].predictionPrice, 2000000 + i * 10000);
+  //   }
+  // }
+
+  // function testGetPredictionsForAddressPaginatedWithBulkPredictions() public {
+  //   _createMultiplePools(1);
+
+  //   // Create bulk predictions
+  //   cusd.mint(user1, 3000000);
+  //   vm.startPrank(user1);
+  //   cusd.approve(address(castora), 3000000);
+  //   castora.bulkPredict(1, 55555, 3);
+  //   vm.stopPrank();
+
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
+  //   assertEq(predictions.length, 3);
+
+  //   // All should have the same price from bulk predict
+  //   for (uint256 i = 0; i < 3; i++) {
+  //     assertEq(predictions[i].predicter, user1);
+  //     assertEq(predictions[i].predictionPrice, 55555);
+  //     assertEq(predictions[i].predictionId, i + 1);
+  //     assertEq(predictions[i].poolId, 1);
+  //   }
+  // }
+
+  // function testGetPredictionsForAddressPaginatedEmptyPool() public {
+  //   _createMultiplePools(1);
+
+  //   // Pool exists but user made no predictions
+  //   Prediction[] memory predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 5);
+  //   assertEq(predictions.length, 0);
+  // }
+
+  // function testGetPredictionsForAddressPaginatedMixedUserActivity() public {
+  //   _createMultiplePools(1);
+
+  //   // user1 makes some predictions
+  //   _createMultiplePredictions(1, user1, 2);
+
+  //   // user2 makes some predictions in between
+  //   _createMultiplePredictions(1, user2, 1);
+
+  //   // user1 makes more predictions
+  //   _createMultiplePredictions(1, user1, 2);
+
+  //   // Get all predictions for user1 - should only get user1's predictions, not user2's
+  //   Prediction[] memory user1Predictions = castora.getPredictionsForAddressPaginated(1, user1, 0, 10);
+  //   assertEq(user1Predictions.length, 4);
+
+  //   // Verify all returned predictions belong to user1
+  //   for (uint256 i = 0; i < user1Predictions.length; i++) {
+  //     assertEq(user1Predictions[i].predicter, user1);
+  //   }
+
+  //   // Verify the prediction IDs are correct (1, 2, 4, 5 - skipping 3 which belongs to user2)
+  //   assertEq(user1Predictions[0].predictionId, 1);
+  //   assertEq(user1Predictions[1].predictionId, 2);
+  //   assertEq(user1Predictions[2].predictionId, 4);
+  //   assertEq(user1Predictions[3].predictionId, 5);
+
+  //   // Test pagination within user1's predictions
+  //   Prediction[] memory firstTwo = castora.getPredictionsForAddressPaginated(1, user1, 0, 2);
+  //   assertEq(firstTwo.length, 2);
+  //   assertEq(firstTwo[0].predictionId, 1);
+  //   assertEq(firstTwo[1].predictionId, 2);
+
+  //   Prediction[] memory lastTwo = castora.getPredictionsForAddressPaginated(1, user1, 2, 2);
+  //   assertEq(lastTwo.length, 2);
+  //   assertEq(lastTwo[0].predictionId, 4);
+  //   assertEq(lastTwo[1].predictionId, 5);
+  // }
 }

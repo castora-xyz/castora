@@ -3,7 +3,11 @@ pragma solidity 0.8.30;
 
 contract CastoraEvents {
   /// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
-  event CreatedPool(uint256 indexed poolId, bytes32 indexed seedsHash);
+  event PoolCreated(uint256 indexed poolId, bytes32 indexed seedsHash);
+
+  /// Emitted when a user (with `predicter` address) interacts with Castora
+  /// for the first time by joining a {Pool} with matching `poolId`.
+  event NewUserPredicted(address indexed predicter, uint256 indexed poolId, uint256 indexed nthUserCount);
 
   /// Emitted when a participant (with `predicter` address) joins a {Pool}
   /// with matching `poolId` with the new `predictionId` for a
@@ -14,7 +18,7 @@ contract CastoraEvents {
 
   /// Emitted when the {Pool} with `poolId` obtains what the price
   /// (`snapshotPrice`) of the `predictionToken` was at `snapshotTime`.
-  event CompletedPool(
+  event PoolCompleted(
     uint256 indexed poolId, uint256 snapshotTime, uint256 snapshotPrice, uint256 winAmount, uint256 noOfWinners
   );
 

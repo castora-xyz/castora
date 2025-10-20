@@ -72,8 +72,6 @@ contract CastoraStructs {
     /// When the {snapshotPrice} of this pool was taken.
     uint256 completionTime;
     /// The amount of the {seeds-stakeToken} that is winners claim.
-    /// It is almost equal to twice of the {seeds-stakeAmount}.
-    /// It takes into account the decimals of {seeds-stakeToken}.
     uint256 winAmount;
     /// The number of {winnerPredictions}. Helps in analysis.
     uint256 noOfWinners;
@@ -81,6 +79,93 @@ contract CastoraStructs {
     uint256 noOfClaimedWinnings;
   }
 
+  /// Tracks global activity info
+  struct AllPredictionStats {
+    /// Total number of unique users who have interacted with pools
+    uint256 noOfUsers;
+    /// Total number of pools ever created by user or admin
+    uint256 noOfPools;
+    /// Total number of predictions ever made across all pools
+    uint256 noOfPredictions;
+    /// Total number of winnings predictions across all pools
+    uint256 noOfWinnings;
+    /// Total number of Claimable winning predictions across all pools
+    uint256 noOfClaimableWinnings;
+    /// Total number of claimed winnings across all pools
+    uint256 noOfClaimedWinnings;
+    /// Total number of unique tokens used for predictions
+    uint256 noOfPredictionTokens;
+    /// Total number of unique tokens used for staking
+    uint256 noOfStakeTokens;
+  }
+
+  /// Tracks info about user activity in main Castora
+  struct UserPredictionStats {
+    /// The sequential number of when this user first made a creation
+    uint256 nthUserCount;
+    /// Total number of pools joined by this user
+    uint256 noOfJoinedPools;
+    /// Total number of predictions made by this user
+    uint256 noOfPredictions;
+    /// Total number of won predictions
+    uint256 noOfWinnings;
+    /// Total number of Claimable winning predictions across all pools
+    uint256 noOfClaimableWinnings;
+    /// Total number of claimed winnings across all pools
+    uint256 noOfClaimedWinnings;
+    /// Number of different tokens this user has used for prediction fees
+    uint256 noOfPredictionTokens;
+    /// Number of different tokens this user has used for staking fees
+    uint256 noOfStakeTokens;
+  }
+
+  /// Tracks info about user predictions activity in a given pool
+  struct UserInPoolPredictionStats {
+    /// Total number of predictions in the pool
+    uint256 noOfPredictions;
+    /// Total number of won predictions
+    uint256 noOfWinnings;
+    /// Total number of Claimable winning predictions
+    uint256 noOfClaimableWinnings;
+    /// Total number of claimed winnings
+    uint256 noOfClaimedWinnings;
+  }
+
+  /// Tracks info about pool and prediction activity of a user
+  struct UserPredictionActivity {
+    /// The ID of the pool in which the prediction was made
+    uint256 poolId;
+    /// The ID of the specific prediction made by the user
+    uint256 predictionId;
+  }
+
+  /// Tracks info about tokens used for predictions generally
+  struct PredictionTokenDetails {
+    /// Total number of pools where this token has been used as a prediction token
+    uint256 noOfPools;
+    /// Total number of predictions made using this token as prediction token across all pools
+    uint256 noOfPredictions;
+  }
+
+  /// Tracks info about tokens used for staking generally
+  struct StakeTokenDetails {
+    /// Total number of pools where this token has been used as a stake token
+    uint256 noOfPools;
+    /// Total number of predictions made using this token as stake across all pools
+    uint256 noOfPredictions;
+    /// Total number of winning predictions made with this token as stake
+    uint256 noOfWinnings;
+    /// Total number of Claimable winning predictions across all pools
+    uint256 noOfClaimableWinnings;
+    /// Total number of claimed winnings across all pools
+    uint256 noOfClaimedWinnings;
+    /// The total amount of the token used in predictions
+    uint256 totalStaked;
+    /// The total amount of the token won in predictions
+    uint256 totalWon;
+    /// The total amount of the token claimed as winnings
+    uint256 totalClaimed;
+  }
 
   /// Tracks global activity info
   struct AllUserCreatedPoolStats {

@@ -37,35 +37,64 @@ contract Castora is
   address public feeCollector;
   /// Address for CastoraPoolsRules contract
   address public poolsRules;
-  /// Keeps tracks of the total number of pools that have ever been created.
-  uint256 public noOfPools;
-  /// Keeps track of the total number of predictions that have ever been made.
-  uint256 public totalNoOfPredictions;
-  /// Keeps track of the total number of predictions that claimed their winnings.
-  uint256 public totalNoOfClaimedWinningsPredictions;
-  /// Specifies the role that allow perculiar addresses to call the
-  /// {takeSnapshot} function.
+  /// Specifies the role that allow perculiar addresses to call admin functions.
   bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
-  /// All pools that were ever created against their poolIds.
-  mapping(uint256 => Pool) public pools;
+  /// Global statistics for all pools and users
+  AllPredictionStats public allStats;
+  /// Array of users who have created pools
+  address[] public users;
+  /// Array of tokens ever used for predictions overall
+  address[] public predictionTokens;
+  /// Array of tokens ever used for staking overall
+  address[] public stakeTokens;
+  /// Array of userPredictionActivities stored globally
+  bytes32[] public userPredictionActivityHashes;
+  /// Keeps track of user addresses to their activity info
+  mapping(address => UserPredictionStats stats) public userStats;
+  /// Keeps track of user addresses to the number of unique pools they have joined
+  mapping(address => uint256[]) public joinedPoolIdsByAddresses;
+  /// Keeps track of user addresses to the activities of their predictions
+  mapping(address => bytes32[]) public userPredictionActivityHashesByAddresses;
+  /// Keeps track of all winner predictions of the user across pools
+  mapping(address => bytes32[]) public winnerActivityHashesByAddresses;
+  /// Keeps track of all claimable predictions that the user can claim winnings
+  mapping(address => bytes32[]) public claimableActivityHashesByAddresses;
+  /// All UserPredictionActivities against the hash of the activities.
+  /// Helps in retrieving an activity from either the general context or
+  /// when querying a user's chronological actions or getting their claimables.
+  mapping(bytes32 => UserPredictionActivity) public userPredictionActivities;
   /// All poolIds against the hash of their seeds. Helps when there is a
   /// need to fetch a poolId.
   mapping(bytes32 => uint256) public poolIdsBySeedsHashes;
-  /// Keeps track of the noOfPools that a participant with a given address
-  /// has ever joined.
-  mapping(address => uint256) public noOfJoinedPoolsByAddresses;
-  /// Keeps track of the poolIds that a participant with a given address
-  /// has ever joined.
-  mapping(address => uint256[]) public joinedPoolIdsByAddresses;
+  /// All pools that were ever created against their poolIds.
+  mapping(uint256 => Pool) public pools;
   /// Keeps track of predictions in pools by their predictionIds.
   mapping(uint256 => mapping(uint256 => Prediction)) predictions;
+  /// Keeps track of a user's activity in a given pool.
+  mapping(uint256 => mapping(address => UserInPoolPredictionStats)) public userInPoolPredictionStats;
   /// Keeps track of predictions in pools by the predicter's address.
   /// Helps in fetching predictions made by participants.
-  mapping(uint256 => mapping(address => uint256[])) predictionIdsByAddresses;
-  /// Keeps track of total ever staked amount per token.
-  mapping(address => uint256) public totalStakedAmounts;
-  /// Keeps track of total ever claimed amount per token.
-  mapping(address => uint256) public totalClaimedWinningsAmounts;
+  mapping(uint256 => mapping(address => uint256[])) predictionIdsByAddressesPerPool;
+  /// Keeps track of all winner predictions of a user in a pool
+  mapping(uint256 => mapping(address => uint256[])) public winnerPredictionIdsByAddressesPerPool;
+  /// Keeps track of all claimable predictions that the user can claim for a given pool.
+  mapping(uint256 => mapping(address => uint256[])) public claimableWinnerPredictionIdsByAddressesPerPool;
+  /// Keeps track of totals and info of tokens used for predictions overall
+  mapping(address => PredictionTokenDetails) public predictionTokenDetails;
+  /// Keeps track of totals and info of tokens used for staking overall
+  mapping(address => StakeTokenDetails) public stakeTokenDetails;
+  /// Keeps track of tokens that a user has ever used in joinig pools
+  mapping(address => address[]) public userPredictionTokens;
+  /// Keeps track of info about prediction tokens a user has ever used in joining pools
+  mapping(address => mapping(address => PredictionTokenDetails)) public userPredictionTokenDetails;
+  /// Keeps track of tokens that a user has ever paid to join pools
+  mapping(address => address[]) public userStakeTokens;
+  /// Keeps track of info about stake tokens a user has ever used to join pools
+  mapping(address => mapping(address => StakeTokenDetails)) public userStakeTokenDetails;
+  /// Maps each activityHash for the user's claimable to the right index
+  mapping(address => mapping(bytes32 => uint256)) public claimableActivityHashesIndex;
+  /// Maps each predictionId for the user's claimable to the right index in each pool
+  mapping(uint256 => mapping(address => mapping(uint256 => uint256))) public claimablePredictionIdsInPoolIndex;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -73,8 +102,12 @@ contract Castora is
   }
 
   function initialize(address feeCollector_, address poolsRules_) public initializer {
+    if (feeCollector_ == address(0)) revert InvalidAddress();
+    if (poolsRules_ == address(0)) revert InvalidAddress();
+
     feeCollector = feeCollector_;
     poolsRules = poolsRules_;
+
     __Ownable_init(msg.sender);
     __AccessControl_init();
     __ReentrancyGuard_init();
@@ -86,7 +119,7 @@ contract Castora is
   function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
 
   /// Sets the address of the `feeCollector` to the provided `newFeeCollector`.
-  function setFeeCollector(address newFeeCollector) public onlyOwner {
+  function setFeeCollector(address newFeeCollector) external onlyOwner {
     if (newFeeCollector == address(0)) revert InvalidAddress();
     address oldFeeCollector = feeCollector;
     feeCollector = newFeeCollector;
@@ -103,21 +136,154 @@ contract Castora is
   }
 
   /// Grants the {ADMIN_ROLE} to the provided `admin` address.
-  function grantAdminRole(address admin) public onlyOwner {
+  function grantAdminRole(address admin) external onlyOwner {
     if (admin == address(0)) revert InvalidAddress();
     _grantRole(ADMIN_ROLE, admin);
   }
 
   /// Revokes the {ADMIN_ROLE} from the provided `admin` address.
-  function revokeAdminRole(address admin) public onlyOwner {
+  function revokeAdminRole(address admin) external onlyOwner {
     if (admin == address(0)) revert InvalidAddress();
     _revokeRole(ADMIN_ROLE, admin);
+  }
+
+  function getAllStats() external view returns (AllPredictionStats memory stats) {
+    stats = allStats;
+  }
+
+  /// Internal helper to paginate address arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (address[] memory items)
+  {
+    if (offset >= total) return new address[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new address[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      items[i] = array[offset + i];
+    }
+  }
+
+  /// Internal helper to paginate uint256 arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateUint256Array(uint256[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (uint256[] memory items)
+  {
+    if (offset >= total) return new uint256[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new uint256[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      items[i] = array[offset + i];
+    }
+  }
+
+  function getUsersPaginated(uint256 offset, uint256 limit) external view returns (address[] memory usersList) {
+    usersList = _paginateAddressArray(users, allStats.noOfUsers, offset, limit);
+  }
+
+  function getPredictionTokensPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokensList)
+  {
+    tokensList = _paginateAddressArray(predictionTokens, allStats.noOfPredictionTokens, offset, limit);
+  }
+
+  function getStakeTokensPaginated(uint256 offset, uint256 limit) external view returns (address[] memory tokensList) {
+    tokensList = _paginateAddressArray(stakeTokens, allStats.noOfStakeTokens, offset, limit);
+  }
+
+  function getAllPredictionActivitiesPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (UserPredictionActivity[] memory activities)
+  {
+    uint256 total = allStats.noOfPredictions;
+    if (offset >= total) return new UserPredictionActivity[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    activities = new UserPredictionActivity[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      activities[i] = userPredictionActivities[userPredictionActivityHashes[offset + i]];
+    }
+  }
+
+  function getUserStats(address user) external view returns (UserPredictionStats memory stats) {
+    if (user == address(0)) revert InvalidAddress();
+    stats = userStats[user];
+  }
+
+  function getJoinedPoolIdsForUserPaginated(address user, uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint256[] memory poolIds)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    poolIds = _paginateUint256Array(joinedPoolIdsByAddresses[user], userStats[user].noOfJoinedPools, offset, limit);
+  }
+
+  function getUserPredictionActivitiesPaginated(address user, uint256 offset, uint256 limit)
+    external
+    view
+    returns (UserPredictionActivity[] memory activities)
+  {
+    if (user == address(0)) revert InvalidAddress();
+
+    uint256 total = userStats[user].noOfPredictions;
+    if (offset >= total) return new UserPredictionActivity[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    activities = new UserPredictionActivity[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      activities[i] = userPredictionActivities[userPredictionActivityHashesByAddresses[user][offset + i]];
+    }
+  }
+
+  function getClaimableActivitiesForAddressPaginated(address predicter, uint256 offset, uint256 limit)
+    external
+    view
+    returns (UserPredictionActivity[] memory activities)
+  {
+    if (predicter == address(0)) revert InvalidAddress();
+
+    uint256 total = userStats[predicter].noOfClaimableWinnings;
+    if (offset >= total) return new UserPredictionActivity[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    activities = new UserPredictionActivity[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      activities[i] = userPredictionActivities[claimableActivityHashesByAddresses[predicter][offset + i]];
+    }
   }
 
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
   /// `poolId` is invalid.
   function getPool(uint256 poolId) public view returns (Pool memory pool) {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     pool = pools[poolId];
   }
 
@@ -126,7 +292,7 @@ contract Castora is
   ///
   /// Fails if either the provided `poolId` or `predictionId` are invalid.
   function getPrediction(uint256 poolId, uint256 predictionId) public view returns (Prediction memory prediction) {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (predictionId == 0 || predictionId > pool.noOfPredictions) {
       revert InvalidPredictionId();
@@ -134,56 +300,13 @@ contract Castora is
     prediction = predictions[poolId][predictionId];
   }
 
-  /// Returns the predictionIds that made by the participant with address
-  /// `predicter` in {Pool} with the provided `poolId`.
-  function getPredictionIdsForAddress(uint256 poolId, address predicter)
-    public
-    view
-    returns (uint256[] memory predictionIds)
-  {
-    if (predicter == address(0)) revert InvalidAddress();
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-    predictionIds = predictionIdsByAddresses[poolId][predicter];
-  }
-
-  /// Returns the predictionIds of unclaimed winning predictions made by the participant with address
-  /// `predicter` in {Pool} with the provided `poolId`.
-  function getUnclaimedWinnerPredictionIdsForAddress(uint256 poolId, address predicter)
-    public
-    view
-    returns (uint256[] memory unclaimedWinnerPredictionIds)
-  {
-    if (predicter == address(0)) revert InvalidAddress();
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-
-    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
-    uint256 unclaimedWinnerCount = 0;
-
-    for (uint256 i = 0; i < userPredictionIds.length; i++) {
-      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
-      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
-        unclaimedWinnerCount++;
-      }
-    }
-
-    unclaimedWinnerPredictionIds = new uint256[](unclaimedWinnerCount);
-    uint256 index = 0;
-    for (uint256 i = 0; i < userPredictionIds.length; i++) {
-      Prediction storage prediction = predictions[poolId][userPredictionIds[i]];
-      if (prediction.isAWinner && prediction.claimedWinningsTime == 0) {
-        unclaimedWinnerPredictionIds[index] = userPredictionIds[i];
-        index++;
-      }
-    }
-  }
-
   /// Returns the pools corresponding to the provided list of poolIds.
   /// @param poolIds The array of poolIds to fetch
   /// @return poolsList The array of Pool structs
-  function getPools(uint256[] memory poolIds) public view returns (Pool[] memory poolsList) {
+  function getPools(uint256[] calldata poolIds) external view returns (Pool[] memory poolsList) {
     poolsList = new Pool[](poolIds.length);
-    for (uint256 i = 0; i < poolIds.length; i++) {
-      if (poolIds[i] == 0 || poolIds[i] > noOfPools) revert InvalidPoolId();
+    for (uint256 i = 0; i < poolIds.length; i += 1) {
+      if (poolIds[i] == 0 || poolIds[i] > allStats.noOfPools) revert InvalidPoolId();
       poolsList[i] = pools[poolIds[i]];
     }
   }
@@ -192,243 +315,124 @@ contract Castora is
   /// @param poolId The pool to fetch predictions from
   /// @param predictionIds The array of predictionIds to fetch
   /// @return predictionsList The array of Prediction structs
-  function getPredictions(uint256 poolId, uint256[] memory predictionIds)
-    public
+  function getPredictions(uint256 poolId, uint256[] calldata predictionIds)
+    external
     view
     returns (Prediction[] memory predictionsList)
   {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     predictionsList = new Prediction[](predictionIds.length);
-    for (uint256 i = 0; i < predictionIds.length; i++) {
+    for (uint256 i = 0; i < predictionIds.length; i += 1) {
       if (predictionIds[i] == 0 || predictionIds[i] > pool.noOfPredictions) revert InvalidPredictionId();
       predictionsList[i] = predictions[poolId][predictionIds[i]];
     }
   }
 
-  /// Returns a paginated list of pools.
-  /// @param offset The starting index (1-based) of the pool list
-  /// @param limit The maximum number of pools to return
-  /// @return poolsList The array of Pool structs
-  function getPoolsPaginated(uint256 offset, uint256 limit) public view returns (Pool[] memory poolsList) {
-    if (offset == 0 || offset > noOfPools) revert InvalidPoolId();
-    uint256 end = offset + limit - 1;
-    if (end > noOfPools) end = noOfPools;
-    uint256 size = end >= offset ? end - offset + 1 : 0;
-    poolsList = new Pool[](size);
-    for (uint256 i = 0; i < size; i++) {
-      poolsList[i] = pools[offset + i];
-    }
-  }
-
-  /// Returns a paginated list of predictions for a pool.
-  /// @param poolId The pool to fetch predictions from
-  /// @param offset The starting predictionId (1-based)
-  /// @param limit The maximum number of predictions to return
-  /// @return predictionsList The array of Prediction structs
-  function getPoolPredictionsPaginated(uint256 poolId, uint256 offset, uint256 limit)
-    public
+  function getUserInPoolPredictionStats(uint256 poolId, address user)
+    external
     view
-    returns (Prediction[] memory predictionsList)
+    returns (UserInPoolPredictionStats memory stats)
   {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-    Pool storage pool = pools[poolId];
-    if (offset == 0 || offset > pool.noOfPredictions) revert InvalidPredictionId();
-    uint256 end = offset + limit - 1;
-    if (end > pool.noOfPredictions) end = pool.noOfPredictions;
-    uint256 size = end >= offset ? end - offset + 1 : 0;
-    predictionsList = new Prediction[](size);
-    for (uint256 i = 0; i < size; i++) {
-      predictionsList[i] = predictions[poolId][offset + i];
-    }
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
+    stats = userInPoolPredictionStats[poolId][user];
   }
 
-  /// Returns a paginated list of predictions made by a user in a pool.
+  /// Returns a paginated list of prediction IDs made by a user in a pool.
   /// @param poolId The pool to fetch predictions from
   /// @param user The address of the user
   /// @param offset The starting index (0-based) in the user's predictions array
   /// @param limit The maximum number of predictions to return
-  /// @return predictionsList The array of Prediction structs
-  function getUserPredictionsPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
-    public
+  /// @return predictionIds The array of Prediction structs
+  function getPredictionIdsInPoolForUserPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
+    external
     view
-    returns (Prediction[] memory predictionsList)
+    returns (uint256[] memory predictionIds)
   {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     if (user == address(0)) revert InvalidAddress();
-    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][user];
-    uint256 total = userPredictionIds.length;
-    if (offset >= total) return new Prediction[](0);
-    uint256 end = offset + limit;
-    if (end > total) end = total;
-    uint256 size = end > offset ? end - offset : 0;
-    predictionsList = new Prediction[](size);
-    for (uint256 i = 0; i < size; i++) {
-      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
-    }
-  }
-
-  /// Returns a paginated list of predictions made by the participant with address
-  /// `predicter` in {Pool} with the provided `poolId`.
-  /// @param poolId The pool to fetch predictions from
-  /// @param predicter The address of the participant
-  /// @param offset The starting index (0-based) in the user's predictions array
-  /// @param limit The maximum number of predictions to return
-  /// @return predictionsList The array of Prediction structs
-  function getPredictionsForAddressPaginated(uint256 poolId, address predicter, uint256 offset, uint256 limit)
-    public
-    view
-    returns (Prediction[] memory predictionsList)
-  {
-    if (predicter == address(0)) revert InvalidAddress();
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-
-    uint256[] storage userPredictionIds = predictionIdsByAddresses[poolId][predicter];
-    uint256 total = userPredictionIds.length;
-    if (offset >= total) return new Prediction[](0);
-
-    uint256 end = offset + limit;
-    if (end > total) end = total;
-    uint256 size = end > offset ? end - offset : 0;
-
-    predictionsList = new Prediction[](size);
-    for (uint256 i = 0; i < size; i++) {
-      predictionsList[i] = predictions[poolId][userPredictionIds[offset + i]];
-    }
-  }
-
-  /// Returns a paginated list of unique pools a user has joined and their predictions.
-  /// @param user The address of the user
-  /// @param offset The starting index (0-based) in the user's joined pools array
-  /// @param limit The maximum number of entries to return
-  /// @return uniquePools The array of unique Pool structs the user has joined
-  /// @return predictionsList The array of Prediction structs made by the user
-  /// @return poolIndexes The array mapping each prediction to its unique pool index
-  function getUserActivitiesOptimizedPaginated(address user, uint256 offset, uint256 limit)
-    public
-    view
-    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
-  {
-    if (user == address(0)) revert InvalidAddress();
-
-    uint256 totalCount = noOfJoinedPoolsByAddresses[user];
-    if (totalCount == 0) return (new Pool[](0), new Prediction[](0), new uint256[](0));
-    if (offset >= totalCount) return (new Pool[](0), new Prediction[](0), new uint256[](0));
-
-    uint256 end = offset + limit;
-    if (end > totalCount) end = totalCount;
-    uint256 size = end > offset ? end - offset : 0;
-
-    // the recursive split into smaller chunks to avoid "stack too deep" errors
-    return _buildUserActivitiesData(user, offset, size);
-  }
-
-  /// Internal function to build user activities data
-  function _buildUserActivitiesData(address user, uint256 offset, uint256 size)
-    internal
-    view
-    returns (Pool[] memory uniquePools, Prediction[] memory predictionsList, uint256[] memory poolIndexes)
-  {
-    predictionsList = new Prediction[](size);
-    poolIndexes = new uint256[](size);
-
-    uint256[] memory uniquePoolIds = new uint256[](size);
-    uint256 uniqueCount = _processActivitiesBatch(user, offset, size, uniquePoolIds, predictionsList, poolIndexes);
-
-    uniquePools = new Pool[](uniqueCount);
-    for (uint256 i = 0; i < uniqueCount; i++) {
-      uniquePools[i] = pools[uniquePoolIds[i]];
-    }
-  }
-
-  /// Internal function to process activities batch and return unique count
-  function _processActivitiesBatch(
-    address user,
-    uint256 offset,
-    uint256 size,
-    uint256[] memory uniquePoolIds,
-    Prediction[] memory predictionsList,
-    uint256[] memory poolIndexes
-  ) internal view returns (uint256) {
-    uint256[] memory firstOccurrence = new uint256[](size);
-    uint256[] memory batchOccurrences = new uint256[](size);
-    uint256 uniqueCount = 0;
-
-    for (uint256 i = 0; i < size; i++) {
-      uniqueCount = _processActivityEntry(
-        user, offset, i, uniqueCount, uniquePoolIds, firstOccurrence, batchOccurrences, predictionsList, poolIndexes
-      );
-    }
-
-    return uniqueCount;
-  }
-
-  /// Internal function to process a single activity entry
-  function _processActivityEntry(
-    address user,
-    uint256 offset,
-    uint256 entryIndex,
-    uint256 uniqueCount,
-    uint256[] memory uniquePoolIds,
-    uint256[] memory firstOccurrence,
-    uint256[] memory batchOccurrences,
-    Prediction[] memory predictionsList,
-    uint256[] memory poolIndexes
-  ) internal view returns (uint256) {
-    uint256 currentPoolId = joinedPoolIdsByAddresses[user][offset + entryIndex];
-    uint256 poolIndex = _findPoolIndex(uniquePoolIds, uniqueCount, currentPoolId);
-
-    if (poolIndex == uniqueCount) {
-      uniquePoolIds[uniqueCount] = currentPoolId;
-      firstOccurrence[uniqueCount] = _countPreOffsetOccurrences(user, offset, currentPoolId);
-      batchOccurrences[uniqueCount] = 0;
-      uniqueCount++;
-      poolIndex = uniqueCount - 1;
-    } else {
-      batchOccurrences[poolIndex]++;
-    }
-
-    _setPredictionForEntry(
-      user, currentPoolId, firstOccurrence[poolIndex] + batchOccurrences[poolIndex], entryIndex, predictionsList
+    predictionIds = _paginateUint256Array(
+      predictionIdsByAddressesPerPool[poolId][user],
+      userInPoolPredictionStats[poolId][user].noOfPredictions,
+      offset,
+      limit
     );
-
-    poolIndexes[entryIndex] = poolIndex;
-    return uniqueCount;
   }
 
-  /// Internal function to set prediction for an entry
-  function _setPredictionForEntry(
-    address user,
-    uint256 poolId,
-    uint256 predictionIndex,
-    uint256 entryIndex,
-    Prediction[] memory predictionsList
-  ) internal view {
-    uint256 predictionId = predictionIdsByAddresses[poolId][user][predictionIndex];
-    predictionsList[entryIndex] = predictions[poolId][predictionId];
-  }
-
-  /// Internal helper to find pool index
-  function _findPoolIndex(uint256[] memory uniquePoolIds, uint256 uniqueCount, uint256 poolId)
-    internal
-    pure
-    returns (uint256)
-  {
-    for (uint256 j = 0; j < uniqueCount; j++) {
-      if (uniquePoolIds[j] == poolId) return j;
-    }
-    return uniqueCount;
-  }
-
-  /// Internal helper to count occurrences of a pool before the offset
-  function _countPreOffsetOccurrences(address user, uint256 offset, uint256 poolId)
-    internal
+  function getWinnerPredictionIdsInPoolForUserPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
+    external
     view
-    returns (uint256 count)
+    returns (uint256[] memory predictionIds)
   {
-    for (uint256 k = 0; k < offset; k++) {
-      if (joinedPoolIdsByAddresses[user][k] == poolId) count++;
-    }
+    if (user == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    predictionIds = _paginateUint256Array(
+      winnerPredictionIdsByAddressesPerPool[poolId][user],
+      userInPoolPredictionStats[poolId][user].noOfWinnings,
+      offset,
+      limit
+    );
+  }
+
+  function getClaimableWinnerPredictionIdsInPoolForUserPaginated(
+    uint256 poolId,
+    address user,
+    uint256 offset,
+    uint256 limit
+  ) external view returns (uint256[] memory predictionIds) {
+    if (user == address(0)) revert InvalidAddress();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    predictionIds = _paginateUint256Array(
+      claimableWinnerPredictionIdsByAddressesPerPool[poolId][user],
+      userInPoolPredictionStats[poolId][user].noOfClaimableWinnings,
+      offset,
+      limit
+    );
+  }
+
+  function getPredictionTokenDetails(address token) external view returns (PredictionTokenDetails memory details) {
+    details = predictionTokenDetails[token];
+  }
+
+  function getStakeTokenDetails(address token) external view returns (StakeTokenDetails memory details) {
+    details = stakeTokenDetails[token];
+  }
+
+  function getUserPredictionTokensPaginated(address user, uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokensList)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    tokensList = _paginateAddressArray(userPredictionTokens[user], userStats[user].noOfPredictionTokens, offset, limit);
+  }
+
+  function getUserPredictionTokenDetails(address user, address token)
+    external
+    view
+    returns (PredictionTokenDetails memory details)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    details = userPredictionTokenDetails[user][token];
+  }
+
+  function getUserStakeTokensPaginated(address user, uint256 offset, uint256 limit)
+    external
+    view
+    returns (address[] memory tokensList)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    tokensList = _paginateAddressArray(userStakeTokens[user], userStats[user].noOfStakeTokens, offset, limit);
+  }
+
+  function getUserStakeTokenDetails(address user, address token)
+    external
+    view
+    returns (StakeTokenDetails memory details)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    details = userStakeTokenDetails[user][token];
   }
 
   /// Returns a hash of the provided `seeds`.
@@ -445,6 +449,11 @@ contract Castora is
     );
   }
 
+  /// Returns a hash of the provided `activity`.
+  function hashUserPredictionActivity(UserPredictionActivity memory activity) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked('poolId', activity.poolId, 'predictionId', activity.predictionId));
+  }
+
   /// Creates a {Pool} with the provided `seeds`.
   ///
   /// Fails if any of the {PoolSeeds} properties are invalid or if there
@@ -452,20 +461,87 @@ contract Castora is
   ///
   /// Emits a {CreatedPool} event.
   function createPool(PoolSeeds memory seeds) public onlyRole(ADMIN_ROLE) nonReentrant returns (uint256) {
-    CastoraPoolsRules(poolsRules).validateCreatePool(seeds);
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
 
-    noOfPools += 1;
-    poolIdsBySeedsHashes[seedsHash] = noOfPools;
-    Pool storage pool = pools[noOfPools];
-    pool.poolId = noOfPools;
+    CastoraPoolsRules(poolsRules).validateCreatePool(seeds);
+
+    allStats.noOfPools += 1;
+    poolIdsBySeedsHashes[seedsHash] = allStats.noOfPools;
+    Pool storage pool = pools[allStats.noOfPools];
+    pool.poolId = allStats.noOfPools;
     pool.seeds = seeds;
     pool.seedsHash = seedsHash;
     pool.creationTime = block.timestamp;
 
-    emit CreatedPool(noOfPools, seedsHash);
-    return noOfPools;
+    if (predictionTokenDetails[seeds.predictionToken].noOfPools == 0) {
+      allStats.noOfPredictionTokens += 1;
+      predictionTokens.push(seeds.predictionToken);
+    }
+    predictionTokenDetails[seeds.predictionToken].noOfPools += 1;
+
+    if (stakeTokenDetails[seeds.stakeToken].noOfPools == 0) {
+      allStats.noOfStakeTokens += 1;
+      stakeTokens.push(seeds.stakeToken);
+    }
+    stakeTokenDetails[seeds.stakeToken].noOfPools += 1;
+
+    emit PoolCreated(allStats.noOfPools, seedsHash);
+    return allStats.noOfPools;
+  }
+
+  function _validateStartPredict(uint256 poolId) internal view returns (Pool storage pool, PoolSeeds memory seeds) {
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    pool = pools[poolId];
+    seeds = pool.seeds;
+    if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
+  }
+
+  function _checkNewUserOnPredict(uint256 poolId) internal {
+    if (userStats[msg.sender].nthUserCount == 0) {
+      allStats.noOfUsers += 1;
+      userStats[msg.sender].nthUserCount = allStats.noOfUsers;
+      users.push(msg.sender);
+      emit NewUserPredicted(msg.sender, poolId, userStats[msg.sender].nthUserCount);
+    }
+  }
+
+  function _updatePredictStatsGeneral(uint256 poolId, uint256 predictionsCount, PoolSeeds memory seeds) internal {
+    if (userInPoolPredictionStats[poolId][msg.sender].noOfPredictions == 0) {
+      userStats[msg.sender].noOfJoinedPools += 1;
+      joinedPoolIdsByAddresses[msg.sender].push(poolId);
+    }
+    if (userPredictionTokenDetails[msg.sender][seeds.predictionToken].noOfPredictions == 0) {
+      userPredictionTokens[msg.sender].push(seeds.predictionToken);
+      userStats[msg.sender].noOfPredictionTokens += 1;
+    }
+    if (userStakeTokenDetails[msg.sender][seeds.stakeToken].noOfPredictions == 0) {
+      userStakeTokens[msg.sender].push(seeds.stakeToken);
+      userStats[msg.sender].noOfStakeTokens += 1;
+    }
+
+    allStats.noOfPredictions += predictionsCount;
+    predictionTokenDetails[seeds.predictionToken].noOfPredictions += predictionsCount;
+    stakeTokenDetails[seeds.stakeToken].noOfPredictions += predictionsCount;
+    stakeTokenDetails[seeds.stakeToken].totalStaked += seeds.stakeAmount * predictionsCount;
+    userStats[msg.sender].noOfPredictions += predictionsCount;
+    userPredictionTokenDetails[msg.sender][seeds.predictionToken].noOfPredictions += predictionsCount;
+    userStakeTokenDetails[msg.sender][seeds.stakeToken].noOfPredictions += predictionsCount;
+    userStakeTokenDetails[msg.sender][seeds.stakeToken].totalStaked += seeds.stakeAmount * predictionsCount;
+    userInPoolPredictionStats[poolId][msg.sender].noOfPredictions += predictionsCount;
+  }
+
+  function _updatePredictStatsPrediction(uint256 poolId, uint256 predictionId, uint256 predictionPrice) internal {
+    predictionIdsByAddressesPerPool[poolId][msg.sender].push(predictionId);
+
+    bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
+    userPredictionActivities[activityHash] = UserPredictionActivity(poolId, predictionId);
+    userPredictionActivityHashes.push(activityHash);
+    userPredictionActivityHashesByAddresses[msg.sender].push(activityHash);
+
+    predictions[poolId][predictionId] =
+      Prediction(msg.sender, poolId, predictionId, predictionPrice, block.timestamp, 0, false);
+    emit Predicted(poolId, predictionId, msg.sender, predictionPrice);
   }
 
   /// Makes a prediction with the provided `predictionPrice` in the {Pool}
@@ -477,10 +553,7 @@ contract Castora is
   ///
   /// Emits a {Predicted} event.
   function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant returns (uint256) {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-    Pool storage pool = pools[poolId];
-    PoolSeeds memory seeds = pool.seeds;
-    if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
+    (Pool storage pool, PoolSeeds memory seeds) = _validateStartPredict(poolId);
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount) revert InsufficientStakeValue();
@@ -489,17 +562,10 @@ contract Castora is
       IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount);
     }
 
-    totalNoOfPredictions += 1;
-    totalStakedAmounts[seeds.stakeToken] += seeds.stakeAmount;
+    _checkNewUserOnPredict(poolId);
+    _updatePredictStatsGeneral(poolId, 1, seeds);
     pool.noOfPredictions += 1;
-    predictions[poolId][pool.noOfPredictions] =
-      Prediction(msg.sender, poolId, pool.noOfPredictions, predictionPrice, block.timestamp, 0, false);
-
-    predictionIdsByAddresses[poolId][msg.sender].push(pool.noOfPredictions);
-    noOfJoinedPoolsByAddresses[msg.sender] += 1;
-    joinedPoolIdsByAddresses[msg.sender].push(poolId);
-
-    emit Predicted(poolId, pool.noOfPredictions, msg.sender, predictionPrice);
+    _updatePredictStatsPrediction(poolId, pool.noOfPredictions, predictionPrice);
     return pool.noOfPredictions;
   }
 
@@ -524,10 +590,7 @@ contract Castora is
     returns (uint256 firstPredictionId, uint256 lastPredictionId)
   {
     if (predictionsCount == 0) revert ZeroAmountSpecified();
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
-    Pool storage pool = pools[poolId];
-    PoolSeeds memory seeds = pool.seeds;
-    if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
+    (Pool storage pool, PoolSeeds memory seeds) = _validateStartPredict(poolId);
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
@@ -536,18 +599,15 @@ contract Castora is
     }
 
     firstPredictionId = pool.noOfPredictions + 1;
-    for (uint16 i = 0; i < predictionsCount; i++) {
-      totalNoOfPredictions += 1;
-      totalStakedAmounts[seeds.stakeToken] += seeds.stakeAmount;
-      pool.noOfPredictions += 1;
-      predictions[poolId][pool.noOfPredictions] =
-        Prediction(msg.sender, poolId, pool.noOfPredictions, predictionPrice, block.timestamp, 0, false);
+    _checkNewUserOnPredict(poolId);
+    _updatePredictStatsGeneral(poolId, predictionsCount, seeds);
 
-      predictionIdsByAddresses[poolId][msg.sender].push(pool.noOfPredictions);
-      noOfJoinedPoolsByAddresses[msg.sender] += 1;
-      joinedPoolIdsByAddresses[msg.sender].push(poolId);
-      emit Predicted(poolId, pool.noOfPredictions, msg.sender, predictionPrice);
+    for (uint16 i = 0; i < predictionsCount; i += 1) {
+      uint256 predictionId = firstPredictionId + i;
+      _updatePredictStatsPrediction(poolId, predictionId, predictionPrice);
     }
+
+    pool.noOfPredictions += predictionsCount;
     lastPredictionId = pool.noOfPredictions;
   }
 
@@ -562,7 +622,7 @@ contract Castora is
     uint256 winAmount,
     uint256[] memory winnerPredictions
   ) public nonReentrant onlyRole(ADMIN_ROLE) {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (pool.completionTime != 0) revert PoolAlreadyCompleted();
     if (block.timestamp < pool.seeds.snapshotTime) revert NotYetSnapshotTime();
@@ -584,11 +644,36 @@ contract Castora is
     pool.completionTime = block.timestamp;
     pool.noOfWinners = noOfWinners;
     pool.winAmount = winAmount;
+    allStats.noOfWinnings += noOfWinners;
+    allStats.noOfClaimableWinnings += noOfWinners;
+    stakeTokenDetails[pool.seeds.stakeToken].noOfWinnings += noOfWinners;
+    stakeTokenDetails[pool.seeds.stakeToken].noOfClaimableWinnings += noOfWinners;
+    stakeTokenDetails[pool.seeds.stakeToken].totalWon += winAmount * noOfWinners;
+
     for (uint256 i = 0; i < noOfWinners; i += 1) {
-      predictions[poolId][winnerPredictions[i]].isAWinner = true;
+      uint256 predictionId = winnerPredictions[i];
+      predictions[poolId][predictionId].isAWinner = true;
+
+      address predicter = predictions[poolId][predictionId].predicter;
+      userStats[predicter].noOfWinnings += 1;
+      userStats[predicter].noOfClaimableWinnings += 1;
+      userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfWinnings += 1;
+      userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfClaimableWinnings += 1;
+      userStakeTokenDetails[predicter][pool.seeds.stakeToken].totalWon += winAmount;
+      userInPoolPredictionStats[poolId][predicter].noOfWinnings += 1;
+      userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings += 1;
+
+      winnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
+      claimableWinnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
+      bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
+      winnerActivityHashesByAddresses[predicter].push(activityHash);
+      claimableActivityHashesByAddresses[predicter].push(activityHash);
+      claimableActivityHashesIndex[predicter][activityHash] = userStats[predicter].noOfClaimableWinnings - 1;
+      claimablePredictionIdsInPoolIndex[poolId][predicter][predictionId] =
+        userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings - 1;
     }
 
-    emit CompletedPool(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
+    emit PoolCompleted(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
 
     // As the feeCollector is now the CastoraPoolsManager contract, this main Castora needs to tell it
     // to process the received fees to either send out to the main Castora fee collector address or split
@@ -601,14 +686,56 @@ contract Castora is
     }
   }
 
+  function _removeClaimableActivityHash(uint256 poolId, uint256 predictionId) internal {
+    bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
+    uint256 indexToRemove = claimableActivityHashesIndex[msg.sender][activityHash];
+    uint256 lastIndex = userStats[msg.sender].noOfClaimableWinnings - 1;
+
+    if (indexToRemove != lastIndex) {
+      bytes32 lastHash = claimableActivityHashesByAddresses[msg.sender][lastIndex];
+      claimableActivityHashesByAddresses[msg.sender][indexToRemove] = lastHash;
+      claimableActivityHashesIndex[msg.sender][lastHash] = indexToRemove;
+    }
+
+    claimableActivityHashesByAddresses[msg.sender].pop();
+    delete claimableActivityHashesIndex[msg.sender][activityHash];
+    userStats[msg.sender].noOfClaimableWinnings -= 1;
+  }
+
+  function _removeClaimablePredictionIdInPool(uint256 poolId, uint256 predictionId) internal {
+    uint256 indexToRemove = claimablePredictionIdsInPoolIndex[poolId][msg.sender][predictionId];
+    uint256 lastIndex = userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings - 1;
+
+    if (indexToRemove != lastIndex) {
+      uint256 lastPredictionId = claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender][lastIndex];
+      claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender][indexToRemove] = lastPredictionId;
+      claimablePredictionIdsInPoolIndex[poolId][msg.sender][lastPredictionId] = indexToRemove;
+    }
+
+    claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender].pop();
+    delete claimablePredictionIdsInPoolIndex[poolId][msg.sender][predictionId];
+    userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings -= 1;
+  }
+
+  function _updateClaimStats(uint256 poolId, uint256 winAmount, address stakeToken) internal {
+    allStats.noOfClaimableWinnings -= 1;
+    allStats.noOfClaimedWinnings += 1;
+    userStats[msg.sender].noOfClaimedWinnings += 1;
+    userInPoolPredictionStats[poolId][msg.sender].noOfClaimedWinnings += 1;
+    stakeTokenDetails[stakeToken].noOfClaimableWinnings -= 1;
+    stakeTokenDetails[stakeToken].noOfClaimedWinnings += 1;
+    stakeTokenDetails[stakeToken].totalClaimed += winAmount;
+    userStakeTokenDetails[msg.sender][stakeToken].noOfClaimableWinnings -= 1;
+    userStakeTokenDetails[msg.sender][stakeToken].noOfClaimedWinnings += 1;
+    userStakeTokenDetails[msg.sender][stakeToken].totalClaimed += winAmount;
+  }
+
   function _claimWinnings(uint256 poolId, uint256 predictionId) internal {
-    if (poolId == 0 || poolId > noOfPools) revert InvalidPoolId();
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
 
     Pool storage pool = pools[poolId];
     if (pool.completionTime == 0) revert PoolNotYetCompleted();
-    if (predictionId == 0 || predictionId > pool.noOfPredictions) {
-      revert InvalidPredictionId();
-    }
+    if (predictionId == 0 || predictionId > pool.noOfPredictions) revert InvalidPredictionId();
 
     Prediction storage prediction = predictions[poolId][predictionId];
     if (prediction.predicter != msg.sender) revert NotYourPrediction();
@@ -622,10 +749,11 @@ contract Castora is
       IERC20(pool.seeds.stakeToken).safeTransfer(prediction.predicter, pool.winAmount);
     }
 
-    totalNoOfClaimedWinningsPredictions += 1;
-    totalClaimedWinningsAmounts[pool.seeds.stakeToken] += pool.winAmount;
     pool.noOfClaimedWinnings += 1;
     prediction.claimedWinningsTime = block.timestamp;
+    _updateClaimStats(poolId, pool.winAmount, pool.seeds.stakeToken);
+    _removeClaimableActivityHash(poolId, predictionId);
+    _removeClaimablePredictionIdInPool(poolId, predictionId);
 
     emit ClaimedWinnings(
       poolId, predictionId, prediction.predicter, pool.seeds.stakeToken, pool.seeds.stakeAmount, pool.winAmount
