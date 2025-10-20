@@ -11,6 +11,7 @@ import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
+// testRevertPausedPredict
 // testRevertInvalidPoolIdPredict
 // testRevertWindowHasClosedPredict
 // testRevertInsufficientStakePredict

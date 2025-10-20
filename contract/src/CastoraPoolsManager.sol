@@ -362,18 +362,18 @@ contract CastoraPoolsManager is
     creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
     __Ownable_init(msg.sender);
-    __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     __Pausable_init();
+    __UUPSUpgradeable_init();
   }
 
   function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
 
-  function pause() external onlyOwner nonReentrant {
+  function pause() external onlyOwner nonReentrant whenNotPaused {
     _pause();
   }
 
-  function unpause() external onlyOwner nonReentrant {
+  function unpause() external onlyOwner nonReentrant whenPaused {
     _unpause();
   }
 

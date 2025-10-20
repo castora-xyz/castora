@@ -11,17 +11,19 @@ import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
-  // testRevertInvalidPoolIdClaimWinnings
-  // testRevertPoolNotYetCompletedClaimWinnings
-  // testRevertInvalidPredictionIdClaimWinnings
-  // testRevertNotYourPredictionClaimWinnings
-  // testRevertNotAWinnerClaimWinnings
-  // testRevertAlreadyClaimedClaimWinnings
-  // testRevertUnsuccessfulSendWinningsNativeClaimWinnings
-  // testRevertERC20FailureClaimWinnings
-  // testClaimWinningsNativeSuccess
-  // testClaimWinningsERC20Success
-  // testRevertUnmatchingPoolsAndPredictionsClaimWinningsBulk
-  // testClaimWinningsBulkNativeSuccess
-  // testClaimWinningsBulkERC20Success
+// testRevertPausedClaimWinnings
+// testRevertInvalidPoolIdClaimWinnings
+// testRevertPoolNotYetCompletedClaimWinnings
+// testRevertInvalidPredictionIdClaimWinnings
+// testRevertNotYourPredictionClaimWinnings
+// testRevertNotAWinnerClaimWinnings
+// testRevertAlreadyClaimedClaimWinnings
+// testRevertUnsuccessfulSendWinningsNativeClaimWinnings
+// testRevertERC20FailureClaimWinnings
+// testClaimWinningsNativeSuccess
+// testClaimWinningsERC20Success
+// testRevertPausedClaimWinningsBulk
+// testRevertUnmatchingPoolsAndPredictionsClaimWinningsBulk
+// testClaimWinningsBulkNativeSuccess
+// testClaimWinningsBulkERC20Success
 }

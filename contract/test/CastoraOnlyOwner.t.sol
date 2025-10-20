@@ -11,18 +11,24 @@ import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
-  // testRevertInvalidAddressSetFeeCollector
-  // testRevertNotOnwerSetFeeCollector
-  // testSetFeeCollectorSuccess
-  // testRevertInvalidAddressSetPoolsRules
-  // testRevertNotOwnerSetPoolsRules
-  // testSetPoolsRulesSuccess
-  // testRevertInvalidAddressGrantAdminRole
-  // testRevertOnlyOnwerGrantAdminRole
-  // testGrantAdminRoleSuccess (should also check successful grant if already granted)
-  // testRevertInvalidAddressRevokeAdminRole
-  // testRevertOnlyOnwerRevokeAdminRole
-  // testRevokeAdminRoleSuccess  (should also check successful revoke if already revoked)
-  // testRevertNotOwnerWhenUpgrading
-  // testUpgradeSuccessWithRetainedData
+// testRevertNotOwnerPause
+// testRevertPausedPause
+// testPauseSuccess
+// testRevertNotOwnerUnpause
+// testRevertUnpausedUpause
+// testUnpauseSuccess
+// testRevertInvalidAddressSetFeeCollector
+// testRevertNotOnwerSetFeeCollector
+// testSetFeeCollectorSuccess
+// testRevertInvalidAddressSetPoolsRules
+// testRevertNotOwnerSetPoolsRules
+// testSetPoolsRulesSuccess
+// testRevertInvalidAddressGrantAdminRole
+// testRevertOnlyOnwerGrantAdminRole
+// testGrantAdminRoleSuccess (should also check successful grant if already granted)
+// testRevertInvalidAddressRevokeAdminRole
+// testRevertOnlyOnwerRevokeAdminRole
+// testRevokeAdminRoleSuccess  (should also check successful revoke if already revoked)
+// testRevertNotOwnerWhenUpgrading
+// testUpgradeSuccessWithRetainedData
 }

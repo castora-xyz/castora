@@ -6,6 +6,7 @@ import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
@@ -29,6 +30,7 @@ contract Castora is
   OwnableUpgradeable,
   AccessControlUpgradeable,
   ReentrancyGuardUpgradeable,
+  PausableUpgradeable,
   UUPSUpgradeable
 {
   using SafeERC20 for IERC20;
@@ -111,12 +113,22 @@ contract Castora is
     __Ownable_init(msg.sender);
     __AccessControl_init();
     __ReentrancyGuard_init();
+    __Pausable_init();
     __UUPSUpgradeable_init();
+
     _grantRole(DEFAULT_ADMIN_ROLE, owner());
     _grantRole(ADMIN_ROLE, owner());
   }
 
   function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
+
+  function pause() external onlyOwner nonReentrant whenNotPaused {
+    _pause();
+  }
+
+  function unpause() external onlyOwner nonReentrant whenPaused {
+    _unpause();
+  }
 
   /// Sets the address of the `feeCollector` to the provided `newFeeCollector`.
   function setFeeCollector(address newFeeCollector) external onlyOwner {
@@ -460,7 +472,7 @@ contract Castora is
   /// is a pool with the same `seeds`.
   ///
   /// Emits a {CreatedPool} event.
-  function createPool(PoolSeeds memory seeds) public onlyRole(ADMIN_ROLE) nonReentrant returns (uint256) {
+  function createPool(PoolSeeds memory seeds) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) returns (uint256) {
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
 
@@ -552,7 +564,7 @@ contract Castora is
   /// {PoolSeeds-stakeToken} of the pool will be deducted from the predicter.
   ///
   /// Emits a {Predicted} event.
-  function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant returns (uint256) {
+  function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant whenNotPaused returns (uint256) {
     (Pool storage pool, PoolSeeds memory seeds) = _validateStartPredict(poolId);
 
     if (seeds.stakeToken == address(this)) {
@@ -587,6 +599,7 @@ contract Castora is
     public
     payable
     nonReentrant
+    whenNotPaused
     returns (uint256 firstPredictionId, uint256 lastPredictionId)
   {
     if (predictionsCount == 0) revert ZeroAmountSpecified();
@@ -621,7 +634,7 @@ contract Castora is
     uint256 noOfWinners,
     uint256 winAmount,
     uint256[] memory winnerPredictions
-  ) public nonReentrant onlyRole(ADMIN_ROLE) {
+  ) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (pool.completionTime != 0) revert PoolAlreadyCompleted();
@@ -769,7 +782,7 @@ contract Castora is
   /// already claimed their winnings.
   ///
   /// Emits an {ClaimedWinnings} event.
-  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant {
+  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant whenNotPaused {
     _claimWinnings(poolId, predictionId);
   }
 
@@ -781,7 +794,11 @@ contract Castora is
   /// or if the predicter has already claimed their winnings.
   ///
   /// Emits multiple {ClaimedWinnings} events.
-  function claimWinningsBulk(uint256[] memory poolIds, uint256[] memory predictionIds) public nonReentrant {
+  function claimWinningsBulk(uint256[] memory poolIds, uint256[] memory predictionIds)
+    public
+    nonReentrant
+    whenNotPaused
+  {
     if (poolIds.length != predictionIds.length) {
       revert UnmatchingPoolsAndPredictions();
     }

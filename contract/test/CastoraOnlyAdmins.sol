@@ -11,17 +11,19 @@ import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraOnlyAdminsTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
-  // testRevertNotAdminCreatePool
-  // testRevertExistingPoolCreatePool
-  // testCreatePoolSuccessNativeTokenStake
-  // testCreatePoolSuccessERC20TokenStake
-  // testRevertNotAdminCompletePool
-  // testRevertInvalidPoolCompletePool
-  // testRevertAlreadyCompletedPoolCompletePool
-  // testRevertNotYetSnapshotTimeCompletePool
-  // testRevertNoPredictionsInPoolCompletePool
-  // testInvalidWinnersCountCompletePool
-  // testZeroWinAmountCompletePool
-  // testCompletePoolSuccessSingleWinner
-  // testCompletePoolSuccessMultipleWinners
+// testRevertPausedCreatePool
+// testRevertNotAdminCreatePool
+// testRevertExistingPoolCreatePool
+// testCreatePoolSuccessNativeTokenStake
+// testCreatePoolSuccessERC20TokenStake
+// testRevertPausedCompletePool
+// testRevertNotAdminCompletePool
+// testRevertInvalidPoolCompletePool
+// testRevertAlreadyCompletedPoolCompletePool
+// testRevertNotYetSnapshotTimeCompletePool
+// testRevertNoPredictionsInPoolCompletePool
+// testInvalidWinnersCountCompletePool
+// testZeroWinAmountCompletePool
+// testCompletePoolSuccessSingleWinner
+// testCompletePoolSuccessMultipleWinners
 }
