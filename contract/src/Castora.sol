@@ -571,8 +571,19 @@ contract Castora is
   /// {PoolSeeds-stakeToken} of the pool will be deducted from the predicter.
   ///
   /// Emits a {Predicted} event.
-  function predict(uint256 poolId, uint256 predictionPrice) public payable nonReentrant whenNotPaused returns (uint256) {
+  function predict(uint256 poolId, uint256 predictionPrice)
+    public
+    payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256 predictionId)
+  {
     (Pool storage pool, PoolSeeds memory seeds) = _validateStartPredict(poolId);
+    _checkNewUserOnPredict(poolId);
+    _updatePredictStatsGeneral(poolId, 1, seeds);
+    pool.noOfPredictions += 1;
+    _updatePredictStatsPrediction(poolId, pool.noOfPredictions, predictionPrice);
+    predictionId = pool.noOfPredictions;
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount) revert InsufficientStakeValue();
@@ -580,12 +591,6 @@ contract Castora is
     } else {
       IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount);
     }
-
-    _checkNewUserOnPredict(poolId);
-    _updatePredictStatsGeneral(poolId, 1, seeds);
-    pool.noOfPredictions += 1;
-    _updatePredictStatsPrediction(poolId, pool.noOfPredictions, predictionPrice);
-    return pool.noOfPredictions;
   }
 
   /// Makes multiple predictions with the same `predictionPrice` in the {Pool}
@@ -612,12 +617,6 @@ contract Castora is
     if (predictionsCount == 0) revert ZeroAmountSpecified();
     (Pool storage pool, PoolSeeds memory seeds) = _validateStartPredict(poolId);
 
-    if (seeds.stakeToken == address(this)) {
-      if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
-    } else {
-      IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount);
-    }
-
     firstPredictionId = pool.noOfPredictions + 1;
     _checkNewUserOnPredict(poolId);
     _updatePredictStatsGeneral(poolId, predictionsCount, seeds);
@@ -629,6 +628,12 @@ contract Castora is
 
     pool.noOfPredictions += predictionsCount;
     lastPredictionId = pool.noOfPredictions;
+
+    if (seeds.stakeToken == address(this)) {
+      if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
+    } else {
+      IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount);
+    }
   }
 
   /// Initiates pool completion by setting batch requirements.
@@ -825,13 +830,6 @@ contract Castora is
     if (!prediction.isAWinner) revert NotAWinner();
     if (prediction.claimedWinningsTime != 0) revert AlreadyClaimedWinnings();
 
-    if (pool.seeds.stakeToken == address(this)) {
-      (bool isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
-      if (!isSuccess) revert UnsuccessfulSendWinnings();
-    } else {
-      IERC20(pool.seeds.stakeToken).safeTransfer(prediction.predicter, pool.winAmount);
-    }
-
     pool.noOfClaimedWinnings += 1;
     prediction.claimedWinningsTime = block.timestamp;
     _updateClaimStats(poolId, pool.winAmount, pool.seeds.stakeToken);
@@ -841,6 +839,13 @@ contract Castora is
     emit ClaimedWinnings(
       poolId, predictionId, prediction.predicter, pool.seeds.stakeToken, pool.seeds.stakeAmount, pool.winAmount
     );
+
+    if (pool.seeds.stakeToken == address(this)) {
+      (bool isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');
+      if (!isSuccess) revert UnsuccessfulSendWinnings();
+    } else {
+      IERC20(pool.seeds.stakeToken).safeTransfer(prediction.predicter, pool.winAmount);
+    }
   }
 
   /// Awards the predicter who made the {Prediction} with `predictionId` in
