@@ -9,13 +9,11 @@ contract DeployCastoraPoolsManager is Script {
   function run() public {
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
 
-    address castoraAddress = 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53; // vm.envAddress('CASTORA_ADDRESS');
     address feeCollectorAddress = vm.envAddress('FEE_COLLECTOR_ADDRESS');
     uint16 splitPercent = 5000; // 50% , 2 decimals // vm.envUint('COMPLETION_FEES_SPLIT_PERCENT');
 
     address proxy = Upgrades.deployUUPSProxy(
-      'CastoraPoolsManager.sol',
-      abi.encodeCall(CastoraPoolsManager.initialize, (castoraAddress, feeCollectorAddress, splitPercent))
+      'CastoraPoolsManager.sol', abi.encodeCall(CastoraPoolsManager.initialize, (feeCollectorAddress, splitPercent))
     );
 
     console.log('Deployed CastoraPoolsManager at: ', proxy);

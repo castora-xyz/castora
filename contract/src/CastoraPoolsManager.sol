@@ -349,15 +349,12 @@ contract CastoraPoolsManager is
   }
 
   /// Sets up this smart contract when it is deployed.
-  /// @param castora_ The address of the main Castora contract.
   /// @param feeCollector_ The address that will collect pool completion fees for Castora.
   /// @param splitPercent_ The split percentage for completion pool fees (10000 = 100%).
-  function initialize(address castora_, address feeCollector_, uint16 splitPercent_) public initializer {
-    if (castora_ == address(0)) revert InvalidAddress();
+  function initialize(address feeCollector_, uint16 splitPercent_) public initializer {
     if (feeCollector_ == address(0)) revert InvalidAddress();
     if (splitPercent_ > 10000) revert InvalidSplitFeesPercent();
 
-    castora = castora_;
     feeCollector = feeCollector_;
     creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
@@ -453,6 +450,8 @@ contract CastoraPoolsManager is
     // Collect creation fee and create pool
     uint256 creationFeeAmount = _collectCreationFee(creationFeeToken);
     _sendToCastoraFeeCollectorInCreate(creationFeeAmount, creationFeeToken);
+
+    if (castora == address(0)) revert CastoraAddressNotSet();
     poolId = Castora(castora).createPool(seeds);
 
     // Update statistics and user data
@@ -538,11 +537,13 @@ contract CastoraPoolsManager is
   /// @param poolId The pool ID that was completed
   function processPoolCompletion(uint256 poolId) external nonReentrant {
     // Verify pool is completed in main Castora
+    if (castora == address(0)) revert CastoraAddressNotSet();
     Pool memory pool = Castora(castora).getPool(poolId);
     if (pool.completionTime == 0) revert PoolNotYetCompleted();
 
-    // Get the total fees. Following is Same logic as is in Castora.completePool
-    uint256 totalFees = (pool.seeds.stakeAmount * pool.noOfPredictions) - (pool.winAmount * pool.noOfWinners);
+    // Get the total fees. Following is Same logic as is in Castora.finalizePoolCompletion
+    uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
+    uint256 totalFees = pool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     // Get the corresponding UserCreatedPool struct
     UserCreatedPool storage userPool = userCreatedPools[poolId];

@@ -58,7 +58,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(address(mockCastora), feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.setCastora(address(mockCastora));
 
     // Set up creation fees for the token
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
@@ -147,8 +148,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    // Calculate total fees: (stakeAmount * noOfPredictions) - (winAmount * noOfWinners)
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
     uint256 castoraShare = totalFees - userShare;
 
@@ -195,7 +196,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
   function testProcessPoolCompletionNonUserCreatedPool() public {
     uint256 poolId = 999; // Pool not created by any user
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId, totalFees);
 
@@ -233,7 +235,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
 
     // Process once
@@ -246,7 +249,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
   function testProcessPoolCompletionRevertAlreadyProcessedNonUserPool() public {
     uint256 poolId = 999;
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId, totalFees);
 
@@ -264,7 +268,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     _setupCompletedPool(poolId, totalFees);
@@ -314,7 +319,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -338,7 +344,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -359,11 +366,11 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     // Setup a pool with zero fees (break even scenario)
     Pool memory zeroFeesPool = mockPool;
     zeroFeesPool.poolId = poolId;
+    zeroFeesPool.seeds.feesPercent = 0; // No fees
     zeroFeesPool.completionTime = block.timestamp + 1500;
     zeroFeesPool.noOfPredictions = 5;
     zeroFeesPool.noOfWinners = 5;
     zeroFeesPool.winAmount = STAKE_AMOUNT; // Winners get exactly what they staked
-    // totalFees = (1000000 * 5) - (1000000 * 5) = 0
 
     vm.mockCall(
       address(mockCastora), abi.encodeWithSelector(Castora.getPool.selector, poolId), abi.encode(zeroFeesPool)
@@ -387,7 +394,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     poolIds[1] = 2;
     poolIds[2] = 3;
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     for (uint256 i = 0; i < poolIds.length; i++) {
@@ -438,7 +446,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     _createPoolForUser(user2, poolId2);
     _createPoolForUser(user1, poolId3);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId1, totalFees);
     _setupCompletedPool(poolId2, totalFees);
@@ -468,7 +477,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     _createPoolForUser(user1, poolId1);
     _createPoolForUser(user1, poolId2);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     // Only setup and process first pool
     _setupCompletedPool(poolId1, totalFees);
@@ -516,7 +526,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.createPool(differentSeeds, address(creationFeeToken));
 
     // Process both pools
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId1, totalFees);
     poolsManager.processPoolCompletion(poolId1);
@@ -549,7 +560,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -563,7 +575,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     _setupCompletedPool(poolId, totalFees);
@@ -591,7 +604,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
   function testPaginationFunctionsForClaimable() public {
     // Create multiple pools
     uint256 numPools = 5;
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     for (uint256 i = 1; i <= numPools; i++) {
       _createPoolForUser(user1, i);
@@ -661,7 +675,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
     vm.warp(block.timestamp + 1600);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     // Process pool completion
@@ -698,7 +713,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     // Fund contract with ETH
     vm.deal(address(poolsManager), 10 ether);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     for (uint256 i = 0; i < poolIds.length; i++) {
@@ -875,7 +891,8 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     uint256 poolId1 = 1;
     _createPoolForUser(user1, poolId1);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId1, totalFees);
 
     // This should work fine (ERC20 transfer to fee collector)

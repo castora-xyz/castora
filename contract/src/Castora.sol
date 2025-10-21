@@ -11,9 +11,9 @@ import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/ut
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraPoolsManager} from './CastoraPoolsManager.sol';
 import {CastoraPoolsRules} from './CastoraPoolsRules.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
-import {IPoolCompletionHandler} from './IPoolCompletionHandler.sol';
 
 /// @title Rewards participants' accuracy in predicting prices of tokens.
 /// @notice Participants predict what the price of a predictionToken will be at
@@ -35,8 +35,8 @@ contract Castora is
 {
   using SafeERC20 for IERC20;
 
-  /// An address to which all winner fees are sent to.
-  address public feeCollector;
+  /// Address for CastoraPoolsManager contract
+  address public poolsManager;
   /// Address for CastoraPoolsRules contract
   address public poolsRules;
   /// Specifies the role that allow perculiar addresses to call admin functions.
@@ -97,17 +97,23 @@ contract Castora is
   mapping(address => mapping(bytes32 => uint256)) public claimableActivityHashesIndex;
   /// Maps each predictionId for the user's claimable to the right index in each pool
   mapping(uint256 => mapping(address => mapping(uint256 => uint256))) public claimablePredictionIdsInPoolIndex;
+  /// Tracks if a pool's completion has been initiated
+  mapping(uint256 => bool) public hasPoolCompletionBeenInitiated;
+  /// Tracks the total batch sizes for processing pool completion
+  mapping(uint256 => uint256) public poolCompletionBatchSize;
+  /// Tracks how many batches have been processed for each pool
+  mapping(uint256 => uint256) public poolCompletionBatchesProcessed;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
-  function initialize(address feeCollector_, address poolsRules_) public initializer {
-    if (feeCollector_ == address(0)) revert InvalidAddress();
+  function initialize(address poolsManager_, address poolsRules_) public initializer {
+    if (poolsManager_ == address(0)) revert InvalidAddress();
     if (poolsRules_ == address(0)) revert InvalidAddress();
 
-    feeCollector = feeCollector_;
+    poolsManager = poolsManager_;
     poolsRules = poolsRules_;
 
     __Ownable_init(msg.sender);
@@ -130,12 +136,13 @@ contract Castora is
     _unpause();
   }
 
-  /// Sets the address of the `feeCollector` to the provided `newFeeCollector`.
-  function setFeeCollector(address newFeeCollector) external onlyOwner {
-    if (newFeeCollector == address(0)) revert InvalidAddress();
-    address oldFeeCollector = feeCollector;
-    feeCollector = newFeeCollector;
-    emit SetFeeCollector(oldFeeCollector, newFeeCollector);
+  /// Sets the CastoraPoolsManager contract address
+  /// @param _poolsManager The new CastoraPoolsManager contract address
+  function setPoolsManager(address _poolsManager) external onlyOwner {
+    if (_poolsManager == address(0)) revert InvalidAddress();
+    address oldPoolsManager = poolsManager;
+    poolsManager = _poolsManager;
+    emit SetPoolsManagerInCastora(oldPoolsManager, _poolsManager);
   }
 
   /// Sets the CastoraPoolsRules contract address
@@ -624,58 +631,95 @@ contract Castora is
     lastPredictionId = pool.noOfPredictions;
   }
 
-  /// Sets the {Pool-snapshotPrice}, {Pool-noOfWinners}, {Pool-winAmount},
-  /// and {Pool-winnerPredictions} of the {Pool} with the provided `poolId`.
-  ///
-  /// Emits a {CompletedPool} event.
-  function completePool(
-    uint256 poolId,
-    uint256 snapshotPrice,
-    uint256 noOfWinners,
-    uint256 winAmount,
-    uint256[] memory winnerPredictions
-  ) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
+  /// Initiates pool completion by setting batch requirements.
+  /// This must be called first before processing any winner batches.
+  /// Only collects fees and sets snapshot after ALL batches are processed via finalizePoolCompletion.
+  function initiatePoolCompletion(uint256 poolId, uint256 snapshotPrice, uint256 batchSize)
+    public
+    nonReentrant
+    whenNotPaused
+    onlyRole(ADMIN_ROLE)
+  {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (pool.completionTime != 0) revert PoolAlreadyCompleted();
+    if (hasPoolCompletionBeenInitiated[poolId]) revert PoolCompletionAlreadyInitiated();
     if (block.timestamp < pool.seeds.snapshotTime) revert NotYetSnapshotTime();
     if (pool.noOfPredictions == 0) revert NoPredictionsInPool();
-    if (noOfWinners == 0) revert InvalidWinnersCount();
-    if (noOfWinners > pool.noOfPredictions) revert InvalidWinnersCount();
-    if (noOfWinners != winnerPredictions.length) revert InvalidWinnersCount();
-    if (winAmount == 0) revert ZeroAmountSpecified();
+    if (batchSize == 0) revert InvalidPoolCompletionBatchSize();
+    // should never happen due to createPool validations, but worth having to prevent division by zero
+    if (pool.seeds.multiplier == 0) revert InvalidPoolMultiplier();
 
-    uint256 fees = (pool.seeds.stakeAmount * pool.noOfPredictions) - (winAmount * noOfWinners);
-    if (pool.seeds.stakeToken == address(this)) {
-      (bool isSuccess,) = payable(feeCollector).call{value: fees}('');
-      if (!isSuccess) revert UnsuccessfulFeeCollection();
+    uint256 noOfWinners;
+    if (pool.noOfPredictions == 1) {
+      noOfWinners = 1;
     } else {
-      IERC20(pool.seeds.stakeToken).safeTransfer(feeCollector, fees);
+      // the multiplier is in 2 decimal places (x2 is 200), so we multiply by 100 here to cancel it out
+      noOfWinners = (pool.noOfPredictions * 100) / pool.seeds.multiplier;
+      if (noOfWinners == 0) noOfWinners = 1;
+    }
+    pool.noOfWinners = noOfWinners;
+
+    uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
+    uint256 fees = pool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
+    pool.winAmount = (totalStaked - fees) / noOfWinners;
+
+    hasPoolCompletionBeenInitiated[poolId] = true;
+    poolCompletionBatchSize[poolId] = batchSize;
+    poolCompletionBatchesProcessed[poolId] = 0;
+    emit PoolCompletionInitiated(poolId, noOfWinners, noOfWinners);
+  }
+
+  /// Processes a batch of winners for a pool. Can be called multiple times until all batches are processed.
+  /// Each winner is marked and their stats are updated. Prevents duplicate processing.
+  function setWinnersInBatch(uint256 poolId, uint256[] memory winnerPredictionIds)
+    public
+    nonReentrant
+    whenNotPaused
+    onlyRole(ADMIN_ROLE)
+  {
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    if (!hasPoolCompletionBeenInitiated[poolId]) revert PoolCompletionNotInitiated();
+
+    Pool storage pool = pools[poolId];
+    if (pool.completionTime != 0) revert PoolAlreadyCompleted();
+    if (winnerPredictionIds.length == 0) revert InvalidPoolCompletionBatchSize();
+
+    uint256 currentWinnersCount = winnerPredictionIds.length;
+    uint256 batchSize = poolCompletionBatchSize[poolId];
+    uint256 totalBatches = (pool.noOfWinners + batchSize - 1) / batchSize; // Ceiling division
+    uint256 processedBatches = poolCompletionBatchesProcessed[poolId];
+    if (processedBatches >= totalBatches) revert PoolCompletionBatchesAllProcessed();
+
+    // Ensure correct batch size, except for the last batch which can be smaller
+    if (currentWinnersCount != batchSize) {
+      if (totalBatches - processedBatches == 1) {
+        uint256 leftover = pool.noOfWinners - (processedBatches * batchSize);
+        if (currentWinnersCount != leftover) revert InvalidPoolCompletionBatchSize();
+      } else {
+        revert InvalidPoolCompletionBatchSize();
+      }
     }
 
-    pool.snapshotPrice = snapshotPrice;
-    pool.completionTime = block.timestamp;
-    pool.noOfWinners = noOfWinners;
-    pool.winAmount = winAmount;
-    allStats.noOfWinnings += noOfWinners;
-    allStats.noOfClaimableWinnings += noOfWinners;
-    stakeTokenDetails[pool.seeds.stakeToken].noOfWinnings += noOfWinners;
-    stakeTokenDetails[pool.seeds.stakeToken].noOfClaimableWinnings += noOfWinners;
-    stakeTokenDetails[pool.seeds.stakeToken].totalWon += winAmount * noOfWinners;
+    for (uint256 i = 0; i < currentWinnersCount; i++) {
+      uint256 predictionId = winnerPredictionIds[i];
+      if (predictionId == 0 || predictionId > pool.noOfPredictions) revert InvalidPredictionId();
+      if (predictions[poolId][predictionId].isAWinner) revert PredictionAlreadyMarkedAsWinner(predictionId);
 
-    for (uint256 i = 0; i < noOfWinners; i += 1) {
-      uint256 predictionId = winnerPredictions[i];
+      // Mark prediction as winner
       predictions[poolId][predictionId].isAWinner = true;
 
+      // Update all stats for this winner
       address predicter = predictions[poolId][predictionId].predicter;
       userStats[predicter].noOfWinnings += 1;
       userStats[predicter].noOfClaimableWinnings += 1;
       userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfWinnings += 1;
       userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfClaimableWinnings += 1;
-      userStakeTokenDetails[predicter][pool.seeds.stakeToken].totalWon += winAmount;
+      userStakeTokenDetails[predicter][pool.seeds.stakeToken].totalWon += pool.winAmount;
       userInPoolPredictionStats[poolId][predicter].noOfWinnings += 1;
       userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings += 1;
 
+      // Update tracking arrays
       winnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
       claimableWinnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
       bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
@@ -686,16 +730,42 @@ contract Castora is
         userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings - 1;
     }
 
-    emit PoolCompleted(poolId, pool.seeds.snapshotTime, snapshotPrice, pool.winAmount, noOfWinners);
+    allStats.noOfWinnings += currentWinnersCount;
+    allStats.noOfClaimableWinnings += currentWinnersCount;
+    stakeTokenDetails[pool.seeds.stakeToken].noOfWinnings += currentWinnersCount;
+    stakeTokenDetails[pool.seeds.stakeToken].noOfClaimableWinnings += currentWinnersCount;
+    stakeTokenDetails[pool.seeds.stakeToken].totalWon += pool.winAmount * currentWinnersCount;
+    poolCompletionBatchesProcessed[poolId] += 1;
 
-    // As the feeCollector is now the CastoraPoolsManager contract, this main Castora needs to tell it
-    // to process the received fees to either send out to the main Castora fee collector address or split
-    // it with the user who created the pool. Checking for code length, confirms that it is a contract.
-    if (feeCollector.code.length > 0) {
-      // This try/catch method allows that failures in the processing doesn't fail this current running
-      // completePool method. Also, an external/off-chain process could trigger the processPoolCompletion
-      // if it failed from here.
-      try IPoolCompletionHandler(feeCollector).processPoolCompletion(poolId) {} catch {}
+    emit SetWinnersInBatch(poolId, poolCompletionBatchesProcessed[poolId], totalBatches, winnerPredictionIds.length);
+  }
+
+  /// Finalizes pool completion by collecting fees and marking pool as complete.
+  /// Can only be called after all winner batches have been processed.
+  function finalizePoolCompletion(uint256 poolId) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
+    if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    if (!hasPoolCompletionBeenInitiated[poolId]) revert PoolCompletionNotInitiated();
+
+    Pool storage pool = pools[poolId];
+    if (pool.completionTime != 0) revert PoolAlreadyCompleted();
+    uint256 batchSize = poolCompletionBatchSize[poolId];
+    uint256 totalBatches = (pool.noOfWinners + batchSize - 1) / batchSize; // Ceiling division
+    if (poolCompletionBatchesProcessed[poolId] < totalBatches) revert PoolCompletionBatchesNotAllProcessed();
+
+    pool.completionTime = block.timestamp;
+    emit PoolCompleted(poolId);
+
+    uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
+    uint256 fees = pool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
+    if (fees > 0) {
+      if (pool.seeds.stakeToken == address(this)) {
+        (bool isSuccess,) = payable(poolsManager).call{value: fees}('');
+        if (!isSuccess) revert UnsuccessfulFeeCollection();
+      } else {
+        IERC20(pool.seeds.stakeToken).safeTransfer(poolsManager, fees);
+      }
+
+      CastoraPoolsManager(payable(poolsManager)).processPoolCompletion(poolId);
     }
   }
 

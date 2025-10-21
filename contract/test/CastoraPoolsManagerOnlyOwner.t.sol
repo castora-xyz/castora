@@ -44,7 +44,8 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(castora, feeCollector, splitFeesPercent);
+    poolsManager.initialize(feeCollector, splitFeesPercent);
+    poolsManager.setCastora(castora);
 
     // Setup tokens and ETH for testing
     cusd.mint(address(poolsManager), 1000000 * 10 ** 6);
@@ -59,13 +60,10 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
       CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
 
     vm.expectRevert(InvalidAddress.selector);
-    newPoolsManager.initialize(address(0), address(0), 10001);
-
-    vm.expectRevert(InvalidAddress.selector);
-    newPoolsManager.initialize(castora, address(0), 10001);
+    newPoolsManager.initialize(address(0), 10001);
 
     vm.expectRevert(InvalidSplitFeesPercent.selector);
-    newPoolsManager.initialize(castora, feeCollector, 10001);
+    newPoolsManager.initialize(feeCollector, 10001);
   }
 
   // ========== setFeeCollector Tests ==========

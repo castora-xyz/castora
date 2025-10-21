@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 contract CastoraErrors {
   error AlreadyClaimedCompletionFees();
   error AlreadyClaimedWinnings();
+  error CastoraAddressNotSet();
   error CreationFeeTokenAlreadyDisallowed();
   error CreationFeeTokenNotAllowed();
   error IncorrectCreationFeeValue();
@@ -11,6 +12,7 @@ contract CastoraErrors {
   error InsufficientCreationFeeValue();
   error InsufficientStakeValue();
   error InvalidAddress();
+  error InvalidPoolCompletionBatchSize();
   error InvalidPoolFeesPercent();
   error InvalidPoolId();
   error InvalidPoolTimes();
@@ -25,9 +27,14 @@ contract CastoraErrors {
   error NotYourPool();
   error NotYourPrediction();
   error PoolAlreadyCompleted();
+  error PoolCompletionAlreadyInitiated();
   error PoolCompletionAlreadyProcessed();
+  error PoolCompletionBatchesAllProcessed();
+  error PoolCompletionBatchesNotAllProcessed();
+  error PoolCompletionNotInitiated();
   error PoolExistsAlready();
   error PoolNotYetCompleted();
+  error PredictionAlreadyMarkedAsWinner(uint256 predictionId);
   error PredictionTokenNotAllowed();
   error StakeTokenNotAllowed();
   error StakeAmountNotAllowed();

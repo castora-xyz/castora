@@ -16,11 +16,8 @@ contract CastoraEvents {
     uint256 indexed poolId, uint256 indexed predictionId, address indexed predicter, uint256 predictionPrice
   );
 
-  /// Emitted when the {Pool} with `poolId` obtains what the price
-  /// (`snapshotPrice`) of the `predictionToken` was at `snapshotTime`.
-  event PoolCompleted(
-    uint256 indexed poolId, uint256 snapshotTime, uint256 snapshotPrice, uint256 winAmount, uint256 noOfWinners
-  );
+  /// Emitted when the {Pool} with `poolId` finalizes its completion.
+  event PoolCompleted(uint256 indexed poolId);
 
   /// Emitted when the address of predicter (now a `winner`) that made the
   /// {Prediction} with `predictionId` in a {Pool} with `poolId` claims
@@ -56,6 +53,11 @@ contract CastoraEvents {
   /// @param oldCastora The previous Castora contract address
   /// @param newCastora The new Castora contract address
   event SetCastoraInPoolsManager(address indexed oldCastora, address indexed newCastora);
+
+  /// Emitted when the CastoraPoolsManager contract address is updated
+  /// @param oldPoolsManager The previous CastoraPoolsManager contract address
+  /// @param newPoolsManager The new CastoraPoolsManager contract address
+  event SetPoolsManagerInCastora(address indexed oldPoolsManager, address indexed newPoolsManager);
 
   /// Emitted when the CastoraPoolsRules contract address is updated
   /// @param oldPoolsRules The previous CastoraPoolsRules contract address
@@ -107,4 +109,12 @@ contract CastoraEvents {
   /// @param sender The address that sent the money
   /// @param amount The amount received
   event ReceiveWasCalled(address indexed sender, uint256 amount);
+
+  /// Emitted when pool completion is initiated
+  event PoolCompletionInitiated(uint256 indexed poolId, uint256 noOfWinners, uint256 winAmount);
+
+  /// Emitted when a batch of winners is processed
+  event SetWinnersInBatch(
+    uint256 indexed poolId, uint256 batchesProcessed, uint256 totalBatches, uint256 winnersInBatch
+  );
 }

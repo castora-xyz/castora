@@ -41,7 +41,8 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(address(mockCastora), feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.setCastora(address(mockCastora));
 
     // Set up creation fees for the token
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
