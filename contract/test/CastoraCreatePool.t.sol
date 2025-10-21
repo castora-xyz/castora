@@ -68,7 +68,6 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     poolsRules.updateAllowedStakeAmount(address(cusd), 1000000, true);
     poolsRules.updateAllowedStakeAmount(address(castora), 1 ether, true);
     poolsRules.updateAllowedPoolMultiplier(200, true);
-    poolsRules.updateCurrentPoolFeesPercent(500);
   }
 
   function testRevertPausedCreatePool() public {
@@ -230,5 +229,17 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     bytes32 seedsHash = castora.hashPoolSeeds(validSeedsERC20);
     uint256 retrievedPoolId = castora.poolIdsBySeedsHashes(seedsHash);
     assertEq(retrievedPoolId, poolId);
+  }
+
+  function testGetPools() public {
+    uint256 poolId1 = castora.createPool(validSeedsNative);
+    uint256 poolId2 = castora.createPool(validSeedsERC20);
+    uint256[] memory poolIds = new uint256[](2);
+    poolIds[0] = poolId1;
+    poolIds[1] = poolId2;
+    Pool[] memory pools = castora.getPools(poolIds);
+    assertEq(pools.length, 2);
+    assertEq(pools[0].poolId, poolId1);
+    assertEq(pools[1].poolId, poolId2);
   }
 }

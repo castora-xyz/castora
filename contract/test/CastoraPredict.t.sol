@@ -16,33 +16,19 @@ import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
-contract MockFailingERC20 {
-  function transferFrom(address, address, uint256) external pure returns (bool) {
-    return false;
-  }
-
-  function approve(address, uint256) external pure returns (bool) {
-    return true;
-  }
-}
-
 contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
-  MockFailingERC20 failingToken;
   address owner;
   address feeCollector;
   address admin;
   address predicter;
   uint256 poolIdNative;
   uint256 poolIdERC20;
-  uint256 poolIdClosed;
-  uint256 poolIdFailingToken;
   PoolSeeds validSeedsNative;
   PoolSeeds validSeedsERC20;
-  PoolSeeds failingTokenSeeds;
 
   // Allow test contract to receive ETH
   receive() external payable {}
@@ -68,7 +54,6 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     // Deploy contracts
     cusd = new cUSD();
-    failingToken = new MockFailingERC20();
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
     poolsManager.initialize(feeCollector, 5000);
     poolsRules = CastoraPoolsRules(address(new ERC1967Proxy(address(new CastoraPoolsRules()), '')));
@@ -83,12 +68,9 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
     poolsRules.updateAllowedStakeToken(address(cusd), true);
     poolsRules.updateAllowedStakeToken(address(castora), true);
-    poolsRules.updateAllowedStakeToken(address(failingToken), true);
     poolsRules.updateAllowedStakeAmount(address(cusd), 1000000, true);
     poolsRules.updateAllowedStakeAmount(address(castora), 1 ether, true);
-    poolsRules.updateAllowedStakeAmount(address(failingToken), 1000000, true);
     poolsRules.updateAllowedPoolMultiplier(200, true);
-    poolsRules.updateCurrentPoolFeesPercent(500);
 
     // Create pools for testing
     validSeedsNative = getPoolSeeds(address(castora));
@@ -98,13 +80,6 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     validSeedsERC20 = getPoolSeeds(address(cusd));
     vm.prank(admin);
     poolIdERC20 = castora.createPool(validSeedsERC20);
-
-    failingTokenSeeds = getPoolSeeds(address(failingToken));
-    vm.prank(admin);
-    poolIdFailingToken = castora.createPool(failingTokenSeeds);
-
-    // Reset time for other tests
-    vm.warp(1);
 
     // Give predicter some tokens and ETH
     cusd.transfer(predicter, 10000000);
@@ -153,11 +128,18 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   function testRevertERC20FailurePredict() public {
     // Approve tokens first
     vm.prank(predicter);
-    IERC20(address(failingToken)).approve(address(castora), 1000000);
+    IERC20(address(cusd)).approve(address(castora), 1000000);
+
+    // mock cusd to return false for the token transfer
+    vm.mockCall(
+      address(cusd),
+      abi.encodeWithSelector(IERC20.transferFrom.selector, predicter, address(castora), 1000000),
+      abi.encode(false)
+    );
 
     vm.prank(predicter);
-    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(failingToken)));
-    castora.predict(poolIdFailingToken, 1500000);
+    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(cusd)));
+    castora.predict(poolIdERC20, 1500000);
   }
 
   // splitted out the function to overcome "stack too deep" error
@@ -380,11 +362,18 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   function testRevertERC20FailureBulkPredict() public {
     // Approve tokens first
     vm.prank(predicter);
-    IERC20(address(failingToken)).approve(address(castora), 2000000);
+    IERC20(address(cusd)).approve(address(castora), 2000000);
+
+    // mock cusd to return false for the token transfer
+    vm.mockCall(
+      address(cusd),
+      abi.encodeWithSelector(IERC20.transferFrom.selector, predicter, address(castora), 2000000),
+      abi.encode(false)
+    );
 
     vm.prank(predicter);
-    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(failingToken)));
-    castora.bulkPredict(poolIdFailingToken, 1500000, 2);
+    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(cusd)));
+    castora.bulkPredict(poolIdERC20, 1500000, 2);
   }
 
   function testBulkPredictNativeStakeSuccess() public {
@@ -579,5 +568,142 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(castora.getUsersPaginated(0, 10).length, 2);
     assertEq(castora.getUsersPaginated(0, 10)[1], anotherNewUser);
     assertEq(castora.getUserStats(anotherNewUser).nthUserCount, 2);
+  }
+
+  function testGetPredictions() public {
+    uint256 predictionPrice = 1500000;
+
+    vm.prank(predicter);
+    castora.bulkPredict{value: 3 ether}(poolIdNative, predictionPrice, 3);
+
+    // Verify all predictions were created
+    uint256[] memory predictionIds = new uint256[](3);
+    predictionIds[0] = 1;
+    predictionIds[1] = 2;
+    predictionIds[2] = 3;
+
+    Prediction[] memory predictions = castora.getPredictions(poolIdNative, predictionIds);
+    for (uint256 i = 0; i < predictionIds.length; i++) {
+      Prediction memory prediction = predictions[i];
+      assertEq(prediction.predictionId, predictionIds[i]);
+      assertEq(prediction.predicter, predicter);
+      assertEq(prediction.predictionPrice, predictionPrice);
+    }
+  }
+
+  function testRevertsInCastoraGetters() public {
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserStats(address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getJoinedPoolIdsForUserPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserPredictionActivitiesPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getClaimableActivitiesForAddressPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPool(0);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPool(999);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPrediction(0, 0);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPrediction(999, 0);
+
+    vm.expectRevert(InvalidPredictionId.selector);
+    castora.getPrediction(poolIdNative, 0);
+
+    vm.expectRevert(InvalidPredictionId.selector);
+    castora.getPrediction(poolIdNative, 999);
+
+    uint256[] memory pools = new uint256[](1);
+    pools[0] = 0;
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPools(pools);
+
+    pools[0] = 999;
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPools(pools);
+
+    uint256[] memory predictions = new uint256[](1);
+    predictions[0] = 0;
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPredictions(0, predictions);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPredictions(999, predictions);
+
+    vm.expectRevert(InvalidPredictionId.selector);
+    castora.getPredictions(poolIdNative, predictions);
+
+    predictions[0] = 999;
+    vm.expectRevert(InvalidPredictionId.selector);
+    castora.getPredictions(poolIdNative, predictions);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getUserInPoolPredictionStats(0, address(0));
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getUserInPoolPredictionStats(999, address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserInPoolPredictionStats(poolIdNative, address(0));
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getWinnerPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getWinnerPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getPredictionTokenDetails(address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getStakeTokenDetails(address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserPredictionTokensPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserStakeTokensPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserPredictionTokenDetails(address(0), address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserPredictionTokenDetails(predicter, address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserStakeTokenDetails(address(0), address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getUserStakeTokenDetails(predicter, address(0));
   }
 }

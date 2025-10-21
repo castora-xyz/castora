@@ -330,8 +330,8 @@ contract Castora is
     view
     returns (uint256[] memory predictionIds)
   {
-    if (user == address(0)) revert InvalidAddress();
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
     predictionIds = _paginateUint256Array(
       winnerPredictionIdsByAddressesPerPool[poolId][user],
       userInPoolPredictionStats[poolId][user].noOfWinnings,
@@ -346,8 +346,8 @@ contract Castora is
     uint256 offset,
     uint256 limit
   ) external view returns (uint256[] memory predictionIds) {
-    if (user == address(0)) revert InvalidAddress();
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
     predictionIds = _paginateUint256Array(
       claimableWinnerPredictionIdsByAddressesPerPool[poolId][user],
       userInPoolPredictionStats[poolId][user].noOfClaimableWinnings,
@@ -357,10 +357,12 @@ contract Castora is
   }
 
   function getPredictionTokenDetails(address token) external view returns (PredictionTokenDetails memory details) {
+    if (token == address(0)) revert InvalidAddress();
     details = predictionTokenDetails[token];
   }
 
   function getStakeTokenDetails(address token) external view returns (StakeTokenDetails memory details) {
+    if (token == address(0)) revert InvalidAddress();
     details = stakeTokenDetails[token];
   }
 
@@ -378,7 +380,7 @@ contract Castora is
     view
     returns (PredictionTokenDetails memory details)
   {
-    if (user == address(0)) revert InvalidAddress();
+    if (user == address(0) || token == address(0)) revert InvalidAddress();
     details = userPredictionTokenDetails[user][token];
   }
 
@@ -396,7 +398,7 @@ contract Castora is
     view
     returns (StakeTokenDetails memory details)
   {
-    if (user == address(0)) revert InvalidAddress();
+    if (user == address(0) || token == address(0)) revert InvalidAddress();
     details = userStakeTokenDetails[user][token];
   }
 
@@ -682,6 +684,7 @@ contract Castora is
       noOfWinners = (pool.noOfPredictions * 100) / pool.seeds.multiplier;
       if (noOfWinners == 0) noOfWinners = 1;
     }
+    if (batchSize > noOfWinners) revert InvalidPoolCompletionBatchSize();
     pool.noOfWinners = noOfWinners;
 
     uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
@@ -691,7 +694,7 @@ contract Castora is
     hasPoolCompletionBeenInitiated[poolId] = true;
     poolCompletionBatchSize[poolId] = batchSize;
     poolCompletionBatchesProcessed[poolId] = 0;
-    emit PoolCompletionInitiated(poolId, noOfWinners, noOfWinners);
+    emit PoolCompletionInitiated(poolId, noOfWinners, pool.winAmount);
   }
 
   /// Processes a batch of winners for a pool. Can be called multiple times until all batches are processed.
@@ -715,15 +718,14 @@ contract Castora is
     uint256 processedBatches = poolCompletionBatchesProcessed[poolId];
     if (processedBatches >= totalBatches) revert PoolCompletionBatchesAllProcessed();
 
-    // Ensure correct batch size, except for the last batch which can be smaller
-    if (currentWinnersCount != batchSize) {
-      if (totalBatches - processedBatches == 1) {
-        uint256 leftover = pool.noOfWinners - (processedBatches * batchSize);
-        if (currentWinnersCount != leftover) revert InvalidPoolCompletionBatchSize();
-      } else {
-        revert InvalidPoolCompletionBatchSize();
-      }
+    // Ensure correct batch size, last batch array length must match expected leftover count
+    bool isLastBatch = totalBatches - processedBatches == 1;
+    if (isLastBatch) {
+      uint256 leftover = pool.noOfWinners - (processedBatches * batchSize);
+      if (currentWinnersCount != leftover) revert InvalidPoolCompletionBatchSize();
     }
+    // otherwise, array length must match expected batchSize
+    if (!isLastBatch && currentWinnersCount != batchSize) revert InvalidPoolCompletionBatchSize();
 
     for (uint256 i = 0; i < currentWinnersCount; i++) {
       uint256 predictionId = winnerPredictionIds[i];

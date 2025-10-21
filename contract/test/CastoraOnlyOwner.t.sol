@@ -185,6 +185,16 @@ contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, T
     castora.upgradeToAndCall(newImplementation, '');
   }
 
+  function testRevertInvalidAddressesInitialise() public {
+    castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.initialize(address(0), address(poolsRules));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.initialize(address(poolsManager), address(0));
+  }
+
   function testUpgradeSuccessWithRetainedData() public {
     // Store some data before upgrade
     bytes32 adminRole = castora.ADMIN_ROLE();
