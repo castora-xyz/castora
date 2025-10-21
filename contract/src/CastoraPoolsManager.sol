@@ -433,9 +433,8 @@ contract CastoraPoolsManager is
 
   /// @notice Internal function to collect creation fees
   /// @param creationFeeToken The token to collect fees in
-  /// @return creationFeeAmount The amount of fees collected
-  function _collectCreationFee(address creationFeeToken) internal returns (uint256 creationFeeAmount) {
-    creationFeeAmount = creationFeesTokenInfos[creationFeeToken].amount;
+  /// @param creationFeeAmount The amount of fees collected
+  function _collectCreationFee(address creationFeeToken, uint256 creationFeeAmount) internal {
     if (creationFeeAmount > 0) {
       if (creationFeeToken == address(this)) {
         // native token payment
@@ -505,9 +504,9 @@ contract CastoraPoolsManager is
   }
 
   /// @notice Sends fees to castora fee collector
-  /// @param amount Amount to send
   /// @param token Token address
-  function _sendToCastoraFeeCollectorInCreate(uint256 amount, address token) internal {
+  /// @param amount Amount to send
+  function _sendToCastoraFeeCollectorInCreate(address token, uint256 amount) internal {
     if (amount == 0) return;
     // native token payment is when the main castora is used
     if (token == address(this)) {
@@ -538,13 +537,13 @@ contract CastoraPoolsManager is
     poolId = Castora(castora).createPool(seeds);
 
     // Update statistics and user data
+    uint256 creationFeeAmount = creationFeesTokenInfos[creationFeeToken].amount;
     _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
-
     emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
 
     // Collect creation fee and create pool
-    uint256 creationFeeAmount = _collectCreationFee(creationFeeToken);
-    _sendToCastoraFeeCollectorInCreate(creationFeeAmount, creationFeeToken);
+    _collectCreationFee(creationFeeToken, creationFeeAmount);
+    _sendToCastoraFeeCollectorInCreate(creationFeeToken, creationFeeAmount);
   }
 
   /// @notice Internal function to update statistics after pool completion

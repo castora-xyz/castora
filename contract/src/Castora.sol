@@ -71,12 +71,12 @@ contract Castora is
   /// All pools that were ever created against their poolIds.
   mapping(uint256 => Pool) public pools;
   /// Keeps track of predictions in pools by their predictionIds.
-  mapping(uint256 => mapping(uint256 => Prediction)) predictions;
+  mapping(uint256 => mapping(uint256 => Prediction)) public predictions;
   /// Keeps track of a user's activity in a given pool.
   mapping(uint256 => mapping(address => UserInPoolPredictionStats)) public userInPoolPredictionStats;
   /// Keeps track of predictions in pools by the predicter's address.
   /// Helps in fetching predictions made by participants.
-  mapping(uint256 => mapping(address => uint256[])) predictionIdsByAddressesPerPool;
+  mapping(uint256 => mapping(address => uint256[])) public predictionIdsByAddressesPerPool;
   /// Keeps track of all winner predictions of a user in a pool
   mapping(uint256 => mapping(address => uint256[])) public winnerPredictionIdsByAddressesPerPool;
   /// Keeps track of all claimable predictions that the user can claim for a given pool.
@@ -103,68 +103,6 @@ contract Castora is
   mapping(uint256 => uint256) public poolCompletionBatchSize;
   /// Tracks how many batches have been processed for each pool
   mapping(uint256 => uint256) public poolCompletionBatchesProcessed;
-
-  /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor() {
-    _disableInitializers();
-  }
-
-  function initialize(address poolsManager_, address poolsRules_) public initializer {
-    if (poolsManager_ == address(0)) revert InvalidAddress();
-    if (poolsRules_ == address(0)) revert InvalidAddress();
-
-    poolsManager = poolsManager_;
-    poolsRules = poolsRules_;
-
-    __Ownable_init(msg.sender);
-    __AccessControl_init();
-    __ReentrancyGuard_init();
-    __Pausable_init();
-    __UUPSUpgradeable_init();
-
-    _grantRole(DEFAULT_ADMIN_ROLE, owner());
-    _grantRole(ADMIN_ROLE, owner());
-  }
-
-  function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
-
-  function pause() external onlyOwner nonReentrant whenNotPaused {
-    _pause();
-  }
-
-  function unpause() external onlyOwner nonReentrant whenPaused {
-    _unpause();
-  }
-
-  /// Sets the CastoraPoolsManager contract address
-  /// @param _poolsManager The new CastoraPoolsManager contract address
-  function setPoolsManager(address _poolsManager) external onlyOwner {
-    if (_poolsManager == address(0)) revert InvalidAddress();
-    address oldPoolsManager = poolsManager;
-    poolsManager = _poolsManager;
-    emit SetPoolsManagerInCastora(oldPoolsManager, _poolsManager);
-  }
-
-  /// Sets the CastoraPoolsRules contract address
-  /// @param _poolsRules The new CastoraPoolsRules contract address
-  function setPoolsRules(address _poolsRules) external onlyOwner {
-    if (_poolsRules == address(0)) revert InvalidAddress();
-    address oldPoolsRules = poolsRules;
-    poolsRules = _poolsRules;
-    emit SetPoolsRulesInCastora(oldPoolsRules, _poolsRules);
-  }
-
-  /// Grants the {ADMIN_ROLE} to the provided `admin` address.
-  function grantAdminRole(address admin) external onlyOwner {
-    if (admin == address(0)) revert InvalidAddress();
-    _grantRole(ADMIN_ROLE, admin);
-  }
-
-  /// Revokes the {ADMIN_ROLE} from the provided `admin` address.
-  function revokeAdminRole(address admin) external onlyOwner {
-    if (admin == address(0)) revert InvalidAddress();
-    _revokeRole(ADMIN_ROLE, admin);
-  }
 
   function getAllStats() external view returns (AllPredictionStats memory stats) {
     stats = allStats;
@@ -301,7 +239,7 @@ contract Castora is
 
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
   /// `poolId` is invalid.
-  function getPool(uint256 poolId) public view returns (Pool memory pool) {
+  function getPool(uint256 poolId) external view returns (Pool memory pool) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     pool = pools[poolId];
   }
@@ -310,7 +248,7 @@ contract Castora is
   /// made in the {Pool} with the provided `poolId`.
   ///
   /// Fails if either the provided `poolId` or `predictionId` are invalid.
-  function getPrediction(uint256 poolId, uint256 predictionId) public view returns (Prediction memory prediction) {
+  function getPrediction(uint256 poolId, uint256 predictionId) external view returns (Prediction memory prediction) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
     if (predictionId == 0 || predictionId > pool.noOfPredictions) {
@@ -473,13 +411,81 @@ contract Castora is
     return keccak256(abi.encodePacked('poolId', activity.poolId, 'predictionId', activity.predictionId));
   }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize(address poolsManager_, address poolsRules_) public initializer {
+    if (poolsManager_ == address(0)) revert InvalidAddress();
+    if (poolsRules_ == address(0)) revert InvalidAddress();
+
+    poolsManager = poolsManager_;
+    poolsRules = poolsRules_;
+
+    __Ownable_init(msg.sender);
+    __AccessControl_init();
+    __ReentrancyGuard_init();
+    __Pausable_init();
+    __UUPSUpgradeable_init();
+
+    _grantRole(DEFAULT_ADMIN_ROLE, owner());
+    _grantRole(ADMIN_ROLE, owner());
+  }
+
+  function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
+
+  function pause() external onlyOwner nonReentrant whenNotPaused {
+    _pause();
+  }
+
+  function unpause() external onlyOwner nonReentrant whenPaused {
+    _unpause();
+  }
+
+  /// Sets the CastoraPoolsManager contract address
+  /// @param _poolsManager The new CastoraPoolsManager contract address
+  function setPoolsManager(address _poolsManager) external onlyOwner {
+    if (_poolsManager == address(0)) revert InvalidAddress();
+    address oldPoolsManager = poolsManager;
+    poolsManager = _poolsManager;
+    emit SetPoolsManagerInCastora(oldPoolsManager, _poolsManager);
+  }
+
+  /// Sets the CastoraPoolsRules contract address
+  /// @param _poolsRules The new CastoraPoolsRules contract address
+  function setPoolsRules(address _poolsRules) external onlyOwner {
+    if (_poolsRules == address(0)) revert InvalidAddress();
+    address oldPoolsRules = poolsRules;
+    poolsRules = _poolsRules;
+    emit SetPoolsRulesInCastora(oldPoolsRules, _poolsRules);
+  }
+
+  /// Grants the {ADMIN_ROLE} to the provided `admin` address.
+  function grantAdminRole(address admin) external onlyOwner {
+    if (admin == address(0)) revert InvalidAddress();
+    _grantRole(ADMIN_ROLE, admin);
+  }
+
+  /// Revokes the {ADMIN_ROLE} from the provided `admin` address.
+  function revokeAdminRole(address admin) external onlyOwner {
+    if (admin == address(0)) revert InvalidAddress();
+    _revokeRole(ADMIN_ROLE, admin);
+  }
+
   /// Creates a {Pool} with the provided `seeds`.
   ///
   /// Fails if any of the {PoolSeeds} properties are invalid or if there
   /// is a pool with the same `seeds`.
   ///
   /// Emits a {CreatedPool} event.
-  function createPool(PoolSeeds memory seeds) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) returns (uint256) {
+  function createPool(PoolSeeds memory seeds)
+    external
+    nonReentrant
+    whenNotPaused
+    onlyRole(ADMIN_ROLE)
+    returns (uint256)
+  {
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
 
@@ -553,8 +559,9 @@ contract Castora is
   function _updatePredictStatsPrediction(uint256 poolId, uint256 predictionId, uint256 predictionPrice) internal {
     predictionIdsByAddressesPerPool[poolId][msg.sender].push(predictionId);
 
-    bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
-    userPredictionActivities[activityHash] = UserPredictionActivity(poolId, predictionId);
+    UserPredictionActivity memory activity = UserPredictionActivity(poolId, predictionId);
+    bytes32 activityHash = hashUserPredictionActivity(activity);
+    userPredictionActivities[activityHash] = activity;
     userPredictionActivityHashes.push(activityHash);
     userPredictionActivityHashesByAddresses[msg.sender].push(activityHash);
 
@@ -572,7 +579,7 @@ contract Castora is
   ///
   /// Emits a {Predicted} event.
   function predict(uint256 poolId, uint256 predictionPrice)
-    public
+    external
     payable
     nonReentrant
     whenNotPaused
@@ -608,7 +615,7 @@ contract Castora is
   ///
   /// Emits multiple {Predicted} events.
   function bulkPredict(uint256 poolId, uint256 predictionPrice, uint16 predictionsCount)
-    public
+    external
     payable
     nonReentrant
     whenNotPaused
@@ -640,7 +647,7 @@ contract Castora is
   /// This must be called first before processing any winner batches.
   /// Only collects fees and sets snapshot after ALL batches are processed via finalizePoolCompletion.
   function initiatePoolCompletion(uint256 poolId, uint256 snapshotPrice, uint256 batchSize)
-    public
+    external
     nonReentrant
     whenNotPaused
     onlyRole(ADMIN_ROLE)
@@ -660,6 +667,7 @@ contract Castora is
       noOfWinners = 1;
     } else {
       // the multiplier is in 2 decimal places (x2 is 200), so we multiply by 100 here to cancel it out
+      // also rounding down is intended as solidity does that by default
       noOfWinners = (pool.noOfPredictions * 100) / pool.seeds.multiplier;
       if (noOfWinners == 0) noOfWinners = 1;
     }
@@ -678,7 +686,7 @@ contract Castora is
   /// Processes a batch of winners for a pool. Can be called multiple times until all batches are processed.
   /// Each winner is marked and their stats are updated. Prevents duplicate processing.
   function setWinnersInBatch(uint256 poolId, uint256[] memory winnerPredictionIds)
-    public
+    external
     nonReentrant
     whenNotPaused
     onlyRole(ADMIN_ROLE)
@@ -727,7 +735,7 @@ contract Castora is
       // Update tracking arrays
       winnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
       claimableWinnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
-      bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
+      bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
       winnerActivityHashesByAddresses[predicter].push(activityHash);
       claimableActivityHashesByAddresses[predicter].push(activityHash);
       claimableActivityHashesIndex[predicter][activityHash] = userStats[predicter].noOfClaimableWinnings - 1;
@@ -747,7 +755,7 @@ contract Castora is
 
   /// Finalizes pool completion by collecting fees and marking pool as complete.
   /// Can only be called after all winner batches have been processed.
-  function finalizePoolCompletion(uint256 poolId) public nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
+  function finalizePoolCompletion(uint256 poolId) external nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     if (!hasPoolCompletionBeenInitiated[poolId]) revert PoolCompletionNotInitiated();
 
@@ -775,7 +783,7 @@ contract Castora is
   }
 
   function _removeClaimableActivityHash(uint256 poolId, uint256 predictionId) internal {
-    bytes32 activityHash = keccak256(abi.encodePacked('poolId', poolId, 'predictionId', predictionId));
+    bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
     uint256 indexToRemove = claimableActivityHashesIndex[msg.sender][activityHash];
     uint256 lastIndex = userStats[msg.sender].noOfClaimableWinnings - 1;
 
@@ -857,7 +865,7 @@ contract Castora is
   /// already claimed their winnings.
   ///
   /// Emits an {ClaimedWinnings} event.
-  function claimWinnings(uint256 poolId, uint256 predictionId) public nonReentrant whenNotPaused {
+  function claimWinnings(uint256 poolId, uint256 predictionId) external nonReentrant whenNotPaused {
     _claimWinnings(poolId, predictionId);
   }
 
@@ -870,7 +878,7 @@ contract Castora is
   ///
   /// Emits multiple {ClaimedWinnings} events.
   function claimWinningsBulk(uint256[] memory poolIds, uint256[] memory predictionIds)
-    public
+    external
     nonReentrant
     whenNotPaused
   {
