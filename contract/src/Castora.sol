@@ -237,6 +237,14 @@ contract Castora is
     }
   }
 
+  function getUserPredictionActivity(bytes32 activityHash)
+    external
+    view
+    returns (UserPredictionActivity memory activity)
+  {
+    activity = userPredictionActivities[activityHash];
+  }
+
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
   /// `poolId` is invalid.
   function getPool(uint256 poolId) external view returns (Pool memory pool) {
@@ -638,6 +646,7 @@ contract Castora is
 
     if (seeds.stakeToken == address(this)) {
       if (msg.value < seeds.stakeAmount * predictionsCount) revert InsufficientStakeValue();
+      if (msg.value > seeds.stakeAmount * predictionsCount) revert IncorrectStakeValue();
     } else {
       IERC20(seeds.stakeToken).safeTransferFrom(msg.sender, address(this), seeds.stakeAmount * predictionsCount);
     }
