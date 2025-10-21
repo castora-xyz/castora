@@ -261,6 +261,10 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
 
     // Give user1 some ETH but send insufficient amount
     vm.deal(user1, 10 ether);
+    uint256 expectedPoolId = 1;
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
 
     vm.prank(user1);
     vm.expectRevert(InsufficientCreationFeeValue.selector);
@@ -325,6 +329,10 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
 
     // Give user1 some ETH but send too much
     vm.deal(user1, 10 ether);
+    uint256 expectedPoolId = 1;
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
 
     vm.prank(user1);
     vm.expectRevert(IncorrectCreationFeeValue.selector);

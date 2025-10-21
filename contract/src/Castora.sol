@@ -662,6 +662,8 @@ contract Castora is
     // should never happen due to createPool validations, but worth having to prevent division by zero
     if (pool.seeds.multiplier == 0) revert InvalidPoolMultiplier();
 
+    pool.snapshotPrice = snapshotPrice;
+
     uint256 noOfWinners;
     if (pool.noOfPredictions == 1) {
       noOfWinners = 1;

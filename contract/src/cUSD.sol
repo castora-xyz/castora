@@ -17,8 +17,4 @@ contract cUSD is Ownable, ERC20, ERC20Permit {
   function mint(address to, uint256 amount) public onlyOwner {
     _mint(to, amount);
   }
-
-  function burn(uint256 amount) public {
-    _burn(msg.sender, amount);
-  }
 }

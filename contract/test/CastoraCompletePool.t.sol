@@ -10,12 +10,7 @@ import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
-contract CastoraOnlyAdminsTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
-// testRevertPausedCreatePool
-// testRevertNotAdminCreatePool
-// testRevertExistingPoolCreatePool
-// testCreatePoolSuccessNativeTokenStake
-// testCreatePoolSuccessERC20TokenStake
+contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
 // testRevertPausedInitiatePoolCompletion
 // testRevertNotAdminInitiatePoolCompletion
 // testRevertInvalidPoolIdInitiatePoolCompletion
