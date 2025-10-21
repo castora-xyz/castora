@@ -21,9 +21,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
-  address owner;
   address feeCollector;
-  address admin;
   address predicter;
   uint256 poolIdNative;
   uint256 poolIdERC20;
@@ -47,9 +45,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   }
 
   function setUp() public {
-    owner = address(this);
     feeCollector = makeAddr('feeCollector');
-    admin = makeAddr('admin');
     predicter = makeAddr('predicter');
 
     // Deploy contracts
@@ -61,9 +57,6 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
     castora.initialize(address(poolsManager), address(poolsRules));
 
-    // Grant admin role
-    castora.grantAdminRole(admin);
-
     // Configure pools rules
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
     poolsRules.updateAllowedStakeToken(address(cusd), true);
@@ -74,11 +67,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     // Create pools for testing
     validSeedsNative = getPoolSeeds(address(castora));
-    vm.prank(admin);
     poolIdNative = castora.createPool(validSeedsNative);
-
     validSeedsERC20 = getPoolSeeds(address(cusd));
-    vm.prank(admin);
     poolIdERC20 = castora.createPool(validSeedsERC20);
 
     // Give predicter some tokens and ETH

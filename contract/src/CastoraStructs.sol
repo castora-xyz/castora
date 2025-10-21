@@ -163,6 +163,8 @@ contract CastoraStructs {
     uint256 totalStaked;
     /// The total amount of the token won in predictions
     uint256 totalWon;
+    /// The total amount available to be claimed
+    uint256 totalClaimable;
     /// The total amount of the token claimed as winnings
     uint256 totalClaimed;
   }

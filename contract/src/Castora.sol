@@ -742,6 +742,7 @@ contract Castora is
       userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfWinnings += 1;
       userStakeTokenDetails[predicter][pool.seeds.stakeToken].noOfClaimableWinnings += 1;
       userStakeTokenDetails[predicter][pool.seeds.stakeToken].totalWon += pool.winAmount;
+      userStakeTokenDetails[predicter][pool.seeds.stakeToken].totalClaimable += pool.winAmount;
       userInPoolPredictionStats[poolId][predicter].noOfWinnings += 1;
       userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings += 1;
 
@@ -761,6 +762,7 @@ contract Castora is
     stakeTokenDetails[pool.seeds.stakeToken].noOfWinnings += currentWinnersCount;
     stakeTokenDetails[pool.seeds.stakeToken].noOfClaimableWinnings += currentWinnersCount;
     stakeTokenDetails[pool.seeds.stakeToken].totalWon += pool.winAmount * currentWinnersCount;
+    stakeTokenDetails[pool.seeds.stakeToken].totalClaimable += pool.winAmount * currentWinnersCount;
     poolCompletionBatchesProcessed[poolId] += 1;
 
     emit SetWinnersInBatch(poolId, poolCompletionBatchesProcessed[poolId], totalBatches, winnerPredictionIds.length);
@@ -833,9 +835,11 @@ contract Castora is
     userInPoolPredictionStats[poolId][msg.sender].noOfClaimedWinnings += 1;
     stakeTokenDetails[stakeToken].noOfClaimableWinnings -= 1;
     stakeTokenDetails[stakeToken].noOfClaimedWinnings += 1;
+    stakeTokenDetails[stakeToken].totalClaimable -= winAmount;
     stakeTokenDetails[stakeToken].totalClaimed += winAmount;
     userStakeTokenDetails[msg.sender][stakeToken].noOfClaimableWinnings -= 1;
     userStakeTokenDetails[msg.sender][stakeToken].noOfClaimedWinnings += 1;
+    userStakeTokenDetails[msg.sender][stakeToken].totalClaimable -= winAmount;
     userStakeTokenDetails[msg.sender][stakeToken].totalClaimed += winAmount;
   }
 

@@ -23,7 +23,6 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
-  address owner;
   address feeCollector;
   address admin;
   address predicter1;
@@ -50,7 +49,6 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
   }
 
   function setUp() public {
-    owner = address(this);
     feeCollector = makeAddr('feeCollector');
     admin = makeAddr('admin');
     predicter1 = makeAddr('predicter1');
@@ -617,6 +615,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Verify stake token details updated
     StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(address(cusd));
     assertEq(stakeTokenDetails.totalWon, poolBefore.winAmount);
+    assertEq(stakeTokenDetails.totalClaimable, poolBefore.winAmount);
     assertEq(stakeTokenDetails.noOfWinnings, 1);
     assertEq(stakeTokenDetails.noOfClaimableWinnings, 1);
 
@@ -626,6 +625,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(userStakeTokenDetails.noOfWinnings, 1);
     assertEq(userStakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(userStakeTokenDetails.totalWon, poolBefore.winAmount);
+    assertEq(userStakeTokenDetails.totalClaimable, poolBefore.winAmount);
   }
 
   function _stakeTokenAssertsAfterMultipleWinners() internal view {
@@ -633,6 +633,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Verify stake token details globally
     StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(address(cusd));
     assertEq(stakeTokenDetails.totalWon, pool.winAmount * 2);
+    assertEq(stakeTokenDetails.totalClaimable, pool.winAmount * 2);
     assertEq(stakeTokenDetails.noOfWinnings, 2);
     assertEq(stakeTokenDetails.noOfClaimableWinnings, 2);
 
@@ -642,12 +643,14 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(user1StakeTokenDetails.noOfWinnings, 1);
     assertEq(user1StakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(user1StakeTokenDetails.totalWon, pool.winAmount);
+    assertEq(user1StakeTokenDetails.totalClaimable, pool.winAmount);
 
     StakeTokenDetails memory user2StakeTokenDetails =
       castora.getUserStakeTokenDetails(predicter2, pool.seeds.stakeToken);
     assertEq(user2StakeTokenDetails.noOfWinnings, 1);
     assertEq(user2StakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(user2StakeTokenDetails.totalWon, pool.winAmount);
+    assertEq(user2StakeTokenDetails.totalClaimable, pool.winAmount);
   }
 
   function testSetWinnersInBatchSuccessMultipleWinners() public {

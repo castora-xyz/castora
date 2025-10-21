@@ -19,7 +19,6 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
-  address owner;
   address feeCollector;
   address admin;
   address user;
@@ -40,7 +39,6 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   }
 
   function setUp() public {
-    owner = address(this);
     feeCollector = makeAddr('feeCollector');
     admin = makeAddr('admin');
     user = makeAddr('user');
@@ -173,7 +171,8 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     bytes32 expectedSeedsHash = castora.hashPoolSeeds(validSeedsERC20);
 
     // Create pool and expect events
-    // not pranking to allow owner to create pool as owner has admin role, like testing that flow
+    // not pranking to allow owner (this Test contract) to create pool as owner has admin role, 
+    // like testing that flow
     vm.expectEmit(true, true, false, false);
     emit PoolCreated(expectedPoolId, expectedSeedsHash);
     uint256 poolId = castora.createPool(validSeedsERC20);
