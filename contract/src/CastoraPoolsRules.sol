@@ -203,6 +203,8 @@ contract CastoraPoolsRules is
   /// @param multiplier The multiplier value
   /// @param allowed Whether this multiplier is allowed
   function updateAllowedPoolMultiplier(uint16 multiplier, bool allowed) external onlyOwner nonReentrant {
+    if (multiplier == 0) revert InvalidPoolMultiplier();
+
     bool wasAllowed = allowedPoolMultipliers[multiplier];
     allowedPoolMultipliers[multiplier] = allowed;
 

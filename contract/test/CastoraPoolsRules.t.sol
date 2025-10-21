@@ -1179,19 +1179,9 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     rules.updateAllowedPoolMultiplier(5, true);
   }
 
-  function testUpdateAllowedPoolMultiplierZeroValue() public {
-    uint16 multiplier = 0;
-
-    // Allow zero multiplier
-    rules.updateAllowedPoolMultiplier(multiplier, true);
-    assertTrue(rules.allowedPoolMultipliers(multiplier));
-    assertEq(rules.everAllowedPoolMultipliersCount(), 1);
-    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
-
-    // Disallow zero multiplier
-    rules.updateAllowedPoolMultiplier(multiplier, false);
-    assertFalse(rules.allowedPoolMultipliers(multiplier));
-    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  function testRevertUpdateAllowedPoolMultiplierZeroValue() public {
+    vm.expectRevert(InvalidPoolMultiplier.selector);
+    rules.updateAllowedPoolMultiplier(0, true);
   }
 
   function testUpdateAllowedPoolMultiplierMaxValue() public {
@@ -1277,17 +1267,6 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   function testIsValidMultiplierAllowed() public {
     uint16 multiplier = 4;
 
-    rules.updateAllowedPoolMultiplier(multiplier, true);
-    assertTrue(rules.isValidMultiplier(multiplier));
-  }
-
-  function testIsValidMultiplierZero() public {
-    uint16 multiplier = 0;
-
-    // Zero is not allowed by default
-    assertFalse(rules.isValidMultiplier(multiplier));
-
-    // Allow zero and test again
     rules.updateAllowedPoolMultiplier(multiplier, true);
     assertTrue(rules.isValidMultiplier(multiplier));
   }
@@ -1467,36 +1446,6 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     assertEq(rules.everAllowedPoolMultipliersCount(), 1);
     assertEq(rules.currentlyAllowedPoolMultipliersCount(), 1);
-  }
-
-  function testMultiplierBoundaryValues() public {
-    uint16[] memory boundaryValues = new uint16[](5);
-    boundaryValues[0] = 0;
-    boundaryValues[1] = 1;
-    boundaryValues[2] = 2;
-    boundaryValues[3] = type(uint16).max - 1;
-    boundaryValues[4] = type(uint16).max;
-
-    for (uint256 i = 0; i < boundaryValues.length; i++) {
-      uint16 mult = boundaryValues[i];
-
-      // Test allowing boundary value
-      rules.updateAllowedPoolMultiplier(mult, true);
-      assertTrue(rules.allowedPoolMultipliers(mult));
-      assertTrue(rules.isValidMultiplier(mult));
-
-      // Should not revert when validating
-      rules.validateMultiplier(mult);
-
-      // Test disallowing boundary value
-      rules.updateAllowedPoolMultiplier(mult, false);
-      assertFalse(rules.allowedPoolMultipliers(mult));
-      assertFalse(rules.isValidMultiplier(mult));
-
-      // Should revert when validating
-      vm.expectRevert(InvalidPoolMultiplier.selector);
-      rules.validateMultiplier(mult);
-    }
   }
 
   function testMultiplierCommonValues() public {
