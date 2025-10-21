@@ -83,6 +83,10 @@ contract CastoraEvents {
   /// @param token The token address that was disallowed
   event DisallowedCreationFees(address indexed token);
 
+  /// Emitted when a user (with `predicter` address) interacts with CastoraPoolsManager
+  /// for the first time by creating a {Pool} with matching `poolId`.
+  event NewUserCreatedPool(address indexed predicter, uint256 indexed poolId, uint256 indexed nthUserCount);
+
   /// Emitted when a pool is created
   /// @param poolId The ID of the created pool
   /// @param creator The address of the pool creator

@@ -431,19 +431,12 @@ contract CastoraPoolsManager is
     emit DisallowedCreationFees(_token);
   }
 
-  /// @notice Internal function to collect creation fees
-  /// @param creationFeeToken The token to collect fees in
-  /// @param creationFeeAmount The amount of fees collected
-  function _collectCreationFee(address creationFeeToken, uint256 creationFeeAmount) internal {
-    if (creationFeeAmount > 0) {
-      if (creationFeeToken == address(this)) {
-        // native token payment
-        if (msg.value < creationFeeAmount) revert InsufficientCreationFeeValue();
-        if (msg.value > creationFeeAmount) revert IncorrectCreationFeeValue();
-      } else {
-        // ERC20 token payment
-        IERC20(creationFeeToken).safeTransferFrom(msg.sender, address(this), creationFeeAmount);
-      }
+  function _checkNewUserOnCreate(uint256 poolId) internal {
+    if (userStats[msg.sender].nthUserCount == 0) {
+      allStats.noOfUsers += 1;
+      userStats[msg.sender].nthUserCount = allStats.noOfUsers;
+      users.push(msg.sender);
+      emit NewUserCreatedPool(msg.sender, poolId, userStats[msg.sender].nthUserCount);
     }
   }
 
@@ -503,6 +496,22 @@ contract CastoraPoolsManager is
     });
   }
 
+  /// @notice Internal function to collect creation fees
+  /// @param creationFeeToken The token to collect fees in
+  /// @param creationFeeAmount The amount of fees collected
+  function _collectCreationFee(address creationFeeToken, uint256 creationFeeAmount) internal {
+    if (creationFeeAmount > 0) {
+      if (creationFeeToken == address(this)) {
+        // native token payment
+        if (msg.value < creationFeeAmount) revert InsufficientCreationFeeValue();
+        if (msg.value > creationFeeAmount) revert IncorrectCreationFeeValue();
+      } else {
+        // ERC20 token payment
+        IERC20(creationFeeToken).safeTransferFrom(msg.sender, address(this), creationFeeAmount);
+      }
+    }
+  }
+
   /// @notice Sends fees to castora fee collector
   /// @param token Token address
   /// @param amount Amount to send
@@ -537,6 +546,7 @@ contract CastoraPoolsManager is
     poolId = Castora(castora).createPool(seeds);
 
     // Update statistics and user data
+    _checkNewUserOnCreate(poolId);
     uint256 creationFeeAmount = creationFeesTokenInfos[creationFeeToken].amount;
     _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
     emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
