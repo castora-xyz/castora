@@ -419,221 +419,284 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
     castora.claimWinningsBulk(poolIds, predictionIds);
   }
 
-  // function testClaimWinningsBulkNativeSuccess() public {
-  //   // Create additional pools and predictions for bulk testing
-  //   PoolSeeds memory bulkSeeds1 = validSeeds;
-  //   bulkSeeds1.stakeToken = address(castora);
-  //   bulkSeeds1.stakeAmount = 1 ether;
-  //   bulkSeeds1.snapshotTime = 1800;
-  //   bulkSeeds1.windowCloseTime = 1500;
-  //   uint256 bulkPoolId1 = castora.createPool(bulkSeeds1);
+  function _setupClaimWinningsBulk(address stakeToken, uint256 stakeAmount)
+    internal
+    returns (uint256 bulkPoolId1, uint256 bulkPoolId2)
+  {
+    // Create additional pools and predictions for bulk testing
+    PoolSeeds memory bulkSeeds1 = validSeeds;
+    bulkSeeds1.stakeToken = stakeToken;
+    bulkSeeds1.stakeAmount = stakeAmount;
+    bulkSeeds1.snapshotTime = 1800;
+    bulkSeeds1.windowCloseTime = 1500;
+    bulkPoolId1 = castora.createPool(bulkSeeds1);
 
-  //   PoolSeeds memory bulkSeeds2 = validSeeds;
-  //   bulkSeeds2.stakeToken = address(castora);
-  //   bulkSeeds2.stakeAmount = 1 ether;
-  //   bulkSeeds2.snapshotTime = 1800;
-  //   bulkSeeds2.windowCloseTime = 1800;
-  //   uint256 bulkPoolId2 = castora.createPool(bulkSeeds2);
+    PoolSeeds memory bulkSeeds2 = validSeeds;
+    bulkSeeds2.stakeToken = stakeToken;
+    bulkSeeds2.stakeAmount = stakeAmount;
+    bulkSeeds2.snapshotTime = 1800;
+    bulkSeeds2.windowCloseTime = 1800;
+    bulkPoolId2 = castora.createPool(bulkSeeds2);
 
-  //   // Reset time and make predictions
-  //   vm.warp(0);
-  //   vm.prank(predicter1);
-  //   castora.predict{value: 1 ether}(bulkPoolId1, 1500000);
-  //   vm.prank(predicter1);
-  //   castora.predict{value: 1 ether}(bulkPoolId2, 1600000);
+    // Reset time and make predictions
+    vm.warp(0);
+    vm.startPrank(predicter1);
+    if (stakeToken == address(castora)) {
+      vm.deal(predicter1, stakeAmount * 6);
+      // predict 5 times in pool 1 to have 2 winner predictions later
+      for (uint256 i = 0; i < 5; i++) {
+        castora.predict{value: stakeAmount}(bulkPoolId1, 1500000);
+      }
+      // predict once in pool 2 for one winner prediction
+      castora.predict{value: stakeAmount}(bulkPoolId2, 1600000);
+    } else {
+      cusd.transfer(predicter1, stakeAmount * 6);
+      cusd.approve(address(castora), stakeAmount * 6);
+      // predict 5 times in pool 1 to have 2 winner predictions later
+      for (uint256 i = 0; i < 5; i++) {
+        castora.predict(bulkPoolId1, 1500000);
+      }
+      // predict once in pool 2 for one winner prediction
+      castora.predict(bulkPoolId2, 1600000);
+    }
+    vm.stopPrank();
 
-  //   // Advance time and complete pools
-  //   vm.warp(2000);
-  //   uint256[] memory winners = new uint256[](1);
-  //   winners[0] = 1;
+    // Advance time and complete pools
+    vm.warp(2000);
+    uint256[] memory winners1 = new uint256[](2);
+    winners1[0] = 1;
+    winners1[1] = 2;
 
-  //   castora.initiatePoolCompletion(bulkPoolId1, 1550000, 1);
-  //   castora.setWinnersInBatch(bulkPoolId1, winners);
-  //   castora.finalizePoolCompletion(bulkPoolId1);
+    castora.initiatePoolCompletion(bulkPoolId1, 1550000, 2);
+    castora.setWinnersInBatch(bulkPoolId1, winners1);
+    castora.finalizePoolCompletion(bulkPoolId1);
 
-  //   castora.initiatePoolCompletion(bulkPoolId2, 1650000, 1);
-  //   castora.setWinnersInBatch(bulkPoolId2, winners);
-  //   castora.finalizePoolCompletion(bulkPoolId2);
+    uint256[] memory winners2 = new uint256[](1);
+    winners2[0] = 1;
 
-  //   // Store states before bulk claiming
-  //   uint256 predicterBalBefore = predicter1.balance;
-  //   Pool memory pool1Before = castora.getPool(bulkPoolId1);
-  //   Pool memory pool2Before = castora.getPool(bulkPoolId2);
+    castora.initiatePoolCompletion(bulkPoolId2, 1650000, 1);
+    castora.setWinnersInBatch(bulkPoolId2, winners2);
+    castora.finalizePoolCompletion(bulkPoolId2);
+  }
 
-  //   AllPredictionStats memory globalStatsBefore = castora.getAllStats();
-  //   UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter1);
-  //   StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(castora));
-  //   StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(castora));
+  function _performBulkClaim(uint256 bulkPoolId1, uint256 bulkPoolId2) internal {
+    // Prepare bulk claim data
+    uint256[] memory poolIds = new uint256[](3);
+    uint256[] memory predictionIds = new uint256[](3);
+    poolIds[0] = bulkPoolId1;
+    poolIds[1] = bulkPoolId2;
+    poolIds[2] = bulkPoolId1;
+    predictionIds[0] = 1;
+    predictionIds[1] = 1;
+    predictionIds[2] = 2;
 
-  //   UserPredictionActivity[] memory claimableActivitiesBefore =
-  //     castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    Pool memory pool1 = castora.getPool(bulkPoolId1);
+    Pool memory pool2 = castora.getPool(bulkPoolId2);
 
-  //   // Prepare bulk claim data
-  //   uint256[] memory poolIds = new uint256[](2);
-  //   uint256[] memory predictionIds = new uint256[](2);
-  //   poolIds[0] = bulkPoolId1;
-  //   poolIds[1] = bulkPoolId2;
-  //   predictionIds[0] = 1;
-  //   predictionIds[1] = 1;
+    // Perform bulk claim
+    vm.expectEmit(true, true, true, true);
+    emit ClaimedWinnings(bulkPoolId1, 1, predicter1, pool1.seeds.stakeToken, pool1.seeds.stakeAmount, pool1.winAmount);
+    if (pool1.seeds.stakeToken != address(castora)) {
+      vm.expectEmit(true, true, false, true);
+      emit IERC20.Transfer(address(castora), predicter1, pool1.winAmount);
+    }
+    vm.expectEmit(true, true, true, true);
+    emit ClaimedWinnings(bulkPoolId2, 1, predicter1, pool2.seeds.stakeToken, pool2.seeds.stakeAmount, pool2.winAmount);
+    if (pool2.seeds.stakeToken != address(castora)) {
+      vm.expectEmit(true, true, false, true);
+      emit IERC20.Transfer(address(castora), predicter1, pool2.winAmount);
+    }
+    vm.expectEmit(true, true, false, true);
+    emit ClaimedWinnings(bulkPoolId1, 2, predicter1, pool1.seeds.stakeToken, pool1.seeds.stakeAmount, pool1.winAmount);
+    if (pool1.seeds.stakeToken != address(castora)) {
+      vm.expectEmit(true, true, true, true);
+      emit IERC20.Transfer(address(castora), predicter1, pool1.winAmount);
+    }
 
-  //   // Perform bulk claim
-  //   vm.expectEmit(true, true, true, true);
-  //   emit ClaimedWinnings(bulkPoolId1, 1, predicter1, address(castora), 1 ether, pool1Before.winAmount);
-  //   vm.expectEmit(true, true, true, true);
-  //   emit ClaimedWinnings(bulkPoolId2, 1, predicter1, address(castora), 1 ether, pool2Before.winAmount);
+    vm.prank(predicter1);
+    castora.claimWinningsBulk(poolIds, predictionIds);
+  }
 
-  //   vm.prank(predicter1);
-  //   castora.claimWinningsBulk(poolIds, predictionIds);
+  function _afterClaimWinningsBulkPoolAsserts(
+    uint256 poolId1,
+    uint256 poolId2,
+    uint256 castoraBalBefore,
+    uint256 predicterBalBefore,
+    uint256 pool1NoOfClaimedWinningsBefore,
+    uint256 pool2NoOfClaimedWinningsBefore
+  ) internal view {
+    Pool memory pool1 = castora.getPool(poolId1);
+    Pool memory pool2 = castora.getPool(poolId2);
 
-  //   // Verify balance changes
-  //   uint256 predicterBalAfter = predicter1.balance;
-  //   uint256 expectedWinnings = pool1Before.winAmount + pool2Before.winAmount;
-  //   assertEq(predicterBalAfter, predicterBalBefore + expectedWinnings);
+    // Verify balance movements
+    uint256 castoraBalAfter =
+      pool1.seeds.stakeToken == address(castora) ? address(castora).balance : cusd.balanceOf(address(castora));
+    uint256 predicterBalAfter =
+      pool1.seeds.stakeToken == address(castora) ? predicter1.balance : cusd.balanceOf(predicter1);
+    uint256 totalWinnings = (pool1.winAmount * 2) + pool2.winAmount;
+    assertEq(castoraBalAfter, castoraBalBefore - totalWinnings);
+    assertEq(predicterBalAfter, predicterBalBefore + totalWinnings);
 
-  //   // Verify pool states
-  //   Pool memory pool1After = castora.getPool(bulkPoolId1);
-  //   Pool memory pool2After = castora.getPool(bulkPoolId2);
-  //   assertEq(pool1After.noOfClaimedWinnings, pool1Before.noOfClaimedWinnings + 1);
-  //   assertEq(pool2After.noOfClaimedWinnings, pool2Before.noOfClaimedWinnings + 1);
+    // Verify pool states
+    assertEq(pool1.noOfClaimedWinnings, pool1NoOfClaimedWinningsBefore + 2);
+    assertEq(pool2.noOfClaimedWinnings, pool2NoOfClaimedWinningsBefore + 1);
+  }
 
-  //   // Verify prediction states
-  //   Prediction memory prediction1After = castora.getPrediction(bulkPoolId1, 1);
-  //   Prediction memory prediction2After = castora.getPrediction(bulkPoolId2, 1);
-  //   assertTrue(prediction1After.claimedWinningsTime > 0);
-  //   assertTrue(prediction2After.claimedWinningsTime > 0);
+  function _afterClaimWinningsBulkPredictionAsserts(
+    uint256 poolId1,
+    uint256 poolId2,
+    AllPredictionStats memory globalStatsBefore,
+    UserPredictionStats memory userStatsBefore
+  ) internal view {
+    // Verify prediction states
+    assertTrue(castora.getPrediction(poolId1, 1).claimedWinningsTime > 0);
+    assertTrue(castora.getPrediction(poolId1, 2).claimedWinningsTime > 0);
+    assertTrue(castora.getPrediction(poolId2, 1).claimedWinningsTime > 0);
 
-  //   // Verify global stats (should decrease by 2 claimable, increase by 2 claimed)
-  //   AllPredictionStats memory globalStatsAfter = castora.getAllStats();
-  //   assertEq(globalStatsAfter.noOfClaimableWinnings, globalStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(globalStatsAfter.noOfClaimedWinnings, globalStatsBefore.noOfClaimedWinnings + 2);
+    // Verify global stats (should decrease by 2 claimable, increase by 2 claimed)
+    AllPredictionStats memory globalStatsAfter = castora.getAllStats();
+    assertEq(globalStatsAfter.noOfClaimableWinnings, globalStatsBefore.noOfClaimableWinnings - 3);
+    assertEq(globalStatsAfter.noOfClaimedWinnings, globalStatsBefore.noOfClaimedWinnings + 3);
 
-  //   // Verify user stats (should increase claimed by 2)
-  //   UserPredictionStats memory userStatsAfter = castora.getUserStats(predicter1);
-  //   assertEq(userStatsAfter.noOfClaimedWinnings, userStatsBefore.noOfClaimedWinnings + 2);
+    // Verify user stats
+    UserPredictionStats memory userStatsAfter = castora.getUserStats(predicter1);
+    assertEq(userStatsAfter.noOfClaimableWinnings, userStatsBefore.noOfClaimableWinnings - 3);
+    assertEq(userStatsAfter.noOfClaimedWinnings, userStatsBefore.noOfClaimedWinnings + 3);
+  }
 
-  //   // Verify stake token stats
-  //   StakeTokenDetails memory stakeTokenStatsAfter = castora.getStakeTokenDetails(address(castora));
-  //   assertEq(stakeTokenStatsAfter.noOfClaimableWinnings, stakeTokenStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(stakeTokenStatsAfter.noOfClaimedWinnings, stakeTokenStatsBefore.noOfClaimedWinnings + 2);
-  //   assertEq(stakeTokenStatsAfter.totalClaimed, stakeTokenStatsBefore.totalClaimed + expectedWinnings);
+  function _afterClaimWinningsBulkTokenAsserts(
+    uint256 poolId1,
+    uint256 poolId2,
+    UserInPoolPredictionStats memory userInPoolStatsBefore1,
+    UserInPoolPredictionStats memory userInPoolStatsBefore2,
+    StakeTokenDetails memory stakeTokenStatsBefore,
+    StakeTokenDetails memory userStakeTokenStatsBefore,
+    UserPredictionActivity[] memory claimableActivitiesBefore
+  ) internal view {
+    // Verify user in pool stats
+    UserInPoolPredictionStats memory userInPoolStatsAfter1 = castora.getUserInPoolPredictionStats(poolId1, predicter1);
+    UserInPoolPredictionStats memory userInPoolStatsAfter2 = castora.getUserInPoolPredictionStats(poolId2, predicter1);
+    assertEq(userInPoolStatsAfter1.noOfClaimableWinnings, userInPoolStatsBefore1.noOfClaimableWinnings - 2);
+    assertEq(userInPoolStatsAfter1.noOfClaimedWinnings, userInPoolStatsBefore1.noOfClaimedWinnings + 2);
+    assertEq(userInPoolStatsAfter2.noOfClaimableWinnings, userInPoolStatsBefore2.noOfClaimableWinnings - 1);
+    assertEq(userInPoolStatsAfter2.noOfClaimedWinnings, userInPoolStatsBefore2.noOfClaimedWinnings + 1);
 
-  //   // Verify user stake token stats
-  //   StakeTokenDetails memory userStakeTokenStatsAfter = castora.getUserStakeTokenDetails(predicter1, address(castora));
-  //   assertEq(userStakeTokenStatsAfter.noOfClaimableWinnings, userStakeTokenStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(userStakeTokenStatsAfter.noOfClaimedWinnings, userStakeTokenStatsBefore.noOfClaimedWinnings + 2);
-  //   assertEq(userStakeTokenStatsAfter.totalClaimed, userStakeTokenStatsBefore.totalClaimed + expectedWinnings);
+    // Verify stake token stats
+    Pool memory pool1 = castora.getPool(poolId1);
+    Pool memory pool2 = castora.getPool(poolId2);
+    uint256 totalWinnings = (pool1.winAmount * 2) + pool2.winAmount;
+    StakeTokenDetails memory stakeTokenStatsAfter = castora.getStakeTokenDetails(pool1.seeds.stakeToken);
+    assertEq(stakeTokenStatsAfter.noOfClaimableWinnings, stakeTokenStatsBefore.noOfClaimableWinnings - 3);
+    assertEq(stakeTokenStatsAfter.noOfClaimedWinnings, stakeTokenStatsBefore.noOfClaimedWinnings + 3);
+    assertEq(stakeTokenStatsAfter.totalClaimable, stakeTokenStatsBefore.totalClaimable - totalWinnings);
+    assertEq(stakeTokenStatsAfter.totalClaimed, stakeTokenStatsBefore.totalClaimed + totalWinnings);
 
-  //   // Verify claimable activities are removed
-  //   UserPredictionActivity[] memory claimableActivitiesAfter =
-  //     castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
-  //   assertEq(claimableActivitiesAfter.length, claimableActivitiesBefore.length - 2);
-  // }
+    // Verify user stake token stats
+    StakeTokenDetails memory userStakeTokenStatsAfter =
+      castora.getUserStakeTokenDetails(predicter1, pool1.seeds.stakeToken);
 
-  // function testClaimWinningsBulkERC20Success() public {
-  //   // Create additional ERC20 pools for bulk testing
-  //   PoolSeeds memory bulkSeeds1 = validSeeds;
-  //   bulkSeeds1.snapshotTime = 1800;
-  //   bulkSeeds1.windowCloseTime = 1700;
-  //   uint256 bulkPoolId1 = castora.createPool(bulkSeeds1);
+    assertEq(userStakeTokenStatsAfter.noOfClaimableWinnings, userStakeTokenStatsBefore.noOfClaimableWinnings - 3);
+    assertEq(userStakeTokenStatsAfter.noOfClaimedWinnings, userStakeTokenStatsBefore.noOfClaimedWinnings + 3);
+    assertEq(userStakeTokenStatsAfter.totalClaimable, userStakeTokenStatsBefore.totalClaimable - totalWinnings);
+    assertEq(userStakeTokenStatsAfter.totalClaimed, userStakeTokenStatsBefore.totalClaimed + totalWinnings);
 
-  //   PoolSeeds memory bulkSeeds2 = validSeeds;
-  //   bulkSeeds2.snapshotTime = 1900;
-  //   bulkSeeds2.windowCloseTime = 1800;
-  //   uint256 bulkPoolId2 = castora.createPool(bulkSeeds2);
+    // Verify claimable activities are removed
+    UserPredictionActivity[] memory claimableActivitiesAfter =
+      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    assertEq(claimableActivitiesAfter.length, claimableActivitiesBefore.length - 3);
+  }
 
-  //   // Reset time and make predictions
-  //   vm.warp(0);
-  //   vm.prank(predicter1);
-  //   cusd.approve(address(castora), 2000000);
-  //   vm.prank(predicter1);
-  //   castora.predict(bulkPoolId1, 1500000);
-  //   vm.prank(predicter1);
-  //   castora.predict(bulkPoolId2, 1600000);
+  function testClaimWinningsBulkNativeSuccess() public {
+    (uint256 bulkPoolId1, uint256 bulkPoolId2) = _setupClaimWinningsBulk(address(castora), 1 ether);
 
-  //   // Advance time and complete pools
-  //   vm.warp(2000);
-  //   uint256[] memory winners = new uint256[](1);
-  //   winners[0] = 1;
+    // Store states before bulk claiming
+    uint256 castoraBalBefore = address(castora).balance;
+    uint256 predicterBalBefore = predicter1.balance;
+    AllPredictionStats memory globalStatsBefore = castora.getAllStats();
+    UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter1);
+    UserInPoolPredictionStats memory userInPoolStatsBefore1 =
+      castora.getUserInPoolPredictionStats(bulkPoolId1, predicter1);
+    UserInPoolPredictionStats memory userInPoolStatsBefore2 =
+      castora.getUserInPoolPredictionStats(bulkPoolId2, predicter1);
+    StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(castora));
+    StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(castora));
+    UserPredictionActivity[] memory claimableActivitiesBefore =
+      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    uint256 pool1NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId1).noOfClaimedWinnings;
+    uint256 pool2NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId2).noOfClaimedWinnings;
 
-  //   castora.initiatePoolCompletion(bulkPoolId1, 1550000, 1);
-  //   castora.setWinnersInBatch(bulkPoolId1, winners);
-  //   castora.finalizePoolCompletion(bulkPoolId1);
+    // Perform bulk claim
+    _performBulkClaim(bulkPoolId1, bulkPoolId2);
 
-  //   castora.initiatePoolCompletion(bulkPoolId2, 1650000, 1);
-  //   castora.setWinnersInBatch(bulkPoolId2, winners);
-  //   castora.finalizePoolCompletion(bulkPoolId2);
+    // Verify pool states
+    _afterClaimWinningsBulkPoolAsserts(
+      bulkPoolId1,
+      bulkPoolId2,
+      castoraBalBefore,
+      predicterBalBefore,
+      pool1NoOfClaimedWinningsBefore,
+      pool2NoOfClaimedWinningsBefore
+    );
 
-  //   // Store states before bulk claiming
-  //   uint256 predicterBalBefore = cusd.balanceOf(predicter1);
-  //   Pool memory pool1Before = castora.getPool(bulkPoolId1);
-  //   Pool memory pool2Before = castora.getPool(bulkPoolId2);
+    // Verify prediction states
+    _afterClaimWinningsBulkPredictionAsserts(bulkPoolId1, bulkPoolId2, globalStatsBefore, userStatsBefore);
 
-  //   AllPredictionStats memory globalStatsBefore = castora.getAllStats();
-  //   UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter1);
-  //   StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(cusd));
-  //   StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(cusd));
+    // Verify token states
+    _afterClaimWinningsBulkTokenAsserts(
+      bulkPoolId1,
+      bulkPoolId2,
+      userInPoolStatsBefore1,
+      userInPoolStatsBefore2,
+      stakeTokenStatsBefore,
+      userStakeTokenStatsBefore,
+      claimableActivitiesBefore
+    );
+  }
 
-  //   UserPredictionActivity[] memory claimableActivitiesBefore =
-  //     castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+  function testClaimWinningsBulkERC20Success() public {
+    (uint256 bulkPoolId1, uint256 bulkPoolId2) = _setupClaimWinningsBulk(address(cusd), 1000000);
 
-  //   // Prepare bulk claim data
-  //   uint256[] memory poolIds = new uint256[](2);
-  //   uint256[] memory predictionIds = new uint256[](2);
-  //   poolIds[0] = bulkPoolId1;
-  //   poolIds[1] = bulkPoolId2;
-  //   predictionIds[0] = 1;
-  //   predictionIds[1] = 1;
+    // Store states before bulk claiming
+    uint256 castoraBalBefore = cusd.balanceOf(address(castora));
+    uint256 predicterBalBefore = cusd.balanceOf(predicter1);
+    AllPredictionStats memory globalStatsBefore = castora.getAllStats();
+    UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter1);
+    UserInPoolPredictionStats memory userInPoolStatsBefore1 =
+      castora.getUserInPoolPredictionStats(bulkPoolId1, predicter1);
+    UserInPoolPredictionStats memory userInPoolStatsBefore2 =
+      castora.getUserInPoolPredictionStats(bulkPoolId2, predicter1);
+    StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(cusd));
+    StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(cusd));
+    UserPredictionActivity[] memory claimableActivitiesBefore =
+      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    uint256 pool1NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId1).noOfClaimedWinnings;
+    uint256 pool2NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId2).noOfClaimedWinnings;
 
-  //   // Perform bulk claim
-  //   vm.expectEmit(true, true, true, true);
-  //   emit ClaimedWinnings(bulkPoolId1, 1, predicter1, address(cusd), 1000000, pool1Before.winAmount);
-  //   vm.expectEmit(true, true, true, true);
-  //   emit ClaimedWinnings(bulkPoolId2, 1, predicter1, address(cusd), 1000000, pool2Before.winAmount);
+    // Perform bulk claim
+    _performBulkClaim(bulkPoolId1, bulkPoolId2);
 
-  //   vm.prank(predicter1);
-  //   castora.claimWinningsBulk(poolIds, predictionIds);
+    // Verify pool states
+    _afterClaimWinningsBulkPoolAsserts(
+      bulkPoolId1,
+      bulkPoolId2,
+      castoraBalBefore,
+      predicterBalBefore,
+      pool1NoOfClaimedWinningsBefore,
+      pool2NoOfClaimedWinningsBefore
+    );
 
-  //   // Verify balance changes
-  //   uint256 predicterBalAfter = cusd.balanceOf(predicter1);
-  //   uint256 expectedWinnings = pool1Before.winAmount + pool2Before.winAmount;
-  //   assertEq(predicterBalAfter, predicterBalBefore + expectedWinnings);
+    // Verify prediction states
+    _afterClaimWinningsBulkPredictionAsserts(bulkPoolId1, bulkPoolId2, globalStatsBefore, userStatsBefore);
 
-  //   // Verify pool states
-  //   Pool memory pool1After = castora.getPool(bulkPoolId1);
-  //   Pool memory pool2After = castora.getPool(bulkPoolId2);
-  //   assertEq(pool1After.noOfClaimedWinnings, pool1Before.noOfClaimedWinnings + 1);
-  //   assertEq(pool2After.noOfClaimedWinnings, pool2Before.noOfClaimedWinnings + 1);
-
-  //   // Verify prediction states
-  //   Prediction memory prediction1After = castora.getPrediction(bulkPoolId1, 1);
-  //   Prediction memory prediction2After = castora.getPrediction(bulkPoolId2, 1);
-  //   assertTrue(prediction1After.claimedWinningsTime > 0);
-  //   assertTrue(prediction2After.claimedWinningsTime > 0);
-
-  //   // Verify global stats (should decrease by 2 claimable, increase by 2 claimed)
-  //   AllPredictionStats memory globalStatsAfter = castora.getAllStats();
-  //   assertEq(globalStatsAfter.noOfClaimableWinnings, globalStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(globalStatsAfter.noOfClaimedWinnings, globalStatsBefore.noOfClaimedWinnings + 2);
-
-  //   // Verify user stats (should increase claimed by 2)
-  //   UserPredictionStats memory userStatsAfter = castora.getUserStats(predicter1);
-  //   assertEq(userStatsAfter.noOfClaimedWinnings, userStatsBefore.noOfClaimedWinnings + 2);
-
-  //   // Verify stake token stats
-  //   StakeTokenDetails memory stakeTokenStatsAfter = castora.getStakeTokenDetails(address(cusd));
-  //   assertEq(stakeTokenStatsAfter.noOfClaimableWinnings, stakeTokenStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(stakeTokenStatsAfter.noOfClaimedWinnings, stakeTokenStatsBefore.noOfClaimedWinnings + 2);
-  //   assertEq(stakeTokenStatsAfter.totalClaimed, stakeTokenStatsBefore.totalClaimed + expectedWinnings);
-
-  //   // Verify user stake token stats
-  //   StakeTokenDetails memory userStakeTokenStatsAfter = castora.getUserStakeTokenDetails(predicter1, address(cusd));
-  //   assertEq(userStakeTokenStatsAfter.noOfClaimableWinnings, userStakeTokenStatsBefore.noOfClaimableWinnings - 2);
-  //   assertEq(userStakeTokenStatsAfter.noOfClaimedWinnings, userStakeTokenStatsBefore.noOfClaimedWinnings + 2);
-  //   assertEq(userStakeTokenStatsAfter.totalClaimed, userStakeTokenStatsBefore.totalClaimed + expectedWinnings);
-
-  //   // Verify claimable activities are removed
-  //   UserPredictionActivity[] memory claimableActivitiesAfter =
-  //     castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
-  //   assertEq(claimableActivitiesAfter.length, claimableActivitiesBefore.length - 2);
-  // }
+    // Verify token states
+    _afterClaimWinningsBulkTokenAsserts(
+      bulkPoolId1,
+      bulkPoolId2,
+      userInPoolStatsBefore1,
+      userInPoolStatsBefore2,
+      stakeTokenStatsBefore,
+      userStakeTokenStatsBefore,
+      claimableActivitiesBefore
+    );
+  }
 }
