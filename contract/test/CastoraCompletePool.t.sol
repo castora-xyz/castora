@@ -579,8 +579,8 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(castora.poolCompletionBatchesProcessed(poolIdSinglePrediction), 1);
 
     // Verify user claimable activities
-    UserPredictionActivity[] memory userClaimableActivities =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
+    UserPredictionActivity[] memory userClaimableActivities = castora.getUserPredictionActivities(hashes);
     assertEq(userClaimableActivities.length, userStatsAfter.noOfClaimableWinnings);
     bool foundActivity = false;
     for (uint256 i = 0; i < userClaimableActivities.length; i++) {
@@ -626,6 +626,44 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(userStakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(userStakeTokenDetails.totalWon, poolBefore.winAmount);
     assertEq(userStakeTokenDetails.totalClaimable, poolBefore.winAmount);
+  }
+
+  function _winnerAssertsAfterMultipleWinners(Prediction memory prediction1, Prediction memory prediction3)
+    internal
+    view
+  {
+    // User stats checker in pool for both users
+    UserInPoolPredictionStats memory user1InPoolStats =
+      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter1);
+    assertEq(user1InPoolStats.noOfWinnings, 1);
+    assertEq(user1InPoolStats.noOfClaimableWinnings, 1);
+
+    UserInPoolPredictionStats memory user2InPoolStats =
+      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter2);
+    assertEq(user2InPoolStats.noOfWinnings, 1);
+    assertEq(user2InPoolStats.noOfClaimableWinnings, 1);
+
+    // Verify user winner prediction IDs arrays in pool for both users
+    uint256[] memory user1WinnerIds =
+      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
+    assertEq(user1WinnerIds.length, 1);
+    assertEq(user1WinnerIds[0], prediction1.predictionId);
+
+    uint256[] memory user2WinnerIds =
+      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
+    assertEq(user2WinnerIds.length, 1);
+    assertEq(user2WinnerIds[0], prediction3.predictionId);
+
+    // Verify user claimable prediction IDs arrays in pool for both users
+    uint256[] memory user1ClaimableIds =
+      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
+    assertEq(user1ClaimableIds.length, 1);
+    assertEq(user1ClaimableIds[0], prediction1.predictionId);
+
+    uint256[] memory user2ClaimableIds =
+      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
+    assertEq(user2ClaimableIds.length, 1);
+    assertEq(user2ClaimableIds[0], prediction3.predictionId);
   }
 
   function _stakeTokenAssertsAfterMultipleWinners() internal view {
@@ -701,8 +739,8 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(castora.poolCompletionBatchesProcessed(poolIdMultiplePredictions), totalBatches);
 
     // Verify user claimable activities for both users
-    UserPredictionActivity[] memory user1ClaimableActivities =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+    bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
+    UserPredictionActivity[] memory user1ClaimableActivities = castora.getUserPredictionActivities(hashes);
     assertEq(user1ClaimableActivities.length, user1StatsAfter.noOfClaimableWinnings);
     bool foundUser1Activity = false;
     for (uint256 i = 0; i < user1ClaimableActivities.length; i++) {
@@ -716,8 +754,8 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     }
     assertTrue(foundUser1Activity);
 
-    UserPredictionActivity[] memory user2ClaimableActivities =
-      castora.getClaimableActivitiesForAddressPaginated(predicter2, 0, 10);
+    hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter2, 0, 10);
+    UserPredictionActivity[] memory user2ClaimableActivities = castora.getUserPredictionActivities(hashes);
     assertEq(user2ClaimableActivities.length, user2StatsAfter.noOfClaimableWinnings);
     bool foundUser2Activity = false;
     for (uint256 i = 0; i < user2ClaimableActivities.length; i++) {
@@ -731,39 +769,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     }
     assertTrue(foundUser2Activity);
 
-    // User stats checker in pool for both users
-    UserInPoolPredictionStats memory user1InPoolStats =
-      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter1);
-    assertEq(user1InPoolStats.noOfWinnings, 1);
-    assertEq(user1InPoolStats.noOfClaimableWinnings, 1);
-
-    UserInPoolPredictionStats memory user2InPoolStats =
-      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter2);
-    assertEq(user2InPoolStats.noOfWinnings, 1);
-    assertEq(user2InPoolStats.noOfClaimableWinnings, 1);
-
-    // Verify user winner prediction IDs arrays in pool for both users
-    uint256[] memory user1WinnerIds =
-      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
-    assertEq(user1WinnerIds.length, 1);
-    assertEq(user1WinnerIds[0], prediction1.predictionId);
-
-    uint256[] memory user2WinnerIds =
-      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
-    assertEq(user2WinnerIds.length, 1);
-    assertEq(user2WinnerIds[0], prediction3.predictionId);
-
-    // Verify user claimable prediction IDs arrays in pool for both users
-    uint256[] memory user1ClaimableIds =
-      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
-    assertEq(user1ClaimableIds.length, 1);
-    assertEq(user1ClaimableIds[0], prediction1.predictionId);
-
-    uint256[] memory user2ClaimableIds =
-      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
-    assertEq(user2ClaimableIds.length, 1);
-    assertEq(user2ClaimableIds[0], prediction3.predictionId);
-
+    _winnerAssertsAfterMultipleWinners(prediction1, prediction3);
     _stakeTokenAssertsAfterMultipleWinners();
   }
 

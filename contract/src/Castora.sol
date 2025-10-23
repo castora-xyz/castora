@@ -51,6 +51,10 @@ contract Castora is
   address[] public stakeTokens;
   /// Array of userPredictionActivities stored globally
   bytes32[] public userPredictionActivityHashes;
+  /// Array of won predictions
+  bytes32[] public winnerActivityHashes;
+  /// Array of claimed predictions
+  bytes32[] public claimedWinnerActivityHashes;
   /// Keeps track of user addresses to their activity info
   mapping(address => UserPredictionStats stats) public userStats;
   /// Keeps track of user addresses to the number of unique pools they have joined
@@ -152,6 +156,22 @@ contract Castora is
     }
   }
 
+  function _paginateBytes32Array(bytes32[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (bytes32[] memory items)
+  {
+    if (offset >= total) return new bytes32[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new bytes32[](length);
+
+    for (uint256 i = 0; i < length; i += 1) {
+      items[i] = array[offset + i];
+    }
+  }
+
   function getUsersPaginated(uint256 offset, uint256 limit) external view returns (address[] memory usersList) {
     usersList = _paginateAddressArray(users, allStats.noOfUsers, offset, limit);
   }
@@ -168,21 +188,49 @@ contract Castora is
     tokensList = _paginateAddressArray(stakeTokens, allStats.noOfStakeTokens, offset, limit);
   }
 
-  function getAllPredictionActivitiesPaginated(uint256 offset, uint256 limit)
+  function getUserPredictionActivity(bytes32 activityHash)
+    external
+    view
+    returns (UserPredictionActivity memory activity)
+  {
+    if (userPredictionActivities[activityHash].poolId == 0) revert InvalidActivityHash();
+    activity = userPredictionActivities[activityHash];
+  }
+
+  function getUserPredictionActivities(bytes32[] calldata hashes)
     external
     view
     returns (UserPredictionActivity[] memory activities)
   {
-    uint256 total = allStats.noOfPredictions;
-    if (offset >= total) return new UserPredictionActivity[](0);
-
-    uint256 end = offset + limit > total ? total : offset + limit;
-    uint256 length = end - offset;
-    activities = new UserPredictionActivity[](length);
-
-    for (uint256 i = 0; i < length; i += 1) {
-      activities[i] = userPredictionActivities[userPredictionActivityHashes[offset + i]];
+    activities = new UserPredictionActivity[](hashes.length);
+    for (uint256 i = 0; i < hashes.length; i += 1) {
+      if (userPredictionActivities[hashes[i]].poolId == 0) revert InvalidActivityHash();
+      activities[i] = userPredictionActivities[hashes[i]];
     }
+  }
+
+  function getAllPredictionActivityHashesPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (bytes32[] memory activityHashes)
+  {
+    activityHashes = _paginateBytes32Array(userPredictionActivityHashes, allStats.noOfPredictions, offset, limit);
+  }
+
+  function getWinnerActivityHashesPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (bytes32[] memory activityHashes)
+  {
+    activityHashes = _paginateBytes32Array(winnerActivityHashes, allStats.noOfWinnings, offset, limit);
+  }
+
+  function getClaimedWinnerActivityHashesPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (bytes32[] memory activityHashes)
+  {
+    activityHashes = _paginateBytes32Array(claimedWinnerActivityHashes, allStats.noOfClaimedWinnings, offset, limit);
   }
 
   function getUserStats(address user) external view returns (UserPredictionStats memory stats) {
@@ -199,50 +247,36 @@ contract Castora is
     poolIds = _paginateUint256Array(joinedPoolIdsByAddresses[user], userStats[user].noOfJoinedPools, offset, limit);
   }
 
-  function getUserPredictionActivitiesPaginated(address user, uint256 offset, uint256 limit)
+  function getUserPredictionActivityHashesPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (bytes32[] memory activityHashes)
   {
     if (user == address(0)) revert InvalidAddress();
-
-    uint256 total = userStats[user].noOfPredictions;
-    if (offset >= total) return new UserPredictionActivity[](0);
-
-    uint256 end = offset + limit > total ? total : offset + limit;
-    uint256 length = end - offset;
-    activities = new UserPredictionActivity[](length);
-
-    for (uint256 i = 0; i < length; i += 1) {
-      activities[i] = userPredictionActivities[userPredictionActivityHashesByAddresses[user][offset + i]];
-    }
+    activityHashes = _paginateBytes32Array(
+      userPredictionActivityHashesByAddresses[user], userStats[user].noOfPredictions, offset, limit
+    );
   }
 
-  function getClaimableActivitiesForAddressPaginated(address predicter, uint256 offset, uint256 limit)
+  function getWinnerActivityHashesForAddressPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (bytes32[] memory activityHashes)
+  {
+    if (user == address(0)) revert InvalidAddress();
+    activityHashes =
+      _paginateBytes32Array(winnerActivityHashesByAddresses[user], userStats[user].noOfWinnings, offset, limit);
+  }
+
+  function getClaimableActivityHashesForAddressPaginated(address predicter, uint256 offset, uint256 limit)
+    external
+    view
+    returns (bytes32[] memory activityHashes)
   {
     if (predicter == address(0)) revert InvalidAddress();
-
-    uint256 total = userStats[predicter].noOfClaimableWinnings;
-    if (offset >= total) return new UserPredictionActivity[](0);
-
-    uint256 end = offset + limit > total ? total : offset + limit;
-    uint256 length = end - offset;
-    activities = new UserPredictionActivity[](length);
-
-    for (uint256 i = 0; i < length; i += 1) {
-      activities[i] = userPredictionActivities[claimableActivityHashesByAddresses[predicter][offset + i]];
-    }
-  }
-
-  function getUserPredictionActivity(bytes32 activityHash)
-    external
-    view
-    returns (UserPredictionActivity memory activity)
-  {
-    activity = userPredictionActivities[activityHash];
+    activityHashes = _paginateBytes32Array(
+      claimableActivityHashesByAddresses[predicter], userStats[predicter].noOfClaimableWinnings, offset, limit
+    );
   }
 
   /// Returns the {Pool} with the provided `poolId`. Fails if the provided
@@ -750,6 +784,7 @@ contract Castora is
       winnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
       claimableWinnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
       bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
+      winnerActivityHashes.push(activityHash);
       winnerActivityHashesByAddresses[predicter].push(activityHash);
       claimableActivityHashesByAddresses[predicter].push(activityHash);
       claimableActivityHashesIndex[predicter][activityHash] = userStats[predicter].noOfClaimableWinnings - 1;
@@ -797,8 +832,7 @@ contract Castora is
     }
   }
 
-  function _removeClaimableActivityHash(uint256 poolId, uint256 predictionId) internal {
-    bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
+  function _removeClaimableActivityHash(bytes32 activityHash) internal {
     uint256 indexToRemove = claimableActivityHashesIndex[msg.sender][activityHash];
     uint256 lastIndex = userStats[msg.sender].noOfClaimableWinnings - 1;
 
@@ -858,7 +892,10 @@ contract Castora is
     pool.noOfClaimedWinnings += 1;
     prediction.claimedWinningsTime = block.timestamp;
     _updateClaimStats(poolId, pool.winAmount, pool.seeds.stakeToken);
-    _removeClaimableActivityHash(poolId, predictionId);
+
+    bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
+    claimedWinnerActivityHashes.push(activityHash);
+    _removeClaimableActivityHash(activityHash);
     _removeClaimablePredictionIdInPool(poolId, predictionId);
 
     emit ClaimedWinnings(

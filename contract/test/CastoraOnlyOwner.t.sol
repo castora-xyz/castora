@@ -36,6 +36,43 @@ contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, T
     castora.initialize(address(poolsManager), address(poolsRules));
   }
 
+  function testRevertInvalidAddressesInitialise() public {
+    castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.initialize(address(0), address(poolsRules));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.initialize(address(poolsManager), address(0));
+  }
+
+  function testRevertNotOwnerWhenUpgrading() public {
+    address newImplementation = address(new Castora());
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    castora.upgradeToAndCall(newImplementation, '');
+  }
+
+  function testUpgradeSuccessWithRetainedData() public {
+    // Store some data before upgrade
+    bytes32 adminRole = castora.ADMIN_ROLE();
+    castora.grantAdminRole(user);
+    address originalPoolsManager = castora.poolsManager();
+    address originalPoolsRules = castora.poolsRules();
+
+    // Perform upgrade
+    address newImplementation = address(new Castora());
+    vm.expectEmit(true, true, true, false);
+    emit IERC1967.Upgraded(newImplementation);
+    castora.upgradeToAndCall(newImplementation, '');
+
+    // Verify data is retained after upgrade
+    assertTrue(castora.hasRole(adminRole, user));
+    assertEq(castora.poolsManager(), originalPoolsManager);
+    assertEq(castora.poolsRules(), originalPoolsRules);
+    assertEq(castora.owner(), owner);
+  }
+
   function testRevertNotOwnerPause() public {
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
@@ -176,42 +213,5 @@ contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, T
     // Test successful revoke if already revoked (should not revert and not emit)
     castora.revokeAdminRole(user);
     assertFalse(castora.hasRole(adminRole, user));
-  }
-
-  function testRevertNotOwnerWhenUpgrading() public {
-    address newImplementation = address(new Castora());
-    vm.prank(user);
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
-    castora.upgradeToAndCall(newImplementation, '');
-  }
-
-  function testRevertInvalidAddressesInitialise() public {
-    castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.initialize(address(0), address(poolsRules));
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.initialize(address(poolsManager), address(0));
-  }
-
-  function testUpgradeSuccessWithRetainedData() public {
-    // Store some data before upgrade
-    bytes32 adminRole = castora.ADMIN_ROLE();
-    castora.grantAdminRole(user);
-    address originalPoolsManager = castora.poolsManager();
-    address originalPoolsRules = castora.poolsRules();
-
-    // Perform upgrade
-    address newImplementation = address(new Castora());
-    vm.expectEmit(true, true, true, false);
-    emit IERC1967.Upgraded(newImplementation);
-    castora.upgradeToAndCall(newImplementation, '');
-
-    // Verify data is retained after upgrade
-    assertTrue(castora.hasRole(adminRole, user));
-    assertEq(castora.poolsManager(), originalPoolsManager);
-    assertEq(castora.poolsRules(), originalPoolsRules);
-    assertEq(castora.owner(), owner);
   }
 }

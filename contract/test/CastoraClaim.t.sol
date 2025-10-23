@@ -282,7 +282,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
 
     // Verify claimable states are updated
     UserPredictionActivity[] memory claimableActivitiesAfter =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     uint256[] memory claimablePredictionsAfter =
       castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolBefore.poolId, predicter1, 0, 10);
 
@@ -306,7 +306,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
 
     // Get claimable states before
     UserPredictionActivity[] memory claimableActivitiesBefore =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     uint256[] memory claimablePredictionsBefore =
       castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdERC20, predicter1, 0, 10);
 
@@ -357,7 +357,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
 
     // Get claimable states before
     UserPredictionActivity[] memory claimableActivitiesBefore =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     uint256[] memory claimablePredictionsBefore =
       castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdNative, predicter1, 0, 10);
 
@@ -602,7 +602,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
 
     // Verify claimable activities are removed
     UserPredictionActivity[] memory claimableActivitiesAfter =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     assertEq(claimableActivitiesAfter.length, claimableActivitiesBefore.length - 3);
   }
 
@@ -621,7 +621,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
     StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(castora));
     StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(castora));
     UserPredictionActivity[] memory claimableActivitiesBefore =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     uint256 pool1NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId1).noOfClaimedWinnings;
     uint256 pool2NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId2).noOfClaimedWinnings;
 
@@ -668,7 +668,7 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
     StakeTokenDetails memory stakeTokenStatsBefore = castora.getStakeTokenDetails(address(cusd));
     StakeTokenDetails memory userStakeTokenStatsBefore = castora.getUserStakeTokenDetails(predicter1, address(cusd));
     UserPredictionActivity[] memory claimableActivitiesBefore =
-      castora.getClaimableActivitiesForAddressPaginated(predicter1, 0, 10);
+      castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     uint256 pool1NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId1).noOfClaimedWinnings;
     uint256 pool2NoOfClaimedWinningsBefore = castora.getPool(bulkPoolId2).noOfClaimedWinnings;
 

@@ -80,8 +80,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     castora.pause();
     assertTrue(castora.paused());
 
-    vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(predicter);
+    vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     castora.predict(poolIdNative, 1500000);
   }
 
@@ -154,13 +154,17 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(userPredictionIds[0], expectedPredictionId);
 
     // Verify user activities tracking
-    UserPredictionActivity[] memory userActivities = castora.getUserPredictionActivitiesPaginated(predicter, 0, 10);
+    bytes32[] memory hashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
+    UserPredictionActivity[] memory userActivities = castora.getUserPredictionActivities(hashes);
+    assertEq(hashes.length, 1);
     assertEq(userActivities.length, 1);
     assertEq(userActivities[0].poolId, poolIdNative);
     assertEq(userActivities[0].predictionId, expectedPredictionId);
 
     // Verify global prediction activities tracking
-    UserPredictionActivity[] memory allActivities = castora.getAllPredictionActivitiesPaginated(0, 10);
+    hashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
+    UserPredictionActivity[] memory allActivities = castora.getUserPredictionActivities(hashes);
+    assertEq(hashes.length, 1);
     assertEq(allActivities.length, 1);
     assertEq(allActivities[0].poolId, poolIdNative);
     assertEq(allActivities[0].predictionId, expectedPredictionId);
@@ -427,8 +431,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(userInPoolStats.noOfPredictions, predictionsCount);
 
     // Verify all prediction activities were recorded
-    UserPredictionActivity[] memory userActivities = castora.getUserPredictionActivitiesPaginated(predicter, 0, 10);
-    assertEq(userActivities.length, predictionsCount);
+    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
+    assertEq(userActivityHashes.length, predictionsCount);
 
     // Verify user prediction IDs tracking
     uint256[] memory userPredictionIds = castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, predicter, 0, 10);
@@ -475,8 +479,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(userInPoolStats.noOfPredictions, predictionsCount);
 
     // Verify all activities were recorded
-    UserPredictionActivity[] memory userActivities = castora.getUserPredictionActivitiesPaginated(predicter, 0, 10);
-    assertEq(userActivities.length, predictionsCount);
+    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
+    assertEq(userActivityHashes.length, predictionsCount);
   }
 
   function testNewUserPredictedOnlyOnFirstPredict() public {
@@ -582,6 +586,14 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   }
 
   function testRevertsInCastoraGetters() public {
+    vm.expectRevert(InvalidActivityHash.selector);
+    castora.getUserPredictionActivity(bytes32(0));
+
+    bytes32[] memory hashes = new bytes32[](1);
+    hashes[0] = bytes32(0);
+    vm.expectRevert(InvalidActivityHash.selector);
+    castora.getUserPredictionActivities(hashes);
+
     vm.expectRevert(InvalidAddress.selector);
     castora.getUserStats(address(0));
 
@@ -589,10 +601,13 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     castora.getJoinedPoolIdsForUserPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionActivitiesPaginated(address(0), 0, 10);
+    castora.getUserPredictionActivityHashesPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getClaimableActivitiesForAddressPaginated(address(0), 0, 10);
+    castora.getWinnerActivityHashesForAddressPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.getClaimableActivityHashesForAddressPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidPoolId.selector);
     castora.getPool(0);
