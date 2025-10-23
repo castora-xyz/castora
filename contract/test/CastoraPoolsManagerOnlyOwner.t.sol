@@ -5,6 +5,8 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {Test} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
@@ -12,12 +14,6 @@ import {CastoraEvents} from '../src/CastoraEvents.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
-
-contract RejectETH {
-  receive() external payable {
-    revert();
-  }
-}
 
 contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraPoolsManager poolsManager;
@@ -38,11 +34,9 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     newFeeCollector = makeAddr('newFeeCollector');
     splitFeesPercent = 5000; // 50%
 
-    // Deploy tokens
+    // Deploy contracts
     cusd = new cUSD();
     altToken = new cUSD();
-
-    // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
     poolsManager.initialize(feeCollector, splitFeesPercent);
     poolsManager.setCastora(castora);
@@ -52,10 +46,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     vm.deal(address(poolsManager), 10 ether);
   }
 
-  // ========== Initialize Tests ==========
-
   function testRevertInvalidInputsInitialize() public {
-    // Deploy a new CastoraPoolsManager without initializing
     CastoraPoolsManager newPoolsManager =
       CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
 
@@ -66,19 +57,32 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     newPoolsManager.initialize(feeCollector, 10001);
   }
 
-  // ========== setFeeCollector Tests ==========
+  function testUpgradeAuthorization() public {
+    address newImpl = address(new CastoraPoolsManager());
 
-  function testSetFeeCollector() public {
-    address oldFeeCollector = poolsManager.feeCollector();
-    poolsManager.setFeeCollector(newFeeCollector);
-    assertEq(poolsManager.feeCollector(), newFeeCollector);
-    assertEq(oldFeeCollector, feeCollector);
+    // Should work for owner
+    poolsManager.upgradeToAndCall(newImpl, '');
+
+    // Should fail for not owner
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    poolsManager.upgradeToAndCall(newImpl, '');
   }
 
-  function testRevertWhenNotOwnerSetFeeCollector() public {
-    vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.setFeeCollector(newFeeCollector);
+  function testUpgradeRetainsData() public {
+    // Store some data before upgrade
+    address originalCastora = poolsManager.castora();
+    address originalFeeCollector = poolsManager.feeCollector();
+    uint16 originalSplitFeesPercent = poolsManager.creatorPoolCompletionFeesSplitPercent();
+
+    // Upgrade
+    address newImpl = address(new CastoraPoolsManager());
+    poolsManager.upgradeToAndCall(newImpl, '');
+
+    // Verify data is retained
+    assertEq(poolsManager.castora(), originalCastora);
+    assertEq(poolsManager.feeCollector(), originalFeeCollector);
+    assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), originalSplitFeesPercent);
   }
 
   function testRevertZeroAddressSetFeeCollector() public {
@@ -86,11 +90,40 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.setFeeCollector(address(0));
   }
 
-  // ========== setCreatorPoolCompletionFeesSplitPercent Tests ==========
+  function testRevertWhenNotOwnerSetFeeCollector() public {
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    poolsManager.setFeeCollector(newFeeCollector);
+  }
+
+  function testSetFeeCollectorSuccess() public {
+    address oldFeeCollector = poolsManager.feeCollector();
+
+    vm.expectEmit(true, true, false, false);
+    emit SetFeeCollector(oldFeeCollector, newFeeCollector);
+    poolsManager.setFeeCollector(newFeeCollector);
+
+    assertEq(poolsManager.feeCollector(), newFeeCollector);
+    assertEq(oldFeeCollector, feeCollector);
+  }
+
+  function testRevertWhenNotOwnerSetCreatorPoolCompletionFeesSplitPercent() public {
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(3000);
+  }
+
+  function testRevertInvalidSplitFeesPercent() public {
+    vm.expectRevert(InvalidSplitFeesPercent.selector);
+    poolsManager.setCreatorPoolCompletionFeesSplitPercent(10001); // > 100%
+  }
 
   function testSetCreatorPoolCompletionFeesSplitPercent() public {
     uint256 oldPercentage = poolsManager.creatorPoolCompletionFeesSplitPercent();
     uint16 newPercentage = 3000; // 30%
+
+    vm.expectEmit(false, false, false, true);
+    emit SetCreatorPoolCompletionFeesSplitPercent(oldPercentage, newPercentage);
     poolsManager.setCreatorPoolCompletionFeesSplitPercent(newPercentage);
     assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), newPercentage);
     assertEq(oldPercentage, 5000); // Default 50%
@@ -104,41 +137,47 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), 10000);
   }
 
-  function testRevertInvalidSplitFeesPercent() public {
-    vm.expectRevert(InvalidSplitFeesPercent.selector);
-    poolsManager.setCreatorPoolCompletionFeesSplitPercent(10001); // > 100%
-  }
-
-  function testRevertWhenNotOwnerSetCreatorPoolCompletionFeesSplitPercent() public {
+  function testRevertWhenNotOwnerSetCreationFees() public {
     vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.setCreatorPoolCompletionFeesSplitPercent(3000);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    poolsManager.setCreationFees(address(cusd), 1000 * 10 ** 6);
   }
 
-  // ========== setCreationFees Tests ==========
+  function testRevertZeroAddressSetCreationFees() public {
+    vm.expectRevert(InvalidAddress.selector);
+    poolsManager.setCreationFees(address(0), 1000 * 10 ** 6);
+  }
 
-  function testSetCreationFees() public {
+  function testSetCreationFeesZeroAmount() public {
+    // Contract allows zero amount creation fees, this is to allow future marketing campaigns
+    // for users to freely create pools without fees.
+    poolsManager.setCreationFees(address(cusd), 0);
+
+    CreationFeesTokenInfo memory tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
+    assertTrue(tokenInfo.isAllowed);
+    assertEq(tokenInfo.amount, 0);
+  }
+
+  function testSetCreationFeesSuccess() public {
     uint256 feeAmount = 1000 * 10 ** 6;
 
     // Check initial state
     CreationFeesTokenInfo memory tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
     assertFalse(tokenInfo.isAllowed);
     assertEq(tokenInfo.amount, 0);
-    assertEq(tokenInfo.totalUseCount, 0);
-    assertEq(tokenInfo.totalAmountUsed, 0);
 
     // Check initial stats
     AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfCreationFeesTokens, 0);
 
+    vm.expectEmit(true, false, false, false);
+    emit SetCreationFees(address(cusd), feeAmount);
     poolsManager.setCreationFees(address(cusd), feeAmount);
 
     // Check updated state
     tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
     assertTrue(tokenInfo.isAllowed);
     assertEq(tokenInfo.amount, feeAmount);
-    assertEq(tokenInfo.totalUseCount, 0);
-    assertEq(tokenInfo.totalAmountUsed, 0);
 
     // Check updated stats
     stats = poolsManager.getAllStats();
@@ -196,43 +235,10 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     assertEq(poolsManager.creationFeesTokens(1), address(altToken));
   }
 
-  function testSetCreationFeesZeroAmount() public {
-    // Contract allows zero amount
-    poolsManager.setCreationFees(address(cusd), 0);
-
-    CreationFeesTokenInfo memory tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
-    assertTrue(tokenInfo.isAllowed);
-    assertEq(tokenInfo.amount, 0);
-  }
-
-  function testRevertZeroAddressSetCreationFees() public {
-    vm.expectRevert(InvalidAddress.selector);
-    poolsManager.setCreationFees(address(0), 1000 * 10 ** 6);
-  }
-
-  function testRevertWhenNotOwnerSetCreationFees() public {
+  function testRevertWhenNotOwnerDisallowCreationFees() public {
     vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.setCreationFees(address(cusd), 1000 * 10 ** 6);
-  }
-
-  // ========== disallowCreationFees Tests ==========
-
-  function testDisallowCreationFees() public {
-    uint256 feeAmount = 1000 * 10 ** 6;
-
-    // First allow the token
-    poolsManager.setCreationFees(address(cusd), feeAmount);
-    CreationFeesTokenInfo memory tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
-    assertTrue(tokenInfo.isAllowed);
-    assertEq(tokenInfo.amount, feeAmount);
-
-    // Then disallow it
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
     poolsManager.disallowCreationFees(address(cusd));
-
-    tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
-    assertFalse(tokenInfo.isAllowed);
-    assertEq(tokenInfo.amount, 0);
   }
 
   function testRevertZeroAddressDisallowCreationFees() public {
@@ -260,63 +266,56 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.disallowCreationFees(address(cusd));
   }
 
-  function testRevertWhenNotOwnerDisallowCreationFees() public {
-    vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+  function testDisallowCreationFeesSuccess() public {
+    uint256 feeAmount = 1000 * 10 ** 6;
+
+    // First allow the token
+    poolsManager.setCreationFees(address(cusd), feeAmount);
+    CreationFeesTokenInfo memory tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
+    assertTrue(tokenInfo.isAllowed);
+    assertEq(tokenInfo.amount, feeAmount);
+
+    // Then disallow it
+    vm.expectEmit(true, false, false, false);
+    emit DisallowedCreationFees(address(cusd));
     poolsManager.disallowCreationFees(address(cusd));
-  }
 
-  // ========== pause/unpause Tests ==========
-
-  function testPauseUnpause() public {
-    assertFalse(poolsManager.paused());
-    poolsManager.pause();
-    assertTrue(poolsManager.paused());
-    poolsManager.unpause();
-    assertFalse(poolsManager.paused());
+    tokenInfo = poolsManager.getCreationFeesTokenInfo(address(cusd));
+    assertFalse(tokenInfo.isAllowed);
+    assertEq(tokenInfo.amount, 0);
   }
 
   function testRevertWhenNotOwnerPauseUnpause() public {
     vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
     poolsManager.pause();
 
     // pause as owner (this contract)
     poolsManager.pause();
 
     vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
     poolsManager.unpause();
   }
 
-  // ========== upgradeToAndCall Tests ==========
+  function testPauseUnpauseSuccess() public {
+    assertFalse(poolsManager.paused());
 
-  function testUpgradeAuthorization() public {
-    address newImpl = address(new CastoraPoolsManager());
+    vm.expectEmit(false, false, false, false);
+    emit PausableUpgradeable.Paused(address(this));
+    poolsManager.pause();
+    assertTrue(poolsManager.paused());
 
-    // Should work for owner
-    poolsManager.upgradeToAndCall(newImpl, '');
-
-    // Should fail for not owner
-    vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
-    poolsManager.upgradeToAndCall(newImpl, '');
-  }
-
-  // ========== setCastora Tests ==========
-
-  function testSetCastora() public {
-    address newCastora = makeAddr('newCastora');
-    address oldCastora = poolsManager.castora();
-    poolsManager.setCastora(newCastora);
-    assertEq(poolsManager.castora(), newCastora);
-    assertEq(oldCastora, castora);
+    vm.expectEmit(false, false, false, false);
+    emit PausableUpgradeable.Unpaused(address(this));
+    poolsManager.unpause();
+    assertFalse(poolsManager.paused());
   }
 
   function testRevertWhenNotOwnerSetCastora() public {
     address newCastora = makeAddr('newCastora');
     vm.prank(user);
-    vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
     poolsManager.setCastora(newCastora);
   }
 
@@ -325,5 +324,15 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     poolsManager.setCastora(address(0));
   }
 
-  receive() external payable {}
+  function testSetCastoraSuccess() public {
+    address newCastora = makeAddr('newCastora');
+    address oldCastora = poolsManager.castora();
+
+    vm.expectEmit(true, false, false, false);
+    emit SetCastoraInPoolsManager(oldCastora, newCastora);
+    poolsManager.setCastora(newCastora);
+
+    assertEq(poolsManager.castora(), newCastora);
+    assertEq(oldCastora, castora);
+  }
 }

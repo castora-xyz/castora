@@ -38,6 +38,8 @@ contract CastoraPoolsManager is
   address[] public users;
   /// Array of all created pool IDs
   uint256[] public totalCreatedPoolIds;
+  /// Array of all created pool IDs
+  uint256[] public totalPaidCreatedPoolIds;
   /// Array of all claimable pool IDs
   uint256[] public totalClaimablePoolIds;
   /// Array of all claimed pool IDs
@@ -192,7 +194,49 @@ contract CastoraPoolsManager is
     return userCreatedPools[poolId].creationTime != 0;
   }
 
-  // ========== PAGINATION FUNCTIONS ==========
+  /// Internal helper to paginate uint256 arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateUint256Array(uint256[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (uint256[] memory items)
+  {
+    if (offset >= total) return new uint256[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new uint256[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      items[i] = array[offset + i];
+    }
+  }
+
+  /// Internal helper to paginate address arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (address[] memory items)
+  {
+    if (offset >= total) return new address[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new address[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      items[i] = array[offset + i];
+    }
+  }
 
   /// Gets paginated user created pool IDs
   /// @param user The user address to query
@@ -261,6 +305,14 @@ contract CastoraPoolsManager is
     return _paginateUint256Array(totalCreatedPoolIds, allStats.noOfUserCreatedPools, offset, limit);
   }
 
+  function getAllPaidCreatedPoolIdsPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint256[] memory poolIds)
+  {
+    return _paginateUint256Array(totalPaidCreatedPoolIds, allStats.noOfUserPaidPoolCreations, offset, limit);
+  }
+
   /// Gets paginated global claimable pool IDs
   /// @param offset Starting index (0-based)
   /// @param limit Maximum number of items to return
@@ -291,52 +343,6 @@ contract CastoraPoolsManager is
   /// @return usersList Array of user addresses for the page
   function getAllUsersPaginated(uint256 offset, uint256 limit) external view returns (address[] memory usersList) {
     return _paginateAddressArray(users, allStats.noOfUsers, offset, limit);
-  }
-
-  // ========== INTERNAL PAGINATION HELPERS ==========
-
-  /// Internal helper to paginate uint256 arrays
-  /// @param array The array to paginate
-  /// @param total The length of the array to paginate
-  /// @param offset Starting index
-  /// @param limit Maximum items to return
-  /// @return items The paginated items
-  function _paginateUint256Array(uint256[] storage array, uint256 total, uint256 offset, uint256 limit)
-    internal
-    view
-    returns (uint256[] memory items)
-  {
-    if (offset >= total) return new uint256[](0);
-
-    uint256 end = offset + limit > total ? total : offset + limit;
-    uint256 length = end - offset;
-    items = new uint256[](length);
-
-    for (uint256 i = 0; i < length; i++) {
-      items[i] = array[offset + i];
-    }
-  }
-
-  /// Internal helper to paginate address arrays
-  /// @param array The array to paginate
-  /// @param total The length of the array to paginate
-  /// @param offset Starting index
-  /// @param limit Maximum items to return
-  /// @return items The paginated items
-  function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
-    internal
-    view
-    returns (address[] memory items)
-  {
-    if (offset >= total) return new address[](0);
-
-    uint256 end = offset + limit > total ? total : offset + limit;
-    uint256 length = end - offset;
-    items = new address[](length);
-
-    for (uint256 i = 0; i < length; i++) {
-      items[i] = array[offset + i];
-    }
   }
 
   receive() external payable {
@@ -451,13 +457,6 @@ contract CastoraPoolsManager is
     address creationFeeToken,
     uint256 creationFeeAmount
   ) internal {
-    // Update user statistics if this is a new user
-    if (userStats[msg.sender].nthUserCount == 0) {
-      allStats.noOfUsers += 1;
-      userStats[msg.sender].nthUserCount = allStats.noOfUsers;
-      users.push(msg.sender);
-    }
-
     // Update global and user statistics
     allStats.noOfUserCreatedPools += 1;
     totalCreatedPoolIds.push(poolId);
@@ -466,6 +465,7 @@ contract CastoraPoolsManager is
 
     // Update fee statistics
     if (creationFeeAmount > 0) {
+      totalPaidCreatedPoolIds.push(poolId);
       userPaidCreatedPoolIds[msg.sender].push(poolId);
       allStats.noOfUserPaidPoolCreations += 1;
       userStats[msg.sender].noOfPaidCreationFeesPools += 1;

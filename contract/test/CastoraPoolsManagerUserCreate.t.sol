@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {Test} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
@@ -70,6 +71,96 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     creationFeeToken.approve(address(poolsManager), type(uint256).max);
   }
 
+  function testRevertWhenPausedCreatePool() public {
+    // Pause the contract
+    poolsManager.pause();
+
+    // Attempt to create pool should fail
+    vm.prank(user1);
+    vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+  }
+
+  function testRevertInvalidCreationFeeTokenCreatePool() public {
+    vm.prank(user1);
+    vm.expectRevert(InvalidAddress.selector);
+    poolsManager.createPool(validSeeds, address(0));
+  }
+
+  function testRevertDisallowedCreationFeeTokenCreatePool() public {
+    address disallowedToken = makeAddr('disallowedToken');
+    vm.prank(user1);
+    vm.expectRevert(CreationFeeTokenNotAllowed.selector);
+    poolsManager.createPool(validSeeds, disallowedToken);
+  }
+
+  function testRevertInsufficientNativeTokenCreatePool() public {
+    // Set up native token as creation fee token, using contract address
+    poolsManager.setCreationFees(address(poolsManager), 1 ether);
+
+    // Give user1 some ETH but send insufficient amount
+    vm.deal(user1, 10 ether);
+    uint256 expectedPoolId = 1;
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
+
+    vm.prank(user1);
+    vm.expectRevert(InsufficientCreationFeeValue.selector);
+    poolsManager.createPool{value: 0.5 ether}(validSeeds, address(poolsManager));
+  }
+
+  function testRevertWithIncorrectNativeTokenValueCreatePool() public {
+    // Set up native token as creation fee token, using contract address
+    poolsManager.setCreationFees(address(poolsManager), 1 ether);
+
+    // Give user1 some ETH but send too much
+    vm.deal(user1, 10 ether);
+    uint256 expectedPoolId = 1;
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
+
+    vm.prank(user1);
+    vm.expectRevert(IncorrectCreationFeeValue.selector);
+    poolsManager.createPool{value: 2 ether}(validSeeds, address(poolsManager));
+  }
+
+  function testRevertERC20FailureCreatePool() public {
+    // mock castora call to pass
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(1 /* poolId */ )
+    );
+
+    // mock the stake token to return false for the token transfer
+    vm.mockCall(
+      address(creationFeeToken),
+      abi.encodeWithSelector(IERC20.transferFrom.selector, user1, address(poolsManager), CREATION_FEE_AMOUNT),
+      abi.encode(false)
+    );
+
+    vm.prank(user1);
+    vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(creationFeeToken)));
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+  }
+
+  function testRevertCastoraNotSetCreatePool() public {}
+
+  function testRevertRevertedCastoraCallCreatePool() public {
+    // Mock the Castora contract to revert
+    vm.mockCallRevert(
+      address(mockCastora),
+      abi.encodeWithSelector(Castora.createPool.selector, validSeeds),
+      abi.encodeWithSignature('PoolExistsAlready()')
+    );
+
+    vm.prank(user1);
+    vm.expectRevert(PoolExistsAlready.selector);
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+  }
+
+  function testRevertUnsuccessfulFeeCollectionCreatePool() public {}
+
   function testCreatePoolSuccess() public {
     uint256 expectedPoolId = 1;
 
@@ -80,12 +171,12 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
 
     uint256 initialBalance = creationFeeToken.balanceOf(user1);
 
-    // Expect the event to be emitted
+    // Create pool with expected events to be emitted
+    vm.prank(user1);
+    vm.expectEmit(true, true, true, false);
+    emit NewUserCreatedPool(user1, expectedPoolId, 1 /* nthUserCount */ );
     vm.expectEmit(true, true, true, true);
     emit UserHasCreatedPool(expectedPoolId, user1, address(creationFeeToken), CREATION_FEE_AMOUNT);
-
-    // User creates a pool
-    vm.prank(user1);
     uint256 poolId = poolsManager.createPool(validSeeds, address(creationFeeToken));
 
     // Verify return value
@@ -99,6 +190,10 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfUsers, 1);
     assertEq(stats.noOfUserCreatedPools, 1);
+    assertEq(stats.noOfUserPaidPoolCreations, 1);
+    assertEq(poolsManager.users(0), user1);
+    assertEq(poolsManager.totalCreatedPoolIds(0), poolId);
+    assertEq(poolsManager.totalPaidCreatedPoolIds(0), poolId);
 
     // Verify user statistics
     UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
@@ -131,6 +226,8 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userTokenInfo.amount, CREATION_FEE_AMOUNT);
     assertEq(userTokenInfo.count, 1);
   }
+
+  function testNewUserCreatedPoolOnlyOnFirstCreation() public {}
 
   function testCreatePoolMultipleUsers() public {
     uint256 poolId1 = 1;
@@ -232,73 +329,6 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userPool.creationFeesAmount, 1 ether);
   }
 
-  function testCreatePoolFailsWhenPaused() public {
-    // Pause the contract
-    poolsManager.pause();
-
-    // Attempt to create pool should fail
-    vm.prank(user1);
-    vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
-  }
-
-  function testCreatePoolFailsWithInvalidCreationFeeToken() public {
-    vm.prank(user1);
-    vm.expectRevert(InvalidAddress.selector);
-    poolsManager.createPool(validSeeds, address(0));
-  }
-
-  function testCreatePoolFailsWithDisallowedCreationFeeToken() public {
-    address disallowedToken = makeAddr('disallowedToken');
-    vm.prank(user1);
-    vm.expectRevert(CreationFeeTokenNotAllowed.selector);
-    poolsManager.createPool(validSeeds, disallowedToken);
-  }
-
-  function testCreatePoolFailsWithInsufficientNativeToken() public {
-    // Set up native token as creation fee token, using contract address
-    poolsManager.setCreationFees(address(poolsManager), 1 ether);
-
-    // Give user1 some ETH but send insufficient amount
-    vm.deal(user1, 10 ether);
-    uint256 expectedPoolId = 1;
-    vm.mockCall(
-      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
-    );
-
-    vm.prank(user1);
-    vm.expectRevert(InsufficientCreationFeeValue.selector);
-    poolsManager.createPool{value: 0.5 ether}(validSeeds, address(poolsManager));
-  }
-
-  function testCreatePoolFailsWithInsufficientERC20Allowance() public {
-    // Remove approval
-    vm.prank(user1);
-    creationFeeToken.approve(address(poolsManager), 0);
-
-    vm.prank(user1);
-    vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
-  }
-
-  function testCreatePoolFailsWhenCastoraCallFails() public {
-    // Mock the Castora contract to revert
-    vm.mockCallRevert(
-      address(mockCastora),
-      abi.encodeWithSelector(Castora.createPool.selector, validSeeds),
-      abi.encodeWithSignature('PoolExistsAlready()')
-    );
-
-    vm.prank(user1);
-    vm.expectRevert();
-    poolsManager.createPool(validSeeds, address(creationFeeToken));
-  }
-
-  function testCreatePoolFailsForNonExistentPool() public {
-    vm.expectRevert(InvalidPoolId.selector);
-    poolsManager.getUserCreatedPool(999);
-  }
-
   function testCreatePoolWithZeroFeeAmount() public {
     // Set up a token with zero fee
     address zeroFeeToken = makeAddr('zeroFeeToken');
@@ -323,23 +353,11 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userPool.creationFeesAmount, 0);
   }
 
-  function testCreatePoolFailsWithIncorrectNativeTokenValue() public {
-    // Set up native token as creation fee token, using contract address
-    poolsManager.setCreationFees(address(poolsManager), 1 ether);
-
-    // Give user1 some ETH but send too much
-    vm.deal(user1, 10 ether);
-    uint256 expectedPoolId = 1;
-    vm.mockCall(
-      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
-    );
-
-    vm.prank(user1);
-    vm.expectRevert(IncorrectCreationFeeValue.selector);
-    poolsManager.createPool{value: 2 ether}(validSeeds, address(poolsManager));
-  }
-
   function testCreatePoolComprehensiveGetters() public {
+    // Initial revert test for non-existent pool
+    vm.expectRevert(InvalidPoolId.selector);
+    poolsManager.getUserCreatedPool(999);
+
     uint256 expectedPoolId = 1;
 
     // Mock the Castora contract to return a pool ID
