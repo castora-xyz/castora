@@ -155,6 +155,63 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     rules.updateAllowedStakeAmount(address(cusd), 1000000, true);
   }
 
+  function testUpdateCurrentPoolFeesPercent() public {
+    uint16 newPercent = 750; // 7.5%
+    uint16 oldPercent = rules.currentPoolFeesPercent();
+
+    // Update the fees percent
+    vm.expectEmit(true, false, false, true);
+    emit UpdatedCurrentPoolFeesPercent(oldPercent, newPercent);
+    rules.updateCurrentPoolFeesPercent(newPercent);
+
+    // Verify the change
+    assertEq(rules.currentPoolFeesPercent(), newPercent);
+  }
+
+  function testRevertUpdateCurrentPoolFeesPercentTooHigh() public {
+    uint16 invalidPercent = 10001; // > 10000
+
+    vm.expectRevert(InvalidSplitFeesPercent.selector);
+    rules.updateCurrentPoolFeesPercent(invalidPercent);
+  }
+
+  function testUpdateCurrentPoolFeesPercentMaxValue() public {
+    uint16 maxPercent = 10000; // 100%
+
+    rules.updateCurrentPoolFeesPercent(maxPercent);
+    assertEq(rules.currentPoolFeesPercent(), maxPercent);
+  }
+
+  function testRevertUpdateCurrentPoolFeesPercentNotOwner() public {
+    vm.prank(user);
+    vm.expectRevert();
+    rules.updateCurrentPoolFeesPercent(600);
+  }
+
+  function testValidatePoolFeesPercentSuccess() public view {
+    uint16 currentFees = rules.currentPoolFeesPercent();
+
+    // Should not revert with current fees
+    rules.validatePoolFeesPercent(currentFees);
+  }
+
+  function testRevertValidatePoolFeesPercentIncorrect() public {
+    uint16 wrongPercent = 999; // Different from current (500)
+
+    vm.expectRevert(InvalidPoolFeesPercent.selector);
+    rules.validatePoolFeesPercent(wrongPercent);
+  }
+
+  function testIsValidPoolFeesPercentCorrect() public view {
+    uint16 currentFees = rules.currentPoolFeesPercent();
+    assertTrue(rules.isValidPoolFeesPercent(currentFees));
+  }
+
+  function testIsValidPoolFeesPercentIncorrect() public view {
+    uint16 wrongPercent = 999;
+    assertFalse(rules.isValidPoolFeesPercent(wrongPercent));
+  }
+
   function testValidatePoolTimesSuccess() public view {
     // Test valid times (both on 5-minute intervals, snapshot >= window close)
     uint256 windowCloseTime = 1000 * 300; // Multiple of 5 minutes
@@ -576,6 +633,58 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     // Verify functionality still works after upgrade
     rules.updateRequiredTimeInterval(10 * 60); // 10 minutes
     assertEq(rules.requiredTimeInterval(), 10 * 60);
+  }
+
+  function testDeploymentInitialization() public view {
+    assertEq(rules.owner(), owner);
+    assertEq(rules.requiredTimeInterval(), 5 * 60); // 5 minutes default
+    assertEq(rules.currentPoolFeesPercent(), 500); // 5% default
+    assertEq(rules.everAllowedStakeTokensCount(), 0);
+    assertEq(rules.currentlyAllowedStakeTokensCount(), 0);
+    assertEq(rules.everAllowedPredictionTokensCount(), 0);
+    assertEq(rules.currentlyAllowedPredictionTokensCount(), 0);
+  }
+
+  function testPaginationEdgeCases() public {
+    address token1 = makeAddr('edgeToken1');
+    rules.updateAllowedStakeToken(token1, true);
+
+    // Test zero limit
+    address[] memory tokens = rules.getEverAllowedStakeTokensPaginated(0, 0);
+    assertEq(tokens.length, 0);
+
+    // Test offset equal to array length
+    tokens = rules.getEverAllowedStakeTokensPaginated(1, 5);
+    assertEq(tokens.length, 0);
+
+    // Test very large limit
+    tokens = rules.getEverAllowedStakeTokensPaginated(0, type(uint256).max);
+    assertEq(tokens.length, 1);
+  }
+
+  function testValidateCreatePoolWithInvalidMultiplier() public {
+    // Set up other allowances but not multiplier
+    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
+    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+
+    vm.expectRevert(InvalidPoolMultiplier.selector);
+    rules.validateCreatePool(validSeeds);
+  }
+
+  function testValidateCreatePoolWithInvalidFeesPercent() public {
+    // Set up allowances including multiplier
+    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
+    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+    rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
+
+    // Change fees percent to make it invalid
+    PoolSeeds memory invalidFeesSeeds = validSeeds;
+    invalidFeesSeeds.feesPercent = 999; // Different from current 500
+
+    vm.expectRevert(InvalidPoolFeesPercent.selector);
+    rules.validateCreatePool(invalidFeesSeeds);
   }
 
   // Tests for tracking ever allowed and currently allowed tokens
@@ -1595,5 +1704,55 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     // Should still have correct tracking
     assertEq(rules.everAllowedPoolMultipliersCount(), 2);
     assertEq(rules.currentlyAllowedPoolMultipliersCount(), 0);
+  }
+
+  function testEverAllowedPoolMultipliersPagination() public {
+    // Create 8 multipliers for testing pagination
+    uint16[] memory testMultipliers = new uint16[](8);
+    for (uint16 i = 0; i < 8; i++) {
+      testMultipliers[i] = (i + 1) * 5; // 5, 10, 15, 20, 25, 30, 35, 40
+      rules.updateAllowedPoolMultiplier(testMultipliers[i], true);
+    }
+
+    // Confirm length to be 8
+    assertEq(rules.everAllowedPoolMultipliersCount(), 8);
+
+    // Test first page (offset 0, limit 3)
+    uint16[] memory multipliers = rules.getEverAllowedPoolMultipliersPaginated(0, 3);
+    assertEq(multipliers.length, 3);
+    assertEq(multipliers[0], testMultipliers[0]);
+    assertEq(multipliers[1], testMultipliers[1]);
+    assertEq(multipliers[2], testMultipliers[2]);
+
+    // Test offset beyond array length
+    multipliers = rules.getEverAllowedPoolMultipliersPaginated(10, 5);
+    assertEq(multipliers.length, 0);
+
+    // Test getting all multipliers at once
+    multipliers = rules.getEverAllowedPoolMultipliersPaginated(0, 20);
+    assertEq(multipliers.length, 8);
+  }
+
+  function testCurrentlyAllowedPoolMultipliersPagination() public {
+    // Create 5 multipliers
+    uint16[] memory testMultipliers = new uint16[](5);
+    for (uint16 i = 0; i < 5; i++) {
+      testMultipliers[i] = (i + 1) * 10; // 10, 20, 30, 40, 50
+      rules.updateAllowedPoolMultiplier(testMultipliers[i], true);
+    }
+
+    // Remove middle multiplier (30)
+    rules.updateAllowedPoolMultiplier(testMultipliers[2], false);
+
+    // Test pagination with 4 remaining multipliers
+    uint16[] memory multipliers = rules.getCurrentlyAllowedPoolMultipliersPaginated(0, 2);
+    assertEq(multipliers.length, 2);
+
+    // Test edge case: offset at last element
+    multipliers = rules.getCurrentlyAllowedPoolMultipliersPaginated(3, 2);
+    assertEq(multipliers.length, 1);
+
+    // Verify currently allowed count is correct
+    assertEq(rules.currentlyAllowedPoolMultipliersCount(), 4);
   }
 }

@@ -410,6 +410,52 @@ contract CastoraPoolsRules is
     return _paginateAddressArray(currentlyAllowedPredictionTokens, currentlyAllowedPredictionTokensCount, offset, limit);
   }
 
+  /// Get paginated multipliers that have ever been allowed for pools
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of multipliers to return
+  /// @return multipliers Array of multipliers
+  function getEverAllowedPoolMultipliersPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint16[] memory multipliers)
+  {
+    return _paginateUint16Array(everAllowedPoolMultipliers, everAllowedPoolMultipliersCount, offset, limit);
+  }
+
+  /// Get paginated multipliers that are currently allowed for pools
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of multipliers to return
+  /// @return multipliers Array of currently allowed multipliers
+  function getCurrentlyAllowedPoolMultipliersPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint16[] memory multipliers)
+  {
+    return _paginateUint16Array(currentlyAllowedPoolMultipliers, currentlyAllowedPoolMultipliersCount, offset, limit);
+  }
+
+  /// Internal helper to paginate uint16 arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateUint16Array(uint16[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (uint16[] memory items)
+  {
+    if (offset >= total) return new uint16[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new uint16[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      items[i] = array[offset + i];
+    }
+  }
+
   /// Internal helper to paginate address arrays
   /// @param array The array to paginate
   /// @param total The length of the array to paginate
