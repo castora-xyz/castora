@@ -600,7 +600,10 @@ contract CastoraClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test 
     assertEq(userStakeTokenStatsAfter.totalClaimable, userStakeTokenStatsBefore.totalClaimable - totalWinnings);
     assertEq(userStakeTokenStatsAfter.totalClaimed, userStakeTokenStatsBefore.totalClaimed + totalWinnings);
 
-    // Verify claimable activities are removed
+    // Verify global claimable activity hashes
+    assertEq(castora.getClaimedWinnerActivityHashesPaginated(0, 10).length, 3);
+
+    // Verify user claimable activities are removed
     UserPredictionActivity[] memory claimableActivitiesAfter =
       castora.getUserPredictionActivities(castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10));
     assertEq(claimableActivitiesAfter.length, claimableActivitiesBefore.length - 3);

@@ -6,8 +6,7 @@ import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {Test} from 'forge-std/Test.sol';
-import {Vm} from 'forge-std/Vm.sol';
+import {Test, Vm} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
@@ -370,6 +369,38 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     castora.bulkPredict(poolIdERC20, 1500000, 2);
   }
 
+  function _moreAssertionsOnBulkPredictNativeStakeSuccess(uint256 predictionsCount) internal view {
+    // Verify pool stats
+    Pool memory pool = castora.getPool(poolIdNative);
+    assertEq(pool.noOfPredictions, predictionsCount);
+
+    // Verify stake token details for bulk predictions
+    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsNative.stakeToken);
+    assertEq(stakeTokenDetails.noOfPredictions, predictionsCount);
+    assertEq(stakeTokenDetails.totalStaked, 1 ether * predictionsCount);
+
+    // Verify user stake token details
+    StakeTokenDetails memory userStakeTokenDetails =
+      castora.getUserStakeTokenDetails(predicter, validSeedsNative.stakeToken);
+    assertEq(userStakeTokenDetails.noOfPredictions, predictionsCount);
+    assertEq(userStakeTokenDetails.totalStaked, 1 ether * predictionsCount);
+
+    // Verify user in pool stats
+    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdNative, predicter);
+    assertEq(userInPoolStats.noOfPredictions, predictionsCount);
+
+    // Verify all prediction activities were recorded
+    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
+    assertEq(userActivityHashes.length, predictionsCount);
+
+    // Verify user prediction IDs tracking
+    uint256[] memory userPredictionIds = castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, predicter, 0, 10);
+    assertEq(userPredictionIds.length, predictionsCount);
+    for (uint256 i = 0; i < predictionsCount; i++) {
+      assertEq(userPredictionIds[i], i + 1);
+    }
+  }
+
   function testBulkPredictNativeStakeSuccess() public {
     AllPredictionStats memory statsBefore = castora.getAllStats();
     uint256 castoraBalBefore = address(castora).balance;
@@ -411,35 +442,15 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     AllPredictionStats memory statsAfter = castora.getAllStats();
     assertEq(statsAfter.noOfPredictions, statsBefore.noOfPredictions + predictionsCount);
 
-    // Verify pool stats
-    Pool memory pool = castora.getPool(poolIdNative);
-    assertEq(pool.noOfPredictions, predictionsCount);
+    bytes32[] memory globalHashes = castora.getAllPredictionActivityHashesPaginated(0, 10);
+    assertEq(globalHashes.length, statsAfter.noOfPredictions);
+    UserPredictionActivity memory firstActivity = castora.getUserPredictionActivity(globalHashes[0]);
+    assertEq(firstActivity.predictionId, expectedFirstId);
+    UserPredictionActivity memory lastActivity =
+      castora.getUserPredictionActivity(globalHashes[globalHashes.length - 1]);
+    assertEq(lastActivity.predictionId, expectedLastId);
 
-    // Verify stake token details for bulk predictions
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsNative.stakeToken);
-    assertEq(stakeTokenDetails.noOfPredictions, predictionsCount);
-    assertEq(stakeTokenDetails.totalStaked, 1 ether * predictionsCount);
-
-    // Verify user stake token details
-    StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter, validSeedsNative.stakeToken);
-    assertEq(userStakeTokenDetails.noOfPredictions, predictionsCount);
-    assertEq(userStakeTokenDetails.totalStaked, 1 ether * predictionsCount);
-
-    // Verify user in pool stats
-    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdNative, predicter);
-    assertEq(userInPoolStats.noOfPredictions, predictionsCount);
-
-    // Verify all prediction activities were recorded
-    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
-    assertEq(userActivityHashes.length, predictionsCount);
-
-    // Verify user prediction IDs tracking
-    uint256[] memory userPredictionIds = castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, predicter, 0, 10);
-    assertEq(userPredictionIds.length, predictionsCount);
-    for (uint256 i = 0; i < predictionsCount; i++) {
-      assertEq(userPredictionIds[i], i + 1);
-    }
+    _moreAssertionsOnBulkPredictNativeStakeSuccess(predictionsCount);
   }
 
   function testBulkPredictERC20StakeSuccess() public {

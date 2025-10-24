@@ -5,13 +5,15 @@ import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {Test} from 'forge-std/Test.sol';
+import {Test, Vm} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
+
+contract RejectETH {}
 
 contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraPoolsManager poolsManager;
@@ -144,7 +146,16 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     poolsManager.createPool(validSeeds, address(creationFeeToken));
   }
 
-  function testRevertCastoraNotSetCreatePool() public {}
+  function testRevertCastoraNotSetCreatePool() public {
+    // redeploy and setup pools manager without setting castora
+    poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
+    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
+
+    vm.prank(user1);
+    vm.expectRevert(CastoraAddressNotSet.selector);
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+  }
 
   function testRevertRevertedCastoraCallCreatePool() public {
     // Mock the Castora contract to revert
@@ -159,7 +170,24 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     poolsManager.createPool(validSeeds, address(creationFeeToken));
   }
 
-  function testRevertUnsuccessfulFeeCollectionCreatePool() public {}
+  function testRevertUnsuccessfulFeeCollectionCreatePool() public {
+    // Set up native token as creation fee token, using contract address
+    poolsManager.setCreationFees(address(poolsManager), 1 ether);
+
+    // Update fee collector to the rejecting contract
+    poolsManager.setFeeCollector(address(new RejectETH()));
+
+    // Mock the Castora contract to return a pool ID (so we get to the fee collection part)
+    vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(1));
+
+    // Give user1 some ETH
+    vm.deal(user1, 10 ether);
+
+    // Attempt to create pool should fail during fee collection
+    vm.prank(user1);
+    vm.expectRevert(UnsuccessfulFeeCollection.selector);
+    poolsManager.createPool{value: 1 ether}(validSeeds, address(poolsManager));
+  }
 
   function testCreatePoolSuccess() public {
     uint256 expectedPoolId = 1;
@@ -195,6 +223,14 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(poolsManager.totalCreatedPoolIds(0), poolId);
     assertEq(poolsManager.totalPaidCreatedPoolIds(0), poolId);
 
+    // Verify global pool Ids
+    uint256[] memory allPoolIds = poolsManager.getAllCreatedPoolIdsPaginated(0, 10);
+    assertEq(allPoolIds.length, 1);
+    assertEq(allPoolIds[0], poolId);
+    uint256[] memory allPaidPoolIds = poolsManager.getAllPaidCreatedPoolIdsPaginated(0, 10);
+    assertEq(allPaidPoolIds.length, 1);
+    assertEq(allPaidPoolIds[0], poolId);
+
     // Verify user statistics
     UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.nthUserCount, 1);
@@ -227,7 +263,57 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userTokenInfo.count, 1);
   }
 
-  function testNewUserCreatedPoolOnlyOnFirstCreation() public {}
+  function testNewUserCreatedPoolOnlyOnFirstCreation() public {
+    // Ensure no users initially
+    assertEq(poolsManager.getAllStats().noOfUsers, 0);
+    assertEq(poolsManager.getAllUsersPaginated(0, 10).length, 0);
+
+    // mock castora call to pass
+    uint256 expectedPoolId = 1;
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
+
+    // First prediction should emit NewUserCreatedPool
+    vm.prank(user1);
+    vm.expectEmit(true, true, true, false);
+    emit NewUserCreatedPool(user1, expectedPoolId, 1 /* nthUserCount */ );
+    vm.expectEmit(true, true, true, true);
+    emit UserHasCreatedPool(expectedPoolId, user1, address(creationFeeToken), CREATION_FEE_AMOUNT);
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+
+    // Confirm new user count
+    assertEq(poolsManager.getAllStats().noOfUsers, 1);
+    assertEq(poolsManager.getAllUsersPaginated(0, 10).length, 1);
+    assertEq(poolsManager.getAllUsersPaginated(0, 10)[0], user1);
+    assertEq(poolsManager.getUserStats(user1).nthUserCount, 1);
+
+    // Second creation should NOT emit NewUserCreatedPool
+    vm.recordLogs();
+    vm.prank(user1);
+    // mock castora call once more to pass
+    vm.mockCall(
+      address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, validSeeds), abi.encode(expectedPoolId)
+    );
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
+
+    // Check that NewUserCreatedPool was not emitted
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+    bool newUserEventFound = false;
+    for (uint256 i = 0; i < logs.length; i++) {
+      if (logs[i].topics[0] == keccak256('NewUserCreatedPool(address,uint256,uint256)')) {
+        newUserEventFound = true;
+        break;
+      }
+    }
+    assertFalse(newUserEventFound);
+
+    // Confirm new user count remains the same
+    assertEq(poolsManager.getAllStats().noOfUsers, 1);
+    assertEq(poolsManager.getAllUsersPaginated(0, 10).length, 1);
+    assertEq(poolsManager.getAllUsersPaginated(0, 10)[0], user1);
+    assertEq(poolsManager.getUserStats(user1).nthUserCount, 1);
+  }
 
   function testCreatePoolMultipleUsers() public {
     uint256 poolId1 = 1;

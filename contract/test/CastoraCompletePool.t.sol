@@ -16,7 +16,7 @@ import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
-contract RejectETH {}
+contract RejectETH {} // by default, empty contract will reject ETH
 
 contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   Castora castora;
@@ -578,6 +578,9 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Verify batch processing state
     assertEq(castora.poolCompletionBatchesProcessed(poolIdSinglePrediction), 1);
 
+    // Verifiy user winner activity
+    assertEq(castora.getWinnerActivityHashesForAddressPaginated(predicter1, 0, 10).length, 1);
+
     // Verify user claimable activities
     bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
     UserPredictionActivity[] memory userClaimableActivities = castora.getUserPredictionActivities(hashes);
@@ -737,6 +740,9 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
 
     // Verify batch processing state
     assertEq(castora.poolCompletionBatchesProcessed(poolIdMultiplePredictions), totalBatches);
+
+    // Verify global winner activity hashes
+    assertEq(castora.getWinnerActivityHashesPaginated(0, 10).length, 2);
 
     // Verify user claimable activities for both users
     bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
@@ -916,9 +922,12 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     uint256 totalStaked = poolBefore.seeds.stakeAmount * poolBefore.noOfPredictions;
     uint256 expectedFees = poolBefore.seeds.feesPercent * totalStaked / 10000;
 
-    // Expect PoolCompleted event
+    // Expect PoolCompleted event, expect ReceiveWasCalled event for native token fee transfer
+    // to the CastoraPoolsManager contract
     vm.expectEmit(true, false, false, false);
     emit PoolCompleted(nativeStakePoolId);
+    vm.expectEmit(true, false, false, true);
+    emit ReceiveWasCalled(address(castora), expectedFees);
     vm.prank(admin);
     castora.finalizePoolCompletion(nativeStakePoolId);
 
@@ -927,7 +936,8 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertGt(poolAfter.completionTime, 0); // Should be greater than zero after finalization
     assertEq(poolAfter.completionTime, block.timestamp); // Should equal current block timestamp
 
-    // Verify balance movements - fees should go to fee collector
+    // Verify balance movements - fees should go to fee collector, though they passed
+    // through the PoolsManager contract
     uint256 feeCollectorBalanceAfter = feeCollector.balance;
     uint256 castoraBalanceAfter = address(castora).balance;
     assertEq(feeCollectorBalanceAfter, feeCollectorBalanceBefore + expectedFees);

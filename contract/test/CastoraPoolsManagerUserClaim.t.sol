@@ -12,11 +12,7 @@ import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
-contract RejectETH {
-  receive() external payable {
-    revert();
-  }
-}
+contract RejectETH {} // by default, empty contract will reject ETH
 
 contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraPoolsManager poolsManager;
@@ -211,6 +207,17 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
     // Verify the pool is marked as processed
     assertTrue(poolsManager.nonUserPoolHasCollectedFees(poolId));
+  }
+
+  function testProcessPoolCompletionRevertCastoraNotSet() public {
+    // redeploy and setup pools manager without setting castora
+    poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
+    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
+
+    // Expect failure as Castora wasn't set
+    vm.expectRevert(CastoraAddressNotSet.selector);
+    poolsManager.processPoolCompletion(1 /* poolId */);
   }
 
   function testProcessPoolCompletionRevertNotCompleted() public {
