@@ -38,7 +38,7 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     cusd = new cUSD();
     altToken = new cUSD();
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, splitFeesPercent);
+    poolsManager.initialize(makeAddr('activities'), feeCollector, splitFeesPercent);
     poolsManager.setCastora(castora);
 
     // Setup tokens and ETH for testing
@@ -51,10 +51,13 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
       CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
 
     vm.expectRevert(InvalidAddress.selector);
-    newPoolsManager.initialize(address(0), 10001);
+    newPoolsManager.initialize(address(0), address(0), 10001);
+
+    vm.expectRevert(InvalidAddress.selector);
+    newPoolsManager.initialize(makeAddr('activities'), address(0), 10001);
 
     vm.expectRevert(InvalidSplitFeesPercent.selector);
-    newPoolsManager.initialize(feeCollector, 10001);
+    newPoolsManager.initialize(makeAddr('activities'), feeCollector, 10001);
   }
 
   function testUpgradeAuthorization() public {
@@ -83,6 +86,28 @@ contract CastoraPoolsManagerOnlyOwnerTest is CastoraErrors, CastoraEvents, Casto
     assertEq(poolsManager.castora(), originalCastora);
     assertEq(poolsManager.feeCollector(), originalFeeCollector);
     assertEq(poolsManager.creatorPoolCompletionFeesSplitPercent(), originalSplitFeesPercent);
+  }
+
+  function testRevertZeroAddressSetActivities() public {
+    vm.expectRevert(InvalidAddress.selector);
+    poolsManager.setActivities(address(0));
+  }
+
+  function testRevertWhenNotOwnerSetActivities() public {
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    poolsManager.setActivities(makeAddr('activities'));
+  }
+
+  function testSetActivitiesSuccess() public {
+    address oldActivities = poolsManager.activities();
+
+    vm.expectEmit(true, true, false, false);
+    emit SetActivitiesInPoolsManager(oldActivities, makeAddr('newActivities'));
+    poolsManager.setActivities(makeAddr('newActivities'));
+
+    assertEq(poolsManager.activities(), makeAddr('newActivities'));
+    assertEq(oldActivities, makeAddr('activities'));
   }
 
   function testRevertZeroAddressSetFeeCollector() public {

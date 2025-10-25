@@ -9,6 +9,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {Castora} from './Castora.sol';
+import {CastoraActivities} from './CastoraActivities.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
@@ -26,6 +27,8 @@ contract CastoraPoolsManager is
 {
   using SafeERC20 for IERC20;
 
+  /// Address for CastoraActivities contract
+  address public activities;
   /// Address for main castora contract
   address public castora;
   /// Address for fee collection
@@ -355,12 +358,15 @@ contract CastoraPoolsManager is
   }
 
   /// Sets up this smart contract when it is deployed.
+  /// @param activities_ The address of the CastoraActivities contract.
   /// @param feeCollector_ The address that will collect pool completion fees for Castora.
   /// @param splitPercent_ The split percentage for completion pool fees (10000 = 100%).
-  function initialize(address feeCollector_, uint16 splitPercent_) public initializer {
+  function initialize(address activities_, address feeCollector_, uint16 splitPercent_) public initializer {
+    if (activities_ == address(0)) revert InvalidAddress();
     if (feeCollector_ == address(0)) revert InvalidAddress();
     if (splitPercent_ > 10000) revert InvalidSplitFeesPercent();
 
+    activities = activities_;
     feeCollector = feeCollector_;
     creatorPoolCompletionFeesSplitPercent = splitPercent_;
 
@@ -378,6 +384,13 @@ contract CastoraPoolsManager is
 
   function unpause() external onlyOwner nonReentrant whenPaused {
     _unpause();
+  }
+
+  function setActivities(address _activities) external onlyOwner {
+    if (_activities == address(0)) revert InvalidAddress();
+    address oldActivities = activities;
+    activities = _activities;
+    emit SetActivitiesInPoolsManager(oldActivities, _activities);
   }
 
   /// Sets the Castora contract address
@@ -443,6 +456,7 @@ contract CastoraPoolsManager is
       userStats[msg.sender].nthUserCount = allStats.noOfUsers;
       users.push(msg.sender);
       emit NewUserCreatedPool(msg.sender, poolId, userStats[msg.sender].nthUserCount);
+      CastoraActivities(activities).log(poolId, msg.sender, ActivityType.NEW_USER_ACTIVITY, allStats.noOfUsers);
     }
   }
 
@@ -550,6 +564,9 @@ contract CastoraPoolsManager is
     uint256 creationFeeAmount = creationFeesTokenInfos[creationFeeToken].amount;
     _updatePoolCreationStats(poolId, seeds.stakeToken, creationFeeToken, creationFeeAmount);
     emit UserHasCreatedPool(poolId, msg.sender, creationFeeToken, creationFeeAmount);
+    CastoraActivities(activities).log(
+      poolId, msg.sender, ActivityType.USER_HAS_CREATED_POOL, allStats.noOfUserCreatedPools
+    );
 
     // Collect creation fee and create pool
     _collectCreationFee(creationFeeToken, creationFeeAmount);
@@ -695,6 +712,9 @@ contract CastoraPoolsManager is
     pool.creatorClaimTime = block.timestamp;
     _updateClaimStats(poolId, pool.creator, pool.completionFeesToken, pool.completionFeesAmount);
     emit ClaimedCompletionFees(poolId, msg.sender, pool.completionFeesToken, pool.completionFeesAmount);
+    CastoraActivities(activities).log(
+      poolId, msg.sender, ActivityType.CLAIMED_COMPLETION_FEES, allStats.noOfClaimedFeesPools
+    );
 
     // Send the completion fees to the user
     // native token payment is when the main castora is used as that was the original stake token

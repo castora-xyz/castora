@@ -9,6 +9,7 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {CastoraActivities} from './CastoraActivities.sol';
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
 import {CastoraPoolsManager} from './CastoraPoolsManager.sol';
@@ -35,6 +36,8 @@ contract Castora is
 {
   using SafeERC20 for IERC20;
 
+  /// Address for CastoraActivities contract
+  address public activities;
   /// Address for CastoraPoolsManager contract
   address public poolsManager;
   /// Address for CastoraPoolsRules contract
@@ -200,12 +203,12 @@ contract Castora is
   function getUserPredictionActivities(bytes32[] calldata hashes)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (UserPredictionActivity[] memory userActivities)
   {
-    activities = new UserPredictionActivity[](hashes.length);
+    userActivities = new UserPredictionActivity[](hashes.length);
     for (uint256 i = 0; i < hashes.length; i += 1) {
       if (userPredictionActivities[hashes[i]].poolId == 0) revert InvalidActivityHash();
-      activities[i] = userPredictionActivities[hashes[i]];
+      userActivities[i] = userPredictionActivities[hashes[i]];
     }
   }
 
@@ -460,10 +463,12 @@ contract Castora is
     _disableInitializers();
   }
 
-  function initialize(address poolsManager_, address poolsRules_) public initializer {
+  function initialize(address activities_, address poolsManager_, address poolsRules_) public initializer {
+    if (activities_ == address(0)) revert InvalidAddress();
     if (poolsManager_ == address(0)) revert InvalidAddress();
     if (poolsRules_ == address(0)) revert InvalidAddress();
 
+    activities = activities_;
     poolsManager = poolsManager_;
     poolsRules = poolsRules_;
 
@@ -485,6 +490,13 @@ contract Castora is
 
   function unpause() external onlyOwner nonReentrant whenPaused {
     _unpause();
+  }
+
+  function setActivities(address _activities) external onlyOwner {
+    if (_activities == address(0)) revert InvalidAddress();
+    address oldActivities = activities;
+    activities = _activities;
+    emit SetActivitiesInCastora(oldActivities, _activities);
   }
 
   /// Sets the CastoraPoolsManager contract address
@@ -528,7 +540,7 @@ contract Castora is
     nonReentrant
     whenNotPaused
     onlyRole(ADMIN_ROLE)
-    returns (uint256)
+    returns (uint256 poolId)
   {
     bytes32 seedsHash = hashPoolSeeds(seeds);
     if (poolIdsBySeedsHashes[seedsHash] != 0) revert PoolExistsAlready();
@@ -555,8 +567,9 @@ contract Castora is
     }
     stakeTokenDetails[seeds.stakeToken].noOfPools += 1;
 
-    emit PoolCreated(allStats.noOfPools, seedsHash);
-    return allStats.noOfPools;
+    poolId = allStats.noOfPools;
+    emit PoolCreated(poolId, seedsHash);
+    CastoraActivities(activities).log(poolId, msg.sender, ActivityType.POOL_CREATED, poolId);
   }
 
   function _validateStartPredict(uint256 poolId) internal view returns (Pool storage pool, PoolSeeds memory seeds) {
@@ -572,6 +585,7 @@ contract Castora is
       userStats[msg.sender].nthUserCount = allStats.noOfUsers;
       users.push(msg.sender);
       emit NewUserPredicted(msg.sender, poolId, userStats[msg.sender].nthUserCount);
+      CastoraActivities(activities).log(poolId, msg.sender, ActivityType.NEW_USER_ACTIVITY, allStats.noOfUsers);
     }
   }
 
@@ -612,6 +626,7 @@ contract Castora is
     predictions[poolId][predictionId] =
       Prediction(msg.sender, poolId, predictionId, predictionPrice, block.timestamp, 0, false);
     emit Predicted(poolId, predictionId, msg.sender, predictionPrice);
+    CastoraActivities(activities).log(poolId, msg.sender, ActivityType.PREDICTED, allStats.noOfPredictions);
   }
 
   /// Makes a prediction with the provided `predictionPrice` in the {Pool}
@@ -729,6 +744,7 @@ contract Castora is
     poolCompletionBatchSize[poolId] = batchSize;
     poolCompletionBatchesProcessed[poolId] = 0;
     emit PoolCompletionInitiated(poolId, noOfWinners, pool.winAmount);
+    CastoraActivities(activities).log(poolId, msg.sender, ActivityType.POOL_COMPLETION_INITIATED, poolId);
   }
 
   /// Processes a batch of winners for a pool. Can be called multiple times until all batches are processed.
@@ -817,6 +833,7 @@ contract Castora is
 
     pool.completionTime = block.timestamp;
     emit PoolCompleted(poolId);
+    CastoraActivities(activities).log(poolId, msg.sender, ActivityType.POOL_COMPLETED, poolId);
 
     uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
     uint256 fees = pool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
@@ -901,6 +918,7 @@ contract Castora is
     emit ClaimedWinnings(
       poolId, predictionId, prediction.predicter, pool.seeds.stakeToken, pool.seeds.stakeAmount, pool.winAmount
     );
+    CastoraActivities(activities).log(poolId, msg.sender, ActivityType.CLAIMED_WINNINGS, allStats.noOfClaimedWinnings);
 
     if (pool.seeds.stakeToken == address(this)) {
       (bool isSuccess,) = payable(prediction.predicter).call{value: pool.winAmount}('');

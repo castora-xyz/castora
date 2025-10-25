@@ -268,4 +268,27 @@ contract CastoraStructs {
     /// Percentage of completion fees allocated to the creator
     uint16 creatorCompletionFeesPercent;
   }
+
+  /// Activity types that can be tracked
+  enum ActivityType {
+    POOL_CREATED, // Admin created pool (Castora)
+    NEW_USER_ACTIVITY, // Either contracts
+    USER_HAS_CREATED_POOL, // User created pool (CastoraPoolsManager)
+    PREDICTED, // User made prediction (Castora)
+    POOL_COMPLETION_INITIATED, // Pool completion started (Castora)
+    POOL_COMPLETED, // Pool fully completed (Castora)
+    CLAIMED_WINNINGS, // User claimed winnings (Castora)
+    CLAIMED_COMPLETION_FEES // Creator claimed completion fees (CastoraPoolsManager)
+    
+  }
+
+  /// Structure representing a single activity in the protocol
+  struct CastoraActivity {
+    uint256 timestamp; // Block timestamp when activity occurred
+    uint256 poolId; // Related pool ID
+    address user; // Primary actor of the activity
+    ActivityType activityType; // Type of activity
+    address sourceContract; // Contract that logged this activity
+    uint256 refGlobalCount; // Reference count in source contract's global arrays
+  }
 }

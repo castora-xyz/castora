@@ -8,6 +8,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {Test, Vm} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
+import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
@@ -16,6 +17,7 @@ import {CastoraStructs} from '../src/CastoraStructs.sol';
 import {cUSD} from '../src/cUSD.sol';
 
 contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
+  CastoraActivities activities;
   Castora castora;
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
@@ -49,12 +51,16 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     // Deploy contracts
     cusd = new cUSD();
+    activities = CastoraActivities(payable(address(new ERC1967Proxy(address(new CastoraActivities()), ''))));
+    activities.initialize();
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, 5000);
+    poolsManager.initialize(address(activities), feeCollector, 5000);
     poolsRules = CastoraPoolsRules(address(new ERC1967Proxy(address(new CastoraPoolsRules()), '')));
     poolsRules.initialize();
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
-    castora.initialize(address(poolsManager), address(poolsRules));
+    castora.initialize(address(activities), address(poolsManager), address(poolsRules));
+    activities.setAuthorizedLogger((address(poolsManager)), true);
+    activities.setAuthorizedLogger((address(castora)), true);
 
     // Configure pools rules
     poolsRules.updateAllowedPredictionToken(address(cusd), true);

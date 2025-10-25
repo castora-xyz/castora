@@ -29,21 +29,24 @@ contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, T
     user = makeAddr('user');
 
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, 5000);
+    poolsManager.initialize(makeAddr('activities'), feeCollector, 5000);
     poolsRules = CastoraPoolsRules(address(new ERC1967Proxy(address(new CastoraPoolsRules()), '')));
     poolsRules.initialize();
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
-    castora.initialize(address(poolsManager), address(poolsRules));
+    castora.initialize(makeAddr('activities'), address(poolsManager), address(poolsRules));
   }
 
   function testRevertInvalidAddressesInitialise() public {
     castora = Castora(payable(address(new ERC1967Proxy(address(new Castora()), ''))));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.initialize(address(0), address(poolsRules));
+    castora.initialize(address(0), address(poolsManager), address(poolsRules));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.initialize(address(poolsManager), address(0));
+    castora.initialize(makeAddr('activities'), address(0), address(poolsRules));
+
+    vm.expectRevert(InvalidAddress.selector);
+    castora.initialize(makeAddr('activities'), address(poolsManager), address(0));
   }
 
   function testRevertNotOwnerWhenUpgrading() public {
@@ -116,6 +119,26 @@ contract CastoraOnlyOwnerTest is CastoraErrors, CastoraEvents, CastoraStructs, T
     emit PausableUpgradeable.Unpaused(owner);
     castora.unpause();
     assertFalse(castora.paused());
+  }
+
+  function testRevertNotOwnerSetActivities() public {
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+    castora.setActivities(address(makeAddr('activities')));
+  }
+
+  function testRevertInvalidAddressSetActivities() public {
+    vm.expectRevert(InvalidAddress.selector);
+    castora.setActivities(address(0));
+  }
+
+  function testSetActivitiesSuccess() public {
+    address oldActivities = castora.activities();
+    address newActivities = makeAddr('newActivities');
+    vm.expectEmit(true, true, false, false);
+    emit SetActivitiesInCastora(oldActivities, newActivities);
+    castora.setActivities(newActivities);
+    assertEq(castora.activities(), newActivities);
   }
 
   function testRevertNotOwnerSetPoolsManager() public {

@@ -12,6 +12,7 @@ contract CastoraErrors {
   error InsufficientCreationFeeValue();
   error InsufficientStakeValue();
   error InvalidAddress();
+  error InvalidActivityId();
   error InvalidActivityHash();
   error InvalidPoolCompletionBatchSize();
   error InvalidPoolFeesPercent();
@@ -21,6 +22,7 @@ contract CastoraErrors {
   error InvalidPoolMultiplier();
   error InvalidPredictionId();
   error InvalidSplitFeesPercent();
+  error InvalidTimeRange();
   error InvalidWinnersCount();
   error NoPredictionsInPool();
   error NotAWinner();
@@ -39,6 +41,7 @@ contract CastoraErrors {
   error PredictionTokenNotAllowed();
   error StakeTokenNotAllowed();
   error StakeAmountNotAllowed();
+  error UnauthorizedActivityLogger();
   error UnsuccessfulCreationFeeCollection();
   error UnsuccessfulFeeCollection();
   error UnsuccessfulSendCompletionFees();

@@ -49,6 +49,9 @@ contract CastoraEvents {
   /// Emitted when the current pool fees percentage from winnings is updated.
   event UpdatedCurrentPoolFeesPercent(uint16 oldPercent, uint16 newPercent);
 
+  event SetActivitiesInCastora(address indexed oldActivities, address indexed newActivities);
+  event SetActivitiesInPoolsManager(address indexed oldActivities, address indexed newActivities);
+
   /// Emitted when the Castora contract address is updated
   /// @param oldCastora The previous Castora contract address
   /// @param newCastora The new Castora contract address
@@ -121,4 +124,7 @@ contract CastoraEvents {
   event SetWinnersInBatch(
     uint256 indexed poolId, uint256 batchesProcessed, uint256 totalBatches, uint256 winnersInBatch
   );
+
+  /// Emitted when a contract's authorization status is updated
+  event AuthorizedContractUpdated(address indexed contractAddr, bool authorized);
 }

@@ -12,7 +12,11 @@ contract DeployCastora is Script {
       'Castora.sol',
       abi.encodeCall(
         Castora.initialize,
-        (vm.envAddress('CASTORA_POOLS_MANAGER_ADDRESS'), vm.envAddress('CASTORA_POOLS_RULES_ADDRESS'))
+        (
+          vm.envAddress('CASTORA_ACTIVITIES_ADDRESS'),
+          vm.envAddress('CASTORA_POOLS_MANAGER_ADDRESS'),
+          vm.envAddress('CASTORA_POOLS_RULES_ADDRESS')
+        )
       )
     );
     console.log('Deployed Castora at: ', proxy);

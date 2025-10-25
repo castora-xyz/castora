@@ -6,6 +6,7 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {Test} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
+import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
@@ -15,6 +16,7 @@ import {cUSD} from '../src/cUSD.sol';
 contract RejectETH {} // by default, empty contract will reject ETH
 
 contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
+  CastoraActivities activities;
   CastoraPoolsManager poolsManager;
   Castora mockCastora;
   cUSD creationFeeToken;
@@ -45,6 +47,7 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
     user3 = makeAddr('user3');
     feeCollector = makeAddr('feeCollector');
 
+    activities = CastoraActivities(payable(address(new ERC1967Proxy(address(new CastoraActivities()), ''))));
     rejectETHContract = new RejectETH();
     rejectETHFeeCollector = address(rejectETHContract);
     mockCastora = Castora(payable(makeAddr('mockCastora')));
@@ -54,8 +57,10 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
     poolsManager.setCastora(address(mockCastora));
+    activities.initialize();
+    activities.setAuthorizedLogger((address(poolsManager)), true);
 
     // Set up creation fees for the token
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
@@ -212,12 +217,13 @@ contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, Casto
   function testProcessPoolCompletionRevertCastoraNotSet() public {
     // redeploy and setup pools manager without setting castora
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
+    activities.setAuthorizedLogger((address(poolsManager)), true);
 
     // Expect failure as Castora wasn't set
     vm.expectRevert(CastoraAddressNotSet.selector);
-    poolsManager.processPoolCompletion(1 /* poolId */);
+    poolsManager.processPoolCompletion(1 /* poolId */ );
   }
 
   function testProcessPoolCompletionRevertNotCompleted() public {

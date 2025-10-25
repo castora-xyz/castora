@@ -7,6 +7,7 @@ import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {Test, Vm} from 'forge-std/Test.sol';
 import {Castora} from '../src/Castora.sol';
+import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
@@ -16,6 +17,7 @@ import {cUSD} from '../src/cUSD.sol';
 contract RejectETH {}
 
 contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
+  CastoraActivities activities;
   CastoraPoolsManager poolsManager;
   Castora mockCastora;
   cUSD creationFeeToken;
@@ -37,6 +39,7 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     user2 = makeAddr('user2');
     feeCollector = makeAddr('feeCollector');
 
+    activities = CastoraActivities(payable(address(new ERC1967Proxy(address(new CastoraActivities()), ''))));
     mockCastora = Castora(payable(makeAddr('mockCastora')));
     creationFeeToken = new cUSD();
     predictionToken = new cUSD();
@@ -44,8 +47,10 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
     poolsManager.setCastora(address(mockCastora));
+    activities.initialize();
+    activities.setAuthorizedLogger((address(poolsManager)), true);
 
     // Set up creation fees for the token
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
@@ -149,8 +154,9 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
   function testRevertCastoraNotSetCreatePool() public {
     // redeploy and setup pools manager without setting castora
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
+    activities.setAuthorizedLogger((address(poolsManager)), true);
 
     vm.prank(user1);
     vm.expectRevert(CastoraAddressNotSet.selector);
