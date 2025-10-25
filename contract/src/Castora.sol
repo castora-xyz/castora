@@ -16,12 +16,9 @@ import {CastoraPoolsManager} from './CastoraPoolsManager.sol';
 import {CastoraPoolsRules} from './CastoraPoolsRules.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
-/// @title Rewards participants' accuracy in predicting prices of tokens.
-/// @notice Participants predict what the price of a predictionToken will be at
-/// a future snapshotTime. When predicting, they have to stake some funds.
-/// After snapshotTime, those whose predictedPrices are closest to the token's
-/// price are the winners of the {Pool}. They go with all the pool's money or
-/// rather they each go with almost twice of what they initially staked.
+/// Core prediction gaming contract where users stake tokens to predict future prices.
+/// Participants compete by predicting token prices at specific future timestamps.
+/// Winners are determined by accuracy and share the total staked funds proportionally.
 /// @custom:oz-upgrades-from build-info-ref:Castora
 contract Castora is
   CastoraErrors,
@@ -111,16 +108,18 @@ contract Castora is
   /// Tracks how many batches have been processed for each pool
   mapping(uint256 => uint256) public poolCompletionBatchesProcessed;
 
+  /// Returns global statistics for all pools and predictions
+  /// @return stats Struct containing aggregated protocol statistics
   function getAllStats() external view returns (AllPredictionStats memory stats) {
     stats = allStats;
   }
 
-  /// Internal helper to paginate address arrays
-  /// @param array The array to paginate
-  /// @param total The length of the array to paginate
-  /// @param offset Starting index
-  /// @param limit Maximum items to return
-  /// @return items The paginated items
+  /// Paginates through address arrays to handle large datasets
+  /// @param array Storage array to paginate
+  /// @param total Total length of the array
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of items to return
+  /// @return items Slice of addresses from the array
   function _paginateAddressArray(address[] storage array, uint256 total, uint256 offset, uint256 limit)
     internal
     view
@@ -137,12 +136,12 @@ contract Castora is
     }
   }
 
-  /// Internal helper to paginate uint256 arrays
-  /// @param array The array to paginate
-  /// @param total The length of the array to paginate
-  /// @param offset Starting index
-  /// @param limit Maximum items to return
-  /// @return items The paginated items
+  /// Paginates through uint256 arrays to handle large datasets
+  /// @param array Storage array to paginate
+  /// @param total Total length of the array
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of items to return
+  /// @return items Slice of uint256 values from the array
   function _paginateUint256Array(uint256[] storage array, uint256 total, uint256 offset, uint256 limit)
     internal
     view
@@ -159,6 +158,12 @@ contract Castora is
     }
   }
 
+  /// Paginates through bytes32 arrays to handle large datasets
+  /// @param array Storage array to paginate
+  /// @param total Total length of the array
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of items to return
+  /// @return items Slice of bytes32 values from the array
   function _paginateBytes32Array(bytes32[] storage array, uint256 total, uint256 offset, uint256 limit)
     internal
     view
@@ -175,10 +180,18 @@ contract Castora is
     }
   }
 
+  /// Returns paginated list of users who have interacted with the contract
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of users to return
+  /// @return usersList Array of user addresses
   function getUsersPaginated(uint256 offset, uint256 limit) external view returns (address[] memory usersList) {
     usersList = _paginateAddressArray(users, allStats.noOfUsers, offset, limit);
   }
 
+  /// Returns paginated list of tokens used for predictions
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokensList Array of token addresses used in predictions
   function getPredictionTokensPaginated(uint256 offset, uint256 limit)
     external
     view
@@ -187,10 +200,17 @@ contract Castora is
     tokensList = _paginateAddressArray(predictionTokens, allStats.noOfPredictionTokens, offset, limit);
   }
 
+  /// Returns paginated list of tokens used for staking
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokensList Array of token addresses used for staking
   function getStakeTokensPaginated(uint256 offset, uint256 limit) external view returns (address[] memory tokensList) {
     tokensList = _paginateAddressArray(stakeTokens, allStats.noOfStakeTokens, offset, limit);
   }
 
+  /// Retrieves user prediction activity details by hash
+  /// @param activityHash Hash of the activity to retrieve
+  /// @return activity User prediction activity data
   function getUserPredictionActivity(bytes32 activityHash)
     external
     view
@@ -200,6 +220,9 @@ contract Castora is
     activity = userPredictionActivities[activityHash];
   }
 
+  /// Retrieves multiple user prediction activities by their hashes
+  /// @param hashes Array of activity hashes to retrieve
+  /// @return userActivities Array of user prediction activity data
   function getUserPredictionActivities(bytes32[] calldata hashes)
     external
     view
@@ -212,6 +235,10 @@ contract Castora is
     }
   }
 
+  /// Returns paginated list of all prediction activity hashes across the system
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of prediction activity hashes
   function getAllPredictionActivityHashesPaginated(uint256 offset, uint256 limit)
     external
     view
@@ -220,6 +247,10 @@ contract Castora is
     activityHashes = _paginateBytes32Array(userPredictionActivityHashes, allStats.noOfPredictions, offset, limit);
   }
 
+  /// Returns paginated list of winning prediction activity hashes
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of winner activity hashes
   function getWinnerActivityHashesPaginated(uint256 offset, uint256 limit)
     external
     view
@@ -228,6 +259,10 @@ contract Castora is
     activityHashes = _paginateBytes32Array(winnerActivityHashes, allStats.noOfWinnings, offset, limit);
   }
 
+  /// Returns paginated list of claimed winning prediction activity hashes
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of claimed winner activity hashes
   function getClaimedWinnerActivityHashesPaginated(uint256 offset, uint256 limit)
     external
     view
@@ -236,11 +271,19 @@ contract Castora is
     activityHashes = _paginateBytes32Array(claimedWinnerActivityHashes, allStats.noOfClaimedWinnings, offset, limit);
   }
 
+  /// Returns comprehensive statistics for a specific user
+  /// @param user Address of the user to get statistics for
+  /// @return stats User's prediction and pool statistics
   function getUserStats(address user) external view returns (UserPredictionStats memory stats) {
     if (user == address(0)) revert InvalidAddress();
     stats = userStats[user];
   }
 
+  /// Returns paginated list of pool IDs that a user has joined
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of pool IDs to return
+  /// @return poolIds Array of pool IDs the user has participated in
   function getJoinedPoolIdsForUserPaginated(address user, uint256 offset, uint256 limit)
     external
     view
@@ -250,6 +293,11 @@ contract Castora is
     poolIds = _paginateUint256Array(joinedPoolIdsByAddresses[user], userStats[user].noOfJoinedPools, offset, limit);
   }
 
+  /// Returns paginated list of prediction activity hashes for a specific user
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of the user's prediction activity hashes
   function getUserPredictionActivityHashesPaginated(address user, uint256 offset, uint256 limit)
     external
     view
@@ -261,6 +309,11 @@ contract Castora is
     );
   }
 
+  /// Returns paginated list of winning activity hashes for a specific user
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of the user's winning activity hashes
   function getWinnerActivityHashesForAddressPaginated(address user, uint256 offset, uint256 limit)
     external
     view
@@ -271,6 +324,11 @@ contract Castora is
       _paginateBytes32Array(winnerActivityHashesByAddresses[user], userStats[user].noOfWinnings, offset, limit);
   }
 
+  /// Returns paginated list of claimable winning activity hashes for a specific user
+  /// @param predicter Address of the predicter
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of hashes to return
+  /// @return activityHashes Array of the user's claimable winning activity hashes
   function getClaimableActivityHashesForAddressPaginated(address predicter, uint256 offset, uint256 limit)
     external
     view
@@ -282,17 +340,18 @@ contract Castora is
     );
   }
 
-  /// Returns the {Pool} with the provided `poolId`. Fails if the provided
-  /// `poolId` is invalid.
+  /// Retrieves pool data by ID
+  /// @param poolId ID of the pool to retrieve
+  /// @return pool Complete pool data structure
   function getPool(uint256 poolId) external view returns (Pool memory pool) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     pool = pools[poolId];
   }
 
-  /// Returns the {Prediction} with the corresponding `predictionId` that was
-  /// made in the {Pool} with the provided `poolId`.
-  ///
-  /// Fails if either the provided `poolId` or `predictionId` are invalid.
+  /// Retrieves prediction data by pool and prediction ID
+  /// @param poolId ID of the pool containing the prediction
+  /// @param predictionId ID of the specific prediction
+  /// @return prediction Complete prediction data structure
   function getPrediction(uint256 poolId, uint256 predictionId) external view returns (Prediction memory prediction) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     Pool storage pool = pools[poolId];
@@ -302,9 +361,9 @@ contract Castora is
     prediction = predictions[poolId][predictionId];
   }
 
-  /// Returns the pools corresponding to the provided list of poolIds.
-  /// @param poolIds The array of poolIds to fetch
-  /// @return poolsList The array of Pool structs
+  /// Retrieves multiple pools by their IDs
+  /// @param poolIds Array of pool IDs to fetch
+  /// @return poolsList Array of Pool structs corresponding to the IDs
   function getPools(uint256[] calldata poolIds) external view returns (Pool[] memory poolsList) {
     poolsList = new Pool[](poolIds.length);
     for (uint256 i = 0; i < poolIds.length; i += 1) {
@@ -313,10 +372,10 @@ contract Castora is
     }
   }
 
-  /// Returns the predictions corresponding to the provided list of predictionIds in a pool.
-  /// @param poolId The pool to fetch predictions from
-  /// @param predictionIds The array of predictionIds to fetch
-  /// @return predictionsList The array of Prediction structs
+  /// Retrieves multiple predictions from a specific pool
+  /// @param poolId ID of the pool to fetch predictions from
+  /// @param predictionIds Array of prediction IDs to fetch
+  /// @return predictionsList Array of Prediction structs
   function getPredictions(uint256 poolId, uint256[] calldata predictionIds)
     external
     view
@@ -331,6 +390,10 @@ contract Castora is
     }
   }
 
+  /// Returns user statistics within a specific pool
+  /// @param poolId ID of the pool
+  /// @param user Address of the user
+  /// @return stats User's statistics for the specified pool
   function getUserInPoolPredictionStats(uint256 poolId, address user)
     external
     view
@@ -341,12 +404,12 @@ contract Castora is
     stats = userInPoolPredictionStats[poolId][user];
   }
 
-  /// Returns a paginated list of prediction IDs made by a user in a pool.
-  /// @param poolId The pool to fetch predictions from
-  /// @param user The address of the user
-  /// @param offset The starting index (0-based) in the user's predictions array
-  /// @param limit The maximum number of predictions to return
-  /// @return predictionIds The array of Prediction structs
+  /// Returns paginated list of prediction IDs made by a user in a specific pool
+  /// @param poolId ID of the pool to fetch predictions from
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of prediction IDs to return
+  /// @return predictionIds Array of prediction IDs made by the user
   function getPredictionIdsInPoolForUserPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
     external
     view
@@ -362,6 +425,12 @@ contract Castora is
     );
   }
 
+  /// Returns paginated list of winning prediction IDs for a user in a specific pool
+  /// @param poolId ID of the pool to fetch from
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of prediction IDs to return
+  /// @return predictionIds Array of winning prediction IDs
   function getWinnerPredictionIdsInPoolForUserPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
     external
     view
@@ -377,6 +446,12 @@ contract Castora is
     );
   }
 
+  /// Returns paginated list of claimable winning prediction IDs for a user in a specific pool
+  /// @param poolId ID of the pool to fetch from
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of prediction IDs to return
+  /// @return predictionIds Array of claimable winning prediction IDs
   function getClaimableWinnerPredictionIdsInPoolForUserPaginated(
     uint256 poolId,
     address user,
@@ -393,16 +468,27 @@ contract Castora is
     );
   }
 
+  /// Returns global statistics for a prediction token
+  /// @param token Address of the prediction token
+  /// @return details Token usage statistics across all pools
   function getPredictionTokenDetails(address token) external view returns (PredictionTokenDetails memory details) {
     if (token == address(0)) revert InvalidAddress();
     details = predictionTokenDetails[token];
   }
 
+  /// Returns global statistics for a stake token
+  /// @param token Address of the stake token
+  /// @return details Token usage statistics across all pools and predictions
   function getStakeTokenDetails(address token) external view returns (StakeTokenDetails memory details) {
     if (token == address(0)) revert InvalidAddress();
     details = stakeTokenDetails[token];
   }
 
+  /// Returns paginated list of prediction tokens used by a specific user
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokensList Array of prediction token addresses used by the user
   function getUserPredictionTokensPaginated(address user, uint256 offset, uint256 limit)
     external
     view
@@ -412,6 +498,10 @@ contract Castora is
     tokensList = _paginateAddressArray(userPredictionTokens[user], userStats[user].noOfPredictionTokens, offset, limit);
   }
 
+  /// Returns user-specific statistics for a prediction token
+  /// @param user Address of the user
+  /// @param token Address of the prediction token
+  /// @return details User's usage statistics for the specific token
   function getUserPredictionTokenDetails(address user, address token)
     external
     view
@@ -421,6 +511,11 @@ contract Castora is
     details = userPredictionTokenDetails[user][token];
   }
 
+  /// Returns paginated list of stake tokens used by a specific user
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of tokens to return
+  /// @return tokensList Array of stake token addresses used by the user
   function getUserStakeTokensPaginated(address user, uint256 offset, uint256 limit)
     external
     view
@@ -430,6 +525,10 @@ contract Castora is
     tokensList = _paginateAddressArray(userStakeTokens[user], userStats[user].noOfStakeTokens, offset, limit);
   }
 
+  /// Returns user-specific statistics for a stake token
+  /// @param user Address of the user
+  /// @param token Address of the stake token
+  /// @return details User's usage statistics for the specific token
   function getUserStakeTokenDetails(address user, address token)
     external
     view
@@ -439,7 +538,9 @@ contract Castora is
     details = userStakeTokenDetails[user][token];
   }
 
-  /// Returns a hash of the provided `seeds`.
+  /// Generates a unique hash for pool seeds to identify duplicate pools
+  /// @param seeds Pool configuration parameters
+  /// @return Hash of the pool seeds for uniqueness checking
   function hashPoolSeeds(PoolSeeds memory seeds) public pure returns (bytes32) {
     return keccak256(
       abi.encodePacked(
@@ -453,7 +554,9 @@ contract Castora is
     );
   }
 
-  /// Returns a hash of the provided `activity`.
+  /// Generates a unique hash for user prediction activities
+  /// @param activity User prediction activity data
+  /// @return Hash of the activity for tracking and indexing
   function hashUserPredictionActivity(UserPredictionActivity memory activity) public pure returns (bytes32) {
     return keccak256(abi.encodePacked('poolId', activity.poolId, 'predictionId', activity.predictionId));
   }
@@ -463,6 +566,10 @@ contract Castora is
     _disableInitializers();
   }
 
+  /// Initializes the contract with required dependency addresses and sets up roles
+  /// @param activities_ Address of the CastoraActivities contract for activity logging
+  /// @param poolsManager_ Address of the CastoraPoolsManager contract for pool management
+  /// @param poolsRules_ Address of the CastoraPoolsRules contract for validation rules
   function initialize(address activities_, address poolsManager_, address poolsRules_) public initializer {
     if (activities_ == address(0)) revert InvalidAddress();
     if (poolsManager_ == address(0)) revert InvalidAddress();
@@ -482,16 +589,22 @@ contract Castora is
     _grantRole(ADMIN_ROLE, owner());
   }
 
+  /// Authorizes contract upgrades restricted to owner
+  /// @param newImpl Address of the new implementation contract
   function _authorizeUpgrade(address newImpl) internal override onlyOwner {}
 
+  /// Pauses contract operations to prevent new interactions
   function pause() external onlyOwner nonReentrant whenNotPaused {
     _pause();
   }
 
+  /// Unpauses contract operations to resume normal functionality
   function unpause() external onlyOwner nonReentrant whenPaused {
     _unpause();
   }
 
+  /// Updates the CastoraActivities contract address for activity logging
+  /// @param _activities New CastoraActivities contract address
   function setActivities(address _activities) external onlyOwner {
     if (_activities == address(0)) revert InvalidAddress();
     address oldActivities = activities;
@@ -517,24 +630,23 @@ contract Castora is
     emit SetPoolsRulesInCastora(oldPoolsRules, _poolsRules);
   }
 
-  /// Grants the {ADMIN_ROLE} to the provided `admin` address.
+  /// Grants admin role to enable pool creation and management functions
+  /// @param admin Address to receive admin privileges
   function grantAdminRole(address admin) external onlyOwner {
     if (admin == address(0)) revert InvalidAddress();
     _grantRole(ADMIN_ROLE, admin);
   }
 
-  /// Revokes the {ADMIN_ROLE} from the provided `admin` address.
+  /// Revokes admin role from an address
+  /// @param admin Address to remove admin privileges from
   function revokeAdminRole(address admin) external onlyOwner {
     if (admin == address(0)) revert InvalidAddress();
     _revokeRole(ADMIN_ROLE, admin);
   }
 
-  /// Creates a {Pool} with the provided `seeds`.
-  ///
-  /// Fails if any of the {PoolSeeds} properties are invalid or if there
-  /// is a pool with the same `seeds`.
-  ///
-  /// Emits a {CreatedPool} event.
+  /// Creates a new prediction pool with specified parameters
+  /// @param seeds Pool configuration including tokens, amounts, and timing
+  /// @return poolId ID of the newly created pool
   function createPool(PoolSeeds memory seeds)
     external
     nonReentrant
@@ -572,6 +684,10 @@ contract Castora is
     CastoraActivities(activities).log(poolId, msg.sender, ActivityType.POOL_CREATED, poolId);
   }
 
+  /// Validates pool exists and prediction window is still open
+  /// @param poolId ID of the pool to validate
+  /// @return pool Storage reference to the pool
+  /// @return seeds Pool configuration parameters
   function _validateStartPredict(uint256 poolId) internal view returns (Pool storage pool, PoolSeeds memory seeds) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     pool = pools[poolId];
@@ -579,6 +695,8 @@ contract Castora is
     if (block.timestamp > seeds.windowCloseTime) revert WindowHasClosed();
   }
 
+  /// Checks if this is a new user's first prediction and updates global user count
+  /// @param poolId ID of the pool for activity logging
   function _checkNewUserOnPredict(uint256 poolId) internal {
     if (userStats[msg.sender].nthUserCount == 0) {
       allStats.noOfUsers += 1;
@@ -589,6 +707,10 @@ contract Castora is
     }
   }
 
+  /// Updates global and user statistics when predictions are made
+  /// @param poolId ID of the pool being predicted in
+  /// @param predictionsCount Number of predictions being made
+  /// @param seeds Pool configuration for token tracking
   function _updatePredictStatsGeneral(uint256 poolId, uint256 predictionsCount, PoolSeeds memory seeds) internal {
     if (userInPoolPredictionStats[poolId][msg.sender].noOfPredictions == 0) {
       userStats[msg.sender].noOfJoinedPools += 1;
@@ -614,6 +736,10 @@ contract Castora is
     userInPoolPredictionStats[poolId][msg.sender].noOfPredictions += predictionsCount;
   }
 
+  /// Creates prediction record and updates activity tracking
+  /// @param poolId ID of the pool containing the prediction
+  /// @param predictionId Sequential ID for the new prediction
+  /// @param predictionPrice Price prediction made by the user
   function _updatePredictStatsPrediction(uint256 poolId, uint256 predictionId, uint256 predictionPrice) internal {
     predictionIdsByAddressesPerPool[poolId][msg.sender].push(predictionId);
 
@@ -629,14 +755,10 @@ contract Castora is
     CastoraActivities(activities).log(poolId, msg.sender, ActivityType.PREDICTED, allStats.noOfPredictions);
   }
 
-  /// Makes a prediction with the provided `predictionPrice` in the {Pool}
-  /// with the provided `poolId`.
-  ///
-  /// By calling this function, the predicter
-  /// effectively joins the pool. Also, the {PoolSeeds-stakeAmount} of the
-  /// {PoolSeeds-stakeToken} of the pool will be deducted from the predicter.
-  ///
-  /// Emits a {Predicted} event.
+  /// Makes a single prediction in a pool by staking the required amount
+  /// @param poolId ID of the pool to predict in
+  /// @param predictionPrice Predicted price for the token at snapshot time
+  /// @return predictionId Sequential ID assigned to this prediction
   function predict(uint256 poolId, uint256 predictionPrice)
     external
     payable
@@ -659,20 +781,12 @@ contract Castora is
     }
   }
 
-  /// Makes multiple predictions with the same `predictionPrice` in the {Pool}
-  /// with the provided `poolId`.
-  ///
-  /// By calling this function, the predicter effectively joins the pool multiple times.
-  /// The {PoolSeeds-stakeAmount} of the {PoolSeeds-stakeToken} of the pool will be
-  /// deducted from the predicter for each prediction made (predictionsCount times).
-  ///
-  /// @param poolId The ID of the pool to make predictions in
-  /// @param predictionPrice The price prediction to use for all predictions
-  /// @param predictionsCount The number of predictions to make (must be > 0)
-  /// @return firstPredictionId The ID of the first prediction made
-  /// @return lastPredictionId The ID of the last prediction made
-  ///
-  /// Emits multiple {Predicted} events.
+  /// Makes multiple predictions with the same price in a single transaction
+  /// @param poolId ID of the pool to predict in
+  /// @param predictionPrice Predicted price to use for all predictions
+  /// @param predictionsCount Number of predictions to make
+  /// @return firstPredictionId ID of the first prediction made
+  /// @return lastPredictionId ID of the last prediction made
   function bulkPredict(uint256 poolId, uint256 predictionPrice, uint16 predictionsCount)
     external
     payable
@@ -703,9 +817,10 @@ contract Castora is
     }
   }
 
-  /// Initiates pool completion by setting batch requirements.
-  /// This must be called first before processing any winner batches.
-  /// Only collects fees and sets snapshot after ALL batches are processed via finalizePoolCompletion.
+  /// Begins pool completion process with actual price and batch size for processing
+  /// @param poolId ID of the pool to complete
+  /// @param snapshotPrice Actual price of the prediction token at snapshot time
+  /// @param batchSize Number of winners to process per batch
   function initiatePoolCompletion(uint256 poolId, uint256 snapshotPrice, uint256 batchSize)
     external
     nonReentrant
@@ -747,8 +862,9 @@ contract Castora is
     CastoraActivities(activities).log(poolId, msg.sender, ActivityType.POOL_COMPLETION_INITIATED, poolId);
   }
 
-  /// Processes a batch of winners for a pool. Can be called multiple times until all batches are processed.
-  /// Each winner is marked and their stats are updated. Prevents duplicate processing.
+  /// Processes a batch of winning predictions and updates winner statistics
+  /// @param poolId ID of the pool being completed
+  /// @param winnerPredictionIds Array of prediction IDs that won in this batch
   function setWinnersInBatch(uint256 poolId, uint256[] memory winnerPredictionIds)
     external
     nonReentrant
@@ -819,8 +935,8 @@ contract Castora is
     emit SetWinnersInBatch(poolId, poolCompletionBatchesProcessed[poolId], totalBatches, winnerPredictionIds.length);
   }
 
-  /// Finalizes pool completion by collecting fees and marking pool as complete.
-  /// Can only be called after all winner batches have been processed.
+  /// Completes pool finalization after all winner batches are processed
+  /// @param poolId ID of the pool to finalize
   function finalizePoolCompletion(uint256 poolId) external nonReentrant whenNotPaused onlyRole(ADMIN_ROLE) {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
     if (!hasPoolCompletionBeenInitiated[poolId]) revert PoolCompletionNotInitiated();
@@ -849,6 +965,8 @@ contract Castora is
     }
   }
 
+  /// Removes activity hash from user's claimable list efficiently using swap-and-pop
+  /// @param activityHash Hash of the activity to remove from claimable list
   function _removeClaimableActivityHash(bytes32 activityHash) internal {
     uint256 indexToRemove = claimableActivityHashesIndex[msg.sender][activityHash];
     uint256 lastIndex = userStats[msg.sender].noOfClaimableWinnings - 1;
@@ -864,6 +982,9 @@ contract Castora is
     userStats[msg.sender].noOfClaimableWinnings -= 1;
   }
 
+  /// Removes prediction ID from user's claimable list in a specific pool
+  /// @param poolId ID of the pool containing the prediction
+  /// @param predictionId ID of the prediction to remove from claimable list
   function _removeClaimablePredictionIdInPool(uint256 poolId, uint256 predictionId) internal {
     uint256 indexToRemove = claimablePredictionIdsInPoolIndex[poolId][msg.sender][predictionId];
     uint256 lastIndex = userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings - 1;
@@ -879,6 +1000,10 @@ contract Castora is
     userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings -= 1;
   }
 
+  /// Updates all relevant statistics when winnings are claimed
+  /// @param poolId ID of the pool where winnings were claimed
+  /// @param winAmount Amount of tokens won
+  /// @param stakeToken Address of the token being claimed
   function _updateClaimStats(uint256 poolId, uint256 winAmount, address stakeToken) internal {
     allStats.noOfClaimableWinnings -= 1;
     allStats.noOfClaimedWinnings += 1;
@@ -894,6 +1019,9 @@ contract Castora is
     userStakeTokenDetails[msg.sender][stakeToken].totalClaimed += winAmount;
   }
 
+  /// Internal logic for claiming winnings from a winning prediction
+  /// @param poolId ID of the pool containing the winning prediction
+  /// @param predictionId ID of the winning prediction to claim
   function _claimWinnings(uint256 poolId, uint256 predictionId) internal {
     if (poolId == 0 || poolId > allStats.noOfPools) revert InvalidPoolId();
 
@@ -928,27 +1056,16 @@ contract Castora is
     }
   }
 
-  /// Awards the predicter who made the {Prediction} with `predictionId` in
-  /// the {Pool} with `poolId` if the {Prediction-predictionPrice} is among
-  /// the {Pool-winnerPrediction}s.
-  ///
-  /// Fails if the pool has not yet been completed, if the caller is not the
-  /// predicter, if the predicter is not a winner, or if the predicter has
-  /// already claimed their winnings.
-  ///
-  /// Emits an {ClaimedWinnings} event.
+  /// Claims winnings for a single winning prediction
+  /// @param poolId ID of the pool containing the winning prediction
+  /// @param predictionId ID of the winning prediction to claim
   function claimWinnings(uint256 poolId, uint256 predictionId) external nonReentrant whenNotPaused {
     _claimWinnings(poolId, predictionId);
   }
 
-  /// Claims winnings for multiple predictions in multiple pools.
-  ///
-  /// Fails if the lengths of `poolIds` and `predictionIds` do not match.
-  /// For each prediction, fails if the pool has not yet been completed,
-  /// if the caller is not the predicter, if the predicter is not a winner,
-  /// or if the predicter has already claimed their winnings.
-  ///
-  /// Emits multiple {ClaimedWinnings} events.
+  /// Claims winnings for multiple predictions across multiple pools in one transaction
+  /// @param poolIds Array of pool IDs containing winning predictions
+  /// @param predictionIds Array of prediction IDs to claim (must match poolIds length)
   function claimWinningsBulk(uint256[] memory poolIds, uint256[] memory predictionIds)
     external
     nonReentrant

@@ -14,6 +14,8 @@ import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
+/// Manages user-created pools with fee collection and creator rewards system.
+/// Users pay creation fees to create pools and receive completion fees when their pools finish.
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
 contract CastoraPoolsManager is
   CastoraErrors,
@@ -80,22 +82,22 @@ contract CastoraPoolsManager is
   /// Efficient lookup for creation fee token existence
   mapping(address token => bool exists) public creationFeesTokenExists;
 
-  /// Gets global statistics
-  /// @return stats The AllUserCreatedPoolStats struct containing global activity information
+  /// Returns comprehensive statistics for all user-created pools and fees
+  /// @return stats Global statistics including pool counts and fee tokens usage
   function getAllStats() external view returns (AllUserCreatedPoolStats memory stats) {
     return allStats;
   }
 
-  /// Gets creation fee token information
-  /// @param token The token address to query
-  /// @return info The CreationFeesTokenInfo struct for the token
+  /// Returns detailed information about a creation fee token
+  /// @param token Address of the token to query
+  /// @return info Token configuration and usage statistics for pool creation
   function getCreationFeesTokenInfo(address token) external view returns (CreationFeesTokenInfo memory info) {
     return creationFeesTokenInfos[token];
   }
 
-  /// Gets completion fee token information
-  /// @param token The token address to query
-  /// @return info The CompletionFeesTokenInfo struct for the token
+  /// Returns detailed information about a completion fee token
+  /// @param token Address of the token to query
+  /// @return info Token statistics for pool completion rewards
   function getCompletionFeesTokenInfo(address token) external view returns (CompletionFeesTokenInfo memory info) {
     return completionFeesTokenInfos[token];
   }
@@ -460,7 +462,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Internal function to update statistics after pool creation
+  /// Internal function to update statistics after pool creation
   /// @param poolId The ID of the created pool
   /// @param stakeToken The stake token from pool seeds
   /// @param creationFeeToken The token used for creation fees
@@ -510,7 +512,7 @@ contract CastoraPoolsManager is
     });
   }
 
-  /// @notice Internal function to collect creation fees
+  /// Internal function to collect creation fees
   /// @param creationFeeToken The token to collect fees in
   /// @param creationFeeAmount The amount of fees collected
   function _collectCreationFee(address creationFeeToken, uint256 creationFeeAmount) internal {
@@ -526,7 +528,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Sends fees to castora fee collector
+  /// Sends fees to castora fee collector
   /// @param token Token address
   /// @param amount Amount to send
   function _sendToCastoraFeeCollectorInCreate(address token, uint256 amount) internal {
@@ -540,7 +542,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Creates a new pool with the provided seeds and creation fee token
+  /// Creates a new pool with the provided seeds and creation fee token
   /// @param seeds The PoolSeeds struct containing pool parameters
   /// @param creationFeeToken The token to pay creation fees with
   /// @return poolId The ID of the newly created pool
@@ -573,7 +575,7 @@ contract CastoraPoolsManager is
     _sendToCastoraFeeCollectorInCreate(creationFeeToken, creationFeeAmount);
   }
 
-  /// @notice Internal function to update statistics after pool completion
+  /// Internal function to update statistics after pool completion
   /// @param poolId The ID of the completed pool
   /// @param user The address of the pool creator
   /// @param completionFeeToken The token used for completion fees
@@ -602,7 +604,7 @@ contract CastoraPoolsManager is
     userCompletionTokenFeesInfo[user][completionFeeToken].claimableAmount += userShare;
   }
 
-  /// @notice Sends fees to castora fee collector
+  /// Sends fees to castora fee collector
   /// @param amount Amount to send
   /// @param token Token address
   function _sendToCastoraFeeCollectorInComplete(uint256 amount, address token) internal {
@@ -616,7 +618,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Processes completion fees for a completed pool
+  /// Processes completion fees for a completed pool
   /// @param poolId The pool ID that was completed
   function processPoolCompletion(uint256 poolId) external nonReentrant {
     // Verify pool is completed in main Castora
@@ -663,7 +665,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Internal helper to remove an element from a uint256 array while preserving order
+  /// Internal helper to remove an element from a uint256 array while preserving order
   /// @param array The array to modify
   /// @param value The value to remove
   function _removeFromArray(uint256[] storage array, uint256 value) internal {
@@ -679,7 +681,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Internal function to update statistics when completion fees are claimed
+  /// Internal function to update statistics when completion fees are claimed
   /// @param poolId The ID of the pool where fees were claimed
   /// @param user The address of the user claiming the fees
   /// @param completionFeeToken The token used for completion fees
@@ -726,7 +728,7 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// @notice Claims completion fees for a pool created by the caller
+  /// Claims completion fees for a pool created by the caller
   /// @param poolId The ID of the pool to claim completion fees for
   /// @dev Only the pool creator can claim fees. Pool must be completed and fees not yet claimed.
   function claimPoolCompletionFees(uint256 poolId) external nonReentrant whenNotPaused {

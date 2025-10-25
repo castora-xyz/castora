@@ -10,9 +10,9 @@ import {CastoraEvents} from './CastoraEvents.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 import {console} from 'forge-std/console.sol';
 
-/// CastoraActivities - Unified Activity Tracker for Castora
-/// This contract tracks all user activities across Castora and CastoraPoolsManager contracts
-/// in a chronological order.
+/// Tracks and logs all user activities across the Castora ecosystem in chronological order.
+/// Provides unified activity history for predictions, pool creation, completions, and claims.
+/// Maintains engagement metrics and cross-contract activity correlation.
 contract CastoraActivities is
   CastoraErrors,
   CastoraEvents,

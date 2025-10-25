@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
+/// Defines all custom error types used across the Castora ecosystem.
+/// Provides consistent error handling and gas-efficient reverts throughout the system.
 contract CastoraErrors {
   error AlreadyClaimedCompletionFees();
   error AlreadyClaimedWinnings();

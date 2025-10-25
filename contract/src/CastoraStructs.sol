@@ -1,57 +1,49 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
+/// Defines all data structures used across the Castora prediction gaming system.
+/// Contains structures for pools, predictions, user statistics, and activity tracking.
 contract CastoraStructs {
-  /// Holds information about a given prediction in a pool.
+  /// Contains all data for a single prediction made by a user in a pool
   struct Prediction {
-    /// The address of the person who made this prediction.
+    /// Address of the user who made this prediction
     address predicter;
-    /// The numeric id of the pool in which this prediction was made.
+    /// ID of the pool containing this prediction
     uint256 poolId;
-    /// The numeric id of this prediction in the pool. It matches
-    /// the nth prediction that was made in this pool.
+    /// Sequential ID of this prediction within the pool
     uint256 predictionId;
-    /// The price that this predicter proposed when staking. It takes into
-    /// account the decimals of the {PoolSeeds.predictionToken}.
+    /// Price predicted by the user for the target token
     uint256 predictionPrice;
-    /// The timestamp at which this prediction was made.
+    /// Timestamp when this prediction was submitted
     uint256 predictionTime;
-    /// When the predicter claimed their winnings.
+    /// Timestamp when winnings were claimed (0 if not claimed)
     uint256 claimedWinningsTime;
-    /// Whether this prediction was among the first half closest
-    /// to the {PoolSeeds.predictionToken}'s price as of
-    /// {PoolSeeds.snapshotTime}.
+    /// Whether this prediction won based on accuracy to actual price
     bool isAWinner;
   }
 
-  /// Holds information about the properties of a given pool.
-  /// Uniquely identifies a pool alongside the pool's unique numeric poolId.
+  /// Configuration parameters that define a prediction pool
   struct PoolSeeds {
-    /// The token whose price is been predicted in this pool.
+    /// Token whose price participants will predict
     address predictionToken;
-    /// The token that all participants in this pool must stake to make
-    /// their predictions. It could be the same or different from the
-    /// predictionToken.
+    /// Token that participants must stake to join the pool
     address stakeToken;
-    /// The amount of the stakeToken that all participants must stake
-    /// when predicting. It takes into account the stakeToken's decimals.
+    /// Required stake amount per prediction
     uint256 stakeAmount;
-    /// The timestamp for which pool participants speculate what the price
-    /// of the predictionToken will be.
+    /// Future timestamp when actual price will be measured
     uint256 snapshotTime;
-    /// The timestamp at which no other participant can join this pool.
-    /// This must be before or the same as snapshotTime.
+    /// Deadline for joining the pool (must be <= snapshotTime)
     uint256 windowCloseTime;
-    /// Percentage of win amount per winner prediction collected as fees
+    /// Fee percentage taken from total stakes (basis points)
     uint16 feesPercent;
-    // /// The ratio of win percentage in the pool, 2 decimal places (e.g 150 = 1.5x)
+    /// Determines winner ratio. Is in 2 decimal places (200 = 2x = top 50% win)
     uint16 multiplier;
-    // /// Whether the pool is should be visible in the UI
+    /// Whether pool should be hidden from public UI
     bool isUnlisted;
   }
 
   /// @title A pool is where participants make predictions.
-  /// @notice A pool is uniquely identified by its numeric poolId and
+  /// A pool is uniquely identified by its numeric poolId and
   /// seeds struct. At the point when a pool is created, the poolId
   /// corresponds to the current {noOfPools}.
   struct Pool {
@@ -279,7 +271,7 @@ contract CastoraStructs {
     POOL_COMPLETED, // Pool fully completed (Castora)
     CLAIMED_WINNINGS, // User claimed winnings (Castora)
     CLAIMED_COMPLETION_FEES // Creator claimed completion fees (CastoraPoolsManager)
-    
+
   }
 
   /// Structure representing a single activity in the protocol

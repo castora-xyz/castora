@@ -9,12 +9,9 @@ import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraEvents} from './CastoraEvents.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
-/// @title CastoraPoolsRules - Pool Creation and Validation Rules for Castora
-/// @notice This upgradeable contract manages validation rules and permissions for pool creation in the Castora protocol.
-/// It controls which tokens can be used for staking and predictions, what stake amounts are allowed,
-/// and enforces timing constraints for pool windows and snapshots.
-/// @dev The contract is upgradeable using UUPS pattern and includes comprehensive validation functions
-/// that can either revert on failure or return boolean results for integration flexibility.
+/// Manages validation rules and token permissions for pool creation across the system.
+/// Controls which tokens can be used for staking and predictions, validates stake amounts,
+/// enforces timing constraints, and manages pool multipliers and fee percentages.
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsRules
 contract CastoraPoolsRules is
   CastoraErrors,

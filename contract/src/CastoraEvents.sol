@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
+/// Defines all events emitted across the Castora ecosystem for comprehensive logging.
+/// Enables efficient indexing and filtering of activities, state changes, and user interactions.
 contract CastoraEvents {
   /// Emitted when a {Pool} is created with `poolId` and `seedsHash`.
   event PoolCreated(uint256 indexed poolId, bytes32 indexed seedsHash);
