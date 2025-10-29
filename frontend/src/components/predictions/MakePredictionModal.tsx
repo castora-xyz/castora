@@ -2,7 +2,7 @@ import CheckCircle from '@/assets/check-circle.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Telegram from '@/assets/telegram-plain.svg?react';
-import { CountdownNumbers, PredictionMode, SuccessIcon } from '@/components';
+import { CountdownNumbers, SuccessIcon } from '@/components';
 import {
   MAX_BULK_PREDICTIONS,
   useContract,
@@ -21,14 +21,12 @@ export const MakePredictionModal = ({
   pool,
   pool: { poolId, seeds },
   price,
-  mode,
   handleShowHeading,
   handleClose,
   handlePredictionSuccess
 }: {
   pool: Pool;
   price: number;
-  mode: PredictionMode;
   handleShowHeading: (isLoading: boolean) => void;
   handleClose: () => void;
   handlePredictionSuccess: () => void;
@@ -39,7 +37,7 @@ export const MakePredictionModal = ({
   const { updateActivityCount } = useMyPredictActivity();
   const telegram = useTelegram();
 
-  const [bulkCount, setBulkCount] = useState(2);
+  const [bulkCount, setBulkCount] = useState(1);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [currentWalletStep, setCurrentWalletStep] = useState(0);
   const [explorerUrl, setExplorerUrl] = useState('');
@@ -50,7 +48,7 @@ export const MakePredictionModal = ({
   const [loadingTitle, setLoadingTitle] = useState('');
   const [walletSteps, setWalletSteps] = useState(0);
 
-  const stakeAmount = () => seeds.stakeAmount * (mode === 'multiple' ? bulkCount : 1);
+  const stakeAmount = () => seeds.stakeAmount * bulkCount;
 
   const checkBalance = async () => {
     const balanceOf = await balance(seeds.stakeToken);
@@ -69,36 +67,31 @@ export const MakePredictionModal = ({
     setLoadingTitle('Prediction Transaction');
     setLoadingBody('Submitting ...');
     let successUrl: string;
-    predict(
-      poolId,
-      price * 10 ** 8,
-      mode === 'multiple' ? bulkCount : null,
-      seeds.stakeToken,
-      stakeAmount(),
-      (url) => (successUrl = url)
-    ).subscribe({
-      next: (status) => {
-        if (status === 'submitted') {
-          setLoadingBody('Confirm Transaction in Wallet');
-        } else if (status === 'waiting') {
-          setLoadingBody('Waiting for On-Chain Confirmation ...');
-        } else if (status === 'finalizing') {
-          setLoadingBody('Finalizing ...');
+    predict(poolId, price * 10 ** 8, bulkCount, seeds.stakeToken, stakeAmount(), (url) => (successUrl = url)).subscribe(
+      {
+        next: (status) => {
+          if (status === 'submitted') {
+            setLoadingBody('Confirm Transaction in Wallet');
+          } else if (status === 'waiting') {
+            setLoadingBody('Waiting for On-Chain Confirmation ...');
+          } else if (status === 'finalizing') {
+            setLoadingBody('Finalizing ...');
+          }
+        },
+        error: () => {
+          setIsSuccess(false);
+          reset();
+        },
+        complete: () => {
+          console.log('hi', successUrl);
+          if (successUrl) setExplorerUrl(successUrl);
+          setIsSuccess(!!successUrl);
+          updateActivityCount();
+          handlePredictionSuccess();
+          reset();
         }
-      },
-      error: () => {
-        setIsSuccess(false);
-        reset();
-      },
-      complete: () => {
-        console.log('hi', successUrl);
-        if (successUrl) setExplorerUrl(successUrl);
-        setIsSuccess(!!successUrl);
-        updateActivityCount();
-        handlePredictionSuccess();
-        reset();
       }
-    });
+    );
   };
 
   const makePrediction = async () => {
@@ -276,61 +269,58 @@ export const MakePredictionModal = ({
         </div>
       </div>
 
-      {mode === 'multiple' && (
-        <div className="py-3 px-3 mb-6 rounded-2xl border border-border-default dark:border-surface-subtle flex max-xs:flex-wrap gap-4">
-          <div>
-            <p className="pl-1 mb-2 text-xs">How many times?</p>
-            <InputNumber
-              className="border border-surface-subtle rounded-xl text-lg font-medium"
-              inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
-              allowEmpty={false}
-              pt={{
-                incrementButton: {
-                  className: 'text-primary-default bg-surface-subtle py-1'
-                },
-                decrementButton: {
-                  className: 'text-primary-default bg-surface-subtle py-1'
-                }
-              }}
-              value={bulkCount}
-              onChange={(e) =>
-                setBulkCount(e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 2)
+      <div className="py-3 px-3 mb-6 rounded-2xl border border-border-default dark:border-surface-subtle flex max-xs:flex-wrap gap-4">
+        <div>
+          <p className="pl-1 mb-2 text-xs">How many times?</p>
+          <InputNumber
+            className="border border-surface-subtle rounded-xl text-lg font-medium"
+            inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
+            allowEmpty={false}
+            pt={{
+              incrementButton: {
+                className: 'text-primary-default bg-surface-subtle py-1'
+              },
+              decrementButton: {
+                className: 'text-primary-default bg-surface-subtle py-1'
               }
-              onValueChange={(e) => setBulkCount(e.value ?? 2)}
-              showButtons
-              min={2}
-              max={MAX_BULK_PREDICTIONS}
-            />
-          </div>
-          <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
-            <li>
-              Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span> predictions.
-            </li>
-            <li>
-              Each at
-              <span className="font-bold text-base text-primary-default"> ${price} </span> Price.
-            </li>
-            <li>
-              Each for <span className="font-bold text-base text-primary-default">{seeds.displayStake()} </span>
-              stake.
-            </li>
-          </ul>
+            }}
+            value={bulkCount}
+            onChange={(e) =>
+              setBulkCount(e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 1)
+            }
+            onValueChange={(e) => setBulkCount(e.value ?? 1)}
+            showButtons
+            min={1}
+            max={MAX_BULK_PREDICTIONS}
+          />
         </div>
-      )}
+        <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
+          <li>
+            Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span> predictions.
+          </li>
+          <li>
+            Each at
+            <span className="font-bold text-base text-primary-default"> ${price} </span> Price.
+          </li>
+          <li>
+            Each for <span className="font-bold text-base text-primary-default">{seeds.displayStake()} </span>
+            stake.
+          </li>
+        </ul>
+      </div>
 
       <button
         className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled"
         disabled={isMakingPrediction || !hasEnoughBalance}
         onClick={makePrediction}
       >
-        Join Pool ({seeds.displayStake(mode === 'multiple' ? bulkCount : 1)})
-        {!isMakingPrediction && hasEnoughBalance && <Ripple />}
+        Join Pool ({seeds.displayStake(bulkCount)}){!isMakingPrediction && hasEnoughBalance && <Ripple />}
       </button>
 
       <p className="mt-1 text-center">
         <span className="text-xs">Potential Winnings </span>
         <span className="text-sm font-bold text-primary-default">
-          (x{pool.multiplier()}): {seeds.displayStake((mode === 'multiple' ? bulkCount : 1) * pool.multiplier())}
+          (x{pool.multiplier()}): {seeds.displayStake(bulkCount * pool.multiplier())}
         </span>
       </p>
 

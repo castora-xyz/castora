@@ -43,11 +43,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
     const months = now.getMonth();
     const date = now.getDate();
     const hrs = new Date().getHours();
-    return new Date(yrs, months, date, hrs + 1, 0, 0)
-      .toTimeString()
-      .split(':')
-      .slice(0, 2)
-      .join(':');
+    return new Date(yrs, months, date, hrs + 1, 0, 0).toTimeString().split(':').slice(0, 2).join(':');
   };
 
   const validatePrediction = () => {
@@ -75,9 +71,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
       [pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
-        setCurrentPrice(
-          parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2))
-        );
+        setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)));
       }
     );
     return () => connection.closeWebSocket();
@@ -85,9 +79,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     setTimeout(() => {
-      const input = document.querySelector(
-        'input#prediction-input[type=number]'
-      ) as HTMLInputElement;
+      const input = document.querySelector('input#prediction-input[type=number]') as HTMLInputElement;
       input.addEventListener(
         'keydown',
         (e) => {
@@ -103,13 +95,10 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
 
   return (
     <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32">
-      <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">
-        Enter Predictions
-      </h2>
+      <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">Enter Predictions</h2>
       <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
-        Join Pools by predicting the price of a Pool Pair. You stake the Entry Fee as you join. The
-        earliest & closest predictions to the price at the snapshot time (Snapshot Price) are the
-        winners.
+        Join Pools by predicting the price of a Pool Pair. You stake the Entry Fee as you join. The earliest & closest
+        predictions to the price at the snapshot time (Snapshot Price) are the winners.
       </p>
 
       <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
@@ -125,34 +114,26 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                   {pool?.seeds.formattedSnapshotTime().reverse().join(' ') ?? nextHour()}
                 </span>{' '}
                 with{' '}
-                <span className="font-bold">
-                  {pool?.seeds.displayStake() ?? landingPageDefaults.stake(bulkCount)}
-                </span>{' '}
+                <span className="font-bold">{pool?.seeds.displayStake() ?? landingPageDefaults.stake(bulkCount)}</span>{' '}
                 stake.
               </li>
               <li>
-                Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices
-                to Snapshot Price.
+                Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices to Snapshot Price.
               </li>
               <li>
                 Win x{pool?.multiplier() ?? 2} (
                 <span className="font-bold">
-                  {pool?.seeds.displayStake(pool.multiplier()) ??
-                    landingPageDefaults.stakeMultiplied(bulkCount)}
+                  {pool?.seeds.displayStake(pool.multiplier()) ?? landingPageDefaults.stakeMultiplied(bulkCount)}
                 </span>
                 ), if you are in Top{' '}
-                <span className="font-bold">
-                  {pool?.percentWinners() ?? landingPageDefaults.percentWinners}%
-                </span>{' '}
+                <span className="font-bold">{pool?.percentWinners() ?? landingPageDefaults.percentWinners}%</span>{' '}
                 Predictions.
               </li>
             </ul>
 
             <form>
               <label>
-                <span className="font-medium text-sm text-text-disabled block mb-1">
-                  Your Prediction
-                </span>
+                <span className="font-medium text-sm text-text-disabled block mb-1">Your Prediction</span>
 
                 <input
                   min={0}
@@ -166,45 +147,27 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                   required
                 />
 
-                {predictionError && (
-                  <p className="-mt-1 mb-3 text-sm text-errors-default">{predictionError}</p>
-                )}
+                {predictionError && <p className="-mt-1 mb-3 text-sm text-errors-default">{predictionError}</p>}
 
                 <p className="font-medium mb-8">
                   <span className="text-text-disabled">Current Price:</span>{' '}
-                  <span className="text-primary-darker dark:text-primary-subtle">
-                    {currentPrice}
-                  </span>
+                  <span className="text-primary-darker dark:text-primary-subtle">{currentPrice}</span>
                 </p>
               </label>
 
               {isConnected && (
-                <div className="flex flex-row-reverse gap-4">
-                  <button
-                    className="grow py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white whitespace-nowrap"
-                    type="submit"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (validatePrediction()) return;
-                      handleClick();
-                    }}
-                  >
-                    Make Prediction
-                    {!predictionError && <Ripple />}
-                  </button>
-                  <button
-                    className="py-2 px-4 rounded-full font-medium p-ripple text-primary-default bg-surface-subtle whitespace-nowrap"
-                    type="submit"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (validatePrediction()) return;
-                      handleClick();
-                    }}
-                  >
-                    Go Multiple
-                    {!predictionError && <Ripple />}
-                  </button>
-                </div>
+                <button
+                  className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white whitespace-nowrap"
+                  type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (validatePrediction()) return;
+                    handleClick();
+                  }}
+                >
+                  Make Prediction
+                  {!predictionError && <Ripple />}
+                </button>
               )}
             </form>
 
@@ -263,25 +226,17 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                   }}
                   value={bulkCount}
                   onChange={(e) =>
-                    setBulkCount(
-                      e.value
-                        ? e.value > MAX_BULK_PREDICTIONS
-                          ? MAX_BULK_PREDICTIONS
-                          : e.value
-                        : 2
-                    )
+                    setBulkCount(e.value ? (e.value > MAX_BULK_PREDICTIONS ? MAX_BULK_PREDICTIONS : e.value) : 1)
                   }
-                  onValueChange={(e) => setBulkCount(e.value ?? 2)}
+                  onValueChange={(e) => setBulkCount(e.value ?? 1)}
                   showButtons
-                  min={2}
+                  min={1}
                   max={100}
                 />
               </div>
               <ul className="list-primary-bullet pl-4 text-text-subtitle list-disc text-sm w-fit">
                 <li>
-                  Makes{' '}
-                  <span className="font-bold text-base text-primary-default">{bulkCount}</span>{' '}
-                  predictions.
+                  Makes <span className="font-bold text-base text-primary-default">{bulkCount}</span> predictions.
                 </li>
                 <li>
                   Each at
@@ -306,8 +261,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
               className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white disabled:bg-surface-disabled disabled:text-text-disabled mt-auto"
               onClick={handleClick}
             >
-              Join Pool (
-              {pool?.seeds.displayStake(bulkCount) ?? landingPageDefaults.stake(bulkCount)})
+              Join Pool ({pool?.seeds.displayStake(bulkCount) ?? landingPageDefaults.stake(bulkCount)})
               {hasEnoughBalance && <Ripple />}
             </button>
 

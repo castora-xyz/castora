@@ -352,7 +352,7 @@ export const CreateCommunityPoolPage = () => {
                 <span className="font-bold"> 10 MON </span> to create a pool.
               </li>
               <li>
-                Gain <span className="font-bold">50% </span>of Pool Fees at settlement.
+                Gain <span className="font-bold">30% </span>of Pool Fees at settlement.
               </li>
               <li>Withdraw your gains at anytime.</li>
             </ul>
