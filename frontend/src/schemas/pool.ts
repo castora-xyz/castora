@@ -25,7 +25,8 @@ export class Pool {
 
   constructor(input: any) {
     this.poolId = Number(input.poolId);
-    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds);
+    if (input.userCreated) this.userCreated = new UserCreatedPool(input.userCreated);
+    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds, !!this.userCreated);
     this.seedsHash = input.seedsHash;
     this.creationTime = Number(input.creationTime);
     this.noOfPredictions = Number(input.noOfPredictions);
@@ -38,7 +39,6 @@ export class Pool {
     );
     this.noOfWinners = Number(input.noOfWinners);
     this.noOfClaimedWinnings = Number(input.noOfClaimedWinnings);
-    if (input.userCreated) this.userCreated = new UserCreatedPool(input.userCreated);
   }
 
   /**

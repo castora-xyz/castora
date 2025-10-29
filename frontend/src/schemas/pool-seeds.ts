@@ -20,8 +20,9 @@ export class PoolSeeds {
   stakeAmount: number;
   windowCloseTime: number;
   snapshotTime: number;
+  isUserCreatedPool: boolean = false;
 
-  constructor(input: any) {
+  constructor(input: any, userCreatedPool?: any) {
     this.predictionToken = input['predictionToken'];
     this.stakeToken = input['stakeToken'];
     this.stakeAmount = Number(input['stakeAmount']);
@@ -41,6 +42,8 @@ export class PoolSeeds {
     );
     if (!foundS) throw `Token not found in tokens list: ${this.stakeToken}`;
     this.stakeTokenDetails = foundS;
+
+    if (userCreatedPool) this.isUserCreatedPool = true;
   }
 
   /**
@@ -139,6 +142,9 @@ export class PoolSeeds {
    * pool of the same time series.
    */
   openTime() {
+    // If it is a user-created pool, it is automatically open
+    if (this.isUserCreatedPool) return null;
+
     // If it is a stock pool,
     if (this.isStockPool()) {
       // If windowClose is on Monday, open time is 3 days before,
