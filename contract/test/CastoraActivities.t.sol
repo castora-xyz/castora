@@ -113,7 +113,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   ) internal view {
     // Level 1: Global
     assertEq(activities.noOfActivities(), expectedGlobalCount);
-    CastoraActivity[] memory globalActivities = activities.getActivitiesPaginated(0, 100);
+    CastoraActivity[] memory globalActivities = activities.getPaginated(0, 100);
     assertEq(globalActivities.length, expectedGlobalCount);
     if (expectedGlobalCount > 0) {
       CastoraActivity memory lastActivity = globalActivities[expectedGlobalCount - 1];
@@ -124,7 +124,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Level 2: By Type
     assertEq(activities.noOfActivitiesByType(activityType), expectedTypeCount);
-    CastoraActivity[] memory typeActivities = activities.getActivitiesByTypePaginated(activityType, 0, 100);
+    CastoraActivity[] memory typeActivities = activities.getByTypePaginated(activityType, 0, 100);
     assertEq(typeActivities.length, expectedTypeCount);
     if (expectedTypeCount > 0) {
       CastoraActivity memory lastTypeActivity = typeActivities[expectedTypeCount - 1];
@@ -133,7 +133,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Level 3: For Address
     assertEq(activities.userActivityIdsCount(user), expectedUserCount);
-    CastoraActivity[] memory userActivities = activities.getActivitiesForAddressPaginated(user, 0, 100);
+    CastoraActivity[] memory userActivities = activities.getForAddressPaginated(user, 0, 100);
     assertEq(userActivities.length, expectedUserCount);
     if (expectedUserCount > 0) {
       CastoraActivity memory lastUserActivity = userActivities[expectedUserCount - 1];
@@ -142,8 +142,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Level 4: For Address By Type
     assertEq(activities.getActivityTypeCountForAddress(user, activityType), expectedUserTypeCount);
-    CastoraActivity[] memory userTypeActivities =
-      activities.getActivitiesForAddressByTypePaginated(user, activityType, 0, 100);
+    CastoraActivity[] memory userTypeActivities = activities.getForAddressByTypePaginated(user, activityType, 0, 100);
     assertEq(userTypeActivities.length, expectedUserTypeCount);
     if (expectedUserTypeCount > 0) {
       CastoraActivity memory lastUserTypeActivity = userTypeActivities[expectedUserTypeCount - 1];
@@ -225,7 +224,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     );
 
     // Verify activity details
-    CastoraActivity memory activity = activities.getActivity(1);
+    CastoraActivity memory activity = activities.getOne(1);
     assertEq(activity.user, admin);
     assertEq(activity.poolId, poolId);
     assertEq(uint256(activity.activityType), uint256(ActivityType.POOL_CREATED));
@@ -492,51 +491,46 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 endTime = 450;
 
     // Test global time range queries
-    CastoraActivity[] memory activitiesInRange = activities.getActivitiesByTimeRangePaginated(startTime, endTime, 0, 10);
+    CastoraActivity[] memory activitiesInRange = activities.getByTimeRangePaginated(startTime, endTime, 0, 10);
     assertTrue(activitiesInRange.length > 0);
 
     // Test activities only in first period
-    CastoraActivity[] memory firstPeriodActivities =
-      activities.getActivitiesByTimeRangePaginated(startTime, midTime, 0, 10);
+    CastoraActivity[] memory firstPeriodActivities = activities.getByTimeRangePaginated(startTime, midTime, 0, 10);
     assertEq(firstPeriodActivities.length, 2); // 2 pool creations
 
     // Test by type time range
     CastoraActivity[] memory poolCreatedInRange =
-      activities.getActivitiesByTypeByTimeRangePaginated(ActivityType.POOL_CREATED, startTime, midTime, 0, 10);
+      activities.getByTypeByTimeRangePaginated(ActivityType.POOL_CREATED, startTime, midTime, 0, 10);
     assertEq(poolCreatedInRange.length, 2);
-
 
     // Test by type time range second period
     CastoraActivity[] memory predictedInRange =
-      activities.getActivitiesByTypeByTimeRangePaginated(ActivityType.PREDICTED, 250, endTime, 0, 10);
+      activities.getByTypeByTimeRangePaginated(ActivityType.PREDICTED, 250, endTime, 0, 10);
     assertEq(predictedInRange.length, 1);
 
     // Test user time range
     CastoraActivity[] memory user1ActivitiesInRange =
-      activities.getActivitiesForAddressByTimeRangePaginated(user1, startTime, endTime, 0, 10);
+      activities.getForAddressByTimeRangePaginated(user1, startTime, endTime, 0, 10);
     assertEq(user1ActivitiesInRange.length, 2); // NEW_USER_ACTIVITY + PREDICTED
 
     // Test user by type time range
-    CastoraActivity[] memory user1PredictedInRange = activities.getActivitiesForAddressByTypeByTimeRangePaginated(
-      user1, ActivityType.PREDICTED, startTime, endTime, 0, 10
-    );
+    CastoraActivity[] memory user1PredictedInRange =
+      activities.getForAddressByTypeByTimeRangePaginated(user1, ActivityType.PREDICTED, startTime, endTime, 0, 10);
     assertEq(user1PredictedInRange.length, 1);
 
     // Test edge cases
     // Empty range
-    CastoraActivity[] memory emptyRange =
-      activities.getActivitiesByTimeRangePaginated(endTime + 100, endTime + 200, 0, 10);
+    CastoraActivity[] memory emptyRange = activities.getByTimeRangePaginated(endTime + 100, endTime + 200, 0, 10);
     assertEq(emptyRange.length, 0);
 
     // Invalid range (start > end)
     vm.expectRevert(InvalidTimeRange.selector);
-    activities.getActivitiesByTimeRangePaginated(endTime, startTime, 0, 10);
+    activities.getByTimeRangePaginated(endTime, startTime, 0, 10);
 
     // Offset beyond available activities
-    CastoraActivity[] memory beyondOffset = activities.getActivitiesByTimeRangePaginated(startTime, endTime, 100, 10);
+    CastoraActivity[] memory beyondOffset = activities.getByTimeRangePaginated(startTime, endTime, 100, 10);
     assertEq(beyondOffset.length, 0);
-    beyondOffset =
-      activities.getActivitiesByTypeByTimeRangePaginated(ActivityType.PREDICTED, startTime, endTime, 100, 10);
+    beyondOffset = activities.getByTypeByTimeRangePaginated(ActivityType.PREDICTED, startTime, endTime, 100, 10);
     assertEq(beyondOffset.length, 0);
   }
 
@@ -560,7 +554,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 2;
-    assertEq(activities.getActivities(ids).length, 2);
+    assertEq(activities.getMany(ids).length, 2);
 
     // Test global recent activities
     CastoraActivity[] memory recentGlobal = activities.getRecentActivities(3);
@@ -607,24 +601,24 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   function testRevertsInActivitiesGetters() public {
     // Test getActivity with invalid IDs
     vm.expectRevert(InvalidActivityId.selector);
-    activities.getActivity(0);
+    activities.getOne(0);
 
     vm.expectRevert(InvalidActivityId.selector);
-    activities.getActivity(999);
+    activities.getOne(999);
 
     // Test getActivities with invalid IDs
     uint256[] memory invalidIds = new uint256[](2);
     invalidIds[0] = 0;
     invalidIds[1] = 1;
     vm.expectRevert(InvalidActivityId.selector);
-    activities.getActivities(invalidIds);
+    activities.getMany(invalidIds);
 
     // Test address-related functions with zero address
     vm.expectRevert(InvalidAddress.selector);
-    activities.getActivitiesForAddressPaginated(address(0), 0, 10);
+    activities.getForAddressPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    activities.getActivitiesForAddressByTypePaginated(address(0), ActivityType.POOL_CREATED, 0, 10);
+    activities.getForAddressByTypePaginated(address(0), ActivityType.POOL_CREATED, 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
     activities.getActivityTypeCountForAddress(address(0), ActivityType.POOL_CREATED);
@@ -637,10 +631,10 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Test time range functions with invalid ranges
     vm.expectRevert(InvalidTimeRange.selector);
-    activities.getActivitiesByTimeRangePaginated(100, 50, 0, 10);
+    activities.getByTimeRangePaginated(100, 50, 0, 10);
 
     vm.expectRevert(InvalidTimeRange.selector);
-    activities.getActivitiesByTypeByTimeRangePaginated(ActivityType.POOL_CREATED, 100, 50, 0, 10);
+    activities.getByTypeByTimeRangePaginated(ActivityType.POOL_CREATED, 100, 50, 0, 10);
 
     // Test log function access control and validation
     vm.prank(unauthorizedContract);
