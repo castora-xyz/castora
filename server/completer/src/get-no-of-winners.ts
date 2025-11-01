@@ -31,5 +31,11 @@ export const getNoOfWinners = (
   poolMultiplier: PoolMultiplier
 ): number => {
   if (noOfPredictions == 1) return 1;
-  return Math.floor(noOfPredictions / poolMultiplier);
+
+  let computed = Math.floor(noOfPredictions / poolMultiplier);
+
+  // Ensure at least one winner when predictions are less than poolMultiplier
+  if (computed < 1) computed = 1;
+  
+  return computed;
 };
