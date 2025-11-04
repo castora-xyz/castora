@@ -12,6 +12,7 @@ import {Castora} from '../src/Castora.sol';
 import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraGetters} from '../src/CastoraGetters.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
@@ -22,6 +23,7 @@ contract RejectETH {} // by default, empty contract will reject ETH
 contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraActivities activities;
   Castora castora;
+  CastoraGetters getters;
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
@@ -70,6 +72,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     poolsManager.setCastora(address(castora));
     activities.setAuthorizedLogger((address(poolsManager)), true);
     activities.setAuthorizedLogger((address(castora)), true);
+    getters = new CastoraGetters(address(castora));
 
     // Grant admin role
     castora.grantAdminRole(admin);
@@ -237,7 +240,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     uint256 batchSize = 1;
 
     // Get pool before initiation
-    Pool memory poolBefore = castora.getPool(poolIdSinglePrediction);
+    Pool memory poolBefore = getters.pool(poolIdSinglePrediction);
 
     // Calculate expected values
     uint256 expectedWinners = 1; // Single prediction = 1 winner
@@ -252,7 +255,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.initiatePoolCompletion(poolIdSinglePrediction, snapshotPrice, batchSize);
 
     // Verify pool state
-    Pool memory poolAfter = castora.getPool(poolIdSinglePrediction);
+    Pool memory poolAfter = getters.pool(poolIdSinglePrediction);
     assertEq(poolAfter.noOfWinners, expectedWinners);
     assertEq(poolAfter.winAmount, expectedWinAmount);
     assertEq(poolAfter.completionTime, 0); // Not yet finalized
@@ -268,7 +271,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     uint256 batchSize = 2;
 
     // Get pool before initiation
-    Pool memory poolBefore = castora.getPool(poolIdMultiplePredictions);
+    Pool memory poolBefore = getters.pool(poolIdMultiplePredictions);
     assertEq(poolBefore.noOfPredictions, 5);
 
     // Calculate expected values
@@ -286,7 +289,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.initiatePoolCompletion(poolIdMultiplePredictions, snapshotPrice, batchSize);
 
     // Verify pool state
-    Pool memory poolAfter = castora.getPool(poolIdMultiplePredictions);
+    Pool memory poolAfter = getters.pool(poolIdMultiplePredictions);
     assertEq(poolAfter.noOfWinners, expectedWinners);
     assertEq(poolAfter.winAmount, expectedWinAmount);
     assertEq(poolAfter.completionTime, 0); // Not yet finalized
@@ -323,7 +326,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     vm.warp(2200); // Past snapshot time
 
     // Get pool before initiation
-    Pool memory poolBefore = castora.getPool(highMultiplierPoolId);
+    Pool memory poolBefore = getters.pool(highMultiplierPoolId);
     assertEq(poolBefore.noOfPredictions, 2);
     assertEq(poolBefore.seeds.multiplier, 500);
 
@@ -348,7 +351,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.initiatePoolCompletion(highMultiplierPoolId, snapshotPrice, batchSize);
 
     // Verify pool state - should have at least 1 winner
-    Pool memory poolAfter = castora.getPool(highMultiplierPoolId);
+    Pool memory poolAfter = getters.pool(highMultiplierPoolId);
     assertEq(poolAfter.noOfWinners, expectedWinners);
     assertEq(poolAfter.winAmount, expectedWinAmount);
     assertEq(poolAfter.snapshotPrice, snapshotPrice);
@@ -557,9 +560,9 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     winners[0] = 1;
 
     // Get initial stats
-    AllPredictionStats memory statsBefore = castora.getAllStats();
-    UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter1);
-    Pool memory poolBefore = castora.getPool(poolIdSinglePrediction);
+    AllPredictionStats memory statsBefore = getters.allStats();
+    UserPredictionStats memory userStatsBefore = getters.userStats(predicter1);
+    Pool memory poolBefore = getters.pool(poolIdSinglePrediction);
 
     // Expect event
     vm.prank(admin);
@@ -568,16 +571,16 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.setWinnersInBatch(poolIdSinglePrediction, winners);
 
     // Verify prediction is marked as winner
-    Prediction memory prediction = castora.getPrediction(poolIdSinglePrediction, 1);
+    Prediction memory prediction = getters.prediction(poolIdSinglePrediction, 1);
     assertTrue(prediction.isAWinner);
 
     // Verify global stats updated
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfWinnings, statsBefore.noOfWinnings + 1);
     assertEq(statsAfter.noOfClaimableWinnings, statsBefore.noOfClaimableWinnings + 1);
 
     // Verify user stats updated
-    UserPredictionStats memory userStatsAfter = castora.getUserStats(predicter1);
+    UserPredictionStats memory userStatsAfter = getters.userStats(predicter1);
     assertEq(userStatsAfter.noOfWinnings, userStatsBefore.noOfWinnings + 1);
     assertEq(userStatsAfter.noOfClaimableWinnings, userStatsBefore.noOfClaimableWinnings + 1);
 
@@ -585,11 +588,11 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(castora.poolCompletionBatchesProcessed(poolIdSinglePrediction), 1);
 
     // Verifiy user winner activity
-    assertEq(castora.getWinnerActivityHashesForAddressPaginated(predicter1, 0, 10).length, 1);
+    assertEq(getters.userWinnerActivitiesPaginated(predicter1, 0, 10).length, 1);
 
     // Verify user claimable activities
-    bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
-    UserPredictionActivity[] memory userClaimableActivities = castora.getUserPredictionActivities(hashes);
+    UserPredictionActivity[] memory userClaimableActivities =
+      getters.userClaimableActivitiesPaginated(predicter1, 0, 10);
     assertEq(userClaimableActivities.length, userStatsAfter.noOfClaimableWinnings);
     bool foundActivity = false;
     for (uint256 i = 0; i < userClaimableActivities.length; i++) {
@@ -605,24 +608,24 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
 
     // User stats checker in pool
     UserInPoolPredictionStats memory userInPoolStats =
-      castora.getUserInPoolPredictionStats(poolIdSinglePrediction, predicter1);
+      getters.userInPoolPredictionStats(poolIdSinglePrediction, predicter1);
     assertEq(userInPoolStats.noOfWinnings, 1);
     assertEq(userInPoolStats.noOfClaimableWinnings, 1);
 
     // Verify user winner prediction IDs arrays in pool
     uint256[] memory userWinnerIds =
-      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdSinglePrediction, predicter1, 0, 10);
+      getters.userInPoolWinnerPredictionIdsPaginated(poolIdSinglePrediction, predicter1, 0, 10);
     assertEq(userWinnerIds.length, 1);
     assertEq(userWinnerIds[0], prediction.predictionId);
 
     // Verify user claimable prediction IDs arrays in pool
     uint256[] memory userClaimableIds =
-      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdSinglePrediction, predicter1, 0, 10);
+      getters.userInPoolClaimablePredictionIdsPaginated(poolIdSinglePrediction, predicter1, 0, 10);
     assertEq(userClaimableIds.length, 1);
     assertEq(userClaimableIds[0], prediction.predictionId);
 
     // Verify stake token details updated
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(address(cusd));
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(address(cusd));
     assertEq(stakeTokenDetails.totalWon, poolBefore.winAmount);
     assertEq(stakeTokenDetails.totalClaimable, poolBefore.winAmount);
     assertEq(stakeTokenDetails.noOfWinnings, 1);
@@ -630,7 +633,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
 
     // Verify user stake token details
     StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter1, poolBefore.seeds.stakeToken);
+      getters.userStakeTokenDetails(predicter1, poolBefore.seeds.stakeToken);
     assertEq(userStakeTokenDetails.noOfWinnings, 1);
     assertEq(userStakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(userStakeTokenDetails.totalWon, poolBefore.winAmount);
@@ -643,57 +646,55 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
   {
     // User stats checker in pool for both users
     UserInPoolPredictionStats memory user1InPoolStats =
-      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter1);
+      getters.userInPoolPredictionStats(poolIdMultiplePredictions, predicter1);
     assertEq(user1InPoolStats.noOfWinnings, 1);
     assertEq(user1InPoolStats.noOfClaimableWinnings, 1);
 
     UserInPoolPredictionStats memory user2InPoolStats =
-      castora.getUserInPoolPredictionStats(poolIdMultiplePredictions, predicter2);
+      getters.userInPoolPredictionStats(poolIdMultiplePredictions, predicter2);
     assertEq(user2InPoolStats.noOfWinnings, 1);
     assertEq(user2InPoolStats.noOfClaimableWinnings, 1);
 
     // Verify user winner prediction IDs arrays in pool for both users
     uint256[] memory user1WinnerIds =
-      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
+      getters.userInPoolWinnerPredictionIdsPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
     assertEq(user1WinnerIds.length, 1);
     assertEq(user1WinnerIds[0], prediction1.predictionId);
 
     uint256[] memory user2WinnerIds =
-      castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
+      getters.userInPoolWinnerPredictionIdsPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
     assertEq(user2WinnerIds.length, 1);
     assertEq(user2WinnerIds[0], prediction3.predictionId);
 
     // Verify user claimable prediction IDs arrays in pool for both users
     uint256[] memory user1ClaimableIds =
-      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
+      getters.userInPoolClaimablePredictionIdsPaginated(poolIdMultiplePredictions, predicter1, 0, 10);
     assertEq(user1ClaimableIds.length, 1);
     assertEq(user1ClaimableIds[0], prediction1.predictionId);
 
     uint256[] memory user2ClaimableIds =
-      castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
+      getters.userInPoolClaimablePredictionIdsPaginated(poolIdMultiplePredictions, predicter2, 0, 10);
     assertEq(user2ClaimableIds.length, 1);
     assertEq(user2ClaimableIds[0], prediction3.predictionId);
   }
 
   function _stakeTokenAssertsAfterMultipleWinners() internal view {
-    Pool memory pool = castora.getPool(poolIdMultiplePredictions);
+    Pool memory pool = getters.pool(poolIdMultiplePredictions);
     // Verify stake token details globally
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(address(cusd));
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(address(cusd));
     assertEq(stakeTokenDetails.totalWon, pool.winAmount * 2);
     assertEq(stakeTokenDetails.totalClaimable, pool.winAmount * 2);
     assertEq(stakeTokenDetails.noOfWinnings, 2);
     assertEq(stakeTokenDetails.noOfClaimableWinnings, 2);
 
     // Verify user stake token details for both users
-    StakeTokenDetails memory user1StakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter1, pool.seeds.stakeToken);
+    StakeTokenDetails memory user1StakeTokenDetails = getters.userStakeTokenDetails(predicter1, pool.seeds.stakeToken);
     assertEq(user1StakeTokenDetails.noOfWinnings, 1);
     assertEq(user1StakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(user1StakeTokenDetails.totalWon, pool.winAmount);
     assertEq(user1StakeTokenDetails.totalClaimable, pool.winAmount);
 
-    StakeTokenDetails memory user2StakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter2, pool.seeds.stakeToken);
+    StakeTokenDetails memory user2StakeTokenDetails = getters.userStakeTokenDetails(predicter2, pool.seeds.stakeToken);
     assertEq(user2StakeTokenDetails.noOfWinnings, 1);
     assertEq(user2StakeTokenDetails.noOfClaimableWinnings, 1);
     assertEq(user2StakeTokenDetails.totalWon, pool.winAmount);
@@ -709,10 +710,10 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     winners[0] = 1;
 
     // Get initial stats
-    AllPredictionStats memory statsBefore = castora.getAllStats();
-    UserPredictionStats memory user1StatsBefore = castora.getUserStats(predicter1);
-    UserPredictionStats memory user2StatsBefore = castora.getUserStats(predicter2);
-    Pool memory poolBefore = castora.getPool(poolIdMultiplePredictions);
+    AllPredictionStats memory statsBefore = getters.allStats();
+    UserPredictionStats memory user1StatsBefore = getters.userStats(predicter1);
+    UserPredictionStats memory user2StatsBefore = getters.userStats(predicter2);
+    Pool memory poolBefore = getters.pool(poolIdMultiplePredictions);
 
     // Expect event
     uint256 totalBatches = poolBefore.noOfWinners / batchSize;
@@ -726,19 +727,19 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.setWinnersInBatch(poolIdMultiplePredictions, winners);
 
     // Verify both predictions are marked as winners
-    Prediction memory prediction1 = castora.getPrediction(poolIdMultiplePredictions, 1);
-    Prediction memory prediction3 = castora.getPrediction(poolIdMultiplePredictions, 3);
+    Prediction memory prediction1 = getters.prediction(poolIdMultiplePredictions, 1);
+    Prediction memory prediction3 = getters.prediction(poolIdMultiplePredictions, 3);
     assertTrue(prediction1.isAWinner);
     assertTrue(prediction3.isAWinner);
 
     // Verify global stats updated
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfWinnings, statsBefore.noOfWinnings + 2);
     assertEq(statsAfter.noOfClaimableWinnings, statsBefore.noOfClaimableWinnings + 2);
 
     // Verify user stats updated for both users
-    UserPredictionStats memory user1StatsAfter = castora.getUserStats(predicter1);
-    UserPredictionStats memory user2StatsAfter = castora.getUserStats(predicter2);
+    UserPredictionStats memory user1StatsAfter = getters.userStats(predicter1);
+    UserPredictionStats memory user2StatsAfter = getters.userStats(predicter2);
     assertEq(user1StatsAfter.noOfWinnings, user1StatsBefore.noOfWinnings + 1);
     assertEq(user1StatsAfter.noOfClaimableWinnings, user1StatsBefore.noOfClaimableWinnings + 1);
     assertEq(user2StatsAfter.noOfWinnings, user2StatsBefore.noOfWinnings + 1);
@@ -747,12 +748,12 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Verify batch processing state
     assertEq(castora.poolCompletionBatchesProcessed(poolIdMultiplePredictions), totalBatches);
 
-    // Verify global winner activity hashes
-    assertEq(castora.getWinnerActivityHashesPaginated(0, 10).length, 2);
+    // Verify global winner activities
+    assertEq(getters.winnerActivitiesPaginated(0, 10).length, 2);
 
     // Verify user claimable activities for both users
-    bytes32[] memory hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter1, 0, 10);
-    UserPredictionActivity[] memory user1ClaimableActivities = castora.getUserPredictionActivities(hashes);
+    UserPredictionActivity[] memory user1ClaimableActivities =
+      getters.userClaimableActivitiesPaginated(predicter1, 0, 10);
     assertEq(user1ClaimableActivities.length, user1StatsAfter.noOfClaimableWinnings);
     bool foundUser1Activity = false;
     for (uint256 i = 0; i < user1ClaimableActivities.length; i++) {
@@ -766,8 +767,8 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     }
     assertTrue(foundUser1Activity);
 
-    hashes = castora.getClaimableActivityHashesForAddressPaginated(predicter2, 0, 10);
-    UserPredictionActivity[] memory user2ClaimableActivities = castora.getUserPredictionActivities(hashes);
+    UserPredictionActivity[] memory user2ClaimableActivities =
+      getters.userClaimableActivitiesPaginated(predicter2, 0, 10);
     assertEq(user2ClaimableActivities.length, user2StatsAfter.noOfClaimableWinnings);
     bool foundUser2Activity = false;
     for (uint256 i = 0; i < user2ClaimableActivities.length; i++) {
@@ -899,7 +900,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.initiatePoolCompletion(poolIdSinglePrediction, 1550000, 1);
     castora.setWinnersInBatch(poolIdSinglePrediction, winners);
 
-    Pool memory pool = castora.getPool(poolIdSinglePrediction);
+    Pool memory pool = getters.pool(poolIdSinglePrediction);
     uint256 totalStaked = pool.seeds.stakeAmount * pool.noOfPredictions;
     uint256 fees = pool.seeds.feesPercent * totalStaked / 10000;
 
@@ -921,7 +922,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     uint256 castoraBalanceBefore = address(castora).balance;
 
     // Get pool state before finalization
-    Pool memory poolBefore = castora.getPool(nativeStakePoolId);
+    Pool memory poolBefore = getters.pool(nativeStakePoolId);
     assertEq(poolBefore.completionTime, 0); // Should be zero before finalization
 
     // Calculate expected fees
@@ -938,7 +939,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.finalizePoolCompletion(nativeStakePoolId);
 
     // Verify pool state after finalization
-    Pool memory poolAfter = castora.getPool(nativeStakePoolId);
+    Pool memory poolAfter = getters.pool(nativeStakePoolId);
     assertGt(poolAfter.completionTime, 0); // Should be greater than zero after finalization
     assertEq(poolAfter.completionTime, block.timestamp); // Should equal current block timestamp
 
@@ -966,7 +967,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     uint256 castoraBalanceBefore = cusd.balanceOf(address(castora));
 
     // Get pool state before finalization
-    Pool memory poolBefore = castora.getPool(poolIdSinglePrediction);
+    Pool memory poolBefore = getters.pool(poolIdSinglePrediction);
     assertEq(poolBefore.completionTime, 0); // Should be zero before finalization
 
     // Calculate expected fees
@@ -979,7 +980,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     castora.finalizePoolCompletion(poolIdSinglePrediction);
 
     // Verify pool state after finalization
-    Pool memory poolAfter = castora.getPool(poolIdSinglePrediction);
+    Pool memory poolAfter = getters.pool(poolIdSinglePrediction);
     assertGt(poolAfter.completionTime, 0); // Should be greater than zero after finalization
     assertEq(poolAfter.completionTime, block.timestamp); // Should equal current block timestamp
 

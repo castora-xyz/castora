@@ -11,6 +11,7 @@ import {Castora} from '../src/Castora.sol';
 import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraGetters} from '../src/CastoraGetters.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
@@ -19,6 +20,7 @@ import {cUSD} from '../src/cUSD.sol';
 contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraActivities activities;
   Castora castora;
+  CastoraGetters getters;
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
@@ -61,6 +63,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     castora.initialize(address(activities), address(poolsManager), address(poolsRules));
     activities.setAuthorizedLogger((address(poolsManager)), true);
     activities.setAuthorizedLogger((address(castora)), true);
+    getters = new CastoraGetters(address(castora));
 
     // Configure pools rules
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
@@ -140,7 +143,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   // splitted out the function to overcome "stack too deep" error
   function _moreAssertionsOnPredictNativeStakeSuccess(uint256 expectedPredictionId) internal view {
     // Verify user in pool prediction stats
-    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdNative, predicter);
+    UserInPoolPredictionStats memory userInPoolStats = getters.userInPoolPredictionStats(poolIdNative, predicter);
     assertEq(userInPoolStats.noOfPredictions, 1);
     assertEq(userInPoolStats.noOfWinnings, 0);
     assertEq(userInPoolStats.noOfClaimableWinnings, 0);
@@ -149,49 +152,45 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     // Verify user prediction activity was recorded
     UserPredictionActivity memory expectedActivity = UserPredictionActivity(poolIdNative, expectedPredictionId);
     bytes32 activityHash = castora.hashUserPredictionActivity(expectedActivity);
-    UserPredictionActivity memory actualActivity = castora.getUserPredictionActivity(activityHash);
+    UserPredictionActivity memory actualActivity = getters.userPredictionActivity(activityHash);
     assertEq(actualActivity.poolId, poolIdNative);
     assertEq(actualActivity.predictionId, expectedPredictionId);
 
     // Verify user prediction IDs tracking
-    uint256[] memory userPredictionIds = castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, predicter, 0, 10);
+    uint256[] memory userPredictionIds = getters.userInPoolPredictionIdsPaginated(poolIdNative, predicter, 0, 10);
     assertEq(userPredictionIds.length, 1);
     assertEq(userPredictionIds[0], expectedPredictionId);
 
     // Verify user activities tracking
-    bytes32[] memory hashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
-    UserPredictionActivity[] memory userActivities = castora.getUserPredictionActivities(hashes);
-    assertEq(hashes.length, 1);
+    UserPredictionActivity[] memory userActivities = getters.userPredictionActivitiesPaginated(predicter, 0, 10);
     assertEq(userActivities.length, 1);
     assertEq(userActivities[0].poolId, poolIdNative);
     assertEq(userActivities[0].predictionId, expectedPredictionId);
 
     // Verify global prediction activities tracking
-    hashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
-    UserPredictionActivity[] memory allActivities = castora.getUserPredictionActivities(hashes);
-    assertEq(hashes.length, 1);
+    UserPredictionActivity[] memory allActivities = getters.allPredictionActivitiesPaginated(0, 10);
     assertEq(allActivities.length, 1);
     assertEq(allActivities[0].poolId, poolIdNative);
     assertEq(allActivities[0].predictionId, expectedPredictionId);
 
     // Verify user token arrays were updated
-    address[] memory userPredictionTokens = castora.getUserPredictionTokensPaginated(predicter, 0, 10);
+    address[] memory userPredictionTokens = getters.userPredictionTokensPaginated(predicter, 0, 10);
     assertEq(userPredictionTokens.length, 1);
     assertEq(userPredictionTokens[0], validSeedsNative.predictionToken);
 
-    address[] memory userStakeTokens = castora.getUserStakeTokensPaginated(predicter, 0, 10);
+    address[] memory userStakeTokens = getters.userStakeTokensPaginated(predicter, 0, 10);
     assertEq(userStakeTokens.length, 1);
     assertEq(userStakeTokens[0], validSeedsNative.stakeToken);
 
     // Verify joined pools tracking
-    uint256[] memory joinedPools = castora.getJoinedPoolIdsForUserPaginated(predicter, 0, 10);
+    uint256[] memory joinedPools = getters.joinedPoolIdsForUserPaginated(predicter, 0, 10);
     assertEq(joinedPools.length, 1);
     assertEq(joinedPools[0], poolIdNative);
   }
 
   function testPredictNativeStakeSuccess() public {
-    AllPredictionStats memory statsBefore = castora.getAllStats();
-    UserPredictionStats memory userStatsBefore = castora.getUserStats(predicter);
+    AllPredictionStats memory statsBefore = getters.allStats();
+    UserPredictionStats memory userStatsBefore = getters.userStats(predicter);
     uint256 castoraBalBefore = address(castora).balance;
     uint256 predicterBalBefore = address(predicter).balance;
     uint256 predictionPrice = 1500000;
@@ -213,7 +212,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(predicterBalAfter, predicterBalBefore - 1 ether);
 
     // Verify prediction data
-    Prediction memory prediction = castora.getPrediction(poolIdNative, predictionId);
+    Prediction memory prediction = getters.prediction(poolIdNative, predictionId);
     assertEq(prediction.predicter, predicter);
     assertEq(prediction.poolId, poolIdNative);
     assertEq(prediction.predictionId, expectedPredictionId);
@@ -223,38 +222,38 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertFalse(prediction.isAWinner);
 
     // Verify global stats
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfUsers, statsBefore.noOfUsers + 1);
     assertEq(statsAfter.noOfPredictions, statsBefore.noOfPredictions + 1);
 
     // Verify user stats
-    UserPredictionStats memory userStatsAfter = castora.getUserStats(predicter);
+    UserPredictionStats memory userStatsAfter = getters.userStats(predicter);
     assertEq(userStatsAfter.nthUserCount, 1);
     assertEq(userStatsAfter.noOfJoinedPools, userStatsBefore.noOfJoinedPools + 1);
     assertEq(userStatsAfter.noOfPredictions, userStatsBefore.noOfPredictions + 1);
 
     // Verify pool stats
-    Pool memory pool = castora.getPool(poolIdNative);
+    Pool memory pool = getters.pool(poolIdNative);
     assertEq(pool.noOfPredictions, 1);
 
     // Verify stake token details were updated
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsNative.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsNative.stakeToken);
     assertEq(stakeTokenDetails.noOfPredictions, 1);
     assertEq(stakeTokenDetails.totalStaked, 1 ether);
 
     // Verify prediction token details were updated
     PredictionTokenDetails memory predictionTokenDetails =
-      castora.getPredictionTokenDetails(validSeedsNative.predictionToken);
+      getters.predictionTokenDetails(validSeedsNative.predictionToken);
     assertEq(predictionTokenDetails.noOfPredictions, 1);
 
     // Verify user-specific token details
     StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter, validSeedsNative.stakeToken);
+      getters.userStakeTokenDetails(predicter, validSeedsNative.stakeToken);
     assertEq(userStakeTokenDetails.noOfPredictions, 1);
     assertEq(userStakeTokenDetails.totalStaked, 1 ether);
 
     PredictionTokenDetails memory userPredictionTokenDetails =
-      castora.getUserPredictionTokenDetails(predicter, validSeedsNative.predictionToken);
+      getters.userPredictionTokenDetails(predicter, validSeedsNative.predictionToken);
     assertEq(userPredictionTokenDetails.noOfPredictions, 1);
 
     // more assertions
@@ -266,7 +265,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     vm.prank(predicter);
     cusd.approve(address(castora), 1000000);
 
-    AllPredictionStats memory statsBefore = castora.getAllStats();
+    AllPredictionStats memory statsBefore = getters.allStats();
     uint256 castoraBalBefore = cusd.balanceOf(address(castora));
     uint256 predicterBalBefore = cusd.balanceOf(predicter);
     uint256 predictionPrice = 1500000;
@@ -281,7 +280,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(predictionId, expectedPredictionId);
 
     // Verify prediction data
-    Prediction memory prediction = castora.getPrediction(poolIdERC20, predictionId);
+    Prediction memory prediction = getters.prediction(poolIdERC20, predictionId);
     assertEq(prediction.predicter, predicter);
     assertEq(prediction.predictionPrice, predictionPrice);
 
@@ -292,27 +291,27 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(predicterBalAfter, predicterBalBefore - 1000000);
 
     // Verify stake token details (this will be the second pool using cUSD as stake token)
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsERC20.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsERC20.stakeToken);
     assertEq(stakeTokenDetails.noOfPredictions, 1);
     assertEq(stakeTokenDetails.totalStaked, 1000000);
 
     // Verify prediction token details (this will be the second pool using cUSD as prediction token)
     PredictionTokenDetails memory predictionTokenDetails =
-      castora.getPredictionTokenDetails(validSeedsERC20.predictionToken);
+      getters.predictionTokenDetails(validSeedsERC20.predictionToken);
     assertEq(predictionTokenDetails.noOfPredictions, 1);
 
     // Verify user-specific token details
     StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter, validSeedsERC20.stakeToken);
+      getters.userStakeTokenDetails(predicter, validSeedsERC20.stakeToken);
     assertEq(userStakeTokenDetails.noOfPredictions, 1);
     assertEq(userStakeTokenDetails.totalStaked, 1000000);
 
     PredictionTokenDetails memory userPredictionTokenDetails =
-      castora.getUserPredictionTokenDetails(predicter, validSeedsERC20.predictionToken);
+      getters.userPredictionTokenDetails(predicter, validSeedsERC20.predictionToken);
     assertEq(userPredictionTokenDetails.noOfPredictions, 1);
 
     // Verify user in pool prediction stats
-    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdERC20, predicter);
+    UserInPoolPredictionStats memory userInPoolStats = getters.userInPoolPredictionStats(poolIdERC20, predicter);
     assertEq(userInPoolStats.noOfPredictions, 1);
     assertEq(userInPoolStats.noOfWinnings, 0);
     assertEq(userInPoolStats.noOfClaimableWinnings, 0);
@@ -321,7 +320,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     // Verify prediction activity tracking
     UserPredictionActivity memory expectedActivity = UserPredictionActivity(poolIdERC20, expectedPredictionId);
     bytes32 activityHash = castora.hashUserPredictionActivity(expectedActivity);
-    UserPredictionActivity memory actualActivity = castora.getUserPredictionActivity(activityHash);
+    UserPredictionActivity memory actualActivity = getters.userPredictionActivity(activityHash);
     assertEq(actualActivity.poolId, poolIdERC20);
     assertEq(actualActivity.predictionId, expectedPredictionId);
   }
@@ -377,30 +376,30 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
   function _moreAssertionsOnBulkPredictNativeStakeSuccess(uint256 predictionsCount) internal view {
     // Verify pool stats
-    Pool memory pool = castora.getPool(poolIdNative);
+    Pool memory pool = getters.pool(poolIdNative);
     assertEq(pool.noOfPredictions, predictionsCount);
 
     // Verify stake token details for bulk predictions
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsNative.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsNative.stakeToken);
     assertEq(stakeTokenDetails.noOfPredictions, predictionsCount);
     assertEq(stakeTokenDetails.totalStaked, 1 ether * predictionsCount);
 
     // Verify user stake token details
     StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter, validSeedsNative.stakeToken);
+      getters.userStakeTokenDetails(predicter, validSeedsNative.stakeToken);
     assertEq(userStakeTokenDetails.noOfPredictions, predictionsCount);
     assertEq(userStakeTokenDetails.totalStaked, 1 ether * predictionsCount);
 
     // Verify user in pool stats
-    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdNative, predicter);
+    UserInPoolPredictionStats memory userInPoolStats = getters.userInPoolPredictionStats(poolIdNative, predicter);
     assertEq(userInPoolStats.noOfPredictions, predictionsCount);
 
     // Verify all prediction activities were recorded
-    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
-    assertEq(userActivityHashes.length, predictionsCount);
+    UserPredictionActivity[] memory userActivities = getters.userPredictionActivitiesPaginated(predicter, 0, 10);
+    assertEq(userActivities.length, predictionsCount);
 
     // Verify user prediction IDs tracking
-    uint256[] memory userPredictionIds = castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, predicter, 0, 10);
+    uint256[] memory userPredictionIds = getters.userInPoolPredictionIdsPaginated(poolIdNative, predicter, 0, 10);
     assertEq(userPredictionIds.length, predictionsCount);
     for (uint256 i = 0; i < predictionsCount; i++) {
       assertEq(userPredictionIds[i], i + 1);
@@ -408,7 +407,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   }
 
   function testBulkPredictNativeStakeSuccess() public {
-    AllPredictionStats memory statsBefore = castora.getAllStats();
+    AllPredictionStats memory statsBefore = getters.allStats();
     uint256 castoraBalBefore = address(castora).balance;
     uint256 predicterBalBefore = address(predicter).balance;
     uint256 predictionPrice = 1500000;
@@ -433,7 +432,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     // Verify all predictions were created
     for (uint256 i = firstId; i <= lastId; i++) {
-      Prediction memory prediction = castora.getPrediction(poolIdNative, i);
+      Prediction memory prediction = getters.prediction(poolIdNative, i);
       assertEq(prediction.predicter, predicter);
       assertEq(prediction.predictionPrice, predictionPrice);
     }
@@ -445,15 +444,14 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(predicterBalAfter, predicterBalBefore - 1 ether * predictionsCount);
 
     // Verify global stats
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfPredictions, statsBefore.noOfPredictions + predictionsCount);
 
-    bytes32[] memory globalHashes = castora.getAllPredictionActivityHashesPaginated(0, 10);
-    assertEq(globalHashes.length, statsAfter.noOfPredictions);
-    UserPredictionActivity memory firstActivity = castora.getUserPredictionActivity(globalHashes[0]);
+    UserPredictionActivity[] memory globalActivities = getters.allPredictionActivitiesPaginated(0, 10);
+    assertEq(globalActivities.length, statsAfter.noOfPredictions);
+    UserPredictionActivity memory firstActivity = globalActivities[0];
     assertEq(firstActivity.predictionId, expectedFirstId);
-    UserPredictionActivity memory lastActivity =
-      castora.getUserPredictionActivity(globalHashes[globalHashes.length - 1]);
+    UserPredictionActivity memory lastActivity = globalActivities[globalActivities.length - 1];
     assertEq(lastActivity.predictionId, expectedLastId);
 
     _moreAssertionsOnBulkPredictNativeStakeSuccess(predictionsCount);
@@ -481,43 +479,43 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(predicterBalAfter, predicterBalBefore - 1000000 * predictionsCount);
 
     // Verify stake token details for bulk ERC20 predictions
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsERC20.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsERC20.stakeToken);
     assertEq(stakeTokenDetails.noOfPredictions, predictionsCount);
     assertEq(stakeTokenDetails.totalStaked, 1000000 * predictionsCount);
 
     // Verify user stake token details
     StakeTokenDetails memory userStakeTokenDetails =
-      castora.getUserStakeTokenDetails(predicter, validSeedsERC20.stakeToken);
+      getters.userStakeTokenDetails(predicter, validSeedsERC20.stakeToken);
     assertEq(userStakeTokenDetails.noOfPredictions, predictionsCount);
     assertEq(userStakeTokenDetails.totalStaked, 1000000 * predictionsCount);
 
     // Verify user in pool stats
-    UserInPoolPredictionStats memory userInPoolStats = castora.getUserInPoolPredictionStats(poolIdERC20, predicter);
+    UserInPoolPredictionStats memory userInPoolStats = getters.userInPoolPredictionStats(poolIdERC20, predicter);
     assertEq(userInPoolStats.noOfPredictions, predictionsCount);
 
-    // Verify all activities were recorded
-    bytes32[] memory userActivityHashes = castora.getUserPredictionActivityHashesPaginated(predicter, 0, 10);
-    assertEq(userActivityHashes.length, predictionsCount);
+    //  Verify all activities were recorded
+    UserPredictionActivity[] memory userActivities = getters.userPredictionActivitiesPaginated(predicter, 0, 10);
+    assertEq(userActivities.length, predictionsCount);
   }
 
   function testNewUserPredictedOnlyOnFirstPredict() public {
     // Ensure no users initially
-    assertEq(castora.getAllStats().noOfUsers, 0);
-    assertEq(castora.getUsersPaginated(0, 10).length, 0);
+    assertEq(getters.allStats().noOfUsers, 0);
+    assertEq(getters.usersPaginated(0, 10).length, 0);
 
     // First prediction should emit NewUserPredicted
     vm.expectEmit(true, true, true, false);
     emit NewUserPredicted(predicter, poolIdNative, 1);
     vm.prank(predicter);
     castora.predict{value: 1 ether}(poolIdNative, 1500000);
-    assertEq(castora.getAllStats().noOfUsers, 1);
-    assertEq(castora.getUserStats(predicter).nthUserCount, 1);
+    assertEq(getters.allStats().noOfUsers, 1);
+    assertEq(getters.userStats(predicter).nthUserCount, 1);
 
     // Confirm new user count
-    assertEq(castora.getAllStats().noOfUsers, 1);
-    assertEq(castora.getUsersPaginated(0, 10).length, 1);
-    assertEq(castora.getUsersPaginated(0, 10)[0], predicter);
-    assertEq(castora.getUserStats(predicter).nthUserCount, 1);
+    assertEq(getters.allStats().noOfUsers, 1);
+    assertEq(getters.usersPaginated(0, 10).length, 1);
+    assertEq(getters.usersPaginated(0, 10)[0], predicter);
+    assertEq(getters.userStats(predicter).nthUserCount, 1);
 
     // Second prediction should NOT emit NewUserPredicted
     vm.prank(predicter);
@@ -539,10 +537,10 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertFalse(newUserEventFound);
 
     // Confirm new user count remains the same
-    assertEq(castora.getAllStats().noOfUsers, 1);
-    assertEq(castora.getUsersPaginated(0, 10).length, 1);
-    assertEq(castora.getUsersPaginated(0, 10)[0], predicter);
-    assertEq(castora.getUserStats(predicter).nthUserCount, 1);
+    assertEq(getters.allStats().noOfUsers, 1);
+    assertEq(getters.usersPaginated(0, 10).length, 1);
+    assertEq(getters.usersPaginated(0, 10)[0], predicter);
+    assertEq(getters.userStats(predicter).nthUserCount, 1);
 
     // Test same behavior with bulkPredict
     // Give another user tokens
@@ -554,10 +552,10 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     vm.expectEmit(true, true, true, false);
     emit NewUserPredicted(anotherNewUser, poolIdNative, 2);
     castora.bulkPredict{value: 2 ether}(poolIdNative, 1700000, 2);
-    assertEq(castora.getAllStats().noOfUsers, 2);
-    assertEq(castora.getUsersPaginated(0, 10).length, 2);
-    assertEq(castora.getUsersPaginated(0, 10)[1], anotherNewUser);
-    assertEq(castora.getUserStats(anotherNewUser).nthUserCount, 2);
+    assertEq(getters.allStats().noOfUsers, 2);
+    assertEq(getters.usersPaginated(0, 10).length, 2);
+    assertEq(getters.usersPaginated(0, 10)[1], anotherNewUser);
+    assertEq(getters.userStats(anotherNewUser).nthUserCount, 2);
 
     // Second bulk predict should NOT emit NewUserPredicted
     vm.recordLogs();
@@ -575,10 +573,10 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertFalse(newUserEventFound);
 
     // Confirm new user count remains the same
-    assertEq(castora.getAllStats().noOfUsers, 2);
-    assertEq(castora.getUsersPaginated(0, 10).length, 2);
-    assertEq(castora.getUsersPaginated(0, 10)[1], anotherNewUser);
-    assertEq(castora.getUserStats(anotherNewUser).nthUserCount, 2);
+    assertEq(getters.allStats().noOfUsers, 2);
+    assertEq(getters.usersPaginated(0, 10).length, 2);
+    assertEq(getters.usersPaginated(0, 10)[1], anotherNewUser);
+    assertEq(getters.userStats(anotherNewUser).nthUserCount, 2);
   }
 
   function testGetPredictions() public {
@@ -593,7 +591,7 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     predictionIds[1] = 2;
     predictionIds[2] = 3;
 
-    Prediction[] memory predictions = castora.getPredictions(poolIdNative, predictionIds);
+    Prediction[] memory predictions = getters.predictions(poolIdNative, predictionIds);
     for (uint256 i = 0; i < predictionIds.length; i++) {
       Prediction memory prediction = predictions[i];
       assertEq(prediction.predictionId, predictionIds[i]);
@@ -603,28 +601,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
   }
 
   function testRevertsInCastoraGetters() public {
-    vm.expectRevert(InvalidActivityHash.selector);
-    castora.getUserPredictionActivity(bytes32(0));
-
-    bytes32[] memory hashes = new bytes32[](1);
-    hashes[0] = bytes32(0);
-    vm.expectRevert(InvalidActivityHash.selector);
-    castora.getUserPredictionActivities(hashes);
-
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserStats(address(0));
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getJoinedPoolIdsForUserPaginated(address(0), 0, 10);
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionActivityHashesPaginated(address(0), 0, 10);
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getWinnerActivityHashesForAddressPaginated(address(0), 0, 10);
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getClaimableActivityHashesForAddressPaginated(address(0), 0, 10);
+    new CastoraGetters(address(0));
 
     vm.expectRevert(InvalidPoolId.selector);
     castora.getPool(0);
@@ -632,100 +610,100 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     vm.expectRevert(InvalidPoolId.selector);
     castora.getPool(999);
 
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getPrediction(0, 0);
+    vm.expectRevert(InvalidActivityHash.selector);
+    getters.userPredictionActivity(bytes32(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userStats(address(0));
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.joinedPoolIdsForUserPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userPredictionActivitiesPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPrediction(999, 0);
+    getters.pool(0);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.pool(999);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.prediction(0, 0);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.prediction(999, 0);
 
     vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPrediction(poolIdNative, 0);
+    getters.prediction(poolIdNative, 0);
 
     vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPrediction(poolIdNative, 999);
+    getters.prediction(poolIdNative, 999);
 
     uint256[] memory pools = new uint256[](1);
     pools[0] = 0;
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPools(pools);
+    getters.pools(pools);
 
     pools[0] = 999;
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPools(pools);
+    getters.pools(pools);
 
     uint256[] memory predictions = new uint256[](1);
     predictions[0] = 0;
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictions(0, predictions);
+    getters.predictions(0, predictions);
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictions(999, predictions);
+    getters.predictions(999, predictions);
 
     vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPredictions(poolIdNative, predictions);
+    getters.predictions(poolIdNative, predictions);
 
     predictions[0] = 999;
     vm.expectRevert(InvalidPredictionId.selector);
-    castora.getPredictions(poolIdNative, predictions);
+    getters.predictions(poolIdNative, predictions);
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getUserInPoolPredictionStats(0, address(0));
+    getters.userInPoolPredictionStats(0, address(0));
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getUserInPoolPredictionStats(999, address(0));
+    getters.userInPoolPredictionStats(999, address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserInPoolPredictionStats(poolIdNative, address(0));
+    getters.userInPoolPredictionStats(poolIdNative, address(0));
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
+    getters.userInPoolPredictionIdsPaginated(0, address(0), 0, 10);
 
     vm.expectRevert(InvalidPoolId.selector);
-    castora.getPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+    getters.userInPoolPredictionIdsPaginated(999, address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
-
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getWinnerPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
-
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getWinnerPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+    getters.userInPoolPredictionIdsPaginated(poolIdNative, address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getWinnerPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
-
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(0, address(0), 0, 10);
-
-    vm.expectRevert(InvalidPoolId.selector);
-    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(999, address(0), 0, 10);
+    getters.predictionTokenDetails(address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getClaimableWinnerPredictionIdsInPoolForUserPaginated(poolIdNative, address(0), 0, 10);
+    getters.stakeTokenDetails(address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getPredictionTokenDetails(address(0));
+    getters.userPredictionTokensPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getStakeTokenDetails(address(0));
+    getters.userStakeTokensPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionTokensPaginated(address(0), 0, 10);
+    getters.userPredictionTokenDetails(address(0), address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserStakeTokensPaginated(address(0), 0, 10);
+    getters.userPredictionTokenDetails(predicter, address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionTokenDetails(address(0), address(0));
+    getters.userStakeTokenDetails(address(0), address(0));
 
     vm.expectRevert(InvalidAddress.selector);
-    castora.getUserPredictionTokenDetails(predicter, address(0));
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getUserStakeTokenDetails(address(0), address(0));
-
-    vm.expectRevert(InvalidAddress.selector);
-    castora.getUserStakeTokenDetails(predicter, address(0));
+    getters.userStakeTokenDetails(predicter, address(0));
   }
 }

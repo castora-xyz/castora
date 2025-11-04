@@ -10,6 +10,7 @@ import {Castora} from '../src/Castora.sol';
 import {CastoraActivities} from '../src/CastoraActivities.sol';
 import {CastoraErrors} from '../src/CastoraErrors.sol';
 import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraGetters} from '../src/CastoraGetters.sol';
 import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
 import {CastoraPoolsRules} from '../src/CastoraPoolsRules.sol';
 import {CastoraStructs} from '../src/CastoraStructs.sol';
@@ -18,6 +19,7 @@ import {cUSD} from '../src/cUSD.sol';
 contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
   CastoraActivities activities;
   Castora castora;
+  CastoraGetters getters;
   CastoraPoolsManager poolsManager;
   CastoraPoolsRules poolsRules;
   cUSD cusd;
@@ -57,6 +59,7 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     castora.initialize(address(activities), address(poolsManager), address(poolsRules));
     activities.setAuthorizedLogger((address(poolsManager)), true);
     activities.setAuthorizedLogger((address(castora)), true);
+    getters = new CastoraGetters(address(castora));
 
     // Grant admin role to admin address
     castora.grantAdminRole(admin);
@@ -105,7 +108,7 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testCreatePoolSuccessNativeTokenStake() public {
     // Get initial stats
-    AllPredictionStats memory statsBefore = castora.getAllStats();
+    AllPredictionStats memory statsBefore = getters.allStats();
 
     // Expected pool ID
     uint256 expectedPoolId = statsBefore.noOfPools + 1;
@@ -138,26 +141,26 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(pool.completionTime, 0);
 
     // Verify global stats updated
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfPools, statsBefore.noOfPools + 1);
 
     // Verify prediction token arrays
-    address[] memory predictionTokens = castora.getPredictionTokensPaginated(0, 10);
+    address[] memory predictionTokens = getters.predictionTokensPaginated(0, 10);
     assertEq(predictionTokens.length, 1);
     assertEq(predictionTokens[0], validSeedsNative.predictionToken);
 
     // Verify prediction token details
     PredictionTokenDetails memory predictionTokenDetails =
-      castora.getPredictionTokenDetails(validSeedsNative.predictionToken);
+      getters.predictionTokenDetails(validSeedsNative.predictionToken);
     assertEq(predictionTokenDetails.noOfPools, 1);
 
     // Verify stake token arrays
-    address[] memory stakeTokens = castora.getStakeTokensPaginated(0, 10);
+    address[] memory stakeTokens = getters.stakeTokensPaginated(0, 10);
     assertEq(stakeTokens.length, 1);
     assertEq(stakeTokens[0], validSeedsNative.stakeToken);
 
     // Verify stake token details
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsNative.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsNative.stakeToken);
     assertEq(stakeTokenDetails.noOfPools, 1);
 
     // Verify pools can be retrieved by seeds hash
@@ -168,7 +171,7 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testCreatePoolSuccessERC20TokenStake() public {
     // Get initial stats
-    AllPredictionStats memory statsBefore = castora.getAllStats();
+    AllPredictionStats memory statsBefore = getters.allStats();
 
     // Expected pool ID
     uint256 expectedPoolId = statsBefore.noOfPools + 1;
@@ -200,7 +203,7 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(pool.creationTime, block.timestamp);
 
     // Verify global stats updated
-    AllPredictionStats memory statsAfter = castora.getAllStats();
+    AllPredictionStats memory statsAfter = getters.allStats();
     assertEq(statsAfter.noOfPools, statsBefore.noOfPools + 1);
 
     // Verify token arrays updated if this is first time using these tokens
@@ -212,22 +215,22 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     }
 
     // Verify prediction token arrays
-    address[] memory predictionTokens = castora.getPredictionTokensPaginated(0, 10);
+    address[] memory predictionTokens = getters.predictionTokensPaginated(0, 10);
     assertEq(predictionTokens.length, 1);
     assertEq(predictionTokens[0], validSeedsERC20.predictionToken);
 
     // Verify prediction token details
     PredictionTokenDetails memory predictionTokenDetails =
-      castora.getPredictionTokenDetails(validSeedsERC20.predictionToken);
+      getters.predictionTokenDetails(validSeedsERC20.predictionToken);
     assertEq(predictionTokenDetails.noOfPools, 1);
 
     // Verify stake token arrays
-    address[] memory stakeTokens = castora.getStakeTokensPaginated(0, 10);
+    address[] memory stakeTokens = getters.stakeTokensPaginated(0, 10);
     assertEq(stakeTokens.length, 1);
     assertEq(stakeTokens[0], validSeedsERC20.stakeToken);
 
     // Verify stake token details
-    StakeTokenDetails memory stakeTokenDetails = castora.getStakeTokenDetails(validSeedsERC20.stakeToken);
+    StakeTokenDetails memory stakeTokenDetails = getters.stakeTokenDetails(validSeedsERC20.stakeToken);
     assertEq(stakeTokenDetails.noOfPools, 1);
 
     // Verify pools can be retrieved by seeds hash
@@ -242,7 +245,7 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256[] memory poolIds = new uint256[](2);
     poolIds[0] = poolId1;
     poolIds[1] = poolId2;
-    Pool[] memory pools = castora.getPools(poolIds);
+    Pool[] memory pools = getters.pools(poolIds);
     assertEq(pools.length, 2);
     assertEq(pools[0].poolId, poolId1);
     assertEq(pools[1].poolId, poolId2);

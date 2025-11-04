@@ -14,7 +14,8 @@ contract DeployCastoraPoolsManager is Script {
     uint16 splitPercent = 5000; // 50% , 2 decimals // vm.envUint('COMPLETION_FEES_SPLIT_PERCENT');
 
     address proxy = Upgrades.deployUUPSProxy(
-      'CastoraPoolsManager.sol', abi.encodeCall(CastoraPoolsManager.initialize, (activitiesAddress, feeCollectorAddress, splitPercent))
+      'CastoraPoolsManager.sol',
+      abi.encodeCall(CastoraPoolsManager.initialize, (activitiesAddress, feeCollectorAddress, splitPercent))
     );
 
     console.log('Deployed CastoraPoolsManager at: ', proxy);
