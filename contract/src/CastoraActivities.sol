@@ -222,7 +222,7 @@ contract CastoraActivities is
   /// @param offset Starting index
   /// @param limit Maximum activities to return
   /// @return activities Array of activities
-  function getForAddressPaginated(address user, uint256 offset, uint256 limit)
+  function getForUserPaginated(address user, uint256 offset, uint256 limit)
     external
     view
     returns (CastoraActivity[] memory activities)
@@ -241,7 +241,7 @@ contract CastoraActivities is
   /// @param offset Starting index
   /// @param limit Maximum activities to return
   /// @return activities Array of activities
-  function getForAddressByTypePaginated(address user, ActivityType activityType, uint256 offset, uint256 limit)
+  function getForUserByTypePaginated(address user, ActivityType activityType, uint256 offset, uint256 limit)
     external
     view
     returns (CastoraActivity[] memory activities)
@@ -260,11 +260,7 @@ contract CastoraActivities is
   /// @param user Address of the user
   /// @param activityType Type of activities to count
   /// @return count Number of activities
-  function getActivityTypeCountForAddress(address user, ActivityType activityType)
-    external
-    view
-    returns (uint256 count)
-  {
+  function getActivityTypeCountForUser(address user, ActivityType activityType) external view returns (uint256 count) {
     if (user == address(0)) revert InvalidAddress();
     return userActivityIdsCountByType[user][activityType];
   }
@@ -333,7 +329,7 @@ contract CastoraActivities is
   /// @param offset Number of matching activities to skip
   /// @param limit Maximum number of activities to return
   /// @return activities Array of activities within the time range
-  function getForAddressByTimeRangePaginated(
+  function getForUserByTimeRangePaginated(
     address user,
     uint256 startTime,
     uint256 endTime,
@@ -357,7 +353,7 @@ contract CastoraActivities is
   /// @param offset Number of matching activities to skip
   /// @param limit Maximum number of activities to return
   /// @return activities Array of activities within the time range
-  function getForAddressByTypeByTimeRangePaginated(
+  function getForUserByTypeByTimeRangePaginated(
     address user,
     ActivityType activityType,
     uint256 startTime,
@@ -406,7 +402,7 @@ contract CastoraActivities is
     }
   }
 
-  function getRecentActivitiesForAddress(address user, uint256 limit)
+  function getRecentActivitiesForUser(address user, uint256 limit)
     external
     view
     returns (CastoraActivity[] memory activities)
@@ -421,7 +417,7 @@ contract CastoraActivities is
     }
   }
 
-  function getRecentActivitiesForAddressByType(address user, ActivityType activityType, uint256 limit)
+  function getRecentActivitiesForUserByType(address user, ActivityType activityType, uint256 limit)
     external
     view
     returns (CastoraActivity[] memory activities)

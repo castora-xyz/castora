@@ -133,7 +133,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Level 3: For Address
     assertEq(activities.userActivityIdsCount(user), expectedUserCount);
-    CastoraActivity[] memory userActivities = activities.getForAddressPaginated(user, 0, 100);
+    CastoraActivity[] memory userActivities = activities.getForUserPaginated(user, 0, 100);
     assertEq(userActivities.length, expectedUserCount);
     if (expectedUserCount > 0) {
       CastoraActivity memory lastUserActivity = userActivities[expectedUserCount - 1];
@@ -141,8 +141,8 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     }
 
     // Level 4: For Address By Type
-    assertEq(activities.getActivityTypeCountForAddress(user, activityType), expectedUserTypeCount);
-    CastoraActivity[] memory userTypeActivities = activities.getForAddressByTypePaginated(user, activityType, 0, 100);
+    assertEq(activities.getActivityTypeCountForUser(user, activityType), expectedUserTypeCount);
+    CastoraActivity[] memory userTypeActivities = activities.getForUserByTypePaginated(user, activityType, 0, 100);
     assertEq(userTypeActivities.length, expectedUserTypeCount);
     if (expectedUserTypeCount > 0) {
       CastoraActivity memory lastUserTypeActivity = userTypeActivities[expectedUserTypeCount - 1];
@@ -206,7 +206,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.POOL_CREATED);
     uint256 initialUserCount = activities.userActivityIdsCount(admin);
-    uint256 initialUserTypeCount = activities.getActivityTypeCountForAddress(admin, ActivityType.POOL_CREATED);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(admin, ActivityType.POOL_CREATED);
 
     // Admin creates a pool - this should log POOL_CREATED activity
     vm.prank(admin);
@@ -242,7 +242,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.USER_HAS_CREATED_POOL);
     uint256 initialUserCount = activities.userActivityIdsCount(user1);
-    uint256 initialUserTypeCount = activities.getActivityTypeCountForAddress(user1, ActivityType.USER_HAS_CREATED_POOL);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(user1, ActivityType.USER_HAS_CREATED_POOL);
 
     // User creates a pool via PoolsManager
     vm.prank(user1);
@@ -274,7 +274,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.PREDICTED);
     uint256 initialUserCount = activities.userActivityIdsCount(user1);
-    uint256 initialUserTypeCount = activities.getActivityTypeCountForAddress(user1, ActivityType.PREDICTED);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(user1, ActivityType.PREDICTED);
 
     // User1 makes another prediction - should log PREDICTED
     vm.prank(user1);
@@ -309,8 +309,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.POOL_COMPLETION_INITIATED);
     uint256 initialUserCount = activities.userActivityIdsCount(admin);
-    uint256 initialUserTypeCount =
-      activities.getActivityTypeCountForAddress(admin, ActivityType.POOL_COMPLETION_INITIATED);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(admin, ActivityType.POOL_COMPLETION_INITIATED);
 
     // Admin initiates pool completion
     vm.prank(admin);
@@ -346,7 +345,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.POOL_COMPLETED);
     uint256 initialUserCount = activities.userActivityIdsCount(admin);
-    uint256 initialUserTypeCount = activities.getActivityTypeCountForAddress(admin, ActivityType.POOL_COMPLETED);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(admin, ActivityType.POOL_COMPLETED);
 
     // Complete pool processing
     uint256[] memory winners = new uint256[](1);
@@ -391,7 +390,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.CLAIMED_WINNINGS);
     uint256 initialUserCount = activities.userActivityIdsCount(user1);
-    uint256 initialUserTypeCount = activities.getActivityTypeCountForAddress(user1, ActivityType.CLAIMED_WINNINGS);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(user1, ActivityType.CLAIMED_WINNINGS);
 
     // User1 claims winnings
     vm.prank(user1);
@@ -440,8 +439,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     uint256 initialGlobal = activities.noOfActivities();
     uint256 initialTypeCount = activities.noOfActivitiesByType(ActivityType.CLAIMED_COMPLETION_FEES);
     uint256 initialUserCount = activities.userActivityIdsCount(user1);
-    uint256 initialUserTypeCount =
-      activities.getActivityTypeCountForAddress(user1, ActivityType.CLAIMED_COMPLETION_FEES);
+    uint256 initialUserTypeCount = activities.getActivityTypeCountForUser(user1, ActivityType.CLAIMED_COMPLETION_FEES);
 
     // Pool creator claims completion fees
     vm.prank(user1);
@@ -510,12 +508,12 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Test user time range
     CastoraActivity[] memory user1ActivitiesInRange =
-      activities.getForAddressByTimeRangePaginated(user1, startTime, endTime, 0, 10);
+      activities.getForUserByTimeRangePaginated(user1, startTime, endTime, 0, 10);
     assertEq(user1ActivitiesInRange.length, 2); // NEW_USER_ACTIVITY + PREDICTED
 
     // Test user by type time range
     CastoraActivity[] memory user1PredictedInRange =
-      activities.getForAddressByTypeByTimeRangePaginated(user1, ActivityType.PREDICTED, startTime, endTime, 0, 10);
+      activities.getForUserByTypeByTimeRangePaginated(user1, ActivityType.PREDICTED, startTime, endTime, 0, 10);
     assertEq(user1PredictedInRange.length, 1);
 
     // Test edge cases
@@ -571,7 +569,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     }
 
     // Test recent for address
-    CastoraActivity[] memory recentUser1 = activities.getRecentActivitiesForAddress(user1, 5);
+    CastoraActivity[] memory recentUser1 = activities.getRecentActivitiesForUser(user1, 5);
     assertEq(recentUser1.length, 2); // NEW_USER_ACTIVITY + PREDICTED
     for (uint256 i = 0; i < recentUser1.length; i++) {
       assertEq(recentUser1[i].user, user1);
@@ -579,7 +577,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Test recent for address by type
     CastoraActivity[] memory recentUser2Predicted =
-      activities.getRecentActivitiesForAddressByType(user2, ActivityType.PREDICTED, 5);
+      activities.getRecentActivitiesForUserByType(user2, ActivityType.PREDICTED, 5);
     assertEq(recentUser2Predicted.length, 1);
     assertEq(recentUser2Predicted[0].user, user2);
     assertEq(uint256(recentUser2Predicted[0].activityType), uint256(ActivityType.PREDICTED));
@@ -594,7 +592,7 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(zeroLimit.length, 0);
 
     // User with no activities
-    CastoraActivity[] memory noActivities = activities.getRecentActivitiesForAddress(user3, 5);
+    CastoraActivity[] memory noActivities = activities.getRecentActivitiesForUser(user3, 5);
     assertEq(noActivities.length, 0);
   }
 
@@ -615,19 +613,19 @@ contract CastoraActivitiesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Test address-related functions with zero address
     vm.expectRevert(InvalidAddress.selector);
-    activities.getForAddressPaginated(address(0), 0, 10);
+    activities.getForUserPaginated(address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    activities.getForAddressByTypePaginated(address(0), ActivityType.POOL_CREATED, 0, 10);
+    activities.getForUserByTypePaginated(address(0), ActivityType.POOL_CREATED, 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
-    activities.getActivityTypeCountForAddress(address(0), ActivityType.POOL_CREATED);
+    activities.getActivityTypeCountForUser(address(0), ActivityType.POOL_CREATED);
 
     vm.expectRevert(InvalidAddress.selector);
-    activities.getRecentActivitiesForAddress(address(0), 5);
+    activities.getRecentActivitiesForUser(address(0), 5);
 
     vm.expectRevert(InvalidAddress.selector);
-    activities.getRecentActivitiesForAddressByType(address(0), ActivityType.POOL_CREATED, 5);
+    activities.getRecentActivitiesForUserByType(address(0), ActivityType.POOL_CREATED, 5);
 
     // Test time range functions with invalid ranges
     vm.expectRevert(InvalidTimeRange.selector);

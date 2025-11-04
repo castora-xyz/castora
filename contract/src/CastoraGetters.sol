@@ -46,7 +46,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
   }
 
   /// Paginates the PredictionRecords of a given context
-  /// @param array Storage array of the hashes of the records
+  /// @param array Storage array of the record hashes
   /// @param total Total length of the array
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of items to return
@@ -70,13 +70,13 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
   }
 
   /// Paginates the PredictionRecords of a user based on a given context
-  /// @param array Storage array of the hashes of the records
+  /// @param array Storage array of the record hashes
   /// @param user Address of the involved user
   /// @param total Total length of the array
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of items to return
   /// @return items Slice of addresses from the array
-  function _paginatePredictionRecordsArrayForAddress(
+  function _paginateUserPredictionRecordsArray(
     function (address, uint256) external view returns (bytes32) array,
     address user,
     uint256 total,
@@ -254,52 +254,52 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
   /// Returns paginated list of prediction records for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of hashes to return
+  /// @param limit Maximum number of records to return
   /// @return records Array of the user's prediction record
   function userPredictionRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
     returns (PredictionRecord[] memory records)
   {
-    records = _paginatePredictionRecordsArrayForAddress(
+    records = _paginateUserPredictionRecordsArray(
       state.userPredictionRecords, user, userStats(user).noOfPredictions, offset, limit
     );
   }
 
-  /// Returns paginated list of winning record hashes for a specific user
+  /// Returns paginated list of winning record for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of hashes to return
-  /// @return records Array of the user's winning record hashes
+  /// @param limit Maximum number of records to return
+  /// @return records Array of the user's winning records
   function userWinnerRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
     returns (PredictionRecord[] memory records)
   {
-    records = _paginatePredictionRecordsArrayForAddress(
+    records = _paginateUserPredictionRecordsArray(
       state.winnerRecordHashesByAddresses, user, userStats(user).noOfWinnings, offset, limit
     );
   }
 
-  /// Returns paginated list of claimable winning record hashes for a specific user
+  /// Returns paginated list of claimable records for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of hashes to return
-  /// @return records Array of the user's claimable winning record hashes
+  /// @param limit Maximum number of records to return
+  /// @return records Array of the user's claimable records
   function userClaimableRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
     returns (PredictionRecord[] memory records)
   {
-    records = _paginatePredictionRecordsArrayForAddress(
+    records = _paginateUserPredictionRecordsArray(
       state.claimableRecordHashesByAddresses, user, userStats(user).noOfClaimableWinnings, offset, limit
     );
   }
 
   /// Retrieves pool data by ID
   /// @param poolId ID of the pool to retrieve
-  /// @return pool_ Complete pool data structure
-  function pool(uint256 poolId) public view returns (Pool memory pool_) {
+  /// @return pool Complete pool data structure
+  function pool(uint256 poolId) public view returns (Pool memory) {
     if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
     (
       uint256 a,
@@ -313,21 +313,21 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
       uint256 i,
       uint256 j
     ) = state.pools(poolId);
-    pool_ = Pool(a, b, c, d, e, f, g, h, i, j);
+    return Pool(a, b, c, d, e, f, g, h, i, j);
   }
 
   /// Retrieves prediction data by pool and prediction ID
   /// @param poolId ID of the pool containing the prediction
   /// @param predictionId ID of the specific prediction
-  /// @return prediction_ Complete prediction data structure
-  function prediction(uint256 poolId, uint256 predictionId) external view returns (Prediction memory prediction_) {
+  /// @return prediction Complete prediction data structure
+  function prediction(uint256 poolId, uint256 predictionId) external view returns (Prediction memory) {
     if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
     Pool memory pool_ = pool(poolId);
     if (predictionId == 0 || predictionId > pool_.noOfPredictions) {
       revert InvalidPredictionId();
     }
     (address a, uint256 b, uint256 c, uint256 d, uint256 e, uint256 f, bool g) = state.predictions(poolId, predictionId);
-    prediction_ = Prediction(a, b, c, d, e, f, g);
+    return Prediction(a, b, c, d, e, f, g);
   }
 
   /// Retrieves multiple pools by their IDs
