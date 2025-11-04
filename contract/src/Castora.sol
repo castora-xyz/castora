@@ -55,11 +55,11 @@ contract Castora is
     );
   }
 
-  /// Generates a unique hash for user prediction activities
-  /// @param activity User prediction activity data
-  /// @return Hash of the activity for tracking and indexing
-  function hashUserPredictionActivity(UserPredictionActivity memory activity) public pure returns (bytes32) {
-    return keccak256(abi.encodePacked('poolId', activity.poolId, 'predictionId', activity.predictionId));
+  /// Generates a unique hash for user prediction records
+  /// @param record User prediction record data
+  /// @return hash of the record for tracking and indexing
+  function hashPredictionRecord(PredictionRecord memory record) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked('poolId', record.poolId, 'predictionId', record.predictionId));
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -244,11 +244,11 @@ contract Castora is
   function _updatePredictStatsPrediction(uint256 poolId, uint256 predictionId, uint256 predictionPrice) internal {
     predictionIdsByAddressesPerPool[poolId][msg.sender].push(predictionId);
 
-    UserPredictionActivity memory activity = UserPredictionActivity(poolId, predictionId);
-    bytes32 activityHash = hashUserPredictionActivity(activity);
-    userPredictionActivities[activityHash] = activity;
-    userPredictionActivityHashes.push(activityHash);
-    userPredictionActivityHashesByAddresses[msg.sender].push(activityHash);
+    PredictionRecord memory record = PredictionRecord(poolId, predictionId);
+    bytes32 recordHash = hashPredictionRecord(record);
+    predictionRecords[recordHash] = record;
+    predictionRecordHashes.push(recordHash);
+    userPredictionRecords[msg.sender].push(recordHash);
 
     predictions[poolId][predictionId] =
       Prediction(msg.sender, poolId, predictionId, predictionPrice, block.timestamp, 0, false);
@@ -415,12 +415,12 @@ contract Castora is
 
       // Update tracking arrays
       winnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
-      claimableWinnerPredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
-      bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
-      winnerActivityHashes.push(activityHash);
-      winnerActivityHashesByAddresses[predicter].push(activityHash);
-      claimableActivityHashesByAddresses[predicter].push(activityHash);
-      claimableActivityHashesIndex[predicter][activityHash] = userStats[predicter].noOfClaimableWinnings - 1;
+      claimablePredictionIdsByAddressesPerPool[poolId][predicter].push(predictionId);
+      bytes32 recordHash = hashPredictionRecord(PredictionRecord(poolId, predictionId));
+      winnerRecordHashes.push(recordHash);
+      winnerRecordHashesByAddresses[predicter].push(recordHash);
+      claimableRecordHashesByAddresses[predicter].push(recordHash);
+      claimableRecordHashesIndex[predicter][recordHash] = userStats[predicter].noOfClaimableWinnings - 1;
       claimablePredictionIdsInPoolIndex[poolId][predicter][predictionId] =
         userInPoolPredictionStats[poolId][predicter].noOfClaimableWinnings - 1;
     }
@@ -466,20 +466,20 @@ contract Castora is
     }
   }
 
-  /// Removes activity hash from user's claimable list efficiently using swap-and-pop
-  /// @param activityHash Hash of the activity to remove from claimable list
-  function _removeClaimableActivityHash(bytes32 activityHash) internal {
-    uint256 indexToRemove = claimableActivityHashesIndex[msg.sender][activityHash];
+  /// Removes prediction record hash from user's claimable list efficiently using swap-and-pop
+  /// @param recordHash Hash of the prediction record to remove from claimable list
+  function _removeClaimableRecordHash(bytes32 recordHash) internal {
+    uint256 indexToRemove = claimableRecordHashesIndex[msg.sender][recordHash];
     uint256 lastIndex = userStats[msg.sender].noOfClaimableWinnings - 1;
 
     if (indexToRemove != lastIndex) {
-      bytes32 lastHash = claimableActivityHashesByAddresses[msg.sender][lastIndex];
-      claimableActivityHashesByAddresses[msg.sender][indexToRemove] = lastHash;
-      claimableActivityHashesIndex[msg.sender][lastHash] = indexToRemove;
+      bytes32 lastHash = claimableRecordHashesByAddresses[msg.sender][lastIndex];
+      claimableRecordHashesByAddresses[msg.sender][indexToRemove] = lastHash;
+      claimableRecordHashesIndex[msg.sender][lastHash] = indexToRemove;
     }
 
-    claimableActivityHashesByAddresses[msg.sender].pop();
-    delete claimableActivityHashesIndex[msg.sender][activityHash];
+    claimableRecordHashesByAddresses[msg.sender].pop();
+    delete claimableRecordHashesIndex[msg.sender][recordHash];
     userStats[msg.sender].noOfClaimableWinnings -= 1;
   }
 
@@ -491,12 +491,12 @@ contract Castora is
     uint256 lastIndex = userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings - 1;
 
     if (indexToRemove != lastIndex) {
-      uint256 lastPredictionId = claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender][lastIndex];
-      claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender][indexToRemove] = lastPredictionId;
+      uint256 lastPredictionId = claimablePredictionIdsByAddressesPerPool[poolId][msg.sender][lastIndex];
+      claimablePredictionIdsByAddressesPerPool[poolId][msg.sender][indexToRemove] = lastPredictionId;
       claimablePredictionIdsInPoolIndex[poolId][msg.sender][lastPredictionId] = indexToRemove;
     }
 
-    claimableWinnerPredictionIdsByAddressesPerPool[poolId][msg.sender].pop();
+    claimablePredictionIdsByAddressesPerPool[poolId][msg.sender].pop();
     delete claimablePredictionIdsInPoolIndex[poolId][msg.sender][predictionId];
     userInPoolPredictionStats[poolId][msg.sender].noOfClaimableWinnings -= 1;
   }
@@ -539,9 +539,9 @@ contract Castora is
     prediction.claimedWinningsTime = block.timestamp;
     _updateClaimStats(poolId, pool.winAmount, pool.seeds.stakeToken);
 
-    bytes32 activityHash = hashUserPredictionActivity(UserPredictionActivity(poolId, predictionId));
-    claimedWinnerActivityHashes.push(activityHash);
-    _removeClaimableActivityHash(activityHash);
+    bytes32 recordHash = hashPredictionRecord(PredictionRecord(poolId, predictionId));
+    claimedRecordHashes.push(recordHash);
+    _removeClaimableRecordHash(recordHash);
     _removeClaimablePredictionIdInPool(poolId, predictionId);
 
     emit ClaimedWinnings(

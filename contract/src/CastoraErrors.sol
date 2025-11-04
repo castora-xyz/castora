@@ -15,7 +15,7 @@ contract CastoraErrors {
   error InsufficientStakeValue();
   error InvalidAddress();
   error InvalidActivityId();
-  error InvalidActivityHash();
+  error InvalidRecordHash();
   error InvalidPoolCompletionBatchSize();
   error InvalidPoolFeesPercent();
   error InvalidPoolId();

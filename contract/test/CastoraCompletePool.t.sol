@@ -588,23 +588,22 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     assertEq(castora.poolCompletionBatchesProcessed(poolIdSinglePrediction), 1);
 
     // Verifiy user winner activity
-    assertEq(getters.userWinnerActivitiesPaginated(predicter1, 0, 10).length, 1);
+    assertEq(getters.userWinnerRecordsPaginated(predicter1, 0, 10).length, 1);
 
-    // Verify user claimable activities
-    UserPredictionActivity[] memory userClaimableActivities =
-      getters.userClaimableActivitiesPaginated(predicter1, 0, 10);
-    assertEq(userClaimableActivities.length, userStatsAfter.noOfClaimableWinnings);
-    bool foundActivity = false;
-    for (uint256 i = 0; i < userClaimableActivities.length; i++) {
+    // Verify user claimable records
+    PredictionRecord[] memory userClaimableRecords = getters.userClaimableRecordsPaginated(predicter1, 0, 10);
+    assertEq(userClaimableRecords.length, userStatsAfter.noOfClaimableWinnings);
+    bool foundRecord = false;
+    for (uint256 i = 0; i < userClaimableRecords.length; i++) {
       if (
-        userClaimableActivities[i].poolId == poolIdSinglePrediction
-          && userClaimableActivities[i].predictionId == prediction.predictionId
+        userClaimableRecords[i].poolId == poolIdSinglePrediction
+          && userClaimableRecords[i].predictionId == prediction.predictionId
       ) {
-        foundActivity = true;
+        foundRecord = true;
         break;
       }
     }
-    assertTrue(foundActivity);
+    assertTrue(foundRecord);
 
     // User stats checker in pool
     UserInPoolPredictionStats memory userInPoolStats =
@@ -748,39 +747,37 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Verify batch processing state
     assertEq(castora.poolCompletionBatchesProcessed(poolIdMultiplePredictions), totalBatches);
 
-    // Verify global winner activities
-    assertEq(getters.winnerActivitiesPaginated(0, 10).length, 2);
+    // Verify global winner records
+    assertEq(getters.winnerRecordsPaginated(0, 10).length, 2);
 
-    // Verify user claimable activities for both users
-    UserPredictionActivity[] memory user1ClaimableActivities =
-      getters.userClaimableActivitiesPaginated(predicter1, 0, 10);
-    assertEq(user1ClaimableActivities.length, user1StatsAfter.noOfClaimableWinnings);
-    bool foundUser1Activity = false;
-    for (uint256 i = 0; i < user1ClaimableActivities.length; i++) {
+    // Verify user claimable records for both users
+    PredictionRecord[] memory user1ClaimableRecords = getters.userClaimableRecordsPaginated(predicter1, 0, 10);
+    assertEq(user1ClaimableRecords.length, user1StatsAfter.noOfClaimableWinnings);
+    bool foundUser1Record = false;
+    for (uint256 i = 0; i < user1ClaimableRecords.length; i++) {
       if (
-        user1ClaimableActivities[i].poolId == poolIdMultiplePredictions
-          && user1ClaimableActivities[i].predictionId == prediction1.predictionId
+        user1ClaimableRecords[i].poolId == poolIdMultiplePredictions
+          && user1ClaimableRecords[i].predictionId == prediction1.predictionId
       ) {
-        foundUser1Activity = true;
+        foundUser1Record = true;
         break;
       }
     }
-    assertTrue(foundUser1Activity);
+    assertTrue(foundUser1Record);
 
-    UserPredictionActivity[] memory user2ClaimableActivities =
-      getters.userClaimableActivitiesPaginated(predicter2, 0, 10);
-    assertEq(user2ClaimableActivities.length, user2StatsAfter.noOfClaimableWinnings);
-    bool foundUser2Activity = false;
-    for (uint256 i = 0; i < user2ClaimableActivities.length; i++) {
+    PredictionRecord[] memory user2ClaimableRecords = getters.userClaimableRecordsPaginated(predicter2, 0, 10);
+    assertEq(user2ClaimableRecords.length, user2StatsAfter.noOfClaimableWinnings);
+    bool foundUser2Record = false;
+    for (uint256 i = 0; i < user2ClaimableRecords.length; i++) {
       if (
-        user2ClaimableActivities[i].poolId == poolIdMultiplePredictions
-          && user2ClaimableActivities[i].predictionId == prediction3.predictionId
+        user2ClaimableRecords[i].poolId == poolIdMultiplePredictions
+          && user2ClaimableRecords[i].predictionId == prediction3.predictionId
       ) {
-        foundUser2Activity = true;
+        foundUser2Record = true;
         break;
       }
     }
-    assertTrue(foundUser2Activity);
+    assertTrue(foundUser2Record);
 
     _winnerAssertsAfterMultipleWinners(prediction1, prediction3);
     _stakeTokenAssertsAfterMultipleWinners();

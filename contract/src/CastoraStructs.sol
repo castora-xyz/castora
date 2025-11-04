@@ -124,7 +124,7 @@ contract CastoraStructs {
   }
 
   /// Tracks info about pool and prediction activity of a user
-  struct UserPredictionActivity {
+  struct PredictionRecord {
     /// The ID of the pool in which the prediction was made
     uint256 poolId;
     /// The ID of the specific prediction made by the user

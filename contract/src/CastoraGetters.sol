@@ -45,54 +45,54 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     }
   }
 
-  /// Paginates the UserPredictionActivities of a given context
-  /// @param array Storage array of the hashes of the activities
+  /// Paginates the PredictionRecords of a given context
+  /// @param array Storage array of the hashes of the records
   /// @param total Total length of the array
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of items to return
-  /// @return items Slice of UserPredictionActivities from the array
-  function _paginateUserPredictionActivitiesArray(
+  /// @return items Slice of PredictionRecords from the array
+  function _paginatePredictionRecordsArray(
     function (uint256) external view returns (bytes32) array,
     uint256 total,
     uint256 offset,
     uint256 limit
-  ) internal view returns (UserPredictionActivity[] memory items) {
-    if (offset >= total) return new UserPredictionActivity[](0);
+  ) internal view returns (PredictionRecord[] memory items) {
+    if (offset >= total) return new PredictionRecord[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
     uint256 length = end - offset;
-    items = new UserPredictionActivity[](length);
+    items = new PredictionRecord[](length);
 
     for (uint256 i = 0; i < length; i += 1) {
-      (uint256 poolId, uint256 predictionId) = state.userPredictionActivities(array(offset + i));
-      items[i] = UserPredictionActivity(poolId, predictionId);
+      (uint256 poolId, uint256 predictionId) = state.predictionRecords(array(offset + i));
+      items[i] = PredictionRecord(poolId, predictionId);
     }
   }
 
-  /// Paginates the UserPredictionActivities of a user based on a given context
-  /// @param array Storage array of the hashes of the activities
+  /// Paginates the PredictionRecords of a user based on a given context
+  /// @param array Storage array of the hashes of the records
   /// @param user Address of the involved user
   /// @param total Total length of the array
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of items to return
   /// @return items Slice of addresses from the array
-  function _paginateUserPredictionActivitiesArrayForAddress(
+  function _paginatePredictionRecordsArrayForAddress(
     function (address, uint256) external view returns (bytes32) array,
     address user,
     uint256 total,
     uint256 offset,
     uint256 limit
-  ) internal view returns (UserPredictionActivity[] memory items) {
+  ) internal view returns (PredictionRecord[] memory items) {
     if (user == address(0)) revert InvalidAddress();
-    if (offset >= total) return new UserPredictionActivity[](0);
+    if (offset >= total) return new PredictionRecord[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
     uint256 length = end - offset;
-    items = new UserPredictionActivity[](length);
+    items = new PredictionRecord[](length);
 
     for (uint256 i = 0; i < length; i += 1) {
-      (uint256 poolId, uint256 predictionId) = state.userPredictionActivities(array(user, offset + i));
-      items[i] = UserPredictionActivity(poolId, predictionId);
+      (uint256 poolId, uint256 predictionId) = state.predictionRecords(array(user, offset + i));
+      items[i] = PredictionRecord(poolId, predictionId);
     }
   }
 
@@ -173,54 +173,49 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     tokensList = _paginateAddressArray(state.stakeTokens, allStats().noOfStakeTokens, offset, limit);
   }
 
-  /// Retrieves user prediction activity details by hash
-  /// @param activityHash Hash of the activity to retrieve
-  /// @return activity User prediction activity data
-  function userPredictionActivity(bytes32 activityHash) external view returns (UserPredictionActivity memory activity) {
-    (uint256 poolId, uint256 predictionId) = state.userPredictionActivities(activityHash);
-    if (poolId == 0) revert InvalidActivityHash();
-    activity = UserPredictionActivity(poolId, predictionId);
+  /// Retrieves user prediction record details by hash
+  /// @param recordHash Hash of the record to retrieve
+  /// @return record User prediction record data
+  function predictionRecord(bytes32 recordHash) external view returns (PredictionRecord memory record) {
+    (uint256 poolId, uint256 predictionId) = state.predictionRecords(recordHash);
+    if (poolId == 0) revert InvalidRecordHash();
+    record = PredictionRecord(poolId, predictionId);
   }
 
-  /// Returns paginated list of all prediction activities across the system
+  /// Returns paginated list of all prediction records across the system
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of activities to return
-  /// @return activities Array of prediction activities
-  function allPredictionActivitiesPaginated(uint256 offset, uint256 limit)
+  /// @param limit Maximum number of records to return
+  /// @return records Array of prediction records
+  function predictionRecordsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities = _paginateUserPredictionActivitiesArray(
-      state.userPredictionActivityHashes, allStats().noOfPredictions, offset, limit
-    );
+    records = _paginatePredictionRecordsArray(state.predictionRecordHashes, allStats().noOfPredictions, offset, limit);
   }
 
-  /// Returns paginated list of winning prediction activities
+  /// Returns paginated list of winning prediction records
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of activities to return
-  /// @return activities Array of winner activities
-  function winnerActivitiesPaginated(uint256 offset, uint256 limit)
+  /// @param limit Maximum number of records to return
+  /// @return records Array of winner records
+  function winnerRecordsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities =
-      _paginateUserPredictionActivitiesArray(state.winnerActivityHashes, allStats().noOfWinnings, offset, limit);
+    records = _paginatePredictionRecordsArray(state.winnerRecordHashes, allStats().noOfWinnings, offset, limit);
   }
 
-  /// Returns paginated list of claimed winning prediction activities
+  /// Returns paginated list of claimed winning prediction records
   /// @param offset Starting index for pagination
-  /// @param limit Maximum number of activities to return
-  /// @return activities Array of claimed winner activities
-  function claimedActivitiesPaginated(uint256 offset, uint256 limit)
+  /// @param limit Maximum number of records to return
+  /// @return records Array of claimed winner records
+  function claimedRecordsPaginated(uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities = _paginateUserPredictionActivitiesArray(
-      state.claimedWinnerActivityHashes, allStats().noOfClaimedWinnings, offset, limit
-    );
+    records = _paginatePredictionRecordsArray(state.claimedRecordHashes, allStats().noOfClaimedWinnings, offset, limit);
   }
 
   /// Returns comprehensive statistics for a specific user
@@ -237,7 +232,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of pool IDs to return
   /// @return poolIds Array of pool IDs the user has participated in
-  function joinedPoolIdsForUserPaginated(address user, uint256 offset, uint256 limit)
+  function userJoinedPoolIdsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
     returns (uint256[] memory poolIds)
@@ -256,48 +251,48 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     }
   }
 
-  /// Returns paginated list of prediction activities for a specific user
+  /// Returns paginated list of prediction records for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of hashes to return
-  /// @return activities Array of the user's prediction activity
-  function userPredictionActivitiesPaginated(address user, uint256 offset, uint256 limit)
+  /// @return records Array of the user's prediction record
+  function userPredictionRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities = _paginateUserPredictionActivitiesArrayForAddress(
-      state.userPredictionActivityHashesByAddresses, user, userStats(user).noOfPredictions, offset, limit
+    records = _paginatePredictionRecordsArrayForAddress(
+      state.userPredictionRecords, user, userStats(user).noOfPredictions, offset, limit
     );
   }
 
-  /// Returns paginated list of winning activity hashes for a specific user
+  /// Returns paginated list of winning record hashes for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of hashes to return
-  /// @return activities Array of the user's winning activity hashes
-  function userWinnerActivitiesPaginated(address user, uint256 offset, uint256 limit)
+  /// @return records Array of the user's winning record hashes
+  function userWinnerRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities = _paginateUserPredictionActivitiesArrayForAddress(
-      state.winnerActivityHashesByAddresses, user, userStats(user).noOfWinnings, offset, limit
+    records = _paginatePredictionRecordsArrayForAddress(
+      state.winnerRecordHashesByAddresses, user, userStats(user).noOfWinnings, offset, limit
     );
   }
 
-  /// Returns paginated list of claimable winning activity hashes for a specific user
+  /// Returns paginated list of claimable winning record hashes for a specific user
   /// @param user Address of the user
   /// @param offset Starting index for pagination
   /// @param limit Maximum number of hashes to return
-  /// @return activities Array of the user's claimable winning activity hashes
-  function userClaimableActivitiesPaginated(address user, uint256 offset, uint256 limit)
+  /// @return records Array of the user's claimable winning record hashes
+  function userClaimableRecordsPaginated(address user, uint256 offset, uint256 limit)
     external
     view
-    returns (UserPredictionActivity[] memory activities)
+    returns (PredictionRecord[] memory records)
   {
-    activities = _paginateUserPredictionActivitiesArrayForAddress(
-      state.claimableActivityHashesByAddresses, user, userStats(user).noOfClaimableWinnings, offset, limit
+    records = _paginatePredictionRecordsArrayForAddress(
+      state.claimableRecordHashesByAddresses, user, userStats(user).noOfClaimableWinnings, offset, limit
     );
   }
 
@@ -447,7 +442,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     returns (uint256[] memory predictionIds)
   {
     predictionIds = _paginateUint256ArrayForUserInPool(
-      state.claimableWinnerPredictionIdsByAddressesPerPool,
+      state.claimablePredictionIdsByAddressesPerPool,
       poolId,
       user,
       userInPoolPredictionStats(poolId, user).noOfClaimableWinnings,
@@ -522,11 +517,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
   /// @param user Address of the user
   /// @param token Address of the stake token
   /// @return details User's usage statistics for the specific token
-  function userStakeTokenDetails(address user, address token)
-    external
-    view
-    returns (StakeTokenDetails memory details)
-  {
+  function userStakeTokenDetails(address user, address token) external view returns (StakeTokenDetails memory details) {
     if (user == address(0) || token == address(0)) revert InvalidAddress();
     (uint256 a, uint256 b, uint256 c, uint256 d, uint256 e, uint256 f, uint256 g, uint256 h, uint256 i) =
       state.userStakeTokenDetails(user, token);

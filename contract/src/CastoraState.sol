@@ -21,26 +21,26 @@ abstract contract CastoraState is CastoraErrors, CastoraStructs {
   address[] public predictionTokens;
   /// Array of tokens ever used for staking overall
   address[] public stakeTokens;
-  /// Array of userPredictionActivities stored globally
-  bytes32[] public userPredictionActivityHashes;
+  /// Array of predictionRecords stored globally
+  bytes32[] public predictionRecordHashes;
   /// Array of won predictions
-  bytes32[] public winnerActivityHashes;
+  bytes32[] public winnerRecordHashes;
   /// Array of claimed predictions
-  bytes32[] public claimedWinnerActivityHashes;
+  bytes32[] public claimedRecordHashes;
   /// Keeps track of user addresses to their activity info
   mapping(address => UserPredictionStats stats) public userStats;
   /// Keeps track of user addresses to the number of unique pools they have joined
   mapping(address => uint256[]) public joinedPoolIdsByAddresses;
-  /// Keeps track of user addresses to the activities of their predictions
-  mapping(address => bytes32[]) public userPredictionActivityHashesByAddresses;
+  /// Keeps track of user addresses to the records of their predictions
+  mapping(address => bytes32[]) public userPredictionRecords;
   /// Keeps track of all winner predictions of the user across pools
-  mapping(address => bytes32[]) public winnerActivityHashesByAddresses;
+  mapping(address => bytes32[]) public winnerRecordHashesByAddresses;
   /// Keeps track of all claimable predictions that the user can claim winnings
-  mapping(address => bytes32[]) public claimableActivityHashesByAddresses;
-  /// All UserPredictionActivities against the hash of the activities.
+  mapping(address => bytes32[]) public claimableRecordHashesByAddresses;
+  /// All PredictionRecords against the hash of the records.
   /// Helps in retrieving an activity from either the general context or
   /// when querying a user's chronological actions or getting their claimables.
-  mapping(bytes32 => UserPredictionActivity) public userPredictionActivities;
+  mapping(bytes32 => PredictionRecord) public predictionRecords;
   /// All poolIds against the hash of their seeds. Helps when there is a
   /// need to fetch a poolId.
   mapping(bytes32 => uint256) public poolIdsBySeedsHashes;
@@ -56,7 +56,7 @@ abstract contract CastoraState is CastoraErrors, CastoraStructs {
   /// Keeps track of all winner predictions of a user in a pool
   mapping(uint256 => mapping(address => uint256[])) public winnerPredictionIdsByAddressesPerPool;
   /// Keeps track of all claimable predictions that the user can claim for a given pool.
-  mapping(uint256 => mapping(address => uint256[])) public claimableWinnerPredictionIdsByAddressesPerPool;
+  mapping(uint256 => mapping(address => uint256[])) public claimablePredictionIdsByAddressesPerPool;
   /// Keeps track of totals and info of tokens used for predictions overall
   mapping(address => PredictionTokenDetails) public predictionTokenDetails;
   /// Keeps track of totals and info of tokens used for staking overall
@@ -69,8 +69,8 @@ abstract contract CastoraState is CastoraErrors, CastoraStructs {
   mapping(address => address[]) public userStakeTokens;
   /// Keeps track of info about stake tokens a user has ever used to join pools
   mapping(address => mapping(address => StakeTokenDetails)) public userStakeTokenDetails;
-  /// Maps each activityHash for the user's claimable to the right index
-  mapping(address => mapping(bytes32 => uint256)) public claimableActivityHashesIndex;
+  /// Maps each recordHash for the user's claimable to the right index
+  mapping(address => mapping(bytes32 => uint256)) public claimableRecordHashesIndex;
   /// Maps each predictionId for the user's claimable to the right index in each pool
   mapping(uint256 => mapping(address => mapping(uint256 => uint256))) public claimablePredictionIdsInPoolIndex;
   /// Tracks if a pool's completion has been initiated
