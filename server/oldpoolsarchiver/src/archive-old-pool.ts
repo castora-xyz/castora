@@ -21,12 +21,12 @@ export const archiveOldPool = async (job: Job): Promise<void> => {
   }
 
   const archivalRef = storage.bucket().file(`archives/${chain}/pool-${poolId}.json`);
-  const [exists] = await archivalRef.exists();
+  // const [exists] = await archivalRef.exists();
 
-  if (exists) {
-    logger.info(`Pool ${poolId} already pre-archived.`);
-    return;
-  }
+  // if (exists) {
+  //   logger.info(`Pool ${poolId} already pre-archived.`);
+  //   return;
+  // }
 
   logger.info('\nFetching Predictions ... ');
   const predictions = await fetchPredictions(chain, pool);
