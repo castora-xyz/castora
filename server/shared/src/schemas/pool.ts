@@ -47,7 +47,7 @@ export class Pool {
       winAmount: this.winAmount / 10 ** decimals,
       noOfWinners: this.noOfWinners,
       ...(this.creator ? { creator: this.creator } : {}),
-      ...(this.creator ? { creatorCompletionFees: this.creatorCompletionFees } : {})
+      ...(this.creatorCompletionFees ? { creatorCompletionFees: this.creatorCompletionFees } : {})
     };
   }
 }

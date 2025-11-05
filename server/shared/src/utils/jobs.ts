@@ -25,6 +25,8 @@ export const queueJob = async ({ queueName, jobName, jobData, delay, repeat, job
   await new Queue(queueName, { connection }).add(jobName, jobData, {
     attempts: 7,
     backoff: { type: 'exponential', delay: 15000 } /* retry after 15secs, 30secs, 1min ... 16mins */,
+    removeOnComplete: 10, // Keep only last 10 completed jobs
+    removeOnFail: 5, // Keep only last 5 failed jobs
     ...(delay ? { delay } : {}),
     ...(repeat ? { repeat } : {}),
     ...(jobId ? { jobId } : {})
