@@ -15,7 +15,7 @@ abstract contract CastoraState is CastoraErrors, CastoraStructs {
   bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
   /// Global statistics for all pools and users
   AllPredictionStats public allStats;
-  /// Array of users who have created pools
+  /// Array of users who have predicted in pools
   address[] public users;
   /// Array of tokens ever used for predictions overall
   address[] public predictionTokens;
