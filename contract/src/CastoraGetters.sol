@@ -83,7 +83,6 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     uint256 offset,
     uint256 limit
   ) internal view returns (PredictionRecord[] memory items) {
-    if (user == address(0)) revert InvalidAddress();
     if (offset >= total) return new PredictionRecord[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
@@ -110,8 +109,6 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     uint256 offset,
     uint256 limit
   ) internal view returns (uint256[] memory items) {
-    if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
-    if (user == address(0)) revert InvalidAddress();
     if (offset >= total) return new uint256[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
@@ -137,7 +134,6 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     uint256 offset,
     uint256 limit
   ) internal view returns (address[] memory items) {
-    if (user == address(0)) revert InvalidAddress();
     if (offset >= total) return new address[](0);
 
     uint256 end = offset + limit > total ? total : offset + limit;
@@ -261,6 +257,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (PredictionRecord[] memory records)
   {
+    if (user == address(0)) revert InvalidAddress();
     records = _paginateUserPredictionRecordsArray(
       state.userPredictionRecords, user, userStats(user).noOfPredictions, offset, limit
     );
@@ -276,6 +273,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (PredictionRecord[] memory records)
   {
+    if (user == address(0)) revert InvalidAddress();
     records = _paginateUserPredictionRecordsArray(
       state.winnerRecordHashesByAddresses, user, userStats(user).noOfWinnings, offset, limit
     );
@@ -291,6 +289,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (PredictionRecord[] memory records)
   {
+    if (user == address(0)) revert InvalidAddress();
     records = _paginateUserPredictionRecordsArray(
       state.claimableRecordHashesByAddresses, user, userStats(user).noOfClaimableWinnings, offset, limit
     );
@@ -399,6 +398,8 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (uint256[] memory predictionIds)
   {
+    if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
     predictionIds = _paginateUint256ArrayForUserInPool(
       state.predictionIdsByAddressesPerPool,
       poolId,
@@ -420,6 +421,8 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (uint256[] memory predictionIds)
   {
+    if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
     predictionIds = _paginateUint256ArrayForUserInPool(
       state.winnerPredictionIdsByAddressesPerPool,
       poolId,
@@ -441,6 +444,8 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (uint256[] memory predictionIds)
   {
+    if (poolId == 0 || poolId > allStats().noOfPools) revert InvalidPoolId();
+    if (user == address(0)) revert InvalidAddress();
     predictionIds = _paginateUint256ArrayForUserInPool(
       state.claimablePredictionIdsByAddressesPerPool,
       poolId,
@@ -480,6 +485,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (address[] memory tokensList)
   {
+    if (user == address(0)) revert InvalidAddress();
     tokensList = _paginateAddressArrayForUser(
       state.userPredictionTokens, user, userStats(user).noOfPredictionTokens, offset, limit
     );
@@ -509,6 +515,7 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     view
     returns (address[] memory tokensList)
   {
+    if (user == address(0)) revert InvalidAddress();
     tokensList =
       _paginateAddressArrayForUser(state.userStakeTokens, user, userStats(user).noOfStakeTokens, offset, limit);
   }

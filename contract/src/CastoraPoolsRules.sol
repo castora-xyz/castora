@@ -268,8 +268,7 @@ contract CastoraPoolsRules is
   /// @param token The stake token address
   /// @param amount The stake amount
   function validateStakeAmount(address token, uint256 amount) external view {
-    if (!allowedStakeTokens[token]) revert StakeTokenNotAllowed();
-    if (amount < minimumStakeAmounts[token]) revert StakeAmountNotAllowed();
+    if (amount == 0 || amount < minimumStakeAmounts[token]) revert StakeAmountNotAllowed();
   }
 
   /// Validate that a pool multiplier is allowed
@@ -289,7 +288,7 @@ contract CastoraPoolsRules is
   function validateCreatePool(PoolSeeds memory seeds) external view {
     if (!allowedStakeTokens[seeds.stakeToken]) revert StakeTokenNotAllowed();
     if (!allowedPredictionTokens[seeds.predictionToken]) revert PredictionTokenNotAllowed();
-    if (seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) revert StakeAmountNotAllowed();
+    if (seeds.stakeAmount == 0 || seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) revert StakeAmountNotAllowed();
     if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
     if (
       requiredTimeInterval != 0
@@ -355,7 +354,7 @@ contract CastoraPoolsRules is
   function isValidCreatePool(PoolSeeds memory seeds) external view returns (bool) {
     if (!allowedStakeTokens[seeds.stakeToken]) return false;
     if (!allowedPredictionTokens[seeds.predictionToken]) return false;
-    if (seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) return false;
+    if (seeds.stakeAmount == 0 || seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) return false;
     if (seeds.snapshotTime < seeds.windowCloseTime) return false;
     if (
       requiredTimeInterval != 0

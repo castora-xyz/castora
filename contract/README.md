@@ -202,7 +202,7 @@ Tests are organized by contract functionality with dedicated test files for each
 
 Tests verify proper error handling, boundary conditions, and invalid input rejection. This includes testing with zero amounts, invalid addresses, unauthorized access attempts, among others.
 
-Tests achieve near 100% code coverage across all contracts.
+Tests achieve 100% code coverage across all contracts.
 
 Tests use Foundry's testing framework with proper setup. Each test starts with a clean contract state and attempts to mirror actual user interactions. They verify that cross-contract interactions work correctly.
 

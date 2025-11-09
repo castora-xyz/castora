@@ -620,6 +620,12 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     vm.expectRevert(InvalidAddress.selector);
     getters.userPredictionRecordsPaginated(address(0), 0, 10);
 
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userWinnerRecordsPaginated(address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userClaimableRecordsPaginated(address(0), 0, 10);
+
     vm.expectRevert(InvalidPoolId.selector);
     getters.pool(0);
 
@@ -679,6 +685,24 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     vm.expectRevert(InvalidAddress.selector);
     getters.userInPoolPredictionIdsPaginated(poolIdNative, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.userInPoolWinnerPredictionIdsPaginated(0, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.userInPoolWinnerPredictionIdsPaginated(999, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userInPoolWinnerPredictionIdsPaginated(poolIdNative, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.userInPoolClaimablePredictionIdsPaginated(0, address(0), 0, 10);
+
+    vm.expectRevert(InvalidPoolId.selector);
+    getters.userInPoolClaimablePredictionIdsPaginated(999, address(0), 0, 10);
+
+    vm.expectRevert(InvalidAddress.selector);
+    getters.userInPoolClaimablePredictionIdsPaginated(poolIdNative, address(0), 0, 10);
 
     vm.expectRevert(InvalidAddress.selector);
     getters.predictionTokenDetails(address(0));
