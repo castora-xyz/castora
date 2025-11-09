@@ -44,7 +44,7 @@ Once a pool is completed and winners are determined, they can claim their reward
 
 In Castora, you predict the price of a token at specific time in future (**snapshot time**). To place your prediction, you provide your **prediction price** for the given token pair and you pay the entry fee (**stake**). Predicting is essentially joining the pool. Every duel pool is uniquely identified by its ID (a numeric value), snapshot time, stake details, and **window close time** (timestamp before snapshot at which no other person can join the pool).
 
-Castora computes rewards by selecting the predictions whose prices were closest to the actual price of the token pair at snapshot time (**snapshot price**). The following is how Duel completes a pool:
+Castora computes rewards by selecting the predictions whose prices were closest to the actual price of the token pair at snapshot time (**snapshot price**). The following is how pools are settled:
 
 - Obtain the snapshot price
 - Compare all predicted prices against the snapshot price
