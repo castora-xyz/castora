@@ -5,10 +5,17 @@ import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraState} from './CastoraState.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
+/// Dedicated getter contract for improved reads from the main Castora contract.
+/// Exposes paginated queries for users, pools, predictions, tokens, and other statistics.
 contract CastoraGetters is CastoraErrors, CastoraStructs {
+  /// Reference to the main Castora contract (that would have inherited CastoraState) for easy calls
   CastoraState public immutable state;
+
+  /// Address of the main Castora contract
   address public immutable castora;
 
+  /// Initializes getter contract with reference to main Castora contract
+  /// @param castora_ Address of the deployed Castora contract
   constructor(address castora_) {
     if (castora_ == address(0)) revert InvalidAddress();
     castora = castora_;
@@ -410,12 +417,12 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     );
   }
 
-  // /// Returns paginated list of winning prediction IDs for a user in a specific pool
-  // /// @param poolId ID of the pool to fetch from
-  // /// @param user Address of the user
-  // /// @param offset Starting index for pagination
-  // /// @param limit Maximum number of prediction IDs to return
-  // /// @return predictionIds Array of winning prediction IDs
+  /// Returns paginated list of winning prediction IDs for a user in a specific pool
+  /// @param poolId ID of the pool to fetch from
+  /// @param user Address of the user
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of prediction IDs to return
+  /// @return predictionIds Array of winning prediction IDs
   function userInPoolWinnerPredictionIdsPaginated(uint256 poolId, address user, uint256 offset, uint256 limit)
     external
     view

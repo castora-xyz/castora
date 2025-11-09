@@ -85,6 +85,10 @@ mapping(address => bytes32[]) public userPredictionRecords;
 // ...
 ```
 
+Pool IDs and Prediction IDs are numbers. They are numeric increments of the counts of pools or predictions (in a pool) at the time they happened. Pool IDs are stored and referenced in multiple places as necessary. However, to retrieve a prediction, you need both its Pool ID and the Prediction ID itself. So these two are grouped into a `PredictionRecord` struct that has `poolId` and `predictionId` fields.
+
+However, unlike Pool IDs that are repeatedly stored almost everywhere as needed, PredictionRecords are structs. Storage/memory allocations for their repetitive storage would have been expensive. So when a prediction is made, only the PredictionRecord (poolId + predictionId) gets stored once. Instead, the record hash is stored in multiple mappings and arrays as needed in various places. With the hash(es), the main record(s) are retrieveable.
+
 Castora and PoolsManager both store claimable winnings and claimable pool completion fees directly in contract state. Users can bulk claim these funds efficiently. Without storing claimables, client code would need to manually fetch all user predictions or created pools and check which are claimable.
 
 Getter functions either return one struct, multiple structs, or paginated data. Every list or array query uses pagination. Even if you want one item, use the paginator - it serves both single and multiple purposes. Using getters ensures that clients get data in the same format as they are defined in the contract. Otherwise, they will obtain contract data as arrays of primitive types which is hard to work with. The names of getters are consistent to help with easy understanding.

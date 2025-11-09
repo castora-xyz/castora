@@ -4,79 +4,115 @@ pragma solidity 0.8.30;
 import {CastoraErrors} from './CastoraErrors.sol';
 import {CastoraStructs} from './CastoraStructs.sol';
 
+/// Abstract contract containing all state variables for the main Castora contract.
+/// This dedicated contract allows CastoraGetters contract to reference the storage layout of the 
+/// main Castora contract without accessing the entire main Castora contract itself. 
+/// The main Castora contract extends this CastoraState. 
 abstract contract CastoraState is CastoraErrors, CastoraStructs {
-  /// Address for CastoraActivities contract
+  /// Address of the CastoraActivities contract for logging user actions and system events
   address public activities;
-  /// Address for CastoraPoolsManager contract
+
+  /// Address of the CastoraPoolsManager contract that serves as feeCollector and processes pool completions
   address public poolsManager;
-  /// Address for CastoraPoolsRules contract
+
+  /// Address of the CastoraPoolsRules contract for validating PoolSeeds on creation.
   address public poolsRules;
-  /// Specifies the role that allow perculiar addresses to call admin functions.
+
+  /// Role identifier for addresses authorized to create or complete pools.
   bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
-  /// Global statistics for all pools and users
+
+  /// Aggregated statistics across all pools, users, predictions, and tokens in the main Castora contract
   AllPredictionStats public allStats;
-  /// Array of users who have predicted in pools
+
+  /// Array of all unique user addresses that have ever made predictions in any pool
   address[] public users;
-  /// Array of tokens ever used for predictions overall
+
+  /// Array of all token addresses that have been used as prediction targets across any pool
   address[] public predictionTokens;
-  /// Array of tokens ever used for staking overall
+
+  /// Array of all token addresses that have been used for staking/payment across any pool
   address[] public stakeTokens;
-  /// Array of predictionRecords stored globally
+
+  /// Array containing hashes of all prediction records in the main Castora contract
   bytes32[] public predictionRecordHashes;
-  /// Array of won predictions
+
+  /// Array containing hashes of all winning prediction records across completed pools
   bytes32[] public winnerRecordHashes;
-  /// Array of claimed predictions
+
+  /// Array containing hashes of all claimed winning prediction records
   bytes32[] public claimedRecordHashes;
-  /// Keeps track of user addresses to their activity info
+
   mapping(address => UserPredictionStats stats) public userStats;
-  /// Keeps track of user addresses to the number of unique pools they have joined
+
+  /// Maps user addresses to arrays of pool IDs they have participated in
   mapping(address => uint256[]) public joinedPoolIdsByAddresses;
-  /// Keeps track of user addresses to the records of their predictions
+
+  /// Maps user addresses to arrays of their prediction record hashes for activity tracking
   mapping(address => bytes32[]) public userPredictionRecords;
-  /// Keeps track of all winner predictions of the user across pools
+
+  /// Maps user addresses to arrays of their winning prediction record hashes
   mapping(address => bytes32[]) public winnerRecordHashesByAddresses;
-  /// Keeps track of all claimable predictions that the user can claim winnings
+
+  /// Maps user addresses to arrays of their unclaimed winning prediction record hashes
   mapping(address => bytes32[]) public claimableRecordHashesByAddresses;
-  /// All PredictionRecords against the hash of the records.
-  /// Helps in retrieving an activity from either the general context or
-  /// when querying a user's chronological actions or getting their claimables.
+
+  /// Maps prediction record hashes to their corresponding PredictionRecord data structures
+  /// Enables efficient retrieval of prediction details from hashes stored in arrays
   mapping(bytes32 => PredictionRecord) public predictionRecords;
-  /// All poolIds against the hash of their seeds. Helps when there is a
-  /// need to fetch a poolId.
+
+  /// Maps pool seed hashes to their assigned pool IDs to prevent duplicate pool creation
   mapping(bytes32 => uint256) public poolIdsBySeedsHashes;
-  /// All pools that were ever created against their poolIds.
+
+  /// Maps pool IDs to their complete Pool data structures containing all pool information
   mapping(uint256 => Pool) public pools;
-  /// Keeps track of predictions in pools by their predictionIds.
+
+  /// Maps pool ID and prediction ID to complete Prediction data structures
   mapping(uint256 => mapping(uint256 => Prediction)) public predictions;
-  /// Keeps track of a user's activity in a given pool.
+
+  /// Maps pool ID and user address to their specific statistics within that pool
   mapping(uint256 => mapping(address => UserInPoolPredictionStats)) public userInPoolPredictionStats;
-  /// Keeps track of predictions in pools by the predicter's address.
-  /// Helps in fetching predictions made by participants.
+
+  /// Maps pool ID and user address to arrays of prediction IDs they made in that pool
   mapping(uint256 => mapping(address => uint256[])) public predictionIdsByAddressesPerPool;
-  /// Keeps track of all winner predictions of a user in a pool
+
+  /// Maps pool ID and user address to arrays of their winning prediction IDs in that pool
   mapping(uint256 => mapping(address => uint256[])) public winnerPredictionIdsByAddressesPerPool;
-  /// Keeps track of all claimable predictions that the user can claim for a given pool.
+
+  /// Maps pool ID and user address to arrays of their unclaimed winning prediction IDs in that pool
   mapping(uint256 => mapping(address => uint256[])) public claimablePredictionIdsByAddressesPerPool;
-  /// Keeps track of totals and info of tokens used for predictions overall
+
+  /// Maps prediction token addresses to their usage statistics across all pools
   mapping(address => PredictionTokenDetails) public predictionTokenDetails;
-  /// Keeps track of totals and info of tokens used for staking overall
+
+  /// Maps stake token addresses to their usage statistics across all pools and predictions
   mapping(address => StakeTokenDetails) public stakeTokenDetails;
-  /// Keeps track of tokens that a user has ever used in joinig pools
+
+  /// Maps user addresses to arrays of prediction token addresses they have ever used
   mapping(address => address[]) public userPredictionTokens;
-  /// Keeps track of info about prediction tokens a user has ever used in joining pools
+
+  /// Maps user address and prediction token to user-specific usage statistics for that token
   mapping(address => mapping(address => PredictionTokenDetails)) public userPredictionTokenDetails;
-  /// Keeps track of tokens that a user has ever paid to join pools
+
+  /// Maps user addresses to arrays of stake token addresses they have ever used for payments
   mapping(address => address[]) public userStakeTokens;
-  /// Keeps track of info about stake tokens a user has ever used to join pools
+
+  /// Maps user address and stake token to user-specific usage statistics for that token
   mapping(address => mapping(address => StakeTokenDetails)) public userStakeTokenDetails;
-  /// Maps each recordHash for the user's claimable to the right index
+
+  /// Maps user address and record hash to the index position in their claimable records array
+  /// Enables efficient removal of claimed records using swap-and-pop pattern
   mapping(address => mapping(bytes32 => uint256)) public claimableRecordHashesIndex;
-  /// Maps each predictionId for the user's claimable to the right index in each pool
+
+  /// Maps pool ID, user address, and prediction ID to index position in claimable predictions array
+  /// Enables efficient removal of claimed predictions within specific pools
   mapping(uint256 => mapping(address => mapping(uint256 => uint256))) public claimablePredictionIdsInPoolIndex;
-  /// Tracks if a pool's completion has been initiated
+
+  /// Maps pool IDs to boolean indicating if pool completion process has been started
   mapping(uint256 => bool) public hasPoolCompletionBeenInitiated;
-  /// Tracks the total batch sizes for processing pool completion
+
+  /// Maps pool IDs to the batch size used for processing winners during pool completion
   mapping(uint256 => uint256) public poolCompletionBatchSize;
-  /// Tracks how many batches have been processed for each pool
+
+  /// Maps pool IDs to the number of winner batches that have been successfully processed
   mapping(uint256 => uint256) public poolCompletionBatchesProcessed;
 }
