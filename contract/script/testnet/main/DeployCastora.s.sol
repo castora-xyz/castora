@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import 'openzeppelin-foundry-upgrades/Upgrades.sol';
-import '../../src/Castora.sol';
+import '../../../src/Castora.sol';
 import 'forge-std/Script.sol';
 
 contract DeployCastora is Script {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.30;
 
-import '../../src/CastoraPoolsRules.sol';
+import '../../../src/CastoraPoolsRules.sol';
 import 'forge-std/Script.sol';
 
 contract UpdateStakeToken is Script {
@@ -14,7 +14,7 @@ contract UpdateStakeToken is Script {
     bool allowed = vm.envBool('STAKE_TOKEN_ALLOWED');
 
     CastoraPoolsRules poolsRules = CastoraPoolsRules(poolsRulesProxy);
-    
+
     if (allowed) {
       poolsRules.allowStakeToken(tokenAddress, minimumAmount);
       console.log('Allowed stake token: ', tokenAddress);
