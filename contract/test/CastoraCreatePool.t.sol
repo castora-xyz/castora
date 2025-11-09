@@ -70,10 +70,8 @@ contract CastoraCreatePoolTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Configure pools rules to allow these tokens and amounts
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
-    poolsRules.updateAllowedStakeToken(address(cusd), true);
-    poolsRules.updateAllowedStakeToken(address(castora), true);
-    poolsRules.updateAllowedStakeAmount(address(cusd), 1000000, true);
-    poolsRules.updateAllowedStakeAmount(address(castora), 1 ether, true);
+    poolsRules.allowStakeToken(address(cusd), 1000000);
+    poolsRules.allowStakeToken(address(castora), 1 ether);
     poolsRules.updateAllowedPoolMultiplier(200, true);
   }
 

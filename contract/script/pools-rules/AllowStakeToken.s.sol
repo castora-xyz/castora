@@ -10,13 +10,13 @@ contract UpdateStakeToken is Script {
 
     address poolsRulesProxy = vm.envAddress('CASTORA_POOLS_RULES_PROXY');
     address tokenAddress = vm.envAddress('STAKE_TOKEN_ADDRESS');
-    bool allowed = vm.envBool('STAKE_TOKEN_ALLOWED');
+    uint256 minimumAmount = vm.envUint('MINIMUM_STAKE_AMOUNT');
 
     CastoraPoolsRules poolsRules = CastoraPoolsRules(poolsRulesProxy);
-    poolsRules.updateAllowedStakeToken(tokenAddress, allowed);
+    poolsRules.allowStakeToken(tokenAddress, minimumAmount);
 
-    console.log('Updated stake token allowance for: ', tokenAddress);
-    console.log('Allowed: ', allowed);
+    console.log('Allowed stake token: ', tokenAddress);
+    console.log('Minimum amount: ', minimumAmount);
 
     vm.stopBroadcast();
   }

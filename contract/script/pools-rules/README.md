@@ -12,8 +12,7 @@ This folder contains scripts for deploying and managing the CastoraPoolsRules co
 ### Management Scripts
 
 - **UpdatePredictionToken.s.sol**: Updates the allowed status of a prediction token
-- **UpdateStakeToken.s.sol**: Updates the allowed status of a stake token
-- **UpdateStakeAmount.s.sol**: Updates the allowed status of a specific stake amount for a token
+- **AllowStakeToken.s.sol**: Marks a stake token as allowed with a specified minimum stake amount
 - **UpdatePoolTimeInterval.s.sol**: Updates the required time interval for pool timing validation
 
 ## Environment Variables Required

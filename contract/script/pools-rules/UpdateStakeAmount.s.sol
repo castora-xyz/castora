@@ -4,21 +4,25 @@ pragma solidity ^0.8.30;
 import '../../src/CastoraPoolsRules.sol';
 import 'forge-std/Script.sol';
 
-contract UpdateStakeAmount is Script {
+contract UpdateStakeToken is Script {
   function run() public {
     vm.startBroadcast(vm.envUint('CASTORA_OWNER_KEY'));
 
     address poolsRulesProxy = vm.envAddress('CASTORA_POOLS_RULES_PROXY');
     address tokenAddress = vm.envAddress('STAKE_TOKEN_ADDRESS');
-    uint256 stakeAmount = vm.envUint('STAKE_AMOUNT');
-    bool allowed = vm.envBool('STAKE_AMOUNT_ALLOWED');
+    uint256 minimumAmount = vm.envUint('MINIMUM_STAKE_AMOUNT');
+    bool allowed = vm.envBool('STAKE_TOKEN_ALLOWED');
 
     CastoraPoolsRules poolsRules = CastoraPoolsRules(poolsRulesProxy);
-    poolsRules.updateAllowedStakeAmount(tokenAddress, stakeAmount, allowed);
-
-    console.log('Updated stake amount allowance for token: ', tokenAddress);
-    console.log('Stake amount: ', stakeAmount);
-    console.log('Allowed: ', allowed);
+    
+    if (allowed) {
+      poolsRules.allowStakeToken(tokenAddress, minimumAmount);
+      console.log('Allowed stake token: ', tokenAddress);
+      console.log('Minimum stake amount: ', minimumAmount);
+    } else {
+      poolsRules.disallowStakeToken(tokenAddress);
+      console.log('Disallowed stake token: ', tokenAddress);
+    }
 
     vm.stopBroadcast();
   }

@@ -80,8 +80,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
     // Configure pools rules
     poolsRules.updateAllowedPredictionToken(address(castora), true);
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
-    poolsRules.updateAllowedStakeToken(address(cusd), true);
-    poolsRules.updateAllowedStakeAmount(address(cusd), 1000000, true);
+    poolsRules.allowStakeToken(address(cusd), 1000000);
     poolsRules.updateAllowedPoolMultiplier(200, true);
 
     // Create pools for testing
@@ -845,8 +844,7 @@ contract CastoraCompletePoolTest is CastoraErrors, CastoraEvents, CastoraStructs
 
   function _setupForNativeTokenStake() internal returns (uint256 nativeStakePoolId) {
     // allow the castora address as a stoke token for validating native token usage
-    poolsRules.updateAllowedStakeToken(address(castora), true);
-    poolsRules.updateAllowedStakeAmount(address(castora), 1 ether, true);
+    poolsRules.allowStakeToken(address(castora), 1 ether);
 
     // Create a pool that uses the contract itself as stake token to test failed fee transfer
     nativeStakePoolId = castora.createPool(

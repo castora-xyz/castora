@@ -54,8 +54,8 @@ contract CastoraPoolsRules is
   mapping(address => bool) public allowedStakeTokens;
   /// Tracks which tokens are allowed for predictions
   mapping(address => bool) public allowedPredictionTokens;
-  /// Tracks which stake amounts are allowed per token
-  mapping(address => mapping(uint256 => bool)) public allowedStakeAmounts;
+  /// Tracks minimum stake amounts per token
+  mapping(address => uint256) public minimumStakeAmounts;
   /// Tracks if a stake token has ever been added to everAllowedStakeTokens (prevents duplicates)
   mapping(address => bool) public hasEverBeenAllowedStakeToken;
   /// Tracks if a prediction token has ever been added to everAllowedPredictionTokens (prevents duplicates)
@@ -103,46 +103,60 @@ contract CastoraPoolsRules is
     emit UpdatedCurrentPoolFeesPercent(oldPoolFeesPercent, newPercent);
   }
 
-  /// Set whether a stake token is allowed
+  /// Allow a stake token and set its minimum stake amount
   /// @param token The token address
-  /// @param allowed Whether the token is allowed
-  function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
+  /// @param minimumAmount The minimum stake amount for this token
+  function allowStakeToken(address token, uint256 minimumAmount) external onlyOwner nonReentrant {
     if (token == address(0)) revert InvalidAddress();
+    if (minimumAmount == 0) revert StakeAmountNotAllowed();
 
     bool wasAllowed = allowedStakeTokens[token];
-    allowedStakeTokens[token] = allowed;
+    allowedStakeTokens[token] = true;
+    minimumStakeAmounts[token] = minimumAmount;
 
     // Track in ever allowed array if this is the first time it's being allowed
-    if (allowed && !hasEverBeenAllowedStakeToken[token]) {
+    if (!hasEverBeenAllowedStakeToken[token]) {
       everAllowedStakeTokens.push(token);
       hasEverBeenAllowedStakeToken[token] = true;
       everAllowedStakeTokensCount++;
     }
 
     // Update currently allowed arrays
-    if (allowed && !wasAllowed) {
+    if (!wasAllowed) {
       // Adding to currently allowed
       currentlyAllowedStakeTokenIndex[token] = currentlyAllowedStakeTokens.length;
       currentlyAllowedStakeTokens.push(token);
       currentlyAllowedStakeTokensCount++;
-    } else if (!allowed && wasAllowed) {
-      // Removing from currently allowed
-      uint256 indexToRemove = currentlyAllowedStakeTokenIndex[token];
-      uint256 lastIndex = currentlyAllowedStakeTokens.length - 1;
-
-      if (indexToRemove != lastIndex) {
-        // Move the last element to the position of the element to remove
-        address lastToken = currentlyAllowedStakeTokens[lastIndex];
-        currentlyAllowedStakeTokens[indexToRemove] = lastToken;
-        currentlyAllowedStakeTokenIndex[lastToken] = indexToRemove;
-      }
-
-      currentlyAllowedStakeTokens.pop();
-      delete currentlyAllowedStakeTokenIndex[token];
-      currentlyAllowedStakeTokensCount--;
     }
 
-    emit UpdatedAllowedStakeToken(token, allowed);
+    emit UpdatedAllowedStakeToken(token, true);
+  }
+
+  /// Disallow a stake token
+  /// @param token The token address
+  function disallowStakeToken(address token) external onlyOwner nonReentrant {
+    if (token == address(0)) revert InvalidAddress();
+    if (!allowedStakeTokens[token]) revert StakeTokenNotAllowed();
+
+    allowedStakeTokens[token] = false;
+    minimumStakeAmounts[token] = 0;
+
+    // Remove from currently allowed
+    uint256 indexToRemove = currentlyAllowedStakeTokenIndex[token];
+    uint256 lastIndex = currentlyAllowedStakeTokens.length - 1;
+
+    if (indexToRemove != lastIndex) {
+      // Move the last element to the position of the element to remove
+      address lastToken = currentlyAllowedStakeTokens[lastIndex];
+      currentlyAllowedStakeTokens[indexToRemove] = lastToken;
+      currentlyAllowedStakeTokenIndex[lastToken] = indexToRemove;
+    }
+
+    currentlyAllowedStakeTokens.pop();
+    delete currentlyAllowedStakeTokenIndex[token];
+    currentlyAllowedStakeTokensCount--;
+
+    emit UpdatedAllowedStakeToken(token, false);
   }
 
   /// Set whether a prediction token is allowed
@@ -185,15 +199,6 @@ contract CastoraPoolsRules is
     }
 
     emit UpdatedAllowedPredictionToken(token, allowed);
-  }
-
-  /// Set whether a specific stake amount is allowed for a token
-  /// @param token The stake token address
-  /// @param amount The stake amount
-  /// @param allowed Whether this amount is allowed
-  function updateAllowedStakeAmount(address token, uint256 amount, bool allowed) external onlyOwner nonReentrant {
-    allowedStakeAmounts[token][amount] = allowed;
-    emit UpdatedAllowedStakeAmount(token, amount, allowed);
   }
 
   /// Set whether a specific multiplier is allowed for pools
@@ -259,11 +264,12 @@ contract CastoraPoolsRules is
     if (!allowedPredictionTokens[token]) revert PredictionTokenNotAllowed();
   }
 
-  /// Validate that stake amount is allowed for the given token
+  /// Validate that stake amount meets minimum requirement for the given token
   /// @param token The stake token address
   /// @param amount The stake amount
   function validateStakeAmount(address token, uint256 amount) external view {
-    if (!allowedStakeAmounts[token][amount]) revert StakeAmountNotAllowed();
+    if (!allowedStakeTokens[token]) revert StakeTokenNotAllowed();
+    if (amount < minimumStakeAmounts[token]) revert StakeAmountNotAllowed();
   }
 
   /// Validate that a pool multiplier is allowed
@@ -283,7 +289,7 @@ contract CastoraPoolsRules is
   function validateCreatePool(PoolSeeds memory seeds) external view {
     if (!allowedStakeTokens[seeds.stakeToken]) revert StakeTokenNotAllowed();
     if (!allowedPredictionTokens[seeds.predictionToken]) revert PredictionTokenNotAllowed();
-    if (!allowedStakeAmounts[seeds.stakeToken][seeds.stakeAmount]) revert StakeAmountNotAllowed();
+    if (seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) revert StakeAmountNotAllowed();
     if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
     if (
       requiredTimeInterval != 0
@@ -320,12 +326,13 @@ contract CastoraPoolsRules is
     return allowedPredictionTokens[token];
   }
 
-  /// Check if stake amount is allowed for the given token without reverting
+  /// Check if stake amount meets minimum requirement for the given token without reverting
   /// @param token The stake token address
   /// @param amount The stake amount
-  /// @return true if amount is allowed, false otherwise
+  /// @return true if amount meets minimum, false otherwise
   function isValidStakeAmount(address token, uint256 amount) external view returns (bool) {
-    return allowedStakeAmounts[token][amount];
+    if (!allowedStakeTokens[token]) return false;
+    return amount >= minimumStakeAmounts[token];
   }
 
   /// Check if a pool multiplier is allowed without reverting
@@ -348,7 +355,7 @@ contract CastoraPoolsRules is
   function isValidCreatePool(PoolSeeds memory seeds) external view returns (bool) {
     if (!allowedStakeTokens[seeds.stakeToken]) return false;
     if (!allowedPredictionTokens[seeds.predictionToken]) return false;
-    if (!allowedStakeAmounts[seeds.stakeToken][seeds.stakeAmount]) return false;
+    if (seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) return false;
     if (seeds.snapshotTime < seeds.windowCloseTime) return false;
     if (
       requiredTimeInterval != 0

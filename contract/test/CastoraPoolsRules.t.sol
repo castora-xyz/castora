@@ -58,40 +58,86 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.requiredTimeInterval(), 5 * 60); // 5 minutes default
   }
 
-  function testUpdateAllowedStakeToken() public {
+  function testAllowStakeToken() public {
+    uint256 minimumAmount = 1000000;
+
     // Initially not allowed
     assertFalse(rules.allowedStakeTokens(address(cusd)));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), 0);
     assertEq(rules.everAllowedStakeTokensCount(), 0);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 0);
 
-    // Set to allowed
+    // Set to allowed with minimum amount
     vm.expectEmit(true, false, false, true);
     emit UpdatedAllowedStakeToken(address(cusd), true);
-    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), minimumAmount);
     assertTrue(rules.allowedStakeTokens(address(cusd)));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), minimumAmount);
     assertEq(rules.everAllowedStakeTokensCount(), 1);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 1);
     assertTrue(rules.hasEverBeenAllowedStakeToken(address(cusd)));
 
-    // Set back to not allowed
+    // Update minimum amount for same token
+    uint256 newMinimumAmount = 2000000;
+    vm.expectEmit(true, false, false, true);
+    emit UpdatedAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), newMinimumAmount);
+    assertTrue(rules.allowedStakeTokens(address(cusd)));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), newMinimumAmount);
+    assertEq(rules.everAllowedStakeTokensCount(), 1); // Should remain same
+    assertEq(rules.currentlyAllowedStakeTokensCount(), 1); // Should remain same
+  }
+
+  function testDisallowStakeToken() public {
+    uint256 minimumAmount = 1000000;
+
+    // First allow the token
+    rules.allowStakeToken(address(cusd), minimumAmount);
+    assertTrue(rules.allowedStakeTokens(address(cusd)));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), minimumAmount);
+
+    // Disallow the token
     vm.expectEmit(true, false, false, true);
     emit UpdatedAllowedStakeToken(address(cusd), false);
-    rules.updateAllowedStakeToken(address(cusd), false);
+    rules.disallowStakeToken(address(cusd));
     assertFalse(rules.allowedStakeTokens(address(cusd)));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), 0);
     assertEq(rules.everAllowedStakeTokensCount(), 1); // Should remain in ever allowed
     assertEq(rules.currentlyAllowedStakeTokensCount(), 0); // Should be removed from currently allowed
     assertTrue(rules.hasEverBeenAllowedStakeToken(address(cusd))); // Should still be marked as ever allowed
   }
 
-  function testRevertUpdateAllowedStakeTokenNotOwner() public {
+  function testRevertAllowStakeTokenNotOwner() public {
     vm.prank(user);
     vm.expectRevert();
-    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), 1000000);
   }
 
-  function testRevertUpdateAllowedStakeTokenAddressZero() public {
+  function testRevertAllowStakeTokenAddressZero() public {
     vm.expectRevert(InvalidAddress.selector);
-    rules.updateAllowedStakeToken(address(0), true);
+    rules.allowStakeToken(address(0), 1000000);
+  }
+
+  function testRevertAllowStakeTokenZeroAmount() public {
+    vm.expectRevert(StakeAmountNotAllowed.selector);
+    rules.allowStakeToken(address(cusd), 0);
+  }
+
+  function testRevertDisallowStakeTokenNotOwner() public {
+    rules.allowStakeToken(address(cusd), 1000000);
+    vm.prank(user);
+    vm.expectRevert();
+    rules.disallowStakeToken(address(cusd));
+  }
+
+  function testRevertDisallowStakeTokenAddressZero() public {
+    vm.expectRevert(InvalidAddress.selector);
+    rules.disallowStakeToken(address(0));
+  }
+
+  function testRevertDisallowStakeTokenNotAllowed() public {
+    vm.expectRevert(StakeTokenNotAllowed.selector);
+    rules.disallowStakeToken(address(cusd));
   }
 
   function testUpdateAllowedPredictionToken() public {
@@ -128,31 +174,6 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   function testRevertUpdateAllowedPredictionTokenAddressZero() public {
     vm.expectRevert(InvalidAddress.selector);
     rules.updateAllowedPredictionToken(address(0), true);
-  }
-
-  function testUpdateAllowedStakeAmount() public {
-    uint256 amount = 1000000;
-
-    // Initially not allowed
-    assertFalse(rules.allowedStakeAmounts(address(cusd), amount));
-
-    // Set to allowed
-    vm.expectEmit(true, false, false, true);
-    emit UpdatedAllowedStakeAmount(address(cusd), amount, true);
-    rules.updateAllowedStakeAmount(address(cusd), amount, true);
-    assertTrue(rules.allowedStakeAmounts(address(cusd), amount));
-
-    // Set back to not allowed
-    vm.expectEmit(true, false, false, true);
-    emit UpdatedAllowedStakeAmount(address(cusd), amount, false);
-    rules.updateAllowedStakeAmount(address(cusd), amount, false);
-    assertFalse(rules.allowedStakeAmounts(address(cusd), amount));
-  }
-
-  function testRevertUpdateAllowedStakeAmountNotOwner() public {
-    vm.prank(user);
-    vm.expectRevert();
-    rules.updateAllowedStakeAmount(address(cusd), 1000000, true);
   }
 
   function testUpdateCurrentPoolFeesPercent() public {
@@ -263,7 +284,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testValidateStakeTokenSuccess() public {
     // Allow the token first
-    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), 1000000);
 
     // Should not revert
     rules.validateStakeToken(address(cusd));
@@ -290,21 +311,29 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   }
 
   function testValidateStakeAmountSuccess() public {
-    uint256 amount = 1000000;
+    uint256 minimumAmount = 1000000;
+    uint256 validAmount = 1500000; // Above minimum
 
-    // Allow the amount first
-    rules.updateAllowedStakeAmount(address(cusd), amount, true);
+    // Allow the token with minimum amount
+    rules.allowStakeToken(address(cusd), minimumAmount);
 
-    // Should not revert
-    rules.validateStakeAmount(address(cusd), amount);
+    // Should not revert for exact minimum
+    rules.validateStakeAmount(address(cusd), minimumAmount);
+    
+    // Should not revert for amount above minimum
+    rules.validateStakeAmount(address(cusd), validAmount);
   }
 
-  function testRevertValidateStakeAmountNotAllowed() public {
-    uint256 amount = 1000000;
+  function testRevertValidateStakeAmountBelowMinimum() public {
+    uint256 minimumAmount = 1000000;
+    uint256 belowMinimumAmount = 500000;
 
-    // Amount is not allowed by default
+    // Allow the token with minimum amount
+    rules.allowStakeToken(address(cusd), minimumAmount);
+
+    // Amount below minimum should revert
     vm.expectRevert(StakeAmountNotAllowed.selector);
-    rules.validateStakeAmount(address(cusd), amount);
+    rules.validateStakeAmount(address(cusd), belowMinimumAmount);
   }
 
   function testUpdateRequiredTimeInterval() public {
@@ -433,7 +462,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   }
 
   function testIsValidStakeTokenAllowed() public {
-    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), 1000000);
     assertTrue(rules.isValidStakeToken(address(cusd)));
   }
 
@@ -450,22 +479,33 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertFalse(rules.isValidPredictionToken(address(cusd)));
   }
 
-  function testIsValidStakeAmountAllowed() public {
-    uint256 amount = 1000000;
-    rules.updateAllowedStakeAmount(address(cusd), amount, true);
-    assertTrue(rules.isValidStakeAmount(address(cusd), amount));
+  function testIsValidStakeAmountMeetsMinimum() public {
+    uint256 minimumAmount = 1000000;
+    uint256 validAmount = 1500000;
+    
+    rules.allowStakeToken(address(cusd), minimumAmount);
+    
+    // Should return true for exact minimum
+    assertTrue(rules.isValidStakeAmount(address(cusd), minimumAmount));
+    
+    // Should return true for amount above minimum
+    assertTrue(rules.isValidStakeAmount(address(cusd), validAmount));
   }
 
-  function testIsValidStakeAmountNotAllowed() public view {
-    uint256 amount = 1000000;
-    assertFalse(rules.isValidStakeAmount(address(cusd), amount));
+  function testIsValidStakeAmountBelowMinimum() public {
+    uint256 minimumAmount = 1000000;
+    uint256 belowMinimumAmount = 500000;
+    
+    rules.allowStakeToken(address(cusd), minimumAmount);
+    
+    // Should return false for amount below minimum
+    assertFalse(rules.isValidStakeAmount(address(cusd), belowMinimumAmount));
   }
 
   function testValidateCreatePoolSuccess() public {
     // Set up all required allowances
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
     rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
 
     // Should not revert
@@ -475,7 +515,6 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   function testRevertValidateCreatePoolStakeTokenNotAllowed() public {
     // Set up other allowances but not stake token
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
 
     vm.expectRevert(StakeTokenNotAllowed.selector);
     rules.validateCreatePool(validSeeds);
@@ -483,16 +522,16 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testRevertValidateCreatePoolPredictionTokenNotAllowed() public {
     // Set up other allowances but not prediction token
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
 
     vm.expectRevert(PredictionTokenNotAllowed.selector);
     rules.validateCreatePool(validSeeds);
   }
 
-  function testRevertValidateCreatePoolStakeAmountNotAllowed() public {
-    // Set up other allowances but not stake amount
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+  function testRevertValidateCreatePoolStakeAmountBelowMinimum() public {
+    // Set up other allowances but with higher minimum stake amount
+    uint256 higherMinimum = validSeeds.stakeAmount * 2;
+    rules.allowStakeToken(validSeeds.stakeToken, higherMinimum);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
 
     vm.expectRevert(StakeAmountNotAllowed.selector);
@@ -501,9 +540,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testRevertValidateCreatePoolInvalidTimes() public {
     // Set up all allowances
-    rules.updateAllowedStakeToken(invalidSeeds.stakeToken, true);
+    rules.allowStakeToken(invalidSeeds.stakeToken, invalidSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(invalidSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(invalidSeeds.stakeToken, invalidSeeds.stakeAmount, true);
 
     vm.expectRevert(InvalidPoolTimes.selector);
     rules.validateCreatePool(invalidSeeds);
@@ -523,9 +561,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     });
 
     // Set up all allowances
-    rules.updateAllowedStakeToken(invalidIntervalSeeds.stakeToken, true);
+    rules.allowStakeToken(invalidIntervalSeeds.stakeToken, invalidIntervalSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(invalidIntervalSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(invalidIntervalSeeds.stakeToken, invalidIntervalSeeds.stakeAmount, true);
 
     vm.expectRevert(InvalidPoolTimeInterval.selector);
     rules.validateCreatePool(invalidIntervalSeeds);
@@ -533,9 +570,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testIsValidCreatePoolSuccess() public {
     // Set up all required allowances
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
     rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
 
     assertTrue(rules.isValidCreatePool(validSeeds));
@@ -544,22 +580,21 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
   function testIsValidCreatePoolStakeTokenNotAllowed() public {
     // Set up other allowances but not stake token
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
 
     assertFalse(rules.isValidCreatePool(validSeeds));
   }
 
   function testIsValidCreatePoolPredictionTokenNotAllowed() public {
     // Set up other allowances but not prediction token
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
 
     assertFalse(rules.isValidCreatePool(validSeeds));
   }
 
-  function testIsValidCreatePoolStakeAmountNotAllowed() public {
-    // Set up other allowances but not stake amount
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+  function testIsValidCreatePoolStakeAmountBelowMinimum() public {
+    // Set up other allowances but with higher minimum
+    uint256 higherMinimum = validSeeds.stakeAmount * 2;
+    rules.allowStakeToken(validSeeds.stakeToken, higherMinimum);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
 
     assertFalse(rules.isValidCreatePool(validSeeds));
@@ -567,9 +602,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testIsValidCreatePoolInvalidTimes() public {
     // Set up all allowances
-    rules.updateAllowedStakeToken(invalidSeeds.stakeToken, true);
+    rules.allowStakeToken(invalidSeeds.stakeToken, invalidSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(invalidSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(invalidSeeds.stakeToken, invalidSeeds.stakeAmount, true);
 
     assertFalse(rules.isValidCreatePool(invalidSeeds));
   }
@@ -588,9 +622,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     });
 
     // Set up all allowances
-    rules.updateAllowedStakeToken(invalidIntervalSeeds.stakeToken, true);
+    rules.allowStakeToken(invalidIntervalSeeds.stakeToken, invalidIntervalSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(invalidIntervalSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(invalidIntervalSeeds.stakeToken, invalidIntervalSeeds.stakeAmount, true);
 
     assertFalse(rules.isValidCreatePool(invalidIntervalSeeds));
   }
@@ -608,14 +641,13 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address initialOwner = rules.owner();
 
     // Allow some tokens and amounts
-    rules.updateAllowedStakeToken(address(cusd), true);
+    rules.allowStakeToken(address(cusd), 1000000);
     rules.updateAllowedPredictionToken(mockToken, true);
-    rules.updateAllowedStakeAmount(address(cusd), 1000000, true);
 
     // Verify initial state
     assertTrue(rules.allowedStakeTokens(address(cusd)));
     assertTrue(rules.allowedPredictionTokens(mockToken));
-    assertTrue(rules.allowedStakeAmounts(address(cusd), 1000000));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), 1000000);
 
     // Deploy new implementation
     address newImpl = address(new CastoraPoolsRules());
@@ -628,7 +660,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.owner(), initialOwner);
     assertTrue(rules.allowedStakeTokens(address(cusd)));
     assertTrue(rules.allowedPredictionTokens(mockToken));
-    assertTrue(rules.allowedStakeAmounts(address(cusd), 1000000));
+    assertEq(rules.minimumStakeAmounts(address(cusd)), 1000000);
 
     // Verify functionality still works after upgrade
     rules.updateRequiredTimeInterval(10 * 60); // 10 minutes
@@ -647,7 +679,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testPaginationEdgeCases() public {
     address token1 = makeAddr('edgeToken1');
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1000000);
 
     // Test zero limit
     address[] memory tokens = rules.getEverAllowedStakeTokensPaginated(0, 0);
@@ -664,9 +696,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testValidateCreatePoolWithInvalidMultiplier() public {
     // Set up other allowances but not multiplier
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
 
     vm.expectRevert(InvalidPoolMultiplier.selector);
     rules.validateCreatePool(validSeeds);
@@ -674,9 +705,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
   function testValidateCreatePoolWithInvalidFeesPercent() public {
     // Set up allowances including multiplier
-    rules.updateAllowedStakeToken(validSeeds.stakeToken, true);
+    rules.allowStakeToken(validSeeds.stakeToken, validSeeds.stakeAmount);
     rules.updateAllowedPredictionToken(validSeeds.predictionToken, true);
-    rules.updateAllowedStakeAmount(validSeeds.stakeToken, validSeeds.stakeAmount, true);
     rules.updateAllowedPoolMultiplier(validSeeds.multiplier, true);
 
     // Change fees percent to make it invalid
@@ -697,28 +727,28 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.everAllowedStakeTokensCount(), 0);
 
     // Allow first token
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1000000);
     assertEq(rules.everAllowedStakeTokensCount(), 1);
     assertTrue(rules.hasEverBeenAllowedStakeToken(token1));
     assertEq(rules.everAllowedStakeTokens(0), token1);
 
     // Allow second token
-    rules.updateAllowedStakeToken(token2, true);
+    rules.allowStakeToken(token2, 2000000);
     assertEq(rules.everAllowedStakeTokensCount(), 2);
     assertTrue(rules.hasEverBeenAllowedStakeToken(token2));
     assertEq(rules.everAllowedStakeTokens(1), token2);
 
     // Disallow first token - should still be in ever allowed
-    rules.updateAllowedStakeToken(token1, false);
+    rules.disallowStakeToken(token1);
     assertEq(rules.everAllowedStakeTokensCount(), 2);
     assertTrue(rules.hasEverBeenAllowedStakeToken(token1));
 
     // Re-allow first token - should not increase count
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1500000);
     assertEq(rules.everAllowedStakeTokensCount(), 2);
 
     // Allow third token
-    rules.updateAllowedStakeToken(token3, true);
+    rules.allowStakeToken(token3, 3000000);
     assertEq(rules.everAllowedStakeTokensCount(), 3);
     assertTrue(rules.hasEverBeenAllowedStakeToken(token3));
     assertEq(rules.everAllowedStakeTokens(2), token3);
@@ -733,36 +763,36 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.currentlyAllowedStakeTokensCount(), 0);
 
     // Allow first token
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1000000);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 1);
     assertEq(rules.currentlyAllowedStakeTokens(0), token1);
 
     // Allow second token
-    rules.updateAllowedStakeToken(token2, true);
+    rules.allowStakeToken(token2, 2000000);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 2);
     assertEq(rules.currentlyAllowedStakeTokens(1), token2);
 
     // Allow third token
-    rules.updateAllowedStakeToken(token3, true);
+    rules.allowStakeToken(token3, 3000000);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 3);
     assertEq(rules.currentlyAllowedStakeTokens(2), token3);
 
     // Disallow middle token (token2) - should be removed from currently allowed
-    rules.updateAllowedStakeToken(token2, false);
+    rules.disallowStakeToken(token2);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 2);
     // token3 should have moved to index 1
     assertEq(rules.currentlyAllowedStakeTokens(0), token1);
     assertEq(rules.currentlyAllowedStakeTokens(1), token3);
 
     // Re-allow token2
-    rules.updateAllowedStakeToken(token2, true);
+    rules.allowStakeToken(token2, 2500000);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 3);
     assertEq(rules.currentlyAllowedStakeTokens(2), token2);
 
     // Disallow all tokens
-    rules.updateAllowedStakeToken(token1, false);
-    rules.updateAllowedStakeToken(token2, false);
-    rules.updateAllowedStakeToken(token3, false);
+    rules.disallowStakeToken(token1);
+    rules.disallowStakeToken(token2);
+    rules.disallowStakeToken(token3);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 0);
   }
 
@@ -851,8 +881,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address predToken2 = makeAddr('predToken2');
 
     // Allow some tokens before upgrade
-    rules.updateAllowedStakeToken(stakeToken1, true);
-    rules.updateAllowedStakeToken(stakeToken2, true);
+    rules.allowStakeToken(stakeToken1, 1000000);
+    rules.allowStakeToken(stakeToken2, 1000000);
     rules.updateAllowedPredictionToken(predToken1, true);
     rules.updateAllowedPredictionToken(predToken2, true);
 
@@ -863,7 +893,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.currentlyAllowedPredictionTokensCount(), 2);
 
     // Disallow one of each type
-    rules.updateAllowedStakeToken(stakeToken2, false);
+    rules.disallowStakeToken(stakeToken2);
     rules.updateAllowedPredictionToken(predToken2, false);
 
     // Verify state before upgrade
@@ -893,7 +923,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
 
     // Verify functionality still works after upgrade
     address newStakeToken = makeAddr('newStakeToken');
-    rules.updateAllowedStakeToken(newStakeToken, true);
+    rules.allowStakeToken(newStakeToken, 1000000);
     assertEq(rules.everAllowedStakeTokensCount(), 3);
     assertEq(rules.currentlyAllowedStakeTokensCount(), 2);
   }
@@ -905,10 +935,10 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address token4 = makeAddr('indexToken4');
 
     // Add 4 tokens
-    rules.updateAllowedStakeToken(token1, true);
-    rules.updateAllowedStakeToken(token2, true);
-    rules.updateAllowedStakeToken(token3, true);
-    rules.updateAllowedStakeToken(token4, true);
+    rules.allowStakeToken(token1, 1000000);
+    rules.allowStakeToken(token2, 1000000);
+    rules.allowStakeToken(token3, 1000000);
+    rules.allowStakeToken(token4, 1000000);
 
     assertEq(rules.currentlyAllowedStakeTokensCount(), 4);
     assertEq(rules.currentlyAllowedStakeTokens(0), token1);
@@ -917,7 +947,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.currentlyAllowedStakeTokens(3), token4);
 
     // Remove token2 (middle element)
-    rules.updateAllowedStakeToken(token2, false);
+    rules.disallowStakeToken(token2);
 
     assertEq(rules.currentlyAllowedStakeTokensCount(), 3);
     assertEq(rules.currentlyAllowedStakeTokens(0), token1);
@@ -929,7 +959,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(rules.currentlyAllowedStakeTokenIndex(token3), 2);
 
     // Remove token1 (first element)
-    rules.updateAllowedStakeToken(token1, false);
+    rules.disallowStakeToken(token1);
 
     assertEq(rules.currentlyAllowedStakeTokensCount(), 2);
     assertEq(rules.currentlyAllowedStakeTokens(0), token3); // token3 should have moved to position 0
@@ -988,7 +1018,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address[] memory testTokens = new address[](10);
     for (uint256 i = 0; i < 10; i++) {
       testTokens[i] = makeAddr(string(abi.encodePacked('stakeToken', vm.toString(i))));
-      rules.updateAllowedStakeToken(testTokens[i], true);
+      rules.allowStakeToken(testTokens[i], 1000000);
     }
 
     // Confirm length to be 10
@@ -1077,7 +1107,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address[] memory testTokens = new address[](8);
     for (uint256 i = 0; i < 8; i++) {
       testTokens[i] = makeAddr(string(abi.encodePacked('currentStakeToken', vm.toString(i))));
-      rules.updateAllowedStakeToken(testTokens[i], true);
+      rules.allowStakeToken(testTokens[i], 1000000);
     }
 
     // Verify all are currently allowed
@@ -1091,8 +1121,8 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens[2], testTokens[3]);
 
     // Disable some tokens to test dynamic behavior
-    rules.updateAllowedStakeToken(testTokens[2], false);
-    rules.updateAllowedStakeToken(testTokens[5], false);
+    rules.disallowStakeToken(testTokens[2]);
+    rules.disallowStakeToken(testTokens[5]);
 
     // Verify count decreased
     assertEq(rules.currentlyAllowedStakeTokensCount(), 6);
@@ -1155,13 +1185,13 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     address token4 = makeAddr('mixedToken4');
 
     // Add tokens one by one and test pagination
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1000000);
     address[] memory tokens = rules.getEverAllowedStakeTokensPaginated(0, 5);
     assertEq(tokens.length, 1);
     assertEq(tokens[0], token1);
 
-    rules.updateAllowedStakeToken(token2, true);
-    rules.updateAllowedStakeToken(token3, true);
+    rules.allowStakeToken(token2, 1000000);
+    rules.allowStakeToken(token3, 1000000);
 
     // Test ever allowed pagination
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 2);
@@ -1176,7 +1206,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens[1], token3);
 
     // Disable middle token
-    rules.updateAllowedStakeToken(token2, false);
+    rules.disallowStakeToken(token2);
 
     // Ever allowed should still contain all 3
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 5);
@@ -1187,7 +1217,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens.length, 2);
 
     // Add another token and test
-    rules.updateAllowedStakeToken(token4, true);
+    rules.allowStakeToken(token4, 1000000);
 
     // Ever allowed should now have 4
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 10);
@@ -1198,7 +1228,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens.length, 3);
 
     // Re-enable token2
-    rules.updateAllowedStakeToken(token2, true);
+    rules.allowStakeToken(token2, 1000000);
 
     // Ever allowed should still be 4 (no duplicates)
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 10);
@@ -1219,7 +1249,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens.length, 0);
 
     // Add first token
-    rules.updateAllowedStakeToken(token1, true);
+    rules.allowStakeToken(token1, 1000000);
 
     // Check pagination shows 1 token
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 10);
@@ -1227,7 +1257,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens[0], token1);
 
     // Add second token
-    rules.updateAllowedStakeToken(token2, true);
+    rules.allowStakeToken(token2, 1000000);
 
     // Check pagination shows 2 tokens with limit 1
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 1);
@@ -1240,7 +1270,7 @@ contract CastoraPoolsRulesTest is CastoraErrors, CastoraEvents, CastoraStructs, 
     assertEq(tokens[0], token2);
 
     // Disable first token
-    rules.updateAllowedStakeToken(token1, false);
+    rules.disallowStakeToken(token1);
 
     // Ever allowed should still show both
     tokens = rules.getEverAllowedStakeTokensPaginated(0, 10);

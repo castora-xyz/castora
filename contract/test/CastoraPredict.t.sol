@@ -67,10 +67,8 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     // Configure pools rules
     poolsRules.updateAllowedPredictionToken(address(cusd), true);
-    poolsRules.updateAllowedStakeToken(address(cusd), true);
-    poolsRules.updateAllowedStakeToken(address(castora), true);
-    poolsRules.updateAllowedStakeAmount(address(cusd), 1000000, true);
-    poolsRules.updateAllowedStakeAmount(address(castora), 1 ether, true);
+    poolsRules.allowStakeToken(address(cusd), 1000000);
+    poolsRules.allowStakeToken(address(castora), 1 ether);
     poolsRules.updateAllowedPoolMultiplier(200, true);
 
     // Create pools for testing
