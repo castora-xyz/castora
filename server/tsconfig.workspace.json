@@ -4,7 +4,6 @@
     { "path": "./shared" },
     { "path": "./main" },
     { "path": "./archiver" },
-    { "path": "./oldpoolsarchiver" },
     { "path": "./syncer" },
     { "path": "./completer" },
     { "path": "./telegram" }
