@@ -6,6 +6,7 @@ export * from './FilterPoolsContext';
 export * from './FirebaseContext';
 export * from './MyCreateActivityContext';
 export * from './MyPredictActivityContext';
+export * from './LeaderboardContext';
 export * from './PaginatorsContext';
 export * from './PoolsContext';
 export * from './PoolsShimmerContext';
