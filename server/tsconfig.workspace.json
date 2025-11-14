@@ -4,6 +4,7 @@
     { "path": "./shared" },
     { "path": "./main" },
     { "path": "./archiver" },
+    { "path": "./leaderboard" },
     { "path": "./syncer" },
     { "path": "./completer" },
     { "path": "./telegram" }
