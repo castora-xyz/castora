@@ -83,9 +83,11 @@ export const getNotifyWinnerJob = (bot: Bot) => {
       try {
         await firestore.doc('/counts/counts').set(
           {
-            totalTelegramNotifiedCount: FieldValue.increment(progress.notified),
-            perChainTelegramNotifiedCount: {
-              [chain]: FieldValue.increment(progress.notified)
+            telegram: {
+              notified: {
+                total: FieldValue.increment(progress.notified),
+                perChain: { [chain]: FieldValue.increment(progress.notified) }
+              }
             }
           },
           { merge: true }

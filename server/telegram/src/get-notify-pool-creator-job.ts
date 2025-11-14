@@ -38,10 +38,12 @@ export const getNotifyPoolCreatorJob = (bot: Bot) => {
       // Increment global stats on the pool if there were notifications.
       try {
         await firestore.doc('/counts/counts').set(
-          {
-            totalTelegramNotifiedCount: FieldValue.increment(1),
-            perChainTelegramNotifiedCount: {
-              [chain]: FieldValue.increment(1)
+          { 
+            telegram: {
+              notified: {
+                total: FieldValue.increment(1),
+                perChain: { [chain]: FieldValue.increment(1) }
+              }
             }
           },
           { merge: true }

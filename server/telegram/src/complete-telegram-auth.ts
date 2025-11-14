@@ -43,7 +43,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
   );
 
   // Globally increment telegram auth counts.
-  await firestore.doc('/counts/counts').set({ totalTelegramAuthCounts: FieldValue.increment(1) }, { merge: true });
+  await firestore.doc('/counts/counts').set({ telegram: { auth: FieldValue.increment(1) } }, { merge: true });
 
   logger.info(`🎉 User ${userWalletAddress} linked Telegram ID ${ctx.from.id}`);
 
