@@ -1,4 +1,11 @@
-import { fetchPool, Job, logger, queueJob, readPoolsManagerContract } from '@castora/shared';
+import {
+  addPoolForLeaderboardUpdate,
+  fetchPool,
+  Job,
+  logger,
+  queueJob,
+  readPoolsManagerContract
+} from '@castora/shared';
 import { PoolMultiplier } from './get-no-of-winners.js';
 import { getSnapshotPrice } from './get-snapshot-price.js';
 import { rearchivePool } from './rearchive-pool.js';
@@ -112,7 +119,11 @@ export const completePool = async (job: Job): Promise<void> => {
       ...(isCommunity && { delay: 10000 })
     });
 
+    // add completed pool to be used for leaderboard update later on
+    await addPoolForLeaderboardUpdate(poolId, chain);
+
     logger.info('Posted job to notify winners via telegram');
+    logger.info('Added Pool for leaderboard update');
     logger.info(`Successfully completed Pool ${poolId} on chain ${chain}`);
   }
 };

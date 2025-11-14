@@ -4,6 +4,7 @@ export * from './abi.js';
 export * from './contract.js';
 export * from './fetch-pool.js';
 export * from './jobs.js';
+export * from './leaderboard.js';
 export * from './logger.js';
 export * from './tokens.js';
 
