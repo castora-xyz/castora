@@ -1,12 +1,17 @@
 import { queueJob, setWorker } from '@castora/shared';
+import { processPendingLeaderboardPools } from './process-pending-leaderboard-pools.js';
 import { updateLeaderboardFromPool } from './update-leaderboard-from-pool.js';
 
-setWorker({ workerName: 'leaderboard', handler: updateLeaderboardFromPool });
-
-for (let poolId = 15; poolId <= 6900; poolId++) {
+(async () => {
   await queueJob({
-    queueName: 'leaderboard',
-    jobName: 'update-leaderboard',
-    jobData: { chain: 'monadtestnet', poolId }
+    queueName: 'leaderboard-pools-processor',
+    jobName: 'process-pending-leaderboard-pools',
+    jobData: {},
+    repeat: { pattern: '15 0 0 * *' }, // At 00:15 UTC every day
+    jobId: 'process-pending-leaderboard-pools'
   });
-}
+})();
+
+setWorker({ workerName: 'leaderboard-pools-processor', handler: processPendingLeaderboardPools });
+
+setWorker({ workerName: 'leaderboard-pool-updater', handler: updateLeaderboardFromPool });
