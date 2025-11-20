@@ -1,6 +1,7 @@
 import { logger } from '@castora/shared';
 import { Response, Router } from 'express';
 import authRoutes from './auth.js';
+import leaderboardRoutes from './leaderboard.js';
 import poolRoutes from './pools.js';
 
 const router = Router();
@@ -23,6 +24,7 @@ export const wrapper = async (action: Function, desc: string, response: Response
 
 router.use('/', poolRoutes);
 router.use('/', authRoutes);
+router.use('/', leaderboardRoutes);
 router.get('/', (_, res) => res.json({ success: true }));
 router.use('**', (_, res) => res.status(404).json({ success: false, message: 'Not Found' }));
 

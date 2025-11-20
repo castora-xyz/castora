@@ -1,4 +1,12 @@
-import { fetchPool, FieldValue, firestore, Job, logger, storage } from '@castora/shared';
+import {
+  fetchPool,
+  FieldValue,
+  firestore,
+  Job,
+  logger,
+  storage,
+  updateTestnetLeaderboardLastUpdatedTime
+} from '@castora/shared';
 import { Pool, Prediction } from './schemas.js';
 
 /**
@@ -128,6 +136,9 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     const creatorRef = firestore.doc(`/users/${pool.creator}`);
     await creatorRef.set(
       {
+        monadTestnetStats: {
+          createdPools: FieldValue.increment(1)
+        },
         leaderboard: {
           lastUpdatedTime: FieldValue.serverTimestamp(),
           xp: {
@@ -141,6 +152,10 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       { merge: true }
     );
   }
+
+  // Note the last updated time of the pool as now
+  await updateTestnetLeaderboardLastUpdatedTime(new Date());
+  logger.info('Updated last update time for testnet leaderboard in Redis');
 
   // Update the pool to mark the leaderboard processed
   try {

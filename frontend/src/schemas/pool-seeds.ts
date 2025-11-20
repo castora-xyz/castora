@@ -6,6 +6,7 @@ import {
 } from '@/contexts';
 import ms from 'ms';
 import { tokens } from './tokens';
+import { formatTime } from '@/contexts/format-time';
 
 /**
  * Holds information about the properties of a given pool.
@@ -29,17 +30,13 @@ export class PoolSeeds {
     this.snapshotTime = Number(input['snapshotTime']);
     this.windowCloseTime = Number(input['windowCloseTime']);
 
-    const foundP = tokens.find(
-      (t) => t.address.toLowerCase() === this.predictionToken.toLowerCase()
-    );
+    const foundP = tokens.find((t) => t.address.toLowerCase() === this.predictionToken.toLowerCase());
     if (!foundP) {
       throw `Token not found in tokens list: ${this.predictionToken}`;
     }
     this.predictionTokenDetails = foundP;
 
-    const foundS = tokens.find(
-      (t) => t.address.toLowerCase() === this.stakeToken.toLowerCase()
-    );
+    const foundS = tokens.find((t) => t.address.toLowerCase() === this.stakeToken.toLowerCase());
     if (!foundS) throw `Token not found in tokens list: ${this.stakeToken}`;
     this.stakeTokenDetails = foundS;
 
@@ -78,34 +75,7 @@ export class PoolSeeds {
    * Formats and returns time and date parts of snapshot time.
    */
   formattedSnapshotTime() {
-    const snapshot = new Date(this.snapshotTime * 1000);
-    const time = snapshot.toTimeString().split(':').slice(0, 2).join(':');
-    const now = new Date();
-
-    if (
-      now.getMonth() == snapshot.getMonth() &&
-      now.getFullYear() == snapshot.getFullYear()
-    ) {
-      if (now.getDate() == snapshot.getDate()) return [time];
-      if (now.getDate() - 1 == snapshot.getDate()) return [time, 'Yesterday'];
-      if (now.getDate() + 1 == snapshot.getDate()) return [time, 'Tomorrow'];
-      if (Math.abs(now.getDate() - snapshot.getDate()) < 7) {
-        const days = [
-          'Sunday',
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday'
-        ];
-        return [time, days[snapshot.getDay()]];
-      }
-    }
-
-    const parts = snapshot.toDateString().split(' ');
-    const date = [parts[2], parts[1], parts[3]].join(' ');
-    return [time, date];
+    return formatTime(new Date(this.snapshotTime * 1000));
   }
 
   /**
@@ -130,9 +100,7 @@ export class PoolSeeds {
    * Whether this pool is a stock pool.
    */
   isStockPool() {
-    return ALL_STOCK_PREDICTION_TOKENS.includes(
-      this.predictionTokenDetails.name
-    );
+    return ALL_STOCK_PREDICTION_TOKENS.includes(this.predictionTokenDetails.name);
   }
 
   /**
@@ -149,8 +117,7 @@ export class PoolSeeds {
     if (this.isStockPool()) {
       // If windowClose is on Monday, open time is 3 days before,
       // otherwise it is 1 day before.
-      const mul =
-        new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
+      const mul = new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
       return this.windowCloseTime - mul * 24 * 60 * 60;
     }
 
@@ -244,12 +211,7 @@ export class PoolSeeds {
    *
    * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
    */
-  matchesFilterCrypto({
-    poolLifes,
-    predictionTokens,
-    stakeTokens,
-    statuses
-  }: FilterCryptoPoolsProps): boolean {
+  matchesFilterCrypto({ poolLifes, predictionTokens, stakeTokens, statuses }: FilterCryptoPoolsProps): boolean {
     if (!statuses.includes(this.status())) return false;
     if (!poolLifes.includes(this.displayPoolLife())) return false;
 
@@ -268,10 +230,7 @@ export class PoolSeeds {
    *
    * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
    */
-  matchesFilterStock({
-    predictionTokens,
-    statuses
-  }: FilterStockPoolsProps): boolean {
+  matchesFilterStock({ predictionTokens, statuses }: FilterStockPoolsProps): boolean {
     if (!statuses.includes(this.status())) return false;
     if (!predictionTokens.includes(this.predictionTokenDetails.name)) {
       return false;
@@ -285,12 +244,7 @@ export class PoolSeeds {
    *
    * @returns {boolean} `true` if the pool matches all filter criteria; otherwise, `false`.
    */
-  matchesFilterCommunity({
-    predictionTokens,
-    stakeTokens,
-    statuses,
-    multipliers
-  }: FilterCommunityPoolsProps): boolean {
+  matchesFilterCommunity({ predictionTokens, stakeTokens, statuses, multipliers }: FilterCommunityPoolsProps): boolean {
     if (!statuses.includes(this.status())) return false;
 
     const { name: prdToken } = this.predictionTokenDetails;

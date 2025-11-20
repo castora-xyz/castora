@@ -36,10 +36,10 @@ export const BottomNav = () => {
         <li>
           <NavLink
             to="/leaderboard"
-            className={({ isActive }) =>
+            className={
               'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
               `${
-                isActive
+                location.pathname.includes('/leaderboard')
                   ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
                   : 'text-text-subtitle stroke-text-subtitle'
               }`
