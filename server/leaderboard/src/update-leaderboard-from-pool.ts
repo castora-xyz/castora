@@ -3,7 +3,10 @@ import {
   FieldValue,
   firestore,
   Job,
+  LDB_TESTNET_USER_PREFIX,
   logger,
+  REDIS_CACHE_TTL_SECONDS,
+  redisClient,
   storage,
   updateTestnetLeaderboardLastUpdatedTime
 } from '@castora/shared';
@@ -122,6 +125,31 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       },
       { merge: true }
     );
+
+    // Update the user leaderboard data in Redis cache only if it exists already
+    // as it was easier to invalidate the cache individually from here
+    const userKey = `${LDB_TESTNET_USER_PREFIX}${address}`;
+    const userCached = await redisClient.get(userKey);
+    if (userCached) {
+      const newUserSnapshot = await userRef.get();
+      const { leaderboard, monadTestnetStats } = newUserSnapshot.data() as any;
+      const xp = leaderboard.xp.testnet;
+      const totalSnap = await firestore.collection('users').where('leaderboard.xp.testnet', '>', xp).count().get();
+      const rank = totalSnap.data().count + 1;
+
+      await redisClient.set(
+        userKey,
+        JSON.stringify({
+          lastUpdatedTime: leaderboard.lastUpdatedTime.toDate(),
+          xp,
+          rank,
+          ...monadTestnetStats
+        }),
+        'EX',
+        REDIS_CACHE_TTL_SECONDS
+      );
+      logger.info(`User ${address} had cached testnet leaderboard info in Redis and have updated it.`);
+    }
 
     // update job progress
     job.updateProgress(i + 1);

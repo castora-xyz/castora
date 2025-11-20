@@ -1,14 +1,18 @@
-import { firestore, getTestnetLeaderboardLastUpdatedTime, logger, redisClient } from '@castora/shared';
-
-const LDB_TESTNET_TOP100 = 'leaderboard:testnet:top100';
-const LDB_TESTNET_USER_PREFIX = 'leaderboard:testnet:user:';
-const CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+import {
+  firestore,
+  getTestnetLeaderboardLastUpdatedTime,
+  LDB_TESTNET_TOP100_KEY,
+  LDB_TESTNET_USER_PREFIX,
+  logger,
+  REDIS_CACHE_TTL_SECONDS,
+  redisClient
+} from '@castora/shared';
 
 export const getTestnetLeaderboard = async () => {
   logger.info('Getting Testnet Leaderboard ... ');
 
   // Try to get from cache
-  const cached = await redisClient.get(LDB_TESTNET_TOP100);
+  const cached = await redisClient.get(LDB_TESTNET_TOP100_KEY);
   if (cached) {
     const parsed = JSON.parse(cached);
     const parsedLastUpdatedTime = new Date(parsed.lastUpdatedTime);
@@ -40,7 +44,7 @@ export const getTestnetLeaderboard = async () => {
 
   // Cache the result
   try {
-    await redisClient.set(LDB_TESTNET_TOP100, JSON.stringify(result), 'EX', CACHE_TTL_SECONDS);
+    await redisClient.set(LDB_TESTNET_TOP100_KEY, JSON.stringify(result), 'EX', REDIS_CACHE_TTL_SECONDS);
   } catch (e) {
     logger.error(e, 'Failed to cache testnet leaderboard');
   }
@@ -57,14 +61,8 @@ export const getMyTestnetLeaderboard = async (userWalletAddress: string) => {
   const cached = await redisClient.get(cacheKey);
   if (cached) {
     const parsed = JSON.parse(cached);
-    const parsedLastUpdatedTime = new Date(parsed.lastUpdatedTime);
-
-    // if cached data time is equal to or greater than last updated time, return cached
-    const lastUpdatedTime = await getTestnetLeaderboardLastUpdatedTime();
-    if (parsedLastUpdatedTime >= lastUpdatedTime) {
-      logger.info('Returning cached leaderboard');
-      return parsed;
-    }
+    logger.info('Returning cached leaderboard');
+    return parsed;
   }
 
   // Otherwise cache a new leaderboard and return it
@@ -103,7 +101,7 @@ export const getMyTestnetLeaderboard = async (userWalletAddress: string) => {
 
   // Cache the result
   try {
-    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL_SECONDS);
+    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', REDIS_CACHE_TTL_SECONDS);
   } catch (e) {
     logger.error(e, 'Failed to cache user testnet leaderboard');
   }

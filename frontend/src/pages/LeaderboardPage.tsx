@@ -2,7 +2,7 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import History from '@/assets/history.svg?react';
 import { Web3Avatar } from '@/components';
-import { useLeaderboard } from '@/contexts';
+import { useAuth, useLeaderboard } from '@/contexts';
 import { LeaderboardEntry } from '@/schemas';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import { useMemo, useEffect, useState } from 'react';
@@ -40,15 +40,25 @@ type LeaderboardRow = LeaderboardEntry & {
   rank: number;
   winRate: string;
   netProfit: number;
+  isGap?: boolean;
+  isPlaceholder?: boolean;
 };
 
 const columnHelper = createColumnHelper<LeaderboardRow>();
 
 export const LeaderboardPage = () => {
-  const { entries, isLoading, hasError, refresh, lastUpdatedTime } = useLeaderboard();
+  const { entries, isLoading, hasError, refresh, lastUpdatedTime, mine, totalUsersCount } = useLeaderboard();
+  const { address } = useAuth();
   const { chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
   const [explorerUrl, setExplorerUrl] = useState((currentChain ?? defaultChain).blockExplorers?.default.url);
+
+  const addFillerToRows = (rows: LeaderboardRow[], rank: number, isGap: boolean, isPlaceholder: boolean) => {
+    rows.push({
+      ...{ address: '', xp: 0, winningsVolume: 0, pools: 0, predictionsVolume: 0 },
+      ...{ winnings: 0, predictions: 0, rank, winRate: '', netProfit: 0, isGap, isPlaceholder }
+    });
+  };
 
   useEffect(() => {
     setExplorerUrl((currentChain ?? defaultChain).blockExplorers?.default.url);
@@ -60,11 +70,10 @@ export const LeaderboardPage = () => {
 
   // Transform entries to include calculated fields
   const data = useMemo(() => {
-    return entries.map((entry, index) => {
+    const rows: LeaderboardRow[] = entries.map((entry, index) => {
       const rank = index + 1;
       const winRate = entry.predictions > 0 ? ((entry.winnings / entry.predictions) * 100).toFixed(1) : '0.0';
       const netProfit = entry.winningsVolume - entry.predictionsVolume;
-      // xp is already in the entry
 
       return {
         ...entry,
@@ -73,7 +82,30 @@ export const LeaderboardPage = () => {
         netProfit
       };
     });
-  }, [entries]);
+
+    if (mine && address) {
+      const isMineInTop = rows.some((r) => r.address.toLowerCase() === address.toLowerCase());
+
+      if (!isMineInTop) {
+        // Add gap
+        addFillerToRows(rows, 0, true, false);
+
+        // Add mine
+        const winRate = mine.predictions > 0 ? ((mine.winnings / mine.predictions) * 100).toFixed(1) : '0.0';
+        const netProfit = mine.winningsVolume - mine.predictionsVolume;
+        rows.push({ ...mine, winRate, netProfit });
+      }
+
+      // Add placeholder if mine is not last
+      if (mine.rank < totalUsersCount) {
+        // first add gap still
+        addFillerToRows(rows, 0, true, false);
+        addFillerToRows(rows, totalUsersCount, false, true);
+      }
+    }
+
+    return rows;
+  }, [entries, mine, address, totalUsersCount]);
 
   const columns = useMemo(
     () =>
@@ -81,7 +113,16 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('rank', {
           header: 'Rank',
           cell: (info) => {
-            const rank = info.getValue();
+            const { isGap, rank } = info.row.original;
+            if (isGap) {
+              return (
+                <div className="flex flex-col items-end justify-center gap-1 h-full">
+                  <div className="w-1 h-1 bg-text-caption rounded-full"></div>
+                  <div className="w-1 h-1 bg-text-caption rounded-full"></div>
+                  <div className="w-1 h-1 bg-text-caption rounded-full"></div>
+                </div>
+              );
+            }
             return (
               <div className="flex items-center justify-end gap-2">
                 {getRankIcon(rank)}
@@ -96,16 +137,21 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('address', {
           header: 'Address',
           cell: (info) => {
-            const address = info.getValue();
+            const { isGap, isPlaceholder, address: rowAddress } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
+            const isMe = address && rowAddress.toLowerCase() === address.toLowerCase();
             return (
               <a
-                href={explorerUrl ? `${explorerUrl}/address/${address}` : undefined}
+                href={explorerUrl ? `${explorerUrl}/address/${rowAddress}` : undefined}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                <Web3Avatar address={address} />
-                <span className="font-medium opacity-85">{shortenAddress(address)}</span>
+                <Web3Avatar address={rowAddress} />
+                <span className="font-medium opacity-85">
+                  {shortenAddress(rowAddress)}
+                  {isMe && <span className="ml-1 font-bold text-primary-default">(Me)</span>}
+                </span>
                 {explorerUrl && <ExternalLink className="w-4 h-4 fill-text-caption" />}
               </a>
             );
@@ -116,7 +162,8 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('xp', {
           header: 'XP',
           cell: (info) => {
-            const xp = info.getValue();
+            const { isGap, isPlaceholder, xp } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             return (
               <span className="font-bold text-primary-darker dark:text-primary-default">{xp.toLocaleString()}</span>
             );
@@ -126,8 +173,9 @@ export const LeaderboardPage = () => {
         }),
         columnHelper.accessor('pools', {
           header: 'Pools Created',
-          cell: () => {
-            // Hardcoded to 0 for now as requested
+          cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             return <span className="font-medium">0</span>;
           },
           size: 120,
@@ -136,6 +184,8 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('predictions', {
           header: 'Predictions',
           cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             return <span className="font-medium">{info.getValue()}</span>;
           },
           size: 110,
@@ -144,6 +194,8 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('predictionsVolume', {
           header: 'Total Staked',
           cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             return <span className="font-medium opacity-75">{formatUSD(info.getValue())}</span>;
           },
           size: 130,
@@ -152,6 +204,8 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('winningsVolume', {
           header: 'Total Won',
           cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             return (
               <span className="font-bold text-success-darker dark:text-success-default">
                 {formatUSD(info.getValue())}
@@ -164,6 +218,8 @@ export const LeaderboardPage = () => {
         columnHelper.accessor('netProfit', {
           header: 'P/L',
           cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             const profit = info.getValue();
             return (
               <span
@@ -184,6 +240,8 @@ export const LeaderboardPage = () => {
           id: 'winRate',
           header: 'Win Rate',
           cell: (info) => {
+            const { isGap, isPlaceholder } = info.row.original;
+            if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
             const { winRate, wins, total } = info.getValue();
             return (
               <>
@@ -198,7 +256,7 @@ export const LeaderboardPage = () => {
           meta: { align: 'right' }
         })
       ] as ColumnDef<LeaderboardRow>[],
-    [explorerUrl]
+    [explorerUrl, address]
   );
 
   const table = useReactTable({

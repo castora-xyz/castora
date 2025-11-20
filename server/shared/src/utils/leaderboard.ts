@@ -3,6 +3,10 @@ import { redisClient } from './jobs.js';
 const LDB_POOLS_KEY = 'pools-for-leaderboard-update';
 const LDB_TESTNET_LAST_UPDATED_TIME_KEY = 'leaderboard:testnet:lastUpdatedTime';
 
+export const LDB_TESTNET_TOP100_KEY = 'leaderboard:testnet:top100';
+export const LDB_TESTNET_USER_PREFIX = 'leaderboard:testnet:user:';
+export const REDIS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+
 /**
  * Adds a pool to be used to update the leaderboard later on
  *

@@ -31,9 +31,7 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
             headers: {
               Accept: 'application/json',
               'Content-Type': 'application/json',
-              ...(path.startsWith('/auth') && signature && address
-                ? { Authorization: `Bearer ${signature}`, 'user-wallet-address': address }
-                : {})
+              ...(address && signature ? { Authorization: `Bearer ${signature}`, 'user-wallet-address': address } : {})
             },
             ...(body ? { body: JSON.stringify(body) } : {})
           })
