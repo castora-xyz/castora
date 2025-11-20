@@ -6,4 +6,5 @@ export interface LeaderboardEntry {
   predictionsVolume: number;
   winnings: number;
   predictions: number;
+  createdPools?: number;
 }

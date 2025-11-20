@@ -1,15 +1,15 @@
 import ExternalLink from '@/assets/external-link.svg?react';
-import Trophy from '@/assets/trophy.svg?react';
 import History from '@/assets/history.svg?react';
+import Trophy from '@/assets/trophy.svg?react';
 import { Web3Avatar } from '@/components';
 import { useAuth, useLeaderboard } from '@/contexts';
+import { formatTime } from '@/contexts/format-time';
 import { LeaderboardEntry } from '@/schemas';
-import { useReactTable, getCoreRowModel, flexRender, createColumnHelper, ColumnDef } from '@tanstack/react-table';
-import { useMemo, useEffect, useState } from 'react';
+import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { Tooltip } from 'primereact/tooltip';
+import { useEffect, useMemo, useState } from 'react';
 import { Breathing } from 'react-shimmer';
 import { useAccount, useChains } from 'wagmi';
-import { Tooltip } from 'primereact/tooltip';
-import { formatTime } from '@/contexts/format-time';
 
 const shortenAddress = (v: string) => `${v.substring(0, 6)}...${v.substring(v.length - 3)}`;
 
@@ -171,12 +171,12 @@ export const LeaderboardPage = () => {
           size: 120,
           meta: { align: 'right' }
         }),
-        columnHelper.accessor('pools', {
+        columnHelper.accessor('createdPools', {
           header: 'Pools Created',
           cell: (info) => {
-            const { isGap, isPlaceholder } = info.row.original;
+            const { isGap, isPlaceholder, createdPools } = info.row.original;
             if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
-            return <span className="font-medium">0</span>;
+            return <span className="font-medium">{createdPools ?? 0}</span>;
           },
           size: 120,
           meta: { align: 'right' }

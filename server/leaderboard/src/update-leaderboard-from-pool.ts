@@ -179,6 +179,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       },
       { merge: true }
     );
+    logger.info(`✨ Has Incremented createdPools count and XP for Pool Creator ${pool.creator}`);
   }
 
   // Note the last updated time of the pool as now
