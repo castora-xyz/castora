@@ -127,17 +127,18 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
       // b. post their unlisting jobs
       // we will use the same time interval between the windowCloseTime and snapshotTime as the time interval
       // for the completed pool to stay in the community listings, like the difference will serve as delay.
-      let delay = (snapshotTime - windowCloseTime) * 1000;
+      let completionDisplayInterval = (snapshotTime - windowCloseTime) * 1000;
       // if the times are the same, the delay should be a minute after snapshot time
-      if (delay === 0) delay = (snapshotTime - now) * 1000 + 60000;
+      if (completionDisplayInterval === 0) completionDisplayInterval = 60000;
       await queueJob({
         queueName: 'community-pools-unlister',
         jobName: 'unlist-community-pool',
         jobData: { chain, poolId },
-        delay
+        // delay the job by the completionDisplayInterval after the snapshotTime
+        delay: (snapshotTime - now) * 1000 + completionDisplayInterval
       });
       logger.info(
-        `Posted job to unlist Community Pool ${poolId} on chain: ${chain}, ${delay} seconds after snapshotTime`
+        `Posted job to unlist Community Pool ${poolId} on chain: ${chain}, ${completionDisplayInterval} seconds after snapshotTime`
       );
     }
   }
