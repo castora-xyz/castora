@@ -273,7 +273,7 @@ export const LeaderboardPage = () => {
 
   return (
     <>
-      <div className="w-full pl-0 bg-app-bg p-6 text-sm text-text-subtitle">
+      <div className="w-full bg-app-bg pt-6 text-sm text-text-subtitle">
         <div className="flex flex-wrap gap-4 max-w-screen-xl mx-auto">
           <p className="py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle">
             <span>Leaderboard</span>
@@ -319,7 +319,7 @@ export const LeaderboardPage = () => {
         )}
 
         {!isLoading && !hasError && entries.length > 0 && (
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="overflow-auto max-h-[80vh]">
             <div className="min-w-full inline-block">
               <table className="w-full border-collapse min-w-[600px]">
                 <thead>
@@ -333,7 +333,9 @@ export const LeaderboardPage = () => {
                               (header.column.columnDef.meta as { align?: string })?.align === 'right'
                                 ? 'text-right'
                                 : 'text-left'
-                            } py-4 px-4 text-sm font-medium text-text-subtitle`}
+                            } py-4 px-4 text-sm font-medium text-text-subtitle sticky top-0 bg-app-bg ${
+                              header.column.getIsPinned() ? 'left-0 z-20' : 'z-10'
+                            }`}
                             style={{
                               minWidth: header.getSize(),
                               width: header.getSize()
@@ -363,7 +365,11 @@ export const LeaderboardPage = () => {
                                 (cell.column.columnDef.meta as { align?: string })?.align === 'right'
                                   ? 'text-right'
                                   : 'text-left'
-                              } py-4 px-4`}
+                              } py-4 px-4 ${
+                                cell.column.getIsPinned()
+                                  ? 'bg-app-bg sticky left-0 z-10 group-hover:bg-surface-subtle dark:group-hover:bg-surface-disabled'
+                                  : ''
+                              }`}
                             >
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </td>
