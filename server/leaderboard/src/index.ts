@@ -7,7 +7,7 @@ import { updateLeaderboardFromPool } from './update-leaderboard-from-pool.js';
     queueName: 'leaderboard-pools-processor',
     jobName: 'process-pending-leaderboard-pools',
     jobData: {},
-    repeat: { pattern: '15 0 0 * *' }, // At 00:15 UTC every day
+    repeat: { pattern: '15 0 * * *' }, // At 00:15 UTC every day
     jobId: 'process-pending-leaderboard-pools'
   });
 })();
