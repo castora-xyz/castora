@@ -249,7 +249,8 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(userPool.creator, user1);
     assertEq(userPool.creationFeesToken, address(creationFeeToken));
     assertEq(userPool.completionFeesToken, address(stakeToken));
-    assertEq(userPool.nthPoolCount, 1);
+    assertEq(userPool.nthAllCreatedPoolsCount, 1);
+    assertEq(userPool.nthCreatorPoolCount, 1);
     assertEq(userPool.creationFeesAmount, CREATION_FEE_AMOUNT);
     assertEq(userPool.creatorCompletionFeesPercent, SPLIT_PERCENT);
     assertTrue(userPool.creationTime > 0);

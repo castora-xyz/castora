@@ -245,8 +245,10 @@ contract CastoraStructs {
     address completionFeesToken;
     /// Token address used for creation fees payment
     address creationFeesToken;
+    /// Sequential number of this pool globally
+    uint256 nthAllCreatedPoolsCount;
     /// Sequential number of this pool for the creator
-    uint256 nthPoolCount;
+    uint256 nthCreatorPoolCount;
     /// Timestamp when the pool was created
     uint256 creationTime;
     /// Amount of creation fees paid for this pool
