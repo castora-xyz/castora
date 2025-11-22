@@ -150,7 +150,7 @@ export const LeaderboardPage = () => {
                 <Web3Avatar address={rowAddress} />
                 <span className="font-medium opacity-85">
                   {shortenAddress(rowAddress)}
-                  {isMe && <span className="ml-1 font-bold text-primary-default">(Me)</span>}
+                  {isMe && <span className="ml-1 font-bold text-primary-darker dark:text-primary-default">(Me)</span>}
                 </span>
                 {explorerUrl && <ExternalLink className="w-4 h-4 fill-text-caption" />}
               </a>
@@ -293,7 +293,7 @@ export const LeaderboardPage = () => {
 
       <div className="w-full max-w-screen-xl mx-auto">
         {isLoading && (
-          <div className="flex justify-center items-center gap-2 max-sm:grow max-sm:text-center py-20 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:px-16 md:px-4 lg:px-8 sm:text-center">
+          <div className="mt-6 flex justify-center items-center gap-2 max-sm:grow max-sm:text-center py-20 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:px-16 md:px-4 lg:px-8 sm:text-center">
             <Breathing width={18} height={18} className="rounded-full" />
             <Breathing width={18} height={18} className="rounded-full" />
             <Breathing width={18} height={18} className="rounded-full" />
@@ -301,7 +301,7 @@ export const LeaderboardPage = () => {
         )}
 
         {hasError && (
-          <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center">
+          <div className="mt-6 max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center">
             <p className="text-lg mb-4">Error loading leaderboard</p>
             <button
               onClick={refresh}
