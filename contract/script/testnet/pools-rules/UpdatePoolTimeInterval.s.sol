@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.30;
 
-import '../../src/CastoraPoolsRules.sol';
+import '../../../src/CastoraPoolsRules.sol';
 import 'forge-std/Script.sol';
 
 contract UpdatePoolTimeInterval is Script {

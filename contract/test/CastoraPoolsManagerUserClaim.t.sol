@@ -1,25 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.25;
+pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'forge-std/Test.sol';
-import '../src/CastoraPoolsManager.sol';
-import '../src/Castora.sol';
-import '../src/CastoraPoolsRules.sol';
-import '../src/cUSD.sol';
+import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Test} from 'forge-std/Test.sol';
+import {Castora} from '../src/Castora.sol';
+import {CastoraActivities} from '../src/CastoraActivities.sol';
+import {CastoraErrors} from '../src/CastoraErrors.sol';
+import {CastoraEvents} from '../src/CastoraEvents.sol';
+import {CastoraPoolsManager} from '../src/CastoraPoolsManager.sol';
+import {CastoraStructs} from '../src/CastoraStructs.sol';
+import {cUSD} from '../src/cUSD.sol';
 
-contract RejectETH {
-  receive() external payable {
-    revert();
-  }
-}
+contract RejectETH {} // by default, empty contract will reject ETH
 
-contract CastoraPoolsManagerUserClaimTest is Test {
+contract CastoraPoolsManagerUserClaimTest is CastoraErrors, CastoraEvents, CastoraStructs, Test {
+  CastoraActivities activities;
   CastoraPoolsManager poolsManager;
   Castora mockCastora;
-  CastoraPoolsRules mockPoolsRules;
   cUSD creationFeeToken;
   cUSD predictionToken;
   cUSD stakeToken;
@@ -31,7 +30,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   address user3;
   address feeCollector;
   address rejectETHFeeCollector;
-  uint256 constant SPLIT_PERCENT = 5000; // 50%
+  uint16 constant SPLIT_PERCENT = 5000; // 50%
   uint256 constant CREATION_FEE_AMOUNT = 100 * 10 ** 6; // 100 tokens with 6 decimals
   uint256 constant STAKE_AMOUNT = 1000000; // 1 token with 6 decimals
   uint256 constant NUM_PREDICTIONS = 10;
@@ -48,22 +47,20 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     user3 = makeAddr('user3');
     feeCollector = makeAddr('feeCollector');
 
-    // Deploy RejectETH contract
+    activities = CastoraActivities(payable(address(new ERC1967Proxy(address(new CastoraActivities()), ''))));
     rejectETHContract = new RejectETH();
     rejectETHFeeCollector = address(rejectETHContract);
-
-    // Deploy mock contracts
     mockCastora = Castora(payable(makeAddr('mockCastora')));
-    mockPoolsRules = CastoraPoolsRules(makeAddr('mockPoolsRules'));
-
-    // Deploy real tokens for testing
     creationFeeToken = new cUSD();
     predictionToken = new cUSD();
     stakeToken = new cUSD();
 
     // Deploy CastoraPoolsManager with proxy
     poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
-    poolsManager.initialize(address(mockCastora), address(mockPoolsRules), feeCollector, SPLIT_PERCENT);
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
+    poolsManager.setCastora(address(mockCastora));
+    activities.initialize();
+    activities.setAuthorizedLogger((address(poolsManager)), true);
 
     // Set up creation fees for the token
     poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
@@ -74,7 +71,10 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       stakeToken: address(stakeToken),
       stakeAmount: STAKE_AMOUNT,
       snapshotTime: block.timestamp + 1200,
-      windowCloseTime: block.timestamp + 900
+      windowCloseTime: block.timestamp + 900,
+      feesPercent: 500,
+      multiplier: 200,
+      isUnlisted: false
     });
 
     // Set up mock pool structure
@@ -106,16 +106,6 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     creationFeeToken.approve(address(poolsManager), type(uint256).max);
     vm.prank(user3);
     creationFeeToken.approve(address(poolsManager), type(uint256).max);
-
-    // Mock the rules validation to pass
-    vm.mockCall(
-      address(mockPoolsRules),
-      abi.encodeWithSelector(CastoraPoolsRules.validateCreatePool.selector, validSeeds),
-      abi.encode()
-    );
-    vm.mockCall(
-      address(mockPoolsRules), abi.encodeWithSelector(CastoraPoolsRules.validateMultiplier.selector, 200), abi.encode()
-    );
   }
 
   function _createPoolForUser(address user, uint256 poolId) internal {
@@ -126,7 +116,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
     // User creates a pool
     vm.prank(user);
-    poolsManager.createPool(validSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(validSeeds, address(creationFeeToken));
   }
 
   function _setupCompletedPool(uint256 poolId, uint256 /* totalFees */ ) internal {
@@ -144,14 +134,23 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.warp(block.timestamp + 1600);
   }
 
+  function testReceivingOfNativeTokens() public {
+    vm.deal(user1, 1 ether);
+    vm.prank(user1);
+
+    vm.expectEmit(true, false, false, true);
+    emit ReceiveWasCalled(user1, 1 ether);
+    (payable(poolsManager).call{value: 1 ether}(''));
+  }
+
   // ========== PROCESS POOL COMPLETION TESTS ==========
 
   function testProcessPoolCompletionUserCreatedPool() public {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    // Calculate total fees: (stakeAmount * noOfPredictions) - (winAmount * noOfWinners)
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
     uint256 castoraShare = totalFees - userShare;
 
@@ -175,12 +174,12 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     assertEq(userPool.completionFeesAmount, userShare);
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimableFeesPools, 1);
     assertEq(stats.noOfCompletionFeesTokens, 1);
 
     // Verify user stats were updated
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.noOfClaimableCompletionFeesPools, 1);
     assertEq(userStats.noOfCompletionFeeTokens, 1);
 
@@ -198,7 +197,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
   function testProcessPoolCompletionNonUserCreatedPool() public {
     uint256 poolId = 999; // Pool not created by any user
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId, totalFees);
 
@@ -212,6 +212,18 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
     // Verify the pool is marked as processed
     assertTrue(poolsManager.nonUserPoolHasCollectedFees(poolId));
+  }
+
+  function testProcessPoolCompletionRevertCastoraNotSet() public {
+    // redeploy and setup pools manager without setting castora
+    poolsManager = CastoraPoolsManager(payable(address(new ERC1967Proxy(address(new CastoraPoolsManager()), ''))));
+    poolsManager.initialize(address(activities), feeCollector, SPLIT_PERCENT);
+    poolsManager.setCreationFees(address(creationFeeToken), CREATION_FEE_AMOUNT);
+    activities.setAuthorizedLogger((address(poolsManager)), true);
+
+    // Expect failure as Castora wasn't set
+    vm.expectRevert(CastoraAddressNotSet.selector);
+    poolsManager.processPoolCompletion(1 /* poolId */ );
   }
 
   function testProcessPoolCompletionRevertNotCompleted() public {
@@ -236,7 +248,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
 
     // Process once
@@ -249,7 +262,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
   function testProcessPoolCompletionRevertAlreadyProcessedNonUserPool() public {
     uint256 poolId = 999;
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId, totalFees);
 
@@ -267,7 +281,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     _setupCompletedPool(poolId, totalFees);
@@ -293,12 +308,12 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     assertEq(userPool.creatorClaimTime, block.timestamp);
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimedFeesPools, 1);
     assertEq(stats.noOfClaimableFeesPools, 0);
 
     // Verify user stats were updated
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.noOfClaimedCompletionFeesPools, 1);
     assertEq(userStats.noOfClaimableCompletionFeesPools, 0);
 
@@ -317,7 +332,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -341,7 +357,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -362,11 +379,11 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     // Setup a pool with zero fees (break even scenario)
     Pool memory zeroFeesPool = mockPool;
     zeroFeesPool.poolId = poolId;
+    zeroFeesPool.seeds.feesPercent = 0; // No fees
     zeroFeesPool.completionTime = block.timestamp + 1500;
     zeroFeesPool.noOfPredictions = 5;
     zeroFeesPool.noOfWinners = 5;
     zeroFeesPool.winAmount = STAKE_AMOUNT; // Winners get exactly what they staked
-    // totalFees = (1000000 * 5) - (1000000 * 5) = 0
 
     vm.mockCall(
       address(mockCastora), abi.encodeWithSelector(Castora.getPool.selector, poolId), abi.encode(zeroFeesPool)
@@ -390,7 +407,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     poolIds[1] = 2;
     poolIds[2] = 3;
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     for (uint256 i = 0; i < poolIds.length; i++) {
@@ -421,12 +439,12 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     }
 
     // Verify global stats were updated
-    AllStats memory stats = poolsManager.getAllStats();
+    AllUserCreatedPoolStats memory stats = poolsManager.getAllStats();
     assertEq(stats.noOfClaimedFeesPools, 3);
     assertEq(stats.noOfClaimableFeesPools, 0);
 
     // Verify user stats were updated
-    UserStats memory userStats = poolsManager.getUserStats(user1);
+    UserCreatedPoolStats memory userStats = poolsManager.getUserStats(user1);
     assertEq(userStats.noOfClaimedCompletionFeesPools, 3);
     assertEq(userStats.noOfClaimableCompletionFeesPools, 0);
   }
@@ -441,7 +459,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     _createPoolForUser(user2, poolId2);
     _createPoolForUser(user1, poolId3);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId1, totalFees);
     _setupCompletedPool(poolId2, totalFees);
@@ -471,7 +490,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     _createPoolForUser(user1, poolId1);
     _createPoolForUser(user1, poolId2);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     // Only setup and process first pool
     _setupCompletedPool(poolId1, totalFees);
@@ -516,10 +536,11 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     );
 
     vm.prank(user1);
-    poolsManager.createPool(differentSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(differentSeeds, address(creationFeeToken));
 
     // Process both pools
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     _setupCompletedPool(poolId1, totalFees);
     poolsManager.processPoolCompletion(poolId1);
@@ -552,7 +573,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId, totalFees);
     poolsManager.processPoolCompletion(poolId);
 
@@ -566,7 +588,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId = 1;
     _createPoolForUser(user1, poolId);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     _setupCompletedPool(poolId, totalFees);
@@ -594,7 +617,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
   function testPaginationFunctionsForClaimable() public {
     // Create multiple pools
     uint256 numPools = 5;
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
 
     for (uint256 i = 1; i <= numPools; i++) {
       _createPoolForUser(user1, i);
@@ -649,7 +673,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(ethSeeds, address(creationFeeToken));
 
     // Fund contract with ETH for fee distribution
     vm.deal(address(poolsManager), 10 ether);
@@ -664,7 +688,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
 
     vm.warp(block.timestamp + 1600);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     // Process pool completion
@@ -695,13 +720,14 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       );
 
       vm.prank(user1);
-      poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+      poolsManager.createPool(ethSeeds, address(creationFeeToken));
     }
 
     // Fund contract with ETH
     vm.deal(address(poolsManager), 10 ether);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     uint256 userShare = (totalFees * SPLIT_PERCENT) / 10000;
 
     for (uint256 i = 0; i < poolIds.length; i++) {
@@ -741,7 +767,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(ethSeeds, address(creationFeeToken));
 
     // Update fee collector to the contract that rejects ETH
     poolsManager.setFeeCollector(rejectETHFeeCollector);
@@ -798,7 +824,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     vm.mockCall(address(mockCastora), abi.encodeWithSelector(Castora.createPool.selector, ethSeeds), abi.encode(poolId));
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(ethSeeds, address(creationFeeToken));
 
     // Fund contract with ETH for fee distribution
     vm.deal(address(poolsManager), 10 ether);
@@ -841,7 +867,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
       );
 
       vm.prank(user1);
-      poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+      poolsManager.createPool(ethSeeds, address(creationFeeToken));
     }
 
     // Fund contract with ETH
@@ -878,7 +904,8 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     uint256 poolId1 = 1;
     _createPoolForUser(user1, poolId1);
 
-    uint256 totalFees = (STAKE_AMOUNT * NUM_PREDICTIONS) - (WIN_AMOUNT * NUM_WINNERS);
+    uint256 totalStaked = STAKE_AMOUNT * NUM_PREDICTIONS;
+    uint256 totalFees = mockPool.seeds.feesPercent * totalStaked / 10000; // feesPercent is in 2 decimal places
     _setupCompletedPool(poolId1, totalFees);
 
     // This should work fine (ERC20 transfer to fee collector)
@@ -895,7 +922,7 @@ contract CastoraPoolsManagerUserClaimTest is Test {
     );
 
     vm.prank(user1);
-    poolsManager.createPool(ethSeeds, address(creationFeeToken), 200, false);
+    poolsManager.createPool(ethSeeds, address(creationFeeToken));
 
     // Update fee collector to the contract that rejects ETH
     poolsManager.setFeeCollector(rejectETHFeeCollector);

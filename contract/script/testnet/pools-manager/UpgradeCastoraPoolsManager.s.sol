@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.30;
 
 import 'openzeppelin-foundry-upgrades/Upgrades.sol';
-import '../../src/CastoraPoolsManager.sol';
+import '../../../src/CastoraPoolsManager.sol';
 import 'forge-std/Script.sol';
 
 contract UpgradeCastoraPoolsManager is Script {

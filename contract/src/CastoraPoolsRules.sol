@@ -1,41 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.25;
+pragma solidity 0.8.30;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import './Castora.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {CastoraErrors} from './CastoraErrors.sol';
+import {CastoraEvents} from './CastoraEvents.sol';
+import {CastoraStructs} from './CastoraStructs.sol';
 
-error InvalidPoolTimeInterval();
-error InvalidPoolMultiplier();
-error PredictionTokenNotAllowed();
-error StakeTokenNotAllowed();
-error StakeAmountNotAllowed();
-
-/// Emitted when a stake token's allowed status is updated.
-event UpdatedAllowedStakeToken(address indexed token, bool allowed);
-
-/// Emitted when a prediction token's allowed status is updated.
-event UpdatedAllowedPredictionToken(address indexed token, bool allowed);
-
-/// Emitted when a specific stake amount's allowed status is updated for a token.
-event UpdatedAllowedStakeAmount(address indexed token, uint256 amount, bool allowed);
-
-/// Emitted when a specific multiplier's allowed status is updated for a pool.
-event UpdatedAllowedPoolMultiplier(uint16 multiplier, bool allowed);
-
-/// Emitted when the required time interval for pool timing validation is updated.
-event UpdatedRequiredTimeInterval(uint256 oldInterval, uint256 newInterval);
-
-/// @title CastoraPoolsRules - Pool Creation and Validation Rules for Castora
-/// @notice This upgradeable contract manages validation rules and permissions for pool creation in the Castora protocol.
-/// It controls which tokens can be used for staking and predictions, what stake amounts are allowed,
-/// and enforces timing constraints for pool windows and snapshots.
-/// @dev The contract is upgradeable using UUPS pattern and includes comprehensive validation functions
-/// that can either revert on failure or return boolean results for integration flexibility.
+/// Manages validation rules and token permissions for pool creation across the system.
+/// Controls which tokens can be used for staking and predictions, validates stake amounts,
+/// enforces timing constraints, and manages pool multipliers and fee percentages.
 /// @custom:oz-upgrades-from build-info-ref:CastoraPoolsRules
-contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract CastoraPoolsRules is
+  CastoraErrors,
+  CastoraEvents,
+  CastoraStructs,
+  Initializable,
+  OwnableUpgradeable,
+  UUPSUpgradeable,
+  ReentrancyGuardUpgradeable
+{
   /// Required time interval in seconds for pool timing validation
   uint256 public requiredTimeInterval;
   /// Counter for the number of stake tokens that have ever been allowed
@@ -46,6 +32,12 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   uint256 public currentlyAllowedStakeTokensCount;
   /// Counter for the number of prediction tokens that are currently allowed
   uint256 public currentlyAllowedPredictionTokensCount;
+  /// Counter for the number of multipliers that have ever been allowed
+  uint256 public everAllowedPoolMultipliersCount;
+  /// Counter for the number of multipliers that are currently allowed
+  uint256 public currentlyAllowedPoolMultipliersCount;
+  /// Current Pool Fees Percentage from winnings, 2 decimal places
+  uint16 public currentPoolFeesPercent;
   /// Array of all stake tokens that have ever been allowed
   address[] public everAllowedStakeTokens;
   /// Array of all prediction tokens that have ever been allowed
@@ -54,12 +46,16 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   address[] public currentlyAllowedStakeTokens;
   /// Array of prediction tokens that are currently allowed
   address[] public currentlyAllowedPredictionTokens;
+  /// Array of all multipliers that have ever been allowed
+  uint16[] public everAllowedPoolMultipliers;
+  /// Array of multipliers that are currently allowed
+  uint16[] public currentlyAllowedPoolMultipliers;
   /// Tracks which tokens are allowed for staking
   mapping(address => bool) public allowedStakeTokens;
   /// Tracks which tokens are allowed for predictions
   mapping(address => bool) public allowedPredictionTokens;
-  /// Tracks which stake amounts are allowed per token
-  mapping(address => mapping(uint256 => bool)) public allowedStakeAmounts;
+  /// Tracks minimum stake amounts per token
+  mapping(address => uint256) public minimumStakeAmounts;
   /// Tracks if a stake token has ever been added to everAllowedStakeTokens (prevents duplicates)
   mapping(address => bool) public hasEverBeenAllowedStakeToken;
   /// Tracks if a prediction token has ever been added to everAllowedPredictionTokens (prevents duplicates)
@@ -69,19 +65,11 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   /// Maps each currently allowed prediction token to its index in currentlyAllowedPredictionTokens (for efficient removal)
   mapping(address => uint256) public currentlyAllowedPredictionTokenIndex;
   /// Maps allowed multipliers for pools, 2 decimal places (e.g. 150 = 1.5x)
-  mapping(uint16 => bool) public allowedPoolMultipliers; 
+  mapping(uint16 => bool) public allowedPoolMultipliers;
   /// Tracks if a multiplier has ever been added to allowedPoolMultipliers (prevents duplicates)
   mapping(uint16 => bool) public hasEverBeenAllowedPoolMultiplier;
-  /// Array of all multipliers that have ever been allowed
-  uint16[] public everAllowedPoolMultipliers;
-  /// Counter for the number of multipliers that have ever been allowed
-  uint256 public everAllowedPoolMultipliersCount;
-  /// Counter for the number of multipliers that are currently allowed
-  uint256 public currentlyAllowedPoolMultipliersCount;
   /// Maps each currently allowed multiplier to its index in currentlyAllowedPoolMultipliers (for efficient removal)
   mapping(uint16 => uint256) public currentlyAllowedPoolMultiplierIndex;
-  /// Array of multipliers that are currently allowed
-  uint16[] public currentlyAllowedPoolMultipliers;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -93,6 +81,7 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     requiredTimeInterval = 5 * 60; // 5 minutes default
+    currentPoolFeesPercent = 500; // 5%
   }
 
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -105,46 +94,69 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     emit UpdatedRequiredTimeInterval(oldInterval, newInterval);
   }
 
-  /// Set whether a stake token is allowed
+  /// Update the current pool fees percent from winnings
+  /// @param newPercent The new pool fees percent to 2 decimal places
+  function updateCurrentPoolFeesPercent(uint16 newPercent) external onlyOwner nonReentrant {
+    if (newPercent > 10000) revert InvalidSplitFeesPercent();
+    uint16 oldPoolFeesPercent = currentPoolFeesPercent;
+    currentPoolFeesPercent = newPercent;
+    emit UpdatedCurrentPoolFeesPercent(oldPoolFeesPercent, newPercent);
+  }
+
+  /// Allow a stake token and set its minimum stake amount
   /// @param token The token address
-  /// @param allowed Whether the token is allowed
-  function updateAllowedStakeToken(address token, bool allowed) external onlyOwner nonReentrant {
+  /// @param minimumAmount The minimum stake amount for this token
+  function allowStakeToken(address token, uint256 minimumAmount) external onlyOwner nonReentrant {
     if (token == address(0)) revert InvalidAddress();
-    
+    if (minimumAmount == 0) revert StakeAmountNotAllowed();
+
     bool wasAllowed = allowedStakeTokens[token];
-    allowedStakeTokens[token] = allowed;
+    allowedStakeTokens[token] = true;
+    minimumStakeAmounts[token] = minimumAmount;
 
     // Track in ever allowed array if this is the first time it's being allowed
-    if (allowed && !hasEverBeenAllowedStakeToken[token]) {
+    if (!hasEverBeenAllowedStakeToken[token]) {
       everAllowedStakeTokens.push(token);
       hasEverBeenAllowedStakeToken[token] = true;
       everAllowedStakeTokensCount++;
     }
 
     // Update currently allowed arrays
-    if (allowed && !wasAllowed) {
+    if (!wasAllowed) {
       // Adding to currently allowed
       currentlyAllowedStakeTokenIndex[token] = currentlyAllowedStakeTokens.length;
       currentlyAllowedStakeTokens.push(token);
       currentlyAllowedStakeTokensCount++;
-    } else if (!allowed && wasAllowed) {
-      // Removing from currently allowed
-      uint256 indexToRemove = currentlyAllowedStakeTokenIndex[token];
-      uint256 lastIndex = currentlyAllowedStakeTokens.length - 1;
-
-      if (indexToRemove != lastIndex) {
-        // Move the last element to the position of the element to remove
-        address lastToken = currentlyAllowedStakeTokens[lastIndex];
-        currentlyAllowedStakeTokens[indexToRemove] = lastToken;
-        currentlyAllowedStakeTokenIndex[lastToken] = indexToRemove;
-      }
-
-      currentlyAllowedStakeTokens.pop();
-      delete currentlyAllowedStakeTokenIndex[token];
-      currentlyAllowedStakeTokensCount--;
     }
 
-    emit UpdatedAllowedStakeToken(token, allowed);
+    emit UpdatedAllowedStakeToken(token, true);
+  }
+
+  /// Disallow a stake token
+  /// @param token The token address
+  function disallowStakeToken(address token) external onlyOwner nonReentrant {
+    if (token == address(0)) revert InvalidAddress();
+    if (!allowedStakeTokens[token]) revert StakeTokenNotAllowed();
+
+    allowedStakeTokens[token] = false;
+    minimumStakeAmounts[token] = 0;
+
+    // Remove from currently allowed
+    uint256 indexToRemove = currentlyAllowedStakeTokenIndex[token];
+    uint256 lastIndex = currentlyAllowedStakeTokens.length - 1;
+
+    if (indexToRemove != lastIndex) {
+      // Move the last element to the position of the element to remove
+      address lastToken = currentlyAllowedStakeTokens[lastIndex];
+      currentlyAllowedStakeTokens[indexToRemove] = lastToken;
+      currentlyAllowedStakeTokenIndex[lastToken] = indexToRemove;
+    }
+
+    currentlyAllowedStakeTokens.pop();
+    delete currentlyAllowedStakeTokenIndex[token];
+    currentlyAllowedStakeTokensCount--;
+
+    emit UpdatedAllowedStakeToken(token, false);
   }
 
   /// Set whether a prediction token is allowed
@@ -166,13 +178,13 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     // Update currently allowed arrays
     if (allowed && !wasAllowed) {
       // Adding to currently allowed
-      currentlyAllowedPredictionTokenIndex[token] = currentlyAllowedPredictionTokens.length;
+      currentlyAllowedPredictionTokenIndex[token] = currentlyAllowedPredictionTokensCount;
       currentlyAllowedPredictionTokens.push(token);
       currentlyAllowedPredictionTokensCount++;
     } else if (!allowed && wasAllowed) {
       // Removing from currently allowed
       uint256 indexToRemove = currentlyAllowedPredictionTokenIndex[token];
-      uint256 lastIndex = currentlyAllowedPredictionTokens.length - 1;
+      uint256 lastIndex = currentlyAllowedPredictionTokensCount - 1;
 
       if (indexToRemove != lastIndex) {
         // Move the last element to the position of the element to remove
@@ -189,19 +201,12 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     emit UpdatedAllowedPredictionToken(token, allowed);
   }
 
-  /// Set whether a specific stake amount is allowed for a token
-  /// @param token The stake token address
-  /// @param amount The stake amount
-  /// @param allowed Whether this amount is allowed
-  function updateAllowedStakeAmount(address token, uint256 amount, bool allowed) external onlyOwner nonReentrant {
-    allowedStakeAmounts[token][amount] = allowed;
-    emit UpdatedAllowedStakeAmount(token, amount, allowed);
-  }
-
   /// Set whether a specific multiplier is allowed for pools
   /// @param multiplier The multiplier value
   /// @param allowed Whether this multiplier is allowed
   function updateAllowedPoolMultiplier(uint16 multiplier, bool allowed) external onlyOwner nonReentrant {
+    if (multiplier == 0) revert InvalidPoolMultiplier();
+
     bool wasAllowed = allowedPoolMultipliers[multiplier];
     allowedPoolMultipliers[multiplier] = allowed;
 
@@ -214,13 +219,13 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     // Update currently allowed arrays
     if (allowed && !wasAllowed) {
       // Adding to currently allowed
-      currentlyAllowedPoolMultiplierIndex[multiplier] = currentlyAllowedPoolMultipliers.length;
+      currentlyAllowedPoolMultiplierIndex[multiplier] = currentlyAllowedPoolMultipliersCount;
       currentlyAllowedPoolMultipliers.push(multiplier);
       currentlyAllowedPoolMultipliersCount++;
     } else if (!allowed && wasAllowed) {
       // Removing from currently allowed
       uint256 indexToRemove = currentlyAllowedPoolMultiplierIndex[multiplier];
-      uint256 lastIndex = currentlyAllowedPoolMultipliers.length - 1;
+      uint256 lastIndex = currentlyAllowedPoolMultipliersCount - 1;
 
       if (indexToRemove != lastIndex) {
         // Move the last element to the position of the element to remove
@@ -259,11 +264,11 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     if (!allowedPredictionTokens[token]) revert PredictionTokenNotAllowed();
   }
 
-  /// Validate that stake amount is allowed for the given token
+  /// Validate that stake amount meets minimum requirement for the given token
   /// @param token The stake token address
   /// @param amount The stake amount
   function validateStakeAmount(address token, uint256 amount) external view {
-    if (!allowedStakeAmounts[token][amount]) revert StakeAmountNotAllowed();
+    if (amount == 0 || amount < minimumStakeAmounts[token]) revert StakeAmountNotAllowed();
   }
 
   /// Validate that a pool multiplier is allowed
@@ -272,17 +277,25 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     if (!allowedPoolMultipliers[multiplier]) revert InvalidPoolMultiplier();
   }
 
+  /// Validate that the pool fees percent is coorect
+  /// @param percent The fees percent
+  function validatePoolFeesPercent(uint16 percent) external view {
+    if (currentPoolFeesPercent != percent) revert InvalidPoolFeesPercent();
+  }
+
   /// Comprehensive validation for pool creation using PoolSeeds
   /// @param seeds The PoolSeeds struct containing all pool parameters
   function validateCreatePool(PoolSeeds memory seeds) external view {
     if (!allowedStakeTokens[seeds.stakeToken]) revert StakeTokenNotAllowed();
     if (!allowedPredictionTokens[seeds.predictionToken]) revert PredictionTokenNotAllowed();
-    if (!allowedStakeAmounts[seeds.stakeToken][seeds.stakeAmount]) revert StakeAmountNotAllowed();
+    if (seeds.stakeAmount == 0 || seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) revert StakeAmountNotAllowed();
     if (seeds.snapshotTime < seeds.windowCloseTime) revert InvalidPoolTimes();
     if (
       requiredTimeInterval != 0
         && (seeds.windowCloseTime % requiredTimeInterval != 0 || seeds.snapshotTime % requiredTimeInterval != 0)
     ) revert InvalidPoolTimeInterval();
+    if (currentPoolFeesPercent != seeds.feesPercent) revert InvalidPoolFeesPercent();
+    if (!allowedPoolMultipliers[seeds.multiplier]) revert InvalidPoolMultiplier();
   }
 
   /// Check if pool timing rules are valid without reverting
@@ -312,19 +325,27 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     return allowedPredictionTokens[token];
   }
 
-  /// Check if stake amount is allowed for the given token without reverting
+  /// Check if stake amount meets minimum requirement for the given token without reverting
   /// @param token The stake token address
   /// @param amount The stake amount
-  /// @return true if amount is allowed, false otherwise
+  /// @return true if amount meets minimum, false otherwise
   function isValidStakeAmount(address token, uint256 amount) external view returns (bool) {
-    return allowedStakeAmounts[token][amount];
+    if (!allowedStakeTokens[token]) return false;
+    return amount >= minimumStakeAmounts[token];
   }
 
   /// Check if a pool multiplier is allowed without reverting
   /// @param multiplier The pool multiplier
   /// @return true if multiplier is allowed, false otherwise
-  function isValidMultiplier(uint16 multiplier) external view returns (bool) {  
+  function isValidMultiplier(uint16 multiplier) external view returns (bool) {
     return allowedPoolMultipliers[multiplier];
+  }
+
+  /// Check if the pool fees percent is coorect
+  /// @param percent The fees percent
+  /// @return true if percent is correct, false otherwise
+  function isValidPoolFeesPercent(uint16 percent) external view returns (bool) {
+    return currentPoolFeesPercent == percent;
   }
 
   /// Comprehensive validation check for pool creation using PoolSeeds without reverting
@@ -333,12 +354,14 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
   function isValidCreatePool(PoolSeeds memory seeds) external view returns (bool) {
     if (!allowedStakeTokens[seeds.stakeToken]) return false;
     if (!allowedPredictionTokens[seeds.predictionToken]) return false;
-    if (!allowedStakeAmounts[seeds.stakeToken][seeds.stakeAmount]) return false;
+    if (seeds.stakeAmount == 0 || seeds.stakeAmount < minimumStakeAmounts[seeds.stakeToken]) return false;
     if (seeds.snapshotTime < seeds.windowCloseTime) return false;
     if (
       requiredTimeInterval != 0
         && (seeds.windowCloseTime % requiredTimeInterval != 0 || seeds.snapshotTime % requiredTimeInterval != 0)
     ) return false;
+    if (currentPoolFeesPercent != seeds.feesPercent) return false;
+    if (!allowedPoolMultipliers[seeds.multiplier]) return false;
     return true;
   }
 
@@ -388,6 +411,52 @@ contract CastoraPoolsRules is Initializable, OwnableUpgradeable, UUPSUpgradeable
     returns (address[] memory tokens)
   {
     return _paginateAddressArray(currentlyAllowedPredictionTokens, currentlyAllowedPredictionTokensCount, offset, limit);
+  }
+
+  /// Get paginated multipliers that have ever been allowed for pools
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of multipliers to return
+  /// @return multipliers Array of multipliers
+  function getEverAllowedPoolMultipliersPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint16[] memory multipliers)
+  {
+    return _paginateUint16Array(everAllowedPoolMultipliers, everAllowedPoolMultipliersCount, offset, limit);
+  }
+
+  /// Get paginated multipliers that are currently allowed for pools
+  /// @param offset Starting index for pagination
+  /// @param limit Maximum number of multipliers to return
+  /// @return multipliers Array of currently allowed multipliers
+  function getCurrentlyAllowedPoolMultipliersPaginated(uint256 offset, uint256 limit)
+    external
+    view
+    returns (uint16[] memory multipliers)
+  {
+    return _paginateUint16Array(currentlyAllowedPoolMultipliers, currentlyAllowedPoolMultipliersCount, offset, limit);
+  }
+
+  /// Internal helper to paginate uint16 arrays
+  /// @param array The array to paginate
+  /// @param total The length of the array to paginate
+  /// @param offset Starting index
+  /// @param limit Maximum items to return
+  /// @return items The paginated items
+  function _paginateUint16Array(uint16[] storage array, uint256 total, uint256 offset, uint256 limit)
+    internal
+    view
+    returns (uint16[] memory items)
+  {
+    if (offset >= total) return new uint16[](0);
+
+    uint256 end = offset + limit > total ? total : offset + limit;
+    uint256 length = end - offset;
+    items = new uint16[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      items[i] = array[offset + i];
+    }
   }
 
   /// Internal helper to paginate address arrays
