@@ -3,6 +3,7 @@ import {
   FieldValue,
   firestore,
   Job,
+  LDB_MAINNET_USER_PREFIX,
   LDB_TESTNET_USER_PREFIX,
   logger,
   REDIS_CACHE_TTL_SECONDS,
@@ -10,6 +11,7 @@ import {
   storage,
   updateTestnetLeaderboardLastUpdatedTime
 } from '@castora/shared';
+import { getTokenPrice } from './get-token-price.js';
 import { Pool, Prediction } from './schemas.js';
 
 /**
@@ -58,6 +60,30 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     );
   }
 
+  const isInTestnet = chain === 'monadtestnet';
+
+  // Get the USD price of the stake token at snapshot time if we are in mainnet
+  let price = 1;
+  if (!isInTestnet) {
+    const stakeTokenSymbol = pool.json?.pool?.stakeToken;
+    if (!stakeTokenSymbol) {
+      throw `FATAL: could not get stake token symbol for price conversion from archived pool ${poolId} on ${chain}`;
+    }
+
+    const snapshotTime = pool.json?.pool?.seeds?.snapshotTime;
+    if (!snapshotTime) {
+      throw `FATAL: could not get snapshotTime for price conversion from archived pool ${poolId} on ${chain}`;
+    }
+
+    // TODO: Reconcile other tokens when added for staking
+    if (stakeTokenSymbol !== 'MON') {
+      throw `FATAL: handle price conversion of stake token ${stakeTokenSymbol} in pool ${poolId} on ${chain}`;
+    }
+
+    price = await getTokenPrice(stakeTokenSymbol, snapshotTime);
+    logger.info(`Obtained stake token price for ${stakeTokenSymbol} at snapshotTime ${snapshotTime}: ${price} USD`);
+  }
+
   // Group predictions by user addresses
   const grouped: Record<string, Prediction[]> = {};
   for (let prediction of pool.predictions) {
@@ -86,39 +112,76 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       leftover = userData?.leaderboard?.leftoverStakeAmounts?.[chain] ?? 0;
     }
 
-    if (!userSnap.exists || !userSnap.data()?.leaderboard) {
-      // we've never updated leaderboard stats for this user so we increment global count
+    if (chain === 'monadtestnet' && (!userSnap.exists || !userSnap.data()?.leaderboard)) {
+      // on monadtestnet, we've never updated leaderboard stats for this user so we increment global count
       await firestore.doc('/counts/counts').set({ monadTestnetUsersCount: FieldValue.increment(1) }, { merge: true });
       logger.info(`\n📝 Incremented global monadTestnetUsersCount by 1 for user: ${address}`);
     }
 
-    // apply prediction volume points
-    xp += Math.trunc(predictions.length * pool.stakeAmount + leftover); // Using 1 MON for 1 XP
+    if (
+      !isInTestnet &&
+      (!userSnap.exists || !userSnap.data()?.leaderboard || !userSnap.data()?.leaderboard?.xp.mainnet)
+    ) {
+      // on mainnet, we've never updated leaderboard stats for this user so we increment global count
+      await firestore.doc('/counts/counts').set({ mainnetUsersCount: FieldValue.increment(1) }, { merge: true });
+      logger.info(`\n📝 Incremented global mainnetUsersCount by 1 for user: ${address}`);
+    }
 
-    // keep leftover for next time
-    leftover = (predictions.length * pool.stakeAmount + leftover) % 1;
+    // apply prediction volume points with price conversion and leftover from before
+    xp += Math.trunc(predictions.length * pool.stakeAmount * price + leftover);
+
+    // keep new leftover for next time
+    leftover = (predictions.length * pool.stakeAmount * price + leftover) % 1;
 
     // filter out winner predictions and apply points
     const winnings = predictions.filter(({ isAWinner }) => isAWinner);
     xp += winnings.length; // Using 1 winning for 1 XP
 
+    let predictionsVolume = predictions.length * pool.stakeAmount * price;
+    let dividedBy;
+    if (isInTestnet) {
+      dividedBy = 0.95; // assuming 5% fees on testnet
+    } else {
+      // mainnet fees percent from pool seeds, subtract from 1
+      const feesPercent = pool.json?.pool?.seeds?.feesPercent;
+      if (feesPercent === undefined) {
+        throw `FATAL: could not get feesPercent from archived pool ${poolId} on ${chain} for winnings volume calculation`;
+      }
+      dividedBy = 1 - feesPercent / 10000;
+    }
+    let winningsVolume = (winnings.length * pool.winAmount * price) / dividedBy; // winnings volume without fees
+
     // save user to firestore
     await userRef.set(
       {
-        monadTestnetStats: {
-          pools: FieldValue.increment(1),
-          predictions: FieldValue.increment(predictions.length),
-          predictionsVolume: FieldValue.increment(predictions.length * pool.stakeAmount),
-          winnings: FieldValue.increment(winnings.length),
-          winningsVolume: FieldValue.increment((winnings.length * pool.winAmount) / 0.95) // winnings volume without fees
-        },
+        ...(chain === 'monadtestnet'
+          ? {
+              monadTestnetStats: {
+                pools: FieldValue.increment(1),
+                predictions: FieldValue.increment(predictions.length),
+                predictionsVolume: FieldValue.increment(predictionsVolume),
+                winnings: FieldValue.increment(winnings.length),
+                winningsVolume: FieldValue.increment(winningsVolume) // winnings volume without fees
+              }
+            }
+          : {
+              stats: {
+                [chain]: {
+                  predictionsVolume: FieldValue.increment(predictionsVolume),
+                  winningsVolume: FieldValue.increment(winningsVolume)
+                },
+                mainnet: {
+                  predictionsVolume: FieldValue.increment(predictionsVolume),
+                  winningsVolume: FieldValue.increment(winningsVolume)
+                }
+              }
+            }),
         leaderboard: {
           leftoverStakeAmounts: { [chain]: leftover },
           lastUpdatedTime: FieldValue.serverTimestamp(),
           xp: {
             chains: { [chain]: FieldValue.increment(xp) },
-            // TODO: Unhardcode this testnet when in mainnet
-            testnet: FieldValue.increment(xp),
+            [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(xp),
             total: FieldValue.increment(xp)
           }
         }
@@ -128,13 +191,17 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
 
     // Update the user leaderboard data in Redis cache only if it exists already
     // as it was easier to invalidate the cache individually from here
-    const userKey = `${LDB_TESTNET_USER_PREFIX}${address}`;
+    const userKey = `${isInTestnet ? LDB_TESTNET_USER_PREFIX : LDB_MAINNET_USER_PREFIX}${address}`;
     const userCached = await redisClient.get(userKey);
     if (userCached) {
       const newUserSnapshot = await userRef.get();
       const { leaderboard, monadTestnetStats } = newUserSnapshot.data() as any;
-      const xp = leaderboard.xp.testnet;
-      const totalSnap = await firestore.collection('users').where('leaderboard.xp.testnet', '>', xp).count().get();
+      const xp = leaderboard.xp[isInTestnet ? 'testnet' : 'mainnet'];
+      const totalSnap = await firestore
+        .collection('users')
+        .where(`leaderboard.xp.${isInTestnet ? 'testnet' : 'mainnet'}`, '>', xp)
+        .count()
+        .get();
       const rank = totalSnap.data().count + 1;
 
       await redisClient.set(
@@ -143,7 +210,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
           lastUpdatedTime: leaderboard.lastUpdatedTime.toDate(),
           xp,
           rank,
-          ...monadTestnetStats
+          ...(monadTestnetStats ? { monadTestnetStats } : {})
         }),
         'EX',
         REDIS_CACHE_TTL_SECONDS
@@ -164,15 +231,18 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     const creatorRef = firestore.doc(`/users/${pool.creator}`);
     await creatorRef.set(
       {
-        monadTestnetStats: {
-          createdPools: FieldValue.increment(1)
-        },
+        ...(chain === 'monadtestnet'
+          ? {
+              monadTestnetStats: {
+                createdPools: FieldValue.increment(1)
+              }
+            }
+          : {}),
         leaderboard: {
           lastUpdatedTime: FieldValue.serverTimestamp(),
           xp: {
             chains: { [chain]: FieldValue.increment(3) }, // Using x3 XP for creators
-            // TODO: Unhardcode this testnet when in mainnet
-            testnet: FieldValue.increment(3), // Using x3 XP for creators
+            [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(3), // Using x3 XP for creators
             total: FieldValue.increment(3) // Using x3 XP for creators
           }
         }
@@ -201,12 +271,12 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       leaderboard: {
         lastUpdatedTime: {
           chains: { [chain]: FieldValue.serverTimestamp() },
-          testnet: FieldValue.serverTimestamp(),
+          [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.serverTimestamp(),
           total: FieldValue.serverTimestamp()
         },
         processedPools: {
           chains: { [chain]: FieldValue.increment(1) },
-          testnet: FieldValue.increment(1),
+          [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(1),
           total: FieldValue.increment(1)
         }
       }

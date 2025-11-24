@@ -1,13 +1,20 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { castoraAbi, castoraPoolsManagerAbi } from './abi.js';
+import {
+  castoraGettersAbi,
+  castoraMainnetAbi,
+  castoraMainnetPoolsManagerAbi,
+  castoraTestnetAbi,
+  castoraTestnetPoolsManagerAbi
+} from './abi.js';
 import { Chain } from './index.js';
 import { logger } from './logger.js';
 
 export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const CONTRACT_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
+export const CASTORA_GETTERS_ADDRESS_MONAD: `0x${string}` = '0x';
 
 const monadTestnet = () => {
   if (!process.env.MONAD_TESTNET_RPC_URL) throw 'Set MONAD_TESTNET_RPC_URL in env';
@@ -26,31 +33,87 @@ const monadTestnet = () => {
   });
 };
 
-const getAccount = (chain: Chain) => {
-  const adminKeyMonad = process.env.ADMIN_KEY_MONAD as `0x${string}`;
-  if (!adminKeyMonad) throw 'Set ADMIN_KEY_MONAD in env';
-  return privateKeyToAccount({ monadtestnet: adminKeyMonad }[chain]);
+const monadMainnet = () => {
+  if (!process.env.MONAD_MAINNET_RPC_URL) throw 'Set MONAD_MAINNET_RPC_URL in env';
+
+  return defineChain({
+    id: 143,
+    name: 'Monad Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Monad',
+      symbol: 'MON'
+    },
+    rpcUrls: {
+      default: { http: [process.env.MONAD_MAINNET_RPC_URL!] }
+    }
+  });
+};
+
+const getCastoraAbi = (chain: Chain) => {
+  if (chain === 'monadtestnet') return castoraTestnetAbi;
+  return castoraMainnetAbi;
 };
 
 export const getConfig = (chain: Chain) =>
   ({
-    monadtestnet: { chain: monadTestnet(), transport: http() }
+    monadtestnet: { chain: monadTestnet(), transport: http() },
+    monadmainnet: { chain: monadMainnet(), transport: http() }
   }[chain]);
+
 export const getContractAddress = (chain: Chain) =>
   ({
-    monadtestnet: CONTRACT_ADDRESS_MONAD
+    monadtestnet: CONTRACT_ADDRESS_MONAD,
+    monadmainnet: CONTRACT_ADDRESS_MONAD
   }[chain]);
+
+const getPoolsManagerAddress = (chain: Chain) =>
+  ({
+    monadtestnet: POOLS_MANAGER_ADDRESS_MONAD,
+    monadmainnet: POOLS_MANAGER_ADDRESS_MONAD
+  }[chain]);
+
+const getPoolsManagerAbi = (chain: Chain) => {
+  if (chain === 'monadtestnet') return castoraTestnetPoolsManagerAbi;
+  return castoraMainnetPoolsManagerAbi;
+};
+
+const getAccount = (chain: Chain) => {
+  const adminTestnetKey = process.env.ADMIN_KEY_MONAD_TESTNET as `0x${string}`;
+  if (!adminTestnetKey) throw 'Set ADMIN_KEY_MONAD_TESTNET in env';
+
+  const adminMainnetKey = process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`;
+  if (!adminMainnetKey) throw 'Set ADMIN_KEY_MONAD_MAINNET in env';
+
+  return privateKeyToAccount({ monadtestnet: adminTestnetKey, monadmainnet: adminMainnetKey }[chain]);
+};
 
 export const readCastoraContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
   try {
+    // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
       address: getContractAddress(chain),
-      abi: castoraAbi,
+      abi: getCastoraAbi(chain),
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readCastoraContract call ${e}`);
+    logger.error(e, `Error at readCastoraContract call on chain: ${chain}, ${e}`);
+    throw e;
+  }
+};
+
+export const readGettersContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
+  try {
+    // @ts-ignore
+    return await createPublicClient({ ...getConfig(chain) }).readContract({
+      address: CASTORA_GETTERS_ADDRESS_MONAD,
+      abi: castoraGettersAbi,
+      functionName,
+      args
+    });
+  } catch (e) {
+    logger.error(e, `Error at readGettersContract call on chain: ${chain}, ${e}`);
     throw e;
   }
 };
@@ -59,13 +122,13 @@ export const readPoolsManagerContract = async (chain: Chain, functionName: any, 
   try {
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: POOLS_MANAGER_ADDRESS_MONAD,
-      abi: castoraPoolsManagerAbi,
+      address: getPoolsManagerAddress(chain),
+      abi: getPoolsManagerAbi(chain),
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readPoolsManagerContract call ${e}`);
+    logger.error(e, `Error at readPoolsManagerContract call on chain: ${chain}, ${e}`);
     throw e;
   }
 };
@@ -74,12 +137,9 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
   const balance = await createPublicClient({ ...getConfig(chain) }).getBalance({
     address
   });
-  logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ETH`}`);
-
-  if (balance < 10e18) {
-    logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ETH`}. Please top up.`);
-  }
-
+  const symbol = chain.includes('monad') ? 'MON' : 'ETH';
+  logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ${symbol}`}`);
+  if (balance < 10e18) logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ${symbol}`}. Please top up.`);
   return balance;
 };
 
@@ -100,7 +160,7 @@ export const writeContract = async (
     const prevBalance = await showBalance(chain, account.address);
     const { result, request } = await publicClient.simulateContract({
       address: getContractAddress(chain),
-      abi: castoraAbi,
+      abi: getCastoraAbi(chain),
       functionName,
       args,
       account
@@ -126,14 +186,15 @@ export const writeContract = async (
 
     const newBalance = await showBalance(chain, account.address);
     const balanceDiffs = formatEther(newBalance - prevBalance);
-    logger.info(`Admin Balance Change: ${balanceDiffs} ETH`);
+    const symbol = chain.includes('monad') ? 'MON' : 'ETH';
+    logger.info(`Admin Balance Change: ${balanceDiffs} ${symbol}`);
   } catch (e) {
     if (Object.keys(e as any).includes('abi')) delete (e as any).abi;
     if (Object.keys(e as any).includes('args')) delete (e as any).args;
 
     logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 
-    if (`${e}`.includes('TransactionReceiptNotFoundError')) {
+    if (chain === 'monadtestnet' && `${e}`.includes('TransactionReceiptNotFoundError')) {
       // Surprisingly, this receipt not found error happens when
       // the transaction succeeded, so we don't rethrow to not stop execution
       // but we wait 10 seconds to allow the transaction to be mined

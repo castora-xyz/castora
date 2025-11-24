@@ -1,8 +1,6 @@
 import { Prediction } from './prediction.js';
 
-export * from './activities.js';
 export * from './archived-pool.js';
-export * from './leaderboard.js';
 export * from './pool-seeds.js';
 export * from './pool.js';
 export * from './prediction.js';

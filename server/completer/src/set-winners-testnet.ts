@@ -20,7 +20,7 @@ import { getSplittedPredictions } from './get-splitted-predictions.js';
  * @param multiplier The multiplier used to determine number of winners.
  * @returns The result containing winner prediction IDs.
  */
-export const setWinners = async (
+export const setWinnersTestnet = async (
   chain: Chain,
   pool: Pool,
   snapshotPrice: number,

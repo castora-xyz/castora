@@ -18,7 +18,9 @@ export const removeUserTelegram = async (userWalletAddress: string): Promise<voi
   logger.info(`User Wallet Address: ${userWalletAddress}`);
 
   // Using the default Firestore here to remove telegram IDs
-  await firestore.doc(`/users/${userWalletAddress}`).update({ telegramId: FieldValue.delete() });
+  await firestore
+    .doc(`/users/${userWalletAddress}`)
+    .update({ telegramId: FieldValue.delete(), telegram: FieldValue.delete() });
   logger.info('User Telegram Removed Successfully.');
 };
 
@@ -56,8 +58,10 @@ export const startTelegramAuth = async (userWalletAddress: string): Promise<stri
   await firestore.doc(`/users/${userWalletAddress}`).set(
     {
       address: userWalletAddress,
-      pendingTelegramAuthToken: token,
-      pendingTelegramAuthTime: FieldValue.serverTimestamp()
+      telegram: {
+        pendingAuthToken: token,
+        pendingAuthTime: FieldValue.serverTimestamp()
+      }
     },
     { merge: true }
   );

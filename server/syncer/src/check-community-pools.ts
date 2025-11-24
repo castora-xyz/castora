@@ -98,25 +98,43 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
         `snapshotTime: ${snapshotTime}, and the current timestamp: ${now}`
     );
 
-    // For every pool, post an archive job
-    await queueJob({
-      queueName: 'pool-archiver',
-      jobName: 'archive-pool',
-      jobData: { chain, poolId },
-      // 10 seconds after windowCloseTime to allow for transaction finality for last minute predictions
-      delay: (windowCloseTime - now) * 1000 + 10000
-    });
-    logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
+    // For every pool, post an archival and completion job, however, if windowCloseTime and snapshotTime
+    // are too close (less than a minute apart), only post the archival job with shouldComplete: true
+    // otherwise, post both jobs normally.
+    if (snapshotTime - windowCloseTime < 60) {
+      // post an archival job with shouldComplete: true
+      await queueJob({
+        queueName: 'pool-archiver',
+        jobName: 'archive-pool',
+        jobData: { chain, poolId, shouldComplete: true },
+        // 10 seconds after snapshotTime to allow for transaction finality
+        delay: (snapshotTime - now) * 1000 + 10000
+      });
+      logger.info(
+        `Posted job to archive and complete Pool ${poolId} on chain ${chain} at snapshotTime since ` +
+          `windowCloseTime and snapshotTime are less than a minute apart`
+      );
+    } else {
+      // post an archival job
+      await queueJob({
+        queueName: 'pool-archiver',
+        jobName: 'archive-pool',
+        jobData: { chain, poolId },
+        // 10 seconds after windowCloseTime to allow for transaction finality for last minute predictions
+        delay: (windowCloseTime - now) * 1000 + 10000
+      });
+      logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
 
-    // post a completion job
-    await queueJob({
-      queueName: 'pool-completer',
-      jobName: 'complete-pool',
-      jobData: { poolId, chain },
-      // 20 seconds after snapshotTime for price availability
-      delay: (snapshotTime - now) * 1000 + 20000
-    });
-    logger.info(`Posted job to complete Pool ${poolId} on chain ${chain} after snapshotTime`);
+      // post a completion job
+      await queueJob({
+        queueName: 'pool-completer',
+        jobName: 'complete-pool',
+        jobData: { poolId, chain },
+        // 20 seconds after snapshotTime for price availability
+        delay: (snapshotTime - now) * 1000 + 20000
+      });
+      logger.info(`Posted job to complete Pool ${poolId} on chain ${chain} after snapshotTime`);
+    }
 
     // For pools that are public ...
     if (!isUnlisted) {

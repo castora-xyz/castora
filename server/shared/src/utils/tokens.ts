@@ -76,7 +76,7 @@ export const tokens: Token[] = [
     name: 'MON',
     fullName: 'Monad',
     decimals: 18,
-    pythPriceId: ''
+    pythPriceId: '0x31491744e2dbf6df7fcf4ac0820d18a609b49076d45066d3568424e62f686cd1'
   },
   {
     address: CONTRACT_ADDRESS_SEPOLIA,

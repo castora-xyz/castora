@@ -11,7 +11,8 @@
     "clean": "rm -rf lib"
   },
   "dependencies": {
-    "@castora/shared": "file:../shared"
+    "@castora/shared": "file:../shared",
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

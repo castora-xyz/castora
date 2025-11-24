@@ -2,9 +2,12 @@ import { redisClient } from './jobs.js';
 
 const LDB_POOLS_KEY = 'pools-for-leaderboard-update';
 const LDB_TESTNET_LAST_UPDATED_TIME_KEY = 'leaderboard:testnet:lastUpdatedTime';
+const LDB_MAINNET_LAST_UPDATED_TIME_KEY = 'leaderboard:mainnet:lastUpdatedTime';
 
 export const LDB_TESTNET_TOP100_KEY = 'leaderboard:testnet:top100';
 export const LDB_TESTNET_USER_PREFIX = 'leaderboard:testnet:user:';
+export const LDB_MAINNET_TOP100_KEY = 'leaderboard:mainnet:top100';
+export const LDB_MAINNET_USER_PREFIX = 'leaderboard:mainnet:user:';
 export const REDIS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
 
 /**
@@ -32,6 +35,29 @@ export const getPoolsForLeaderboardUpdate = async (): Promise<Array<{ poolId: nu
 export const clearPoolsForLeaderboardUpdate = async () => {
   await redisClient.del(LDB_POOLS_KEY);
 };
+
+/**
+ * Updates the last updated time for the mainnet leaderboard.
+ *
+ * @param lastUpdatedTime - The Date object representing the last updated time.
+ */
+export const updateMainnetLeaderboardLastUpdatedTime = async (lastUpdatedTime: Date) => {
+  await redisClient.set(LDB_MAINNET_LAST_UPDATED_TIME_KEY, lastUpdatedTime.toISOString());
+};
+
+/**
+ * Retrieves the last updated time for the mainnet leaderboard.
+ * If no time is set, it returns the current date.
+ *
+ * @returns A Promise that resolves to a Date object representing the last updated time.
+ */
+export const getMainnetLeaderboardLastUpdatedTime = async (): Promise<Date> => {
+  const lastUpdatedTime = await redisClient.get(LDB_MAINNET_LAST_UPDATED_TIME_KEY);
+  if (!lastUpdatedTime) return new Date();
+  return new Date(lastUpdatedTime as string);
+};
+
+
 /**
  * Updates the last updated time for the testnet leaderboard.
  *

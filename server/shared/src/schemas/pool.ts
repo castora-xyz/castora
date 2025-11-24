@@ -22,16 +22,16 @@ export class Pool {
   creatorCompletionFees: string | undefined;
 
   constructor(input: any) {
-    this.poolId = Number(input[0]);
-    this.seeds = new PoolSeeds(input[1]);
-    this.seedsHash = input[2];
-    this.creationTime = Number(input[3]);
-    this.noOfPredictions = Number(input[4]);
-    this.snapshotPrice = Number(input[5]);
-    this.completionTime = Number(input[6]);
-    this.winAmount = Number(input[7]);
-    this.noOfWinners = Number(input[8]);
-    this.noOfClaimedWinnings = Number(input[9]);
+    this.poolId = Number(input.poolId);
+    this.seeds = new PoolSeeds(input.seeds);
+    this.seedsHash = input.seedsHash;
+    this.creationTime = Number(input.creationTime);
+    this.noOfPredictions = Number(input.noOfPredictions);
+    this.snapshotPrice = Number(input.snapshotPrice);
+    this.completionTime = Number(input.completionTime);
+    this.winAmount = Number(input.winAmount);
+    this.noOfWinners = Number(input.noOfWinners);
+    this.noOfClaimedWinnings = Number(input.noOfClaimedWinnings);
   }
 
   toJSON() {

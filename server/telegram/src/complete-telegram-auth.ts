@@ -10,15 +10,27 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
 
   // Verify the token against the user's wallet address. If the token is valid,
   // it will be found in the user's document.
-  const pendingsSnap = await firestore.collection('users').where('pendingTelegramAuthToken', '==', token).get();
-  if (pendingsSnap.empty) return ctx.reply('⚠️ Error. Please restart linking.');
+  let pendingsSnap = await firestore.collection('users').where('pendingTelegramAuthToken', '==', token).get();
+  if (pendingsSnap.empty) {
+    pendingsSnap = await firestore.collection('users').where('telegram.pendingAuthToken', '==', token).get();
+    if (pendingsSnap.empty) return ctx.reply('⚠️ Error. Please restart linking.');
+  }
 
   const userSnap = pendingsSnap.docs[0];
-  const { address: userWalletAddress, pendingTelegramAuthTime } = userSnap.data() as {
+  let {
+    address: userWalletAddress,
+    pendingTelegramAuthTime,
+    telegram
+  } = userSnap.data() as {
     address: string;
     pendingTelegramAuthTime: Timestamp;
+    telegram: {
+      pendingAuthToken: string;
+      pendingAuthTime: Timestamp;
+    };
   };
 
+  pendingTelegramAuthTime = pendingTelegramAuthTime || telegram?.pendingAuthTime;
   if (!userWalletAddress || !pendingTelegramAuthTime) {
     logger.error(`FATAL: Invalid user data in pending auth token: ${userSnap.id}`);
     return ctx.reply('⁉️ Invalid user data. Please try again.');
@@ -34,10 +46,16 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
   // Save the Telegram ID to the user's document and remove the pending auth details
   await userSnap.ref.set(
     {
-      telegramId: ctx.from.id,
-      telegramAuthTime: FieldValue.serverTimestamp(),
+      telegramId: FieldValue.delete(),
+      telegramAuthTime: FieldValue.delete(),
       pendingTelegramAuthToken: FieldValue.delete(),
-      pendingTelegramAuthTime: FieldValue.delete()
+      pendingTelegramAuthTime: FieldValue.delete(),
+      telegram: {
+        id: ctx.from.id,
+        authTime: FieldValue.serverTimestamp(),
+        pendingAuthToken: FieldValue.delete(),
+        pendingAuthTime: FieldValue.delete()
+      }
     },
     { merge: true }
   );

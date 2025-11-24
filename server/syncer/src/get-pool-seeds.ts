@@ -44,7 +44,7 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   ];
 };
 
-export const getCryptoSeeds = (chain: Chain) => {
+export const getTestnetCryptoSeeds = (chain: Chain) => {
   const sixHTimes = getCryptoTimes(6, 1);
   const twenty4HTimes = getCryptoTimes(12, 12);
   const seeds: PoolSeeds[] = [];
@@ -99,6 +99,26 @@ export const getCryptoSeeds = (chain: Chain) => {
     );
   }
 
+  return seeds;
+};
+
+export const getMainnetCryptoSeeds = (chain: Chain) => {
+  const times = getCryptoTimes(1, 1);
+  const seeds: PoolSeeds[] = [];
+  for (const { windowCloseTime, snapshotTime } of times) {
+    seeds.push(
+      new PoolSeeds({
+        predictionToken: getContractAddress(chain),
+        stakeToken: getContractAddress(chain),
+        stakeAmount: 100e18,
+        snapshotTime,
+        windowCloseTime,
+        feesPercent: 500,
+        multiplier: 300,
+        isUnlisted: false
+      })
+    );
+  }
   return seeds;
 };
 
@@ -172,7 +192,7 @@ const getStocksTimes = (): PoolTimes[] => {
   ];
 };
 
-export const getStocksSeeds = (chain: Chain) => {
+export const getTestnetStockSeeds = (chain: Chain) => {
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of getStocksTimes()) {
     for (const predictionToken of [AAPL, TSLA, CRCL]) {

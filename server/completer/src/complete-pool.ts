@@ -8,8 +8,9 @@ import {
 } from '@castora/shared';
 import { PoolMultiplier } from './get-no-of-winners.js';
 import { getSnapshotPrice } from './get-snapshot-price.js';
+import { mainnetOnchainCompletePool } from './mainnet-onchain-complete-pool.js';
 import { rearchivePool } from './rearchive-pool.js';
-import { setWinners } from './set-winners.js';
+import { setWinnersTestnet } from './set-winners-testnet.js';
 
 /**
  * Completes a pool by taking its snapshot and computing its winners.
@@ -67,7 +68,10 @@ export const completePool = async (job: Job): Promise<void> => {
     }
 
     // Make on-chain call for completion
-    const splitResult = await setWinners(chain, pool, snapshotPrice, multiplier);
+    const splitResult =
+      chain === 'monadtestnet'
+        ? await setWinnersTestnet(chain, pool, snapshotPrice, multiplier)
+        : await mainnetOnchainCompletePool(chain, pool, snapshotPrice);
 
     // refetching the pool here so that the winAmount and completionTime will now be valid
     pool = await fetchPool(chain, poolId);
