@@ -574,7 +574,9 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
     assertEq(getters.allStats().noOfUsers, 2);
     assertEq(getters.usersPaginated(0, 10).length, 2);
     assertEq(getters.usersPaginated(0, 10)[1], anotherNewUser);
-    assertEq(getters.userStats(anotherNewUser).nthUserCount, 2);
+    address[] memory users = new address[](1);
+    users[0] = anotherNewUser;
+    assertEq(getters.usersStatsBulk(users)[0].nthUserCount, 2);
   }
 
   function testGetPredictions() public {
@@ -613,6 +615,11 @@ contract CastoraPredictTest is CastoraErrors, CastoraEvents, CastoraStructs, Tes
 
     vm.expectRevert(InvalidAddress.selector);
     getters.userStats(address(0));
+
+    address[] memory users = new address[](1);
+    users[0] = address(0);
+    vm.expectRevert(InvalidAddress.selector);
+    getters.usersStatsBulk(users);
 
     vm.expectRevert(InvalidAddress.selector);
     getters.userJoinedPoolIdsPaginated(address(0), 0, 10);

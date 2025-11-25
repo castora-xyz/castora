@@ -109,6 +109,20 @@ contract CastoraPoolsManager is
     return userStats[user];
   }
 
+  /// Gets multiple user statistics
+  /// @param addresses The user addresses to query
+  /// @return statsList Array of UserCreatedPoolStats structs for the users
+  function getUserStatsBulk(address[] calldata addresses)
+    external
+    view
+    returns (UserCreatedPoolStats[] memory statsList)
+  {
+    statsList = new UserCreatedPoolStats[](addresses.length);
+    for (uint256 i = 0; i < addresses.length; i++) {
+      statsList[i] = userStats[addresses[i]];
+    }
+  }
+
   /// Gets user creation token fees information
   /// @param user The user address to query
   /// @param token The token address to query
