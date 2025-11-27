@@ -1,6 +1,5 @@
 export const castoraAbi = [
-  { type: 'fallback', stateMutability: 'payable' },
-  { type: 'receive', stateMutability: 'payable' },
+  { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
     name: 'ADMIN_ROLE',
@@ -17,13 +16,6 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'PREDICTION_DECIMALS',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint8', internalType: 'uint8' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
     name: 'UPGRADE_INTERFACE_VERSION',
     inputs: [],
     outputs: [{ name: '', type: 'string', internalType: 'string' }],
@@ -31,9 +23,25 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'WINNER_FEE_PERCENT',
+    name: 'activities',
     inputs: [],
-    outputs: [{ name: '', type: 'uint8', internalType: 'uint8' }],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'allStats',
+    inputs: [],
+    outputs: [
+      { name: 'noOfUsers', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictionTokens', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfStakeTokens', type: 'uint256', internalType: 'uint256' }
+    ],
     stateMutability: 'view'
   },
   {
@@ -72,16 +80,52 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'completePool',
+    name: 'claimablePredictionIdsByAddressesPerPool',
     inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
-      { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
-      { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
-      { name: 'winnerPredictions', type: 'uint256[]', internalType: 'uint256[]' }
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
     ],
-    outputs: [],
-    stateMutability: 'nonpayable'
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'claimablePredictionIdsInPoolIndex',
+    inputs: [
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'claimableRecordHashesByAddresses',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'claimableRecordHashesIndex',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'bytes32', internalType: 'bytes32' }
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'claimedRecordHashes',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
   },
   {
     type: 'function',
@@ -90,25 +134,28 @@ export const castoraAbi = [
       {
         name: 'seeds',
         type: 'tuple',
-        internalType: 'struct PoolSeeds',
+        internalType: 'struct CastoraStructs.PoolSeeds',
         components: [
           { name: 'predictionToken', type: 'address', internalType: 'address' },
           { name: 'stakeToken', type: 'address', internalType: 'address' },
           { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
         ]
       }
     ],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'nonpayable'
   },
   {
     type: 'function',
-    name: 'feeCollector',
-    inputs: [],
-    outputs: [{ name: '', type: 'address', internalType: 'address' }],
-    stateMutability: 'view'
+    name: 'finalizePoolCompletion',
+    inputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable'
   },
   {
     type: 'function',
@@ -118,19 +165,22 @@ export const castoraAbi = [
       {
         name: 'pool',
         type: 'tuple',
-        internalType: 'struct Pool',
+        internalType: 'struct CastoraStructs.Pool',
         components: [
           { name: 'poolId', type: 'uint256', internalType: 'uint256' },
           {
             name: 'seeds',
             type: 'tuple',
-            internalType: 'struct PoolSeeds',
+            internalType: 'struct CastoraStructs.PoolSeeds',
             components: [
               { name: 'predictionToken', type: 'address', internalType: 'address' },
               { name: 'stakeToken', type: 'address', internalType: 'address' },
               { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
               { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+              { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+              { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
             ]
           },
           { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
@@ -141,194 +191,6 @@ export const castoraAbi = [
           { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPoolPredictionsPaginated',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'offset', type: 'uint256', internalType: 'uint256' },
-      { name: 'limit', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'predictionsList',
-        type: 'tuple[]',
-        internalType: 'struct Prediction[]',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPools',
-    inputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
-    outputs: [
-      {
-        name: 'poolsList',
-        type: 'tuple[]',
-        internalType: 'struct Pool[]',
-        components: [
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          {
-            name: 'seeds',
-            type: 'tuple',
-            internalType: 'struct PoolSeeds',
-            components: [
-              { name: 'predictionToken', type: 'address', internalType: 'address' },
-              { name: 'stakeToken', type: 'address', internalType: 'address' },
-              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
-              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
-            ]
-          },
-          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
-          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
-          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPoolsPaginated',
-    inputs: [
-      { name: 'offset', type: 'uint256', internalType: 'uint256' },
-      { name: 'limit', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'poolsList',
-        type: 'tuple[]',
-        internalType: 'struct Pool[]',
-        components: [
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          {
-            name: 'seeds',
-            type: 'tuple',
-            internalType: 'struct PoolSeeds',
-            components: [
-              { name: 'predictionToken', type: 'address', internalType: 'address' },
-              { name: 'stakeToken', type: 'address', internalType: 'address' },
-              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
-              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
-            ]
-          },
-          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
-          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
-          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPrediction',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'prediction',
-        type: 'tuple',
-        internalType: 'struct Prediction',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPredictionIdsForAddress',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'predicter', type: 'address', internalType: 'address' }
-    ],
-    outputs: [{ name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPredictions',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }
-    ],
-    outputs: [
-      {
-        name: 'predictionsList',
-        type: 'tuple[]',
-        internalType: 'struct Prediction[]',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getPredictionsForAddressPaginated',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'predicter', type: 'address', internalType: 'address' },
-      { name: 'offset', type: 'uint256', internalType: 'uint256' },
-      { name: 'limit', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'predictionsList',
-        type: 'tuple[]',
-        internalType: 'struct Prediction[]',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
         ]
       }
     ],
@@ -339,98 +201,6 @@ export const castoraAbi = [
     name: 'getRoleAdmin',
     inputs: [{ name: 'role', type: 'bytes32', internalType: 'bytes32' }],
     outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getUnclaimedWinnerPredictionIdsForAddress',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'predicter', type: 'address', internalType: 'address' }
-    ],
-    outputs: [{ name: 'unclaimedWinnerPredictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getUserActivitiesOptimizedPaginated',
-    inputs: [
-      { name: 'user', type: 'address', internalType: 'address' },
-      { name: 'offset', type: 'uint256', internalType: 'uint256' },
-      { name: 'limit', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'uniquePools',
-        type: 'tuple[]',
-        internalType: 'struct Pool[]',
-        components: [
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          {
-            name: 'seeds',
-            type: 'tuple',
-            internalType: 'struct PoolSeeds',
-            components: [
-              { name: 'predictionToken', type: 'address', internalType: 'address' },
-              { name: 'stakeToken', type: 'address', internalType: 'address' },
-              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
-              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
-            ]
-          },
-          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
-          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
-          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
-        ]
-      },
-      {
-        name: 'predictionsList',
-        type: 'tuple[]',
-        internalType: 'struct Prediction[]',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
-        ]
-      },
-      { name: 'poolIndexes', type: 'uint256[]', internalType: 'uint256[]' }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'getUserPredictionsPaginated',
-    inputs: [
-      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-      { name: 'user', type: 'address', internalType: 'address' },
-      { name: 'offset', type: 'uint256', internalType: 'uint256' },
-      { name: 'limit', type: 'uint256', internalType: 'uint256' }
-    ],
-    outputs: [
-      {
-        name: 'predictionsList',
-        type: 'tuple[]',
-        internalType: 'struct Prediction[]',
-        components: [
-          { name: 'predicter', type: 'address', internalType: 'address' },
-          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
-          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
-        ]
-      }
-    ],
     stateMutability: 'view'
   },
   {
@@ -452,6 +222,13 @@ export const castoraAbi = [
   },
   {
     type: 'function',
+    name: 'hasPoolCompletionBeenInitiated',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'hasRole',
     inputs: [
       { name: 'role', type: 'bytes32', internalType: 'bytes32' },
@@ -467,13 +244,33 @@ export const castoraAbi = [
       {
         name: 'seeds',
         type: 'tuple',
-        internalType: 'struct PoolSeeds',
+        internalType: 'struct CastoraStructs.PoolSeeds',
         components: [
           { name: 'predictionToken', type: 'address', internalType: 'address' },
           { name: 'stakeToken', type: 'address', internalType: 'address' },
           { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'pure'
+  },
+  {
+    type: 'function',
+    name: 'hashPredictionRecord',
+    inputs: [
+      {
+        name: 'record',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.PredictionRecord',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
         ]
       }
     ],
@@ -483,7 +280,22 @@ export const castoraAbi = [
   {
     type: 'function',
     name: 'initialize',
-    inputs: [{ name: 'feeCollector_', type: 'address', internalType: 'address' }],
+    inputs: [
+      { name: 'activities_', type: 'address', internalType: 'address' },
+      { name: 'poolsManager_', type: 'address', internalType: 'address' },
+      { name: 'poolsRules_', type: 'address', internalType: 'address' }
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'initiatePoolCompletion',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'batchSize', type: 'uint256', internalType: 'uint256' }
+    ],
     outputs: [],
     stateMutability: 'nonpayable'
   },
@@ -499,23 +311,31 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'noOfJoinedPoolsByAddresses',
-    inputs: [{ name: '', type: 'address', internalType: 'address' }],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'noOfPools',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
     name: 'owner',
     inputs: [],
     outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  { type: 'function', name: 'pause', inputs: [], outputs: [], stateMutability: 'nonpayable' },
+  {
+    type: 'function',
+    name: 'paused',
+    inputs: [],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'poolCompletionBatchSize',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'poolCompletionBatchesProcessed',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'view'
   },
   {
@@ -534,13 +354,16 @@ export const castoraAbi = [
       {
         name: 'seeds',
         type: 'tuple',
-        internalType: 'struct PoolSeeds',
+        internalType: 'struct CastoraStructs.PoolSeeds',
         components: [
           { name: 'predictionToken', type: 'address', internalType: 'address' },
           { name: 'stakeToken', type: 'address', internalType: 'address' },
           { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
         ]
       },
       { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
@@ -556,13 +379,90 @@ export const castoraAbi = [
   },
   {
     type: 'function',
+    name: 'poolsManager',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'poolsRules',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'predict',
     inputs: [
       { name: 'poolId', type: 'uint256', internalType: 'uint256' },
       { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' }
     ],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: 'predictionId', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'payable'
+  },
+  {
+    type: 'function',
+    name: 'predictionIdsByAddressesPerPool',
+    inputs: [
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionRecordHashes',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionRecords',
+    inputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    outputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionTokenDetails',
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [
+      { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionTokens',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictions',
+    inputs: [
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      { name: 'predicter', type: 'address', internalType: 'address' },
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+      { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+      { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+    ],
+    stateMutability: 'view'
   },
   {
     type: 'function',
@@ -601,10 +501,58 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'setFeeCollector',
-    inputs: [{ name: 'newFeeCollector', type: 'address', internalType: 'address' }],
+    name: 'setActivities',
+    inputs: [{ name: '_activities', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'setPoolsManager',
+    inputs: [{ name: '_poolsManager', type: 'address', internalType: 'address' }],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'setPoolsRules',
+    inputs: [{ name: '_poolsRules', type: 'address', internalType: 'address' }],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'setWinnersInBatch',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'winnerPredictionIds', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'stakeTokenDetails',
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [
+      { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalStaked', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalWon', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalClaimable', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalClaimed', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'stakeTokens',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
   },
   {
     type: 'function',
@@ -615,39 +563,12 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'totalClaimedWinningsAmounts',
-    inputs: [{ name: '', type: 'address', internalType: 'address' }],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'totalNoOfClaimedWinningsPredictions',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'totalNoOfPredictions',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
-    name: 'totalStakedAmounts',
-    inputs: [{ name: '', type: 'address', internalType: 'address' }],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
     name: 'transferOwnership',
     inputs: [{ name: 'newOwner', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
+  { type: 'function', name: 'unpause', inputs: [], outputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
     name: 'upgradeToAndCall',
@@ -660,13 +581,152 @@ export const castoraAbi = [
   },
   {
     type: 'function',
-    name: 'withdraw',
+    name: 'userInPoolPredictionStats',
     inputs: [
-      { name: 'token', type: 'address', internalType: 'address' },
-      { name: 'amount', type: 'uint256', internalType: 'uint256' }
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'address', internalType: 'address' }
     ],
-    outputs: [],
-    stateMutability: 'nonpayable'
+    outputs: [
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionRecords',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionTokenDetails',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'address', internalType: 'address' }
+    ],
+    outputs: [
+      { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionTokens',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStakeTokenDetails',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'address', internalType: 'address' }
+    ],
+    outputs: [
+      { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalStaked', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalWon', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalClaimable', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalClaimed', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStakeTokens',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStats',
+    inputs: [{ name: '', type: 'address', internalType: 'address' }],
+    outputs: [
+      { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfJoinedPools', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfPredictionTokens', type: 'uint256', internalType: 'uint256' },
+      { name: 'noOfStakeTokens', type: 'uint256', internalType: 'uint256' }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'users',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'winnerPredictionIdsByAddressesPerPool',
+    inputs: [
+      { name: '', type: 'uint256', internalType: 'uint256' },
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'winnerRecordHashes',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'winnerRecordHashesByAddresses',
+    inputs: [
+      { name: '', type: 'address', internalType: 'address' },
+      { name: '', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'event',
+    name: 'AuthorizedContractUpdated',
+    inputs: [
+      { name: 'contractAddr', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'authorized', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'ClaimedCompletionFees',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'user', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
   },
   {
     type: 'event',
@@ -683,29 +743,44 @@ export const castoraAbi = [
   },
   {
     type: 'event',
-    name: 'CompletedPool',
-    inputs: [
-      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
-      { name: 'snapshotTime', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'snapshotPrice', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'winAmount', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'noOfWinners', type: 'uint256', indexed: false, internalType: 'uint256' }
-    ],
-    anonymous: false
-  },
-  {
-    type: 'event',
-    name: 'CreatedPool',
-    inputs: [
-      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
-      { name: 'seedsHash', type: 'bytes32', indexed: true, internalType: 'bytes32' }
-    ],
+    name: 'DisallowedCreationFees',
+    inputs: [{ name: 'token', type: 'address', indexed: true, internalType: 'address' }],
     anonymous: false
   },
   {
     type: 'event',
     name: 'Initialized',
     inputs: [{ name: 'version', type: 'uint64', indexed: false, internalType: 'uint64' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'IssuedCompletionFees',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'completionFeesToken', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'completionFeesAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'NewUserCreatedPool',
+    inputs: [
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'nthUserCount', type: 'uint256', indexed: true, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'NewUserPredicted',
+    inputs: [
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'nthUserCount', type: 'uint256', indexed: true, internalType: 'uint256' }
+    ],
     anonymous: false
   },
   {
@@ -719,12 +794,52 @@ export const castoraAbi = [
   },
   {
     type: 'event',
+    name: 'Paused',
+    inputs: [{ name: 'account', type: 'address', indexed: false, internalType: 'address' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'PoolCompleted',
+    inputs: [{ name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'PoolCompletionInitiated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'noOfWinners', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'winAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'PoolCreated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'seedsHash', type: 'bytes32', indexed: true, internalType: 'bytes32' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
     name: 'Predicted',
     inputs: [
       { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
       { name: 'predictionId', type: 'uint256', indexed: true, internalType: 'uint256' },
       { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
       { name: 'predictionPrice', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'ReceiveWasCalled',
+    inputs: [
+      { name: 'sender', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
@@ -760,8 +875,163 @@ export const castoraAbi = [
   },
   {
     type: 'event',
+    name: 'SetActivitiesInCastora',
+    inputs: [
+      { name: 'oldActivities', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newActivities', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetActivitiesInPoolsManager',
+    inputs: [
+      { name: 'oldActivities', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newActivities', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetCastoraInPoolsManager',
+    inputs: [
+      { name: 'oldCastora', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newCastora', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetCreationFees',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetCreatorPoolCompletionFeesSplitPercent',
+    inputs: [
+      { name: 'oldPercentage', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'newPercentage', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetFeeCollector',
+    inputs: [
+      { name: 'oldFeeCollector', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newFeeCollector', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetPoolsManagerInCastora',
+    inputs: [
+      { name: 'oldPoolsManager', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newPoolsManager', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetPoolsRulesInCastora',
+    inputs: [
+      { name: 'oldPoolsRules', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newPoolsRules', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetWinnersInBatch',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'batchesProcessed', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'totalBatches', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'winnersInBatch', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'Unpaused',
+    inputs: [{ name: 'account', type: 'address', indexed: false, internalType: 'address' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedPoolMultiplier',
+    inputs: [
+      { name: 'multiplier', type: 'uint16', indexed: false, internalType: 'uint16' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedPredictionToken',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedStakeAmount',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedStakeToken',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedCurrentPoolFeesPercent',
+    inputs: [
+      { name: 'oldPercent', type: 'uint16', indexed: false, internalType: 'uint16' },
+      { name: 'newPercent', type: 'uint16', indexed: false, internalType: 'uint16' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedRequiredTimeInterval',
+    inputs: [
+      { name: 'oldInterval', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'newInterval', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
     name: 'Upgraded',
     inputs: [{ name: 'implementation', type: 'address', indexed: true, internalType: 'address' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UserHasCreatedPool',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'creator', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'creationFeesToken', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'creationFeesAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
     anonymous: false
   },
   { type: 'error', name: 'AccessControlBadConfirmation', inputs: [] },
@@ -774,25 +1044,43 @@ export const castoraAbi = [
     ]
   },
   { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
+  { type: 'error', name: 'AlreadyClaimedCompletionFees', inputs: [] },
   { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
+  { type: 'error', name: 'CastoraAddressNotSet', inputs: [] },
+  { type: 'error', name: 'CreationFeeTokenAlreadyDisallowed', inputs: [] },
+  { type: 'error', name: 'CreationFeeTokenNotAllowed', inputs: [] },
   {
     type: 'error',
     name: 'ERC1967InvalidImplementation',
     inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
   },
   { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
+  { type: 'error', name: 'EnforcedPause', inputs: [] },
+  { type: 'error', name: 'ExpectedPause', inputs: [] },
   { type: 'error', name: 'FailedCall', inputs: [] },
+  { type: 'error', name: 'IncorrectCreationFeeValue', inputs: [] },
+  { type: 'error', name: 'IncorrectStakeValue', inputs: [] },
+  { type: 'error', name: 'InsufficientCreationFeeValue', inputs: [] },
   { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
+  { type: 'error', name: 'InvalidActivityId', inputs: [] },
   { type: 'error', name: 'InvalidAddress', inputs: [] },
   { type: 'error', name: 'InvalidInitialization', inputs: [] },
+  { type: 'error', name: 'InvalidPoolCompletionBatchSize', inputs: [] },
+  { type: 'error', name: 'InvalidPoolFeesPercent', inputs: [] },
   { type: 'error', name: 'InvalidPoolId', inputs: [] },
+  { type: 'error', name: 'InvalidPoolMultiplier', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimeInterval', inputs: [] },
   { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
   { type: 'error', name: 'InvalidPredictionId', inputs: [] },
+  { type: 'error', name: 'InvalidRecordHash', inputs: [] },
+  { type: 'error', name: 'InvalidSplitFeesPercent', inputs: [] },
+  { type: 'error', name: 'InvalidTimeRange', inputs: [] },
   { type: 'error', name: 'InvalidWinnersCount', inputs: [] },
   { type: 'error', name: 'NoPredictionsInPool', inputs: [] },
   { type: 'error', name: 'NotAWinner', inputs: [] },
   { type: 'error', name: 'NotInitializing', inputs: [] },
   { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
+  { type: 'error', name: 'NotYourPool', inputs: [] },
   { type: 'error', name: 'NotYourPrediction', inputs: [] },
   { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
   {
@@ -801,26 +1089,641 @@ export const castoraAbi = [
     inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
   },
   { type: 'error', name: 'PoolAlreadyCompleted', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyInitiated', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesNotAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionNotInitiated', inputs: [] },
   { type: 'error', name: 'PoolExistsAlready', inputs: [] },
   { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
+  {
+    type: 'error',
+    name: 'PredictionAlreadyMarkedAsWinner',
+    inputs: [{ name: 'predictionId', type: 'uint256', internalType: 'uint256' }]
+  },
+  { type: 'error', name: 'PredictionTokenNotAllowed', inputs: [] },
   { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
+  {
+    type: 'error',
+    name: 'SafeERC20FailedOperation',
+    inputs: [{ name: 'token', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'StakeAmountNotAllowed', inputs: [] },
+  { type: 'error', name: 'StakeTokenNotAllowed', inputs: [] },
   { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
   {
     type: 'error',
     name: 'UUPSUnsupportedProxiableUUID',
     inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
   },
+  { type: 'error', name: 'UnauthorizedActivityLogger', inputs: [] },
   { type: 'error', name: 'UnmatchingPoolsAndPredictions', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulCreationFeeCollection', inputs: [] },
   { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendCompletionFees', inputs: [] },
   { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
-  { type: 'error', name: 'UnsuccessfulStaking', inputs: [] },
+  { type: 'error', name: 'WindowHasClosed', inputs: [] },
+  { type: 'error', name: 'ZeroAmountSpecified', inputs: [] }
+] as const;
+
+export const castoraGettersAbi = [
+  {
+    type: 'constructor',
+    inputs: [{ name: 'castora_', type: 'address', internalType: 'address' }],
+    stateMutability: 'nonpayable'
+  },
+  {
+    type: 'function',
+    name: 'allStats',
+    inputs: [],
+    outputs: [
+      {
+        name: 'stats',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.AllPredictionStats',
+        components: [
+          { name: 'noOfUsers', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictionTokens', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfStakeTokens', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'castora',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'claimedRecordsPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'pool',
+    inputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.Pool',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct CastoraStructs.PoolSeeds',
+            components: [
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+              { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+              { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'pools',
+    inputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    outputs: [
+      {
+        name: 'poolsList',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.Pool[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          {
+            name: 'seeds',
+            type: 'tuple',
+            internalType: 'struct CastoraStructs.PoolSeeds',
+            components: [
+              { name: 'predictionToken', type: 'address', internalType: 'address' },
+              { name: 'stakeToken', type: 'address', internalType: 'address' },
+              { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
+              { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+              { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+              { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+              { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+            ]
+          },
+          { name: 'seedsHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'snapshotPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'winAmount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinners', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'prediction',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.Prediction',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionRecord',
+    inputs: [{ name: 'recordHash', type: 'bytes32', internalType: 'bytes32' }],
+    outputs: [
+      {
+        name: 'record',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.PredictionRecord',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionRecordsPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionTokenDetails',
+    inputs: [{ name: 'token', type: 'address', internalType: 'address' }],
+    outputs: [
+      {
+        name: 'details',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.PredictionTokenDetails',
+        components: [
+          { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictionTokensPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokensList', type: 'address[]', internalType: 'address[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'predictions',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }
+    ],
+    outputs: [
+      {
+        name: 'predictionsList',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.Prediction[]',
+        components: [
+          { name: 'predicter', type: 'address', internalType: 'address' },
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionPrice', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'claimedWinningsTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'isAWinner', type: 'bool', internalType: 'bool' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'stakeTokenDetails',
+    inputs: [{ name: 'token', type: 'address', internalType: 'address' }],
+    outputs: [
+      {
+        name: 'details',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.StakeTokenDetails',
+        components: [
+          { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalStaked', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalWon', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalClaimable', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalClaimed', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'stakeTokensPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokensList', type: 'address[]', internalType: 'address[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'state',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'contract CastoraState' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userClaimableRecordsPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userInPoolClaimablePredictionIdsPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userInPoolPredictionIdsPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userInPoolPredictionStats',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'user', type: 'address', internalType: 'address' }
+    ],
+    outputs: [
+      {
+        name: 'stats',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.UserInPoolPredictionStats',
+        components: [
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userInPoolWinnerPredictionIdsPaginated',
+    inputs: [
+      { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'predictionIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userJoinedPoolIdsPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionRecordsPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionTokenDetails',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'token', type: 'address', internalType: 'address' }
+    ],
+    outputs: [
+      {
+        name: 'details',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.PredictionTokenDetails',
+        components: [
+          { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userPredictionTokensPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokensList', type: 'address[]', internalType: 'address[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStakeTokenDetails',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'token', type: 'address', internalType: 'address' }
+    ],
+    outputs: [
+      {
+        name: 'details',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.StakeTokenDetails',
+        components: [
+          { name: 'noOfPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalStaked', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalWon', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalClaimable', type: 'uint256', internalType: 'uint256' },
+          { name: 'totalClaimed', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStakeTokensPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'tokensList', type: 'address[]', internalType: 'address[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userStats',
+    inputs: [{ name: 'user', type: 'address', internalType: 'address' }],
+    outputs: [
+      {
+        name: 'stats',
+        type: 'tuple',
+        internalType: 'struct CastoraStructs.UserPredictionStats',
+        components: [
+          { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfJoinedPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictionTokens', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfStakeTokens', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'userWinnerRecordsPaginated',
+    inputs: [
+      { name: 'user', type: 'address', internalType: 'address' },
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'usersPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'usersList', type: 'address[]', internalType: 'address[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'winnerRecordsPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [
+      {
+        name: 'records',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.PredictionRecord[]',
+        components: [
+          { name: 'poolId', type: 'uint256', internalType: 'uint256' },
+          { name: 'predictionId', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  { type: 'error', name: 'AlreadyClaimedCompletionFees', inputs: [] },
+  { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
+  { type: 'error', name: 'CastoraAddressNotSet', inputs: [] },
+  { type: 'error', name: 'CreationFeeTokenAlreadyDisallowed', inputs: [] },
+  { type: 'error', name: 'CreationFeeTokenNotAllowed', inputs: [] },
+  { type: 'error', name: 'IncorrectCreationFeeValue', inputs: [] },
+  { type: 'error', name: 'IncorrectStakeValue', inputs: [] },
+  { type: 'error', name: 'InsufficientCreationFeeValue', inputs: [] },
+  { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
+  { type: 'error', name: 'InvalidActivityId', inputs: [] },
+  { type: 'error', name: 'InvalidAddress', inputs: [] },
+  { type: 'error', name: 'InvalidPoolCompletionBatchSize', inputs: [] },
+  { type: 'error', name: 'InvalidPoolFeesPercent', inputs: [] },
+  { type: 'error', name: 'InvalidPoolId', inputs: [] },
+  { type: 'error', name: 'InvalidPoolMultiplier', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimeInterval', inputs: [] },
+  { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
+  { type: 'error', name: 'InvalidPredictionId', inputs: [] },
+  { type: 'error', name: 'InvalidRecordHash', inputs: [] },
+  { type: 'error', name: 'InvalidSplitFeesPercent', inputs: [] },
+  { type: 'error', name: 'InvalidTimeRange', inputs: [] },
+  { type: 'error', name: 'InvalidWinnersCount', inputs: [] },
+  { type: 'error', name: 'NoPredictionsInPool', inputs: [] },
+  { type: 'error', name: 'NotAWinner', inputs: [] },
+  { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
+  { type: 'error', name: 'NotYourPool', inputs: [] },
+  { type: 'error', name: 'NotYourPrediction', inputs: [] },
+  { type: 'error', name: 'PoolAlreadyCompleted', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyInitiated', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesNotAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionNotInitiated', inputs: [] },
+  { type: 'error', name: 'PoolExistsAlready', inputs: [] },
+  { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
+  {
+    type: 'error',
+    name: 'PredictionAlreadyMarkedAsWinner',
+    inputs: [{ name: 'predictionId', type: 'uint256', internalType: 'uint256' }]
+  },
+  { type: 'error', name: 'PredictionTokenNotAllowed', inputs: [] },
+  { type: 'error', name: 'StakeAmountNotAllowed', inputs: [] },
+  { type: 'error', name: 'StakeTokenNotAllowed', inputs: [] },
+  { type: 'error', name: 'UnauthorizedActivityLogger', inputs: [] },
+  { type: 'error', name: 'UnmatchingPoolsAndPredictions', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulCreationFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendCompletionFees', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
   { type: 'error', name: 'WindowHasClosed', inputs: [] },
   { type: 'error', name: 'ZeroAmountSpecified', inputs: [] }
 ] as const;
 
 export const castoraPoolsManagerAbi = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
-  { type: 'fallback', stateMutability: 'payable' },
   { type: 'receive', stateMutability: 'payable' },
   {
     type: 'function',
@@ -831,19 +1734,9 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'function',
-    name: 'allConfig',
+    name: 'activities',
     inputs: [],
-    outputs: [
-      { name: 'castora', type: 'address', internalType: 'address' },
-      { name: 'poolsRules', type: 'address', internalType: 'address' },
-      { name: 'feeCollector', type: 'address', internalType: 'address' },
-      { name: 'completionPoolFeesSplitPercent', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved1', type: 'address', internalType: 'address' },
-      { name: 'reserved2', type: 'address', internalType: 'address' },
-      { name: 'reserved3', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved4', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved5', type: 'uint256', internalType: 'uint256' }
-    ],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
     stateMutability: 'view'
   },
   {
@@ -857,11 +1750,15 @@ export const castoraPoolsManagerAbi = [
       { name: 'noOfClaimableFeesPools', type: 'uint256', internalType: 'uint256' },
       { name: 'noOfClaimedFeesPools', type: 'uint256', internalType: 'uint256' },
       { name: 'noOfCreationFeesTokens', type: 'uint256', internalType: 'uint256' },
-      { name: 'noOfCompletionFeesTokens', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved1', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved2', type: 'uint256', internalType: 'uint256' },
-      { name: 'reserved3', type: 'uint256', internalType: 'uint256' }
+      { name: 'noOfCompletionFeesTokens', type: 'uint256', internalType: 'uint256' }
     ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'castora',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
     stateMutability: 'view'
   },
   {
@@ -903,18 +1800,19 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'seeds',
         type: 'tuple',
-        internalType: 'struct PoolSeeds',
+        internalType: 'struct CastoraStructs.PoolSeeds',
         components: [
           { name: 'predictionToken', type: 'address', internalType: 'address' },
           { name: 'stakeToken', type: 'address', internalType: 'address' },
           { name: 'stakeAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'snapshotTime', type: 'uint256', internalType: 'uint256' },
-          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' }
+          { name: 'windowCloseTime', type: 'uint256', internalType: 'uint256' },
+          { name: 'feesPercent', type: 'uint16', internalType: 'uint16' },
+          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
+          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
         ]
       },
-      { name: 'creationFeeToken', type: 'address', internalType: 'address' },
-      { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
-      { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+      { name: 'creationFeeToken', type: 'address', internalType: 'address' }
     ],
     outputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'payable'
@@ -947,6 +1845,13 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'function',
+    name: 'creatorPoolCompletionFeesSplitPercent',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint16', internalType: 'uint16' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'disallowCreationFees',
     inputs: [{ name: '_token', type: 'address', internalType: 'address' }],
     outputs: [],
@@ -957,6 +1862,13 @@ export const castoraPoolsManagerAbi = [
     name: 'doesUserCreatedPoolExist',
     inputs: [{ name: 'poolId', type: 'uint256', internalType: 'uint256' }],
     outputs: [{ name: 'exists', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'feeCollector',
+    inputs: [],
+    outputs: [{ name: '', type: 'address', internalType: 'address' }],
     stateMutability: 'view'
   },
   {
@@ -988,30 +1900,6 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'function',
-    name: 'getAllConfig',
-    inputs: [],
-    outputs: [
-      {
-        name: 'config',
-        type: 'tuple',
-        internalType: 'struct AllConfig',
-        components: [
-          { name: 'castora', type: 'address', internalType: 'address' },
-          { name: 'poolsRules', type: 'address', internalType: 'address' },
-          { name: 'feeCollector', type: 'address', internalType: 'address' },
-          { name: 'completionPoolFeesSplitPercent', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved1', type: 'address', internalType: 'address' },
-          { name: 'reserved2', type: 'address', internalType: 'address' },
-          { name: 'reserved3', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved4', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved5', type: 'uint256', internalType: 'uint256' }
-        ]
-      }
-    ],
-    stateMutability: 'view'
-  },
-  {
-    type: 'function',
     name: 'getAllCreatedPoolIdsPaginated',
     inputs: [
       { name: 'offset', type: 'uint256', internalType: 'uint256' },
@@ -1029,13 +1917,23 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'function',
+    name: 'getAllPaidCreatedPoolIdsPaginated',
+    inputs: [
+      { name: 'offset', type: 'uint256', internalType: 'uint256' },
+      { name: 'limit', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: 'poolIds', type: 'uint256[]', internalType: 'uint256[]' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'getAllStats',
     inputs: [],
     outputs: [
       {
         name: 'stats',
         type: 'tuple',
-        internalType: 'struct AllStats',
+        internalType: 'struct CastoraStructs.AllUserCreatedPoolStats',
         components: [
           { name: 'noOfUsers', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfUserCreatedPools', type: 'uint256', internalType: 'uint256' },
@@ -1043,10 +1941,7 @@ export const castoraPoolsManagerAbi = [
           { name: 'noOfClaimableFeesPools', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfClaimedFeesPools', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfCreationFeesTokens', type: 'uint256', internalType: 'uint256' },
-          { name: 'noOfCompletionFeesTokens', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved1', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved2', type: 'uint256', internalType: 'uint256' },
-          { name: 'reserved3', type: 'uint256', internalType: 'uint256' }
+          { name: 'noOfCompletionFeesTokens', type: 'uint256', internalType: 'uint256' }
         ]
       }
     ],
@@ -1070,7 +1965,7 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'info',
         type: 'tuple',
-        internalType: 'struct CompletionFeesTokenInfo',
+        internalType: 'struct CastoraStructs.CompletionFeesTokenInfo',
         components: [
           { name: 'totalUseCount', type: 'uint256', internalType: 'uint256' },
           { name: 'totalAmountIssued', type: 'uint256', internalType: 'uint256' },
@@ -1095,7 +1990,7 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'info',
         type: 'tuple',
-        internalType: 'struct CreationFeesTokenInfo',
+        internalType: 'struct CastoraStructs.CreationFeesTokenInfo',
         components: [
           { name: 'isAllowed', type: 'bool', internalType: 'bool' },
           { name: 'amount', type: 'uint256', internalType: 'uint256' },
@@ -1139,7 +2034,7 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'info',
         type: 'tuple',
-        internalType: 'struct UserCompletionTokenFeesInfo',
+        internalType: 'struct CastoraStructs.UserCompletionTokenFeesInfo',
         components: [
           { name: 'claimableAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'claimedAmount', type: 'uint256', internalType: 'uint256' },
@@ -1157,20 +2052,19 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'pool',
         type: 'tuple',
-        internalType: 'struct UserCreatedPool',
+        internalType: 'struct CastoraStructs.UserCreatedPool',
         components: [
           { name: 'creator', type: 'address', internalType: 'address' },
           { name: 'completionFeesToken', type: 'address', internalType: 'address' },
           { name: 'creationFeesToken', type: 'address', internalType: 'address' },
-          { name: 'nthPoolCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'nthAllCreatedPoolsCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'nthCreatorPoolCount', type: 'uint256', internalType: 'uint256' },
           { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
           { name: 'creationFeesAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
           { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
           { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
-          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
-          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+          { name: 'creatorCompletionFeesPercent', type: 'uint16', internalType: 'uint16' }
         ]
       }
     ],
@@ -1195,20 +2089,19 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'pools',
         type: 'tuple[]',
-        internalType: 'struct UserCreatedPool[]',
+        internalType: 'struct CastoraStructs.UserCreatedPool[]',
         components: [
           { name: 'creator', type: 'address', internalType: 'address' },
           { name: 'completionFeesToken', type: 'address', internalType: 'address' },
           { name: 'creationFeesToken', type: 'address', internalType: 'address' },
-          { name: 'nthPoolCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'nthAllCreatedPoolsCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'nthCreatorPoolCount', type: 'uint256', internalType: 'uint256' },
           { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
           { name: 'creationFeesAmount', type: 'uint256', internalType: 'uint256' },
           { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
           { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
           { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
-          { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
-          { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
-          { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+          { name: 'creatorCompletionFeesPercent', type: 'uint16', internalType: 'uint16' }
         ]
       }
     ],
@@ -1225,7 +2118,7 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'info',
         type: 'tuple',
-        internalType: 'struct UserCreationTokenFeesInfo',
+        internalType: 'struct CastoraStructs.UserCreationTokenFeesInfo',
         components: [
           { name: 'amount', type: 'uint256', internalType: 'uint256' },
           { name: 'count', type: 'uint256', internalType: 'uint256' }
@@ -1267,7 +2160,7 @@ export const castoraPoolsManagerAbi = [
       {
         name: 'stats',
         type: 'tuple',
-        internalType: 'struct UserStats',
+        internalType: 'struct CastoraStructs.UserCreatedPoolStats',
         components: [
           { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfPoolsCreated', type: 'uint256', internalType: 'uint256' },
@@ -1285,10 +2178,9 @@ export const castoraPoolsManagerAbi = [
     type: 'function',
     name: 'initialize',
     inputs: [
-      { name: 'castora_', type: 'address', internalType: 'address' },
-      { name: 'poolsRules_', type: 'address', internalType: 'address' },
+      { name: 'activities_', type: 'address', internalType: 'address' },
       { name: 'feeCollector_', type: 'address', internalType: 'address' },
-      { name: 'splitPercent_', type: 'uint256', internalType: 'uint256' }
+      { name: 'splitPercent_', type: 'uint16', internalType: 'uint16' }
     ],
     outputs: [],
     stateMutability: 'nonpayable'
@@ -1339,15 +2231,15 @@ export const castoraPoolsManagerAbi = [
   { type: 'function', name: 'renounceOwnership', inputs: [], outputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
-    name: 'setCastora',
-    inputs: [{ name: '_castora', type: 'address', internalType: 'address' }],
+    name: 'setActivities',
+    inputs: [{ name: '_activities', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
   {
     type: 'function',
-    name: 'setCompletionPoolFeesSplitPercent',
-    inputs: [{ name: '_percentage', type: 'uint256', internalType: 'uint256' }],
+    name: 'setCastora',
+    inputs: [{ name: '_castora', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
@@ -1363,15 +2255,15 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'function',
-    name: 'setFeeCollector',
-    inputs: [{ name: '_feeCollector', type: 'address', internalType: 'address' }],
+    name: 'setCreatorPoolCompletionFeesSplitPercent',
+    inputs: [{ name: '_percentage', type: 'uint16', internalType: 'uint16' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
   {
     type: 'function',
-    name: 'setPoolsRules',
-    inputs: [{ name: '_poolsRules', type: 'address', internalType: 'address' }],
+    name: 'setFeeCollector',
+    inputs: [{ name: '_feeCollector', type: 'address', internalType: 'address' }],
     outputs: [],
     stateMutability: 'nonpayable'
   },
@@ -1392,6 +2284,13 @@ export const castoraPoolsManagerAbi = [
   {
     type: 'function',
     name: 'totalCreatedPoolIds',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'totalPaidCreatedPoolIds',
     inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'view'
@@ -1466,15 +2365,14 @@ export const castoraPoolsManagerAbi = [
       { name: 'creator', type: 'address', internalType: 'address' },
       { name: 'completionFeesToken', type: 'address', internalType: 'address' },
       { name: 'creationFeesToken', type: 'address', internalType: 'address' },
-      { name: 'nthPoolCount', type: 'uint256', internalType: 'uint256' },
+      { name: 'nthAllCreatedPoolsCount', type: 'uint256', internalType: 'uint256' },
+      { name: 'nthCreatorPoolCount', type: 'uint256', internalType: 'uint256' },
       { name: 'creationTime', type: 'uint256', internalType: 'uint256' },
       { name: 'creationFeesAmount', type: 'uint256', internalType: 'uint256' },
       { name: 'completionTime', type: 'uint256', internalType: 'uint256' },
       { name: 'creatorClaimTime', type: 'uint256', internalType: 'uint256' },
       { name: 'completionFeesAmount', type: 'uint256', internalType: 'uint256' },
-      { name: 'completionFeesPercent', type: 'uint256', internalType: 'uint256' },
-      { name: 'multiplier', type: 'uint16', internalType: 'uint16' },
-      { name: 'isUnlisted', type: 'bool', internalType: 'bool' }
+      { name: 'creatorCompletionFeesPercent', type: 'uint16', internalType: 'uint16' }
     ],
     stateMutability: 'view'
   },
@@ -1544,14 +2442,13 @@ export const castoraPoolsManagerAbi = [
     stateMutability: 'view'
   },
   {
-    type: 'function',
-    name: 'withdraw',
+    type: 'event',
+    name: 'AuthorizedContractUpdated',
     inputs: [
-      { name: 'token', type: 'address', internalType: 'address' },
-      { name: 'amount', type: 'uint256', internalType: 'uint256' }
+      { name: 'contractAddr', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'authorized', type: 'bool', indexed: false, internalType: 'bool' }
     ],
-    outputs: [],
-    stateMutability: 'nonpayable'
+    anonymous: false
   },
   {
     type: 'event',
@@ -1561,6 +2458,19 @@ export const castoraPoolsManagerAbi = [
       { name: 'user', type: 'address', indexed: true, internalType: 'address' },
       { name: 'token', type: 'address', indexed: true, internalType: 'address' },
       { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'ClaimedWinnings',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'winner', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'stakeToken', type: 'address', indexed: false, internalType: 'address' },
+      { name: 'stakedAmount', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'wonAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
@@ -1588,6 +2498,26 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'event',
+    name: 'NewUserCreatedPool',
+    inputs: [
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'nthUserCount', type: 'uint256', indexed: true, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'NewUserPredicted',
+    inputs: [
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'nthUserCount', type: 'uint256', indexed: true, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
     name: 'OwnershipTransferred',
     inputs: [
       { name: 'previousOwner', type: 'address', indexed: true, internalType: 'address' },
@@ -1603,19 +2533,73 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'event',
-    name: 'SetCastora',
+    name: 'PoolCompleted',
+    inputs: [{ name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'PoolCompletionInitiated',
     inputs: [
-      { name: 'oldCastora', type: 'address', indexed: true, internalType: 'address' },
-      { name: 'newCastora', type: 'address', indexed: true, internalType: 'address' }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'noOfWinners', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'winAmount', type: 'uint256', indexed: false, internalType: 'uint256' }
     ],
     anonymous: false
   },
   {
     type: 'event',
-    name: 'SetCompletionPoolFeesSplitPercent',
+    name: 'PoolCreated',
     inputs: [
-      { name: 'oldPercentage', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'newPercentage', type: 'uint256', indexed: false, internalType: 'uint256' }
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'seedsHash', type: 'bytes32', indexed: true, internalType: 'bytes32' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'Predicted',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predictionId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'predicter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'predictionPrice', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'ReceiveWasCalled',
+    inputs: [
+      { name: 'sender', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetActivitiesInCastora',
+    inputs: [
+      { name: 'oldActivities', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newActivities', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetActivitiesInPoolsManager',
+    inputs: [
+      { name: 'oldActivities', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newActivities', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetCastoraInPoolsManager',
+    inputs: [
+      { name: 'oldCastora', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newCastora', type: 'address', indexed: true, internalType: 'address' }
     ],
     anonymous: false
   },
@@ -1630,6 +2614,15 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'event',
+    name: 'SetCreatorPoolCompletionFeesSplitPercent',
+    inputs: [
+      { name: 'oldPercentage', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'newPercentage', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
     name: 'SetFeeCollector',
     inputs: [
       { name: 'oldFeeCollector', type: 'address', indexed: true, internalType: 'address' },
@@ -1639,7 +2632,16 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'event',
-    name: 'SetPoolsRules',
+    name: 'SetPoolsManagerInCastora',
+    inputs: [
+      { name: 'oldPoolsManager', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'newPoolsManager', type: 'address', indexed: true, internalType: 'address' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'SetPoolsRulesInCastora',
     inputs: [
       { name: 'oldPoolsRules', type: 'address', indexed: true, internalType: 'address' },
       { name: 'newPoolsRules', type: 'address', indexed: true, internalType: 'address' }
@@ -1648,8 +2650,74 @@ export const castoraPoolsManagerAbi = [
   },
   {
     type: 'event',
+    name: 'SetWinnersInBatch',
+    inputs: [
+      { name: 'poolId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'batchesProcessed', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'totalBatches', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'winnersInBatch', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
     name: 'Unpaused',
     inputs: [{ name: 'account', type: 'address', indexed: false, internalType: 'address' }],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedPoolMultiplier',
+    inputs: [
+      { name: 'multiplier', type: 'uint16', indexed: false, internalType: 'uint16' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedPredictionToken',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedStakeAmount',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedAllowedStakeToken',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'allowed', type: 'bool', indexed: false, internalType: 'bool' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedCurrentPoolFeesPercent',
+    inputs: [
+      { name: 'oldPercent', type: 'uint16', indexed: false, internalType: 'uint16' },
+      { name: 'newPercent', type: 'uint16', indexed: false, internalType: 'uint16' }
+    ],
+    anonymous: false
+  },
+  {
+    type: 'event',
+    name: 'UpdatedRequiredTimeInterval',
+    inputs: [
+      { name: 'oldInterval', type: 'uint256', indexed: false, internalType: 'uint256' },
+      { name: 'newInterval', type: 'uint256', indexed: false, internalType: 'uint256' }
+    ],
     anonymous: false
   },
   {
@@ -1671,6 +2739,8 @@ export const castoraPoolsManagerAbi = [
   },
   { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
   { type: 'error', name: 'AlreadyClaimedCompletionFees', inputs: [] },
+  { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
+  { type: 'error', name: 'CastoraAddressNotSet', inputs: [] },
   { type: 'error', name: 'CreationFeeTokenAlreadyDisallowed', inputs: [] },
   { type: 'error', name: 'CreationFeeTokenNotAllowed', inputs: [] },
   {
@@ -1683,97 +2753,28 @@ export const castoraPoolsManagerAbi = [
   { type: 'error', name: 'ExpectedPause', inputs: [] },
   { type: 'error', name: 'FailedCall', inputs: [] },
   { type: 'error', name: 'IncorrectCreationFeeValue', inputs: [] },
+  { type: 'error', name: 'IncorrectStakeValue', inputs: [] },
   { type: 'error', name: 'InsufficientCreationFeeValue', inputs: [] },
+  { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
+  { type: 'error', name: 'InvalidActivityId', inputs: [] },
   { type: 'error', name: 'InvalidAddress', inputs: [] },
   { type: 'error', name: 'InvalidInitialization', inputs: [] },
+  { type: 'error', name: 'InvalidPoolCompletionBatchSize', inputs: [] },
+  { type: 'error', name: 'InvalidPoolFeesPercent', inputs: [] },
   { type: 'error', name: 'InvalidPoolId', inputs: [] },
-  { type: 'error', name: 'InvalidSplitFeesPercent', inputs: [] },
-  { type: 'error', name: 'NotInitializing', inputs: [] },
-  { type: 'error', name: 'NotYourPool', inputs: [] },
-  { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
-  {
-    type: 'error',
-    name: 'OwnableUnauthorizedAccount',
-    inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
-  },
-  { type: 'error', name: 'PoolCompletionAlreadyProcessed', inputs: [] },
-  { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
-  { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
-  {
-    type: 'error',
-    name: 'SafeERC20FailedOperation',
-    inputs: [{ name: 'token', type: 'address', internalType: 'address' }]
-  },
-  { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
-  {
-    type: 'error',
-    name: 'UUPSUnsupportedProxiableUUID',
-    inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
-  },
-  { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
-  { type: 'error', name: 'UnsuccessfulSendCompletionFees', inputs: [] },
-  { type: 'error', name: 'WithdrawFailed', inputs: [] },
-  { type: 'error', name: 'ZeroAmountSpecified', inputs: [] },
-  { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
-  {
-    type: 'error',
-    name: 'ERC1967InvalidImplementation',
-    inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
-  },
-  { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
-  { type: 'error', name: 'FailedCall', inputs: [] },
-  { type: 'error', name: 'InvalidAddress', inputs: [] },
-  { type: 'error', name: 'InvalidInitialization', inputs: [] },
   { type: 'error', name: 'InvalidPoolMultiplier', inputs: [] },
   { type: 'error', name: 'InvalidPoolTimeInterval', inputs: [] },
   { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
-  { type: 'error', name: 'NotInitializing', inputs: [] },
-  { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
-  {
-    type: 'error',
-    name: 'OwnableUnauthorizedAccount',
-    inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
-  },
-  { type: 'error', name: 'PredictionTokenNotAllowed', inputs: [] },
-  { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
-  { type: 'error', name: 'StakeAmountNotAllowed', inputs: [] },
-  { type: 'error', name: 'StakeTokenNotAllowed', inputs: [] },
-  { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
-  {
-    type: 'error',
-    name: 'UUPSUnsupportedProxiableUUID',
-    inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
-  },
-
-  { type: 'error', name: 'AccessControlBadConfirmation', inputs: [] },
-  {
-    type: 'error',
-    name: 'AccessControlUnauthorizedAccount',
-    inputs: [
-      { name: 'account', type: 'address', internalType: 'address' },
-      { name: 'neededRole', type: 'bytes32', internalType: 'bytes32' }
-    ]
-  },
-  { type: 'error', name: 'AddressEmptyCode', inputs: [{ name: 'target', type: 'address', internalType: 'address' }] },
-  { type: 'error', name: 'AlreadyClaimedWinnings', inputs: [] },
-  {
-    type: 'error',
-    name: 'ERC1967InvalidImplementation',
-    inputs: [{ name: 'implementation', type: 'address', internalType: 'address' }]
-  },
-  { type: 'error', name: 'ERC1967NonPayable', inputs: [] },
-  { type: 'error', name: 'FailedCall', inputs: [] },
-  { type: 'error', name: 'InsufficientStakeValue', inputs: [] },
-  { type: 'error', name: 'InvalidAddress', inputs: [] },
-  { type: 'error', name: 'InvalidInitialization', inputs: [] },
-  { type: 'error', name: 'InvalidPoolId', inputs: [] },
-  { type: 'error', name: 'InvalidPoolTimes', inputs: [] },
   { type: 'error', name: 'InvalidPredictionId', inputs: [] },
+  { type: 'error', name: 'InvalidRecordHash', inputs: [] },
+  { type: 'error', name: 'InvalidSplitFeesPercent', inputs: [] },
+  { type: 'error', name: 'InvalidTimeRange', inputs: [] },
   { type: 'error', name: 'InvalidWinnersCount', inputs: [] },
   { type: 'error', name: 'NoPredictionsInPool', inputs: [] },
   { type: 'error', name: 'NotAWinner', inputs: [] },
   { type: 'error', name: 'NotInitializing', inputs: [] },
   { type: 'error', name: 'NotYetSnapshotTime', inputs: [] },
+  { type: 'error', name: 'NotYourPool', inputs: [] },
   { type: 'error', name: 'NotYourPrediction', inputs: [] },
   { type: 'error', name: 'OwnableInvalidOwner', inputs: [{ name: 'owner', type: 'address', internalType: 'address' }] },
   {
@@ -1782,19 +2783,39 @@ export const castoraPoolsManagerAbi = [
     inputs: [{ name: 'account', type: 'address', internalType: 'address' }]
   },
   { type: 'error', name: 'PoolAlreadyCompleted', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyInitiated', inputs: [] },
+  { type: 'error', name: 'PoolCompletionAlreadyProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionBatchesNotAllProcessed', inputs: [] },
+  { type: 'error', name: 'PoolCompletionNotInitiated', inputs: [] },
   { type: 'error', name: 'PoolExistsAlready', inputs: [] },
   { type: 'error', name: 'PoolNotYetCompleted', inputs: [] },
+  {
+    type: 'error',
+    name: 'PredictionAlreadyMarkedAsWinner',
+    inputs: [{ name: 'predictionId', type: 'uint256', internalType: 'uint256' }]
+  },
+  { type: 'error', name: 'PredictionTokenNotAllowed', inputs: [] },
   { type: 'error', name: 'ReentrancyGuardReentrantCall', inputs: [] },
+  {
+    type: 'error',
+    name: 'SafeERC20FailedOperation',
+    inputs: [{ name: 'token', type: 'address', internalType: 'address' }]
+  },
+  { type: 'error', name: 'StakeAmountNotAllowed', inputs: [] },
+  { type: 'error', name: 'StakeTokenNotAllowed', inputs: [] },
   { type: 'error', name: 'UUPSUnauthorizedCallContext', inputs: [] },
   {
     type: 'error',
     name: 'UUPSUnsupportedProxiableUUID',
     inputs: [{ name: 'slot', type: 'bytes32', internalType: 'bytes32' }]
   },
+  { type: 'error', name: 'UnauthorizedActivityLogger', inputs: [] },
   { type: 'error', name: 'UnmatchingPoolsAndPredictions', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulCreationFeeCollection', inputs: [] },
   { type: 'error', name: 'UnsuccessfulFeeCollection', inputs: [] },
+  { type: 'error', name: 'UnsuccessfulSendCompletionFees', inputs: [] },
   { type: 'error', name: 'UnsuccessfulSendWinnings', inputs: [] },
-  { type: 'error', name: 'UnsuccessfulStaking', inputs: [] },
   { type: 'error', name: 'WindowHasClosed', inputs: [] },
   { type: 'error', name: 'ZeroAmountSpecified', inputs: [] }
 ] as const;

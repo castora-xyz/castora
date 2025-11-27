@@ -1,5 +1,5 @@
 import { useToast } from '@/contexts/ToastContext';
-import { castoraAbi, castoraPoolsManagerAbi, erc20Abi } from '@/contexts/abis';
+import { castoraAbi, castoraGettersAbi, castoraPoolsManagerAbi, erc20Abi } from '@/contexts/abis';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -10,8 +10,9 @@ import { useAccount, useChains, useWalletClient } from 'wagmi';
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
+export const GETTERS_ADDRESS_MONAD: `0x${string}` = '0x';
 
-export type ChoiceContract = 'castora' | 'pools-manager';
+export type ChoiceContract = 'castora' | 'getters' | 'pools-manager';
 export type WriteContractStatus = 'initializing' | 'submitted' | 'waiting';
 
 interface ContractContextProps {
@@ -136,7 +137,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
           bs.error('Transaction Rejected');
         } else {
           console.error(e);
-          
+
           if (e?.cause?.metaMessages) {
             const matched = `${e.cause.metaMessages[0]}`.match(/Error:\s*([A-Za-z0-9_]+)\(\)/);
             const reverted = matched ? matched[1] : null;
@@ -216,8 +217,18 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     contract: ChoiceContract;
     args?: any[];
   }) => {
-    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
-    const abi = contract == 'castora' ? castoraAbi : castoraPoolsManagerAbi;
+    let target;
+    if (contract == 'castora') target = getCastoraAddress();
+    else if (contract == 'pools-manager') target = POOLS_MANAGER_ADDRESS_MONAD;
+    else if (contract == 'getters') target = GETTERS_ADDRESS_MONAD;
+    else throw new Error('Invalid contract type');
+
+    let abi;
+    if (contract == 'castora') abi = castoraAbi;
+    else if (contract == 'pools-manager') abi = castoraPoolsManagerAbi;
+    else if (contract == 'getters') abi = castoraGettersAbi;
+    else throw new Error('Invalid contract type');
+
     return read(target, abi, functionName, args);
   };
 

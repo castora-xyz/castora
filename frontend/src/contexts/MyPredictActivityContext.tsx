@@ -48,7 +48,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
     return last == 0 ? 0 : last - 1;
   };
 
-  const [noOfJoinedPools, setNoOfJoinedPools] = useState<number | null>(null);
+  const [noOfPredictions, setNoOfPredictions] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
   const [myActivities, setMyActivities] = useState<ActivityPredict[]>([]);
   const [hasError, setHasError] = useState(false);
@@ -57,47 +57,61 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
   const updateActivityCount = async (showLoading = false) => {
     if (!address) return;
     // Only show loading if requested or if there is no previous data
-    if (showLoading || noOfJoinedPools === null) setIsFetching(true);
+    if (showLoading || noOfPredictions === null) setIsFetching(true);
 
-    const count = await readContract({
-      contract: 'castora',
-      functionName: 'noOfJoinedPoolsByAddresses',
+    const stats = await readContract({
+      contract: 'getters',
+      functionName: 'userStats',
       args: [address]
     });
-    if (count !== null) {
-      if (noOfJoinedPools == Number(count)) setIsFetching(false);
-      setNoOfJoinedPools(Number(count));
+    if (stats) {
+      if (noOfPredictions == Number(stats.noOfPredictions)) setIsFetching(false);
+      setNoOfPredictions(Number(stats.noOfJoinedPools));
       setHasError(false);
     } else {
       // Only set error if the previous value was null
       // This is to allow valid data to be displayed even if the
       // current data might have needed an update
-      if (noOfJoinedPools === null) setHasError(true);
+      if (noOfPredictions === null) setHasError(true);
       setIsFetching(false);
     }
   };
 
   const fetchMyActivity = async (page = currentPage, rows = rowsPerPage) => {
-    if (noOfJoinedPools === 0) {
+    if (noOfPredictions === 0) {
       setMyActivities([]);
       setIsFetching(false);
       return;
     }
 
-    if (!noOfJoinedPools || page === null || !address) return;
+    if (!noOfPredictions || page === null || !address) return;
 
     setIsFetching(true);
     let start = (page + 1) * rows - rows;
-    const raw = await readContract({
-      contract: 'castora',
-      functionName: 'getUserActivitiesOptimizedPaginated',
+    const rawRecords = (await readContract({
+      contract: 'getters',
+      functionName: 'userPredictionRecordsPaginated',
       args: [address, start, rows]
-    });
-    if (raw) {
-      const pools = raw[0].map((p: any) => new Pool(p));
-      const activities: ActivityPredict[] = raw[1].map((p: any, i: number) => ({
-        pool: pools[raw[2][i]],
-        prediction: new Prediction(p)
+    })) as any;
+    if (rawRecords) {
+      // TODO: Optimise later to only fetch pools uniquely
+      const rawPools = (await readContract({
+        contract: 'getters',
+        functionName: 'pools',
+        args: [rawRecords.map(({ poolId }: any) => poolId)]
+      })) as any;
+      const pools = rawPools.map((p: any) => new Pool(p));
+
+      const rawPredictions = (await readContract({
+        contract: 'getters',
+        functionName: 'predictions',
+        args: [rawRecords.map(({ predictionId }: any) => predictionId)]
+      })) as any;
+      const predictions = rawPredictions.map((p: any) => new Prediction(p));
+
+      const activities: ActivityPredict[] = rawRecords.map((_: any, i: number) => ({
+        pool: pools[i],
+        prediction: predictions[i]
       }));
       setMyActivities([...activities.reverse()]);
       setHasError(false);
@@ -118,7 +132,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
       setIsFetching(false);
       setHasError(false);
       setMyActivities([]);
-      setNoOfJoinedPools(null);
+      setNoOfPredictions(null);
       setCurrentPage(null);
     } else {
       updateActivityCount();
@@ -126,18 +140,18 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
   }, [address, currentChain]);
 
   useEffect(() => {
-    if (noOfJoinedPools !== null) {
+    if (noOfPredictions !== null) {
       // The below is to set the currentPage to the last page on
       // initial load or disconnect wallet and connect back
       if (currentPage === null) {
-        setCurrentPage(getLastPage(noOfJoinedPools));
-        fetchMyActivity(getLastPage(noOfJoinedPools));
+        setCurrentPage(getLastPage(noOfPredictions));
+        fetchMyActivity(getLastPage(noOfPredictions));
       }
 
       // Re-Fetch MyActivity on update of noOfJoinedPools
       if (currentPage !== null) fetchMyActivity(currentPage);
     }
-  }, [noOfJoinedPools]);
+  }, [noOfPredictions]);
 
   useEffect(() => {
     updateActivityCount();
@@ -146,7 +160,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
   return (
     <MyPredictActivityContext.Provider
       value={{
-        activityCount: noOfJoinedPools,
+        activityCount: noOfPredictions,
         currentPage,
         fetchMyActivity,
         isFetching,

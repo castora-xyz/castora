@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-export const ALL_CRYPTO_PREDICTION_TOKENS = ['BTC', 'ETH', 'SOL', 'PUMP', 'HYPE'];
-export const ALL_CRYPTO_STAKE_TOKENS = ['MON', 'gMON', 'aprMON'];
+export const ALL_CRYPTO_PREDICTION_TOKENS = ['MON', 'BTC', 'ETH', 'SOL'];
+export const ALL_CRYPTO_STAKE_TOKENS = ['MON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
 export const ALL_CRYPTO_POOL_LIFES = ['6h', '24h'];
-export const ALL_COMMUNITY_PREDICTION_TOKENS = ['BTC', 'ETH', 'SOL', 'PUMP', 'HYPE', 'AAPL', 'TSLA', 'CRCL', 'MON', 'gMON', 'aprMON'];
-export const ALL_COMMUNITY_STAKE_TOKENS = ['MON', 'USDC'];
+export const ALL_COMMUNITY_PREDICTION_TOKENS = ['MON', 'BTC', 'ETH', 'SOL'];
+export const ALL_COMMUNITY_STAKE_TOKENS = ['MON'];
 export const ALL_COMMUNITY_MULTIPLIERS = ['x2', 'x3', 'x4', 'x5', 'x10'];
 
 export interface FilterStockPoolsProps {
@@ -79,20 +79,24 @@ export const useFilterCryptoPools = () => useContext(FilterCryptoPoolsContext);
 export const useFilterCommunityPools = () => useContext(FilterCommunityPoolsContext);
 
 const retrieveOne = (key: string, prop: string, all: any[], initial: any[]): any[] => {
-  const saved = localStorage.getItem(`castora::filter-v3-${key}pools::${prop}`);
+  const saved = localStorage.getItem(`castora::filter-v4-${key}pools::${prop}`);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.every((p) => all.includes(p))) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        // parsed contains EXCLUDED items
+        // We return ALL items EXCEPT the excluded ones
+        return all.filter((item) => !parsed.includes(item));
       }
     } catch (_) {}
   }
   return initial;
 };
 
-const save = (key: string, prop: string, value: string[]) => {
-  localStorage.setItem(`castora::filter-v3-${key}pools::${prop}`, JSON.stringify(value));
+const save = (key: string, prop: string, currentSelection: string[], allOptions: string[]) => {
+  // Save EXCLUDED items
+  const excluded = allOptions.filter((item) => !currentSelection.includes(item));
+  localStorage.setItem(`castora::filter-v4-${key}pools::${prop}`, JSON.stringify(excluded));
 };
 
 export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) => {
@@ -119,11 +123,11 @@ export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) 
   };
 
   useEffect(() => {
-    save('stock', 'predictiontokens', predictionTokens);
+    save('stock', 'predictiontokens', predictionTokens, ALL_STOCK_PREDICTION_TOKENS);
   }, [predictionTokens]);
 
   useEffect(() => {
-    save('stock', 'statuses', statuses);
+    save('stock', 'statuses', statuses, ALL_STATUSES);
   }, [statuses]);
 
   useEffect(() => {
@@ -134,6 +138,7 @@ export const FilterStockPoolsProvider = ({ children }: { children: ReactNode }) 
     const lsKeys = Object.keys(localStorage);
     for (let key of lsKeys) {
       if (key.startsWith('castora::filterstockpools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filter-v3-stockpools')) localStorage.removeItem(key);
     }
   }, []);
 
@@ -191,19 +196,19 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
   };
 
   useEffect(() => {
-    save('crypto', 'predictiontokens', predictionTokens);
+    save('crypto', 'predictiontokens', predictionTokens, ALL_CRYPTO_PREDICTION_TOKENS);
   }, [predictionTokens]);
 
   useEffect(() => {
-    save('crypto', 'poollifes', poolLifes);
+    save('crypto', 'poollifes', poolLifes, ALL_CRYPTO_POOL_LIFES);
   }, [poolLifes]);
 
   useEffect(() => {
-    save('crypto', 'staketokens', stakeTokens);
+    save('crypto', 'staketokens', stakeTokens, ALL_CRYPTO_STAKE_TOKENS);
   }, [stakeTokens]);
 
   useEffect(() => {
-    save('crypto', 'statuses', statuses);
+    save('crypto', 'statuses', statuses, ALL_STATUSES);
   }, [statuses]);
 
   useEffect(() => {
@@ -217,6 +222,7 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
       if (key.startsWith('castora::filtercryptopools')) localStorage.removeItem(key);
       if (key.startsWith('castora::filter-v2-cryptopools')) localStorage.removeItem(key);
       if (key.startsWith('castora::filter-v2-stockpools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filter-v3-cryptopools')) localStorage.removeItem(key);
     }
   }, []);
 
@@ -268,7 +274,9 @@ export const FilterCommunityPoolsProvider = ({ children }: { children: ReactNode
 
   const toggleMultiplier = (multiplier: string) => {
     setMultipliers(
-      multipliers.includes(multiplier) ? (prev) => prev.filter((m) => m !== multiplier) : (prev) => [...prev, multiplier]
+      multipliers.includes(multiplier)
+        ? (prev) => prev.filter((m) => m !== multiplier)
+        : (prev) => [...prev, multiplier]
     );
   };
 
@@ -282,19 +290,19 @@ export const FilterCommunityPoolsProvider = ({ children }: { children: ReactNode
   };
 
   useEffect(() => {
-    save('community', 'predictiontokens', predictionTokens);
+    save('community', 'predictiontokens', predictionTokens, ALL_COMMUNITY_PREDICTION_TOKENS);
   }, [predictionTokens]);
 
   useEffect(() => {
-    save('community', 'staketokens', stakeTokens);
+    save('community', 'staketokens', stakeTokens, ALL_COMMUNITY_STAKE_TOKENS);
   }, [stakeTokens]);
 
   useEffect(() => {
-    save('community', 'statuses', statuses);
+    save('community', 'statuses', statuses, ALL_STATUSES);
   }, [statuses]);
 
   useEffect(() => {
-    save('community', 'multipliers', multipliers);
+    save('community', 'multipliers', multipliers, ALL_COMMUNITY_MULTIPLIERS);
   }, [multipliers]);
 
   useEffect(() => {
@@ -305,6 +313,7 @@ export const FilterCommunityPoolsProvider = ({ children }: { children: ReactNode
     const lsKeys = Object.keys(localStorage);
     for (let key of lsKeys) {
       if (key.startsWith('castora::filtercommunitypools')) localStorage.removeItem(key);
+      if (key.startsWith('castora::filter-v3-communitypools')) localStorage.removeItem(key);
     }
   }, []);
 

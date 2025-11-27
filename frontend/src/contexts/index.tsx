@@ -1,6 +1,5 @@
 export * from './abis';
 export * from './AuthContext';
-export * from './CacheContext';
 export * from './ContractContext';
 export * from './FilterPoolsContext';
 export * from './FirebaseContext';

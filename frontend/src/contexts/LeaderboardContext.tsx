@@ -10,7 +10,7 @@ interface LeaderboardContextProps {
   refresh: () => void;
   lastUpdatedTime: string;
   totalUsersCount: number;
-  mine: (LeaderboardEntry & { rank: number }) | null;
+  mine: LeaderboardEntry | null;
 }
 
 const LeaderboardContext = createContext<LeaderboardContextProps>({
@@ -31,7 +31,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
   const [hasError, setHasError] = useState(false);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(new Date().toISOString());
   const [totalUsersCount, setTotalUsersCount] = useState<number>(0);
-  const [mine, setMine] = useState<(LeaderboardEntry & { rank: number }) | null>(null);
+  const [mine, setMine] = useState<LeaderboardEntry | null>(null);
   const server = useServer();
   const { address } = useAuth();
 
@@ -39,7 +39,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await server.get('/leaderboard/testnet/top');
+      const data = await server.get('/leaderboard/mainnet/top');
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -70,8 +70,8 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const data = await server.get('/leaderboard/testnet/mine');
-      if (data) setMine({ address, ...data });
+      const data = await server.get('/leaderboard/mainnet/mine');
+      if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);
     }

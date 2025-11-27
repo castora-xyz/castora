@@ -7,6 +7,8 @@ import {
   LDB_TESTNET_TOP100_KEY,
   LDB_TESTNET_USER_PREFIX,
   logger,
+  readGettersContract,
+  readPoolsManagerContract,
   REDIS_CACHE_TTL_SECONDS,
   redisClient
 } from '@castora/shared';
@@ -38,9 +40,18 @@ export const getMainnetLeaderboard = async () => {
   } = (await firestore.doc('/counts/counts').get()).data() as any;
 
   const snapshot = await firestore.collection('users').orderBy('leaderboard.xp.mainnet', 'desc').limit(100).get();
-  const entries = snapshot.docs.map((doc) => {
+  const entries = snapshot.docs.map((doc, index) => {
     const { leaderboard, stats } = doc.data();
-    return { address: doc.id, xp: leaderboard?.xp?.mainnet || 0, ...stats.mainnet };
+    return { address: doc.id, xp: leaderboard?.xp?.mainnet || 0, ...stats.mainnet, rank: index + 1 };
+  });
+  const addresses = entries.map((e) => e.address);
+  const statsCastora = await readGettersContract('monadmainnet', 'usersStatsBulk', [addresses]);
+  const statsPoolsManager = await readPoolsManagerContract('monadmainnet', 'getUserStatsBulk', [addresses]);
+  entries.forEach((entry, index) => {
+    entry.joinedPools = Number(statsCastora[index].noOfJoinedPools);
+    entry.predictions = Number(statsCastora[index].noOfPredictions);
+    entry.winnings = Number(statsCastora[index].noOfWinnings);
+    entry.createdPools = Number(statsPoolsManager[index].noOfPoolsCreated);
   });
 
   const result = { entries, lastUpdatedTime: lastUpdatedTimestamp.toDate(), totalUsersCount: mainnetUsersCount };
@@ -78,23 +89,43 @@ export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
     const { leaderboard, stats } = snapshot.data() as any;
     const xp = leaderboard?.xp?.mainnet || 0;
     let rank = mainnetUsersCount + 1;
+    let joinedPools = 0;
+    let predictions = 0;
+    let winnings = 0;
+    let createdPools = 0;
     if (xp > 0) {
       const totalSnap = await firestore.collection('users').where('leaderboard.xp.mainnet', '>', xp).count().get();
       rank = totalSnap.data().count + 1;
+      const statsCastora = await readGettersContract('monadmainnet', 'usersStats', userWalletAddress);
+      const statsPoolsManager = await readPoolsManagerContract('monadmainnet', 'getUserStats', userWalletAddress);
+      joinedPools = Number(statsCastora.noOfJoinedPools);
+      predictions = Number(statsCastora.noOfPredictions);
+      winnings = Number(statsCastora.noOfWinnings);
+      createdPools = Number(statsPoolsManager.noOfPoolsCreated);
     }
 
     result = {
+      address: userWalletAddress,
       lastUpdatedTime: leaderboard?.lastUpdatedTime?.toDate() ?? new Date(),
       xp,
       rank,
+      joinedPools,
+      predictions,
+      winnings,
+      createdPools,
       ...stats.mainnet
     };
   } else {
     result = {
+      address: userWalletAddress,
       lastUpdatedTime: new Date(),
       rank: mainnetUsersCount + 1,
       xp: 0,
+      joinedPools: 0,
+      predictions: 0,
       predictionsVolume: 0,
+      winnings: 0,
+      createdPools: 0,
       winningsVolume: 0
     };
   }

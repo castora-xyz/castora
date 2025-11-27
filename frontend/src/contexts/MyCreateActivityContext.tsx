@@ -133,8 +133,8 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
     });
     if (poolIds) {
       const raw1 = await readContract({
-        contract: 'castora',
-        functionName: 'getPools',
+        contract: 'getters',
+        functionName: 'pools',
         args: [poolIds]
       });
       const raw2 = await readContract({

@@ -1,16 +1,15 @@
 import FilterList from '@/assets/filter-list.svg?react';
 import {
+  ALL_COMMUNITY_MULTIPLIERS,
+  ALL_COMMUNITY_PREDICTION_TOKENS,
   ALL_CRYPTO_POOL_LIFES,
   ALL_CRYPTO_PREDICTION_TOKENS,
   ALL_CRYPTO_STAKE_TOKENS,
   ALL_STATUSES,
   ALL_STOCK_PREDICTION_TOKENS,
-  ALL_COMMUNITY_PREDICTION_TOKENS,
-  ALL_COMMUNITY_STAKE_TOKENS,
-  ALL_COMMUNITY_MULTIPLIERS,
+  useFilterCommunityPools,
   useFilterCryptoPools,
   useFilterStockPools,
-  useFilterCommunityPools,
   useFirebase
 } from '@/contexts';
 import { Dialog } from 'primereact/dialog';
@@ -24,12 +23,7 @@ interface FilterPoolsSectionProps {
   onClick: (item: string) => void;
 }
 
-const FilterPoolsSection = ({
-  title,
-  current,
-  all,
-  onClick
-}: FilterPoolsSectionProps) => (
+const FilterPoolsSection = ({ title, current, all, onClick }: FilterPoolsSectionProps) => (
   <div className="mb-6 flex items-start gap-x-3 gap-y-2">
     <p className="py-0.5 px-6 mb-2 text-sm rounded-full w-fit border border-border-default dark:border-surface-subtle">
       <span className="-mt-0.5 block">{title}</span>
@@ -59,8 +53,7 @@ const FilterPoolsSection = ({
 export const FilterStockPools = () => {
   const { recordEvent } = useFirebase();
   const [visible, setVisible] = useState(false);
-  const { predictionTokens, statuses, togglePredictionToken, toggleStatus } =
-    useFilterStockPools();
+  const { predictionTokens, statuses, togglePredictionToken, toggleStatus } = useFilterStockPools();
 
   return (
     <>
@@ -100,12 +93,7 @@ export const FilterStockPools = () => {
           onClick={togglePredictionToken}
         />
 
-        <FilterPoolsSection
-          title="Status"
-          current={statuses}
-          all={ALL_STATUSES}
-          onClick={toggleStatus}
-        />
+        <FilterPoolsSection title="Status" current={statuses} all={ALL_STATUSES} onClick={toggleStatus} />
       </Dialog>
     </>
   );
@@ -165,19 +153,9 @@ export const FilterCryptoPools = () => {
           onClick={togglePredictionToken}
         />
 
-        <FilterPoolsSection
-          title="Life"
-          current={poolLifes}
-          all={ALL_CRYPTO_POOL_LIFES}
-          onClick={togglePoolLife}
-        />
+        <FilterPoolsSection title="Life" current={poolLifes} all={ALL_CRYPTO_POOL_LIFES} onClick={togglePoolLife} />
 
-        <FilterPoolsSection
-          title="Status"
-          current={statuses}
-          all={ALL_STATUSES}
-          onClick={toggleStatus}
-        />
+        <FilterPoolsSection title="Status" current={statuses} all={ALL_STATUSES} onClick={toggleStatus} />
 
         <FilterPoolsSection
           title="Stake"
@@ -199,7 +177,6 @@ export const FilterCommunityPools = () => {
     statuses,
     multipliers,
     togglePredictionToken,
-    toggleStakeToken,
     toggleStatus,
     toggleMultiplier
   } = useFilterCommunityPools();
@@ -244,12 +221,12 @@ export const FilterCommunityPools = () => {
           onClick={togglePredictionToken}
         />
 
-        <FilterPoolsSection
+        {/* <FilterPoolsSection
           title="Stake"
           current={stakeTokens}
           all={ALL_COMMUNITY_STAKE_TOKENS}
           onClick={toggleStakeToken}
-        />
+        /> */}
 
         <FilterPoolsSection
           title="Multiplier"
@@ -258,12 +235,7 @@ export const FilterCommunityPools = () => {
           onClick={toggleMultiplier}
         />
 
-        <FilterPoolsSection
-          title="Status"
-          current={statuses}
-          all={ALL_STATUSES}
-          onClick={toggleStatus}
-        />
+        <FilterPoolsSection title="Status" current={statuses} all={ALL_STATUSES} onClick={toggleStatus} />
       </Dialog>
     </>
   );

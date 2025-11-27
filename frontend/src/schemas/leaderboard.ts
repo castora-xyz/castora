@@ -2,9 +2,10 @@ export interface LeaderboardEntry {
   address: string;
   xp: number;
   winningsVolume: number;
-  pools: number;
+  joinedPools: number;
   predictionsVolume: number;
   winnings: number;
   predictions: number;
-  createdPools?: number;
+  createdPools: number;
+  rank: number;
 }

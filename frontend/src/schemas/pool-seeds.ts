@@ -1,12 +1,12 @@
 import {
   ALL_STOCK_PREDICTION_TOKENS,
+  FilterCommunityPoolsProps,
   FilterCryptoPoolsProps,
-  FilterStockPoolsProps,
-  FilterCommunityPoolsProps
+  FilterStockPoolsProps
 } from '@/contexts';
+import { formatTime } from '@/contexts/format-time';
 import ms from 'ms';
 import { tokens } from './tokens';
-import { formatTime } from '@/contexts/format-time';
 
 /**
  * Holds information about the properties of a given pool.
@@ -21,6 +21,11 @@ export class PoolSeeds {
   stakeAmount: number;
   windowCloseTime: number;
   snapshotTime: number;
+  feesPercentOnchain: number;
+  feesPercent: number;
+  multiplierOnchain: number;
+  multiplier: number;
+  isUnlisted: boolean;
   isUserCreatedPool: boolean = false;
 
   constructor(input: any, userCreatedPool?: any) {
@@ -29,6 +34,11 @@ export class PoolSeeds {
     this.stakeAmount = Number(input['stakeAmount']);
     this.snapshotTime = Number(input['snapshotTime']);
     this.windowCloseTime = Number(input['windowCloseTime']);
+    this.feesPercentOnchain = Number(input['feesPercent']);
+    this.feesPercent = this.feesPercentOnchain / 100;
+    this.multiplierOnchain = Number(input['multiplier']);
+    this.multiplier = this.multiplierOnchain / 100;
+    this.isUnlisted = Boolean(input['isUnlisted']);
 
     const foundP = tokens.find((t) => t.address.toLowerCase() === this.predictionToken.toLowerCase());
     if (!foundP) {
@@ -52,7 +62,10 @@ export class PoolSeeds {
       stakeToken: this.stakeToken,
       stakeAmount: BigInt(this.stakeAmount),
       snapshotTime: BigInt(this.snapshotTime),
-      windowCloseTime: BigInt(this.windowCloseTime)
+      windowCloseTime: BigInt(this.windowCloseTime),
+      feesPercent: BigInt(this.feesPercentOnchain),
+      multiplier: BigInt(this.multiplierOnchain),
+      isUnlisted: this.isUnlisted
     };
   }
 

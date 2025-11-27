@@ -54,7 +54,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
       firestoreUnsubRef.current?.();
       if (user) {
         firestoreUnsubRef.current = onSnapshot(doc(firestore, `/users/${user.uid}`), (doc) => {
-          setHasLinked(doc.exists() ? !!doc.data()['telegramId'] : false);
+          setHasLinked(doc.exists() ? !!doc.data()['telegramId'] || !!doc.data()['telegram']?.['id'] : false);
           setIsLoading(false);
         });
       } else {

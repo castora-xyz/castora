@@ -128,7 +128,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         contract: 'pools-manager',
         functionName: 'createPool',
         args: getCreateFormArgs(form),
-        value: 10e18,
+        value: 500e18,
         onSuccessCallback: (hash, rawPoolId) => {
           txHash = hash;
           poolId = Number(rawPoolId);
@@ -299,7 +299,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchMany = async (poolIds: number[], includeUserCreateds = false) => {
-    const raw1 = await readContract({ contract: 'castora', functionName: 'getPools', args: [poolIds] });
+    const raw1 = await readContract({ contract: 'getters', functionName: 'pools', args: [poolIds] });
     if (!raw1) return [];
 
     let raw2;

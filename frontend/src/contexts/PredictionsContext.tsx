@@ -10,8 +10,8 @@ export const usePredictions = () => {
   return async ({ poolId }: Pool, predictionIds: bigint[]) => {
     try {
       const raw = await readContract({
-        contract: 'castora',
-        functionName: 'getPredictions',
+        contract: 'getters',
+        functionName: 'predictions',
         args: [poolId, predictionIds]
       });
       if (!raw) return null;

@@ -55,7 +55,7 @@ export const LeaderboardPage = () => {
 
   const addFillerToRows = (rows: LeaderboardRow[], rank: number, isGap: boolean, isPlaceholder: boolean) => {
     rows.push({
-      ...{ address: '', xp: 0, winningsVolume: 0, pools: 0, predictionsVolume: 0 },
+      ...{ address: '', xp: 0, winningsVolume: 0, joinedPools: 0, predictionsVolume: 0, createdPools: 0 },
       ...{ winnings: 0, predictions: 0, rank, winRate: '', netProfit: 0, isGap, isPlaceholder }
     });
   };

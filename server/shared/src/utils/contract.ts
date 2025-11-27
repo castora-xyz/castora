@@ -118,7 +118,7 @@ export const readGettersContract = async (chain: Chain, functionName: any, args?
   }
 };
 
-export const readPoolsManagerContract = async (chain: Chain, functionName: any, args?: any) => {
+export const readPoolsManagerContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
   try {
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
