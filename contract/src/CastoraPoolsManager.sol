@@ -680,16 +680,14 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// Internal helper to remove an element from a uint256 array while preserving order
+  /// Internal helper to remove an element from a uint256 array
   /// @param array The array to modify
   /// @param value The value to remove
   function _removeFromArray(uint256[] storage array, uint256 value) internal {
     for (uint256 i = 0; i < array.length; i++) {
       if (array[i] == value) {
-        // Shift all elements after the found index one position left
-        for (uint256 j = i; j < array.length - 1; j++) {
-          array[j] = array[j + 1];
-        }
+        array[i] = array[array.length - 1];
+        // Remove last element
         array.pop();
         break;
       }
