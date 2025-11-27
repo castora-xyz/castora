@@ -16,7 +16,6 @@ import {CastoraStructs} from './CastoraStructs.sol';
 
 /// Manages user-created pools with fee collection and creator rewards system.
 /// Users pay creation fees to create pools and receive completion fees when their pools finish.
-/// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
 contract CastoraPoolsManager is
   CastoraErrors,
   CastoraEvents,
