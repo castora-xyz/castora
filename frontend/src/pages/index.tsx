@@ -4,6 +4,7 @@ export * from './LeaderboardPage';
 export * from './LiveCommunityPoolsPage';
 export * from './LiveCryptoPoolsPage';
 export * from './LiveStocksPoolsPage';
+export * from './MainnetPoolsPage';
 export * from './MyActivityCreatedPoolsPage';
 export * from './MyActivityPredictionsPage';
 export * from './NotFoundPage';

@@ -4,7 +4,7 @@ export const ALL_CRYPTO_PREDICTION_TOKENS = ['MON', 'BTC', 'ETH', 'SOL'];
 export const ALL_CRYPTO_STAKE_TOKENS = ['MON'];
 export const ALL_STATUSES = ['Open', 'Closed', 'Completed', 'Upcoming'];
 export const ALL_STOCK_PREDICTION_TOKENS = ['AAPL', 'TSLA', 'CRCL'];
-export const ALL_CRYPTO_POOL_LIFES = ['6h', '24h'];
+export const ALL_CRYPTO_POOL_LIFES = ['1h', '6h', '24h'];
 export const ALL_COMMUNITY_PREDICTION_TOKENS = ['MON', 'BTC', 'ETH', 'SOL'];
 export const ALL_COMMUNITY_STAKE_TOKENS = ['MON'];
 export const ALL_COMMUNITY_MULTIPLIERS = ['x2', 'x3', 'x4', 'x5', 'x10'];
@@ -164,7 +164,7 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
     retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON'])
   );
   const [statuses, setStatuses] = useState(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
-  const [poolLifes, setPoolLifes] = useState(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h']));
+  const [poolLifes, setPoolLifes] = useState(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['1h', '6h', '24h']));
 
   const togglePoolLife = (life: string) => {
     setPoolLifes(poolLifes.includes(life) ? (prev) => prev.filter((l) => l !== life) : (prev) => [...prev, life]);
@@ -192,7 +192,7 @@ export const FilterCryptoPoolsProvider = ({ children }: { children: ReactNode })
     );
     setStakeTokens(retrieveOne('crypto', 'staketokens', ALL_CRYPTO_STAKE_TOKENS, ['MON', 'gMON', 'aprMON']));
     setStatuses(retrieveOne('crypto', 'statuses', ALL_STATUSES, ['Open']));
-    setPoolLifes(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['6h', '24h']));
+    setPoolLifes(retrieveOne('crypto', 'poollifes', ALL_CRYPTO_POOL_LIFES, ['1h', '6h', '24h']));
   };
 
   useEffect(() => {

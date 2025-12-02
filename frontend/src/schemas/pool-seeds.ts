@@ -138,9 +138,17 @@ export class PoolSeeds {
     // between snapshotTime and windowCloseTime.
     const diff = this.snapshotTime - this.windowCloseTime;
 
+    // For hourly pools with an hour close window,
+    // the open time is 1 hour before the window close time.
+    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
+      return this.windowCloseTime - 60 * 60;
+    }
+
     // For 6-hourly pools with an hour close window,
     // the open time is 6 hours before the window close time.
-    if (diff === 60 * 60) return this.windowCloseTime - 6 * 60 * 60;
+    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
+      return this.windowCloseTime - 6 * 60 * 60;
+    }
 
     // For 24-hourly pools with a 12-hour close window,
     // the open time is 24 hours before the window close time.
@@ -190,8 +198,20 @@ export class PoolSeeds {
     // If it is a crypto pool, pool life depends on difference
     // between snapshotTime and windowCloseTime.
     const diff = this.snapshotTime - this.windowCloseTime;
-    if (diff === 60 * 60) return 6 * 60 * 60; // 6-hourly pool
+    
+    // For hourly pools: diff is 1 hour and snapshotTime is not aligned to 6-hour intervals
+    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
+      return 60 * 60; // 1-hourly pool
+    }
+    
+    // For 6-hourly pools: diff is 1 hour and snapshotTime is aligned to 6-hour intervals
+    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
+      return 6 * 60 * 60; // 6-hourly pool
+    }
+    
+    // For 24-hourly pools: diff is 12 hours
     if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 24-hourly pool
+    
     // TODO: Handle newer pool types when the time comes
     return 60 * 60;
   }

@@ -7,6 +7,7 @@ import {
   LiveCommunityPoolsPage,
   LiveCryptoPoolsPage,
   LiveStocksPoolsPage,
+  MainnetPoolsPage,
   MyActivityCreatedPoolsPage,
   MyActivityPredictionsPage,
   NotFoundPage,
@@ -31,6 +32,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',
+      '/pools': 'Pools',
       '/pools/crypto': 'Crypto Pools',
       '/pools/stocks': 'Stocks Pools',
       '/pools/community': 'Community Pools',
@@ -69,7 +71,7 @@ const router = createBrowserRouter(
     <Route path="/" element={<Layout outlet={<Outlet />} />} errorElement={<Layout outlet={<NotFoundPage />} />}>
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
-        <Route path="pools" element={<Navigate to="crypto" replace />} />
+        <Route path="pools" element={<MainnetPoolsPage />} />
         <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
         <Route path="pools/stocks" element={<LiveStocksPoolsPage />} />
         <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
