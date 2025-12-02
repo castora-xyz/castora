@@ -4,7 +4,6 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
 import { useAccount, useChains } from 'wagmi';
-import { monadMainnet } from './chains';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
 
@@ -98,7 +97,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [liveCommunityPoolIds, setLiveCommunityPoolIds] = useState<number[]>([]);
 
   const getChain = () => currentChain ?? defaultChain;
-  const getChainName = () => ({ [monadMainnet.id]: 'monadmainnet' }[getChain().id]);
+  const getChainName = () => 'monadmainnet';
 
   const getCreateFormArgs = (form: CreatePoolForm) => {
     if (!allowedCreatorPredTokens.includes(form.predictionToken)) throw 'Invalid predictionToken';

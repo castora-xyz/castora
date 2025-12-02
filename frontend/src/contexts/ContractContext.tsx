@@ -5,7 +5,6 @@ import { ReactNode, createContext, useContext, useEffect, useState } from 'react
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
 import { useAccount, useChains, useWalletClient } from 'wagmi';
-import { monadMainnet } from './chains';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
@@ -60,16 +59,10 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const walletClient = useWalletClient();
 
   const [defaultChain] = useChains();
-  const getCastoraAddress = () =>
-    ({
-      [monadMainnet.name]: CASTORA_ADDRESS_MONAD
-    }[(currentChain ?? defaultChain).name]!);
-  const [castoraAddress, setCastoraAddress] = useState(getCastoraAddress());
+  const getCastoraAddress = () => CASTORA_ADDRESS_MONAD;
+  const [castoraAddress, setCastoraAddress] = useState(CASTORA_ADDRESS_MONAD);
 
-  const getRpcUrl = () =>
-    ({
-      [monadMainnet.name]: undefined
-    }[(currentChain ?? defaultChain).name]!);
+  const getRpcUrl = () => undefined;
 
   const publicClient = () =>
     createPublicClient({

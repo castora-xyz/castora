@@ -2,8 +2,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServer } from '@/contexts/ServerContext';
 import { LeaderboardEntry } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { useAccount, useChains } from 'wagmi';
-import { monadMainnet } from './chains';
 
 interface LeaderboardContextProps {
   entries: LeaderboardEntry[];
@@ -36,20 +34,13 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
   const [mine, setMine] = useState<LeaderboardEntry | null>(null);
   const server = useServer();
   const { address } = useAuth();
-  const { chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
 
-  const getChainName = () => {
-    const chain = currentChain ?? defaultChain;
-    return chain.id === monadMainnet.id ? 'mainnet' : 'testnet';
-  };
 
   const fetchLeaderboard = async () => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const chainName = getChainName();
-      const data = await server.get(`/leaderboard/${chainName}/top`);
+      const data = await server.get(`/leaderboard/mainnet/top`);
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -80,8 +71,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const chainName = getChainName();
-      const data = await server.get(`/leaderboard/${chainName}/mine`);
+      const data = await server.get(`/leaderboard/mainnet/mine`);
       if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);
@@ -90,7 +80,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [currentChain, defaultChain]);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && entries.length > 0) fetchMine();
