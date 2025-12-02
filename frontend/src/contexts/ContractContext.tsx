@@ -4,8 +4,8 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
-import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains, useWalletClient } from 'wagmi';
+import { monadMainnet } from './chains';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
@@ -62,13 +62,13 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const [defaultChain] = useChains();
   const getCastoraAddress = () =>
     ({
-      [monadTestnet.name]: CASTORA_ADDRESS_MONAD
+      [monadMainnet.name]: CASTORA_ADDRESS_MONAD
     }[(currentChain ?? defaultChain).name]!);
   const [castoraAddress, setCastoraAddress] = useState(getCastoraAddress());
 
   const getRpcUrl = () =>
     ({
-      [monadTestnet.name]: undefined
+      [monadMainnet.name]: undefined
     }[(currentChain ?? defaultChain).name]!);
 
   const publicClient = () =>

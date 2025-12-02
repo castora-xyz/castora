@@ -3,8 +3,8 @@ import { Pool, tokens } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
-import { monadTestnet } from 'viem/chains';
 import { useAccount, useChains } from 'wagmi';
+import { monadMainnet } from './chains';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
 
@@ -98,7 +98,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [liveCommunityPoolIds, setLiveCommunityPoolIds] = useState<number[]>([]);
 
   const getChain = () => currentChain ?? defaultChain;
-  const getChainName = () => ({ [monadTestnet.id]: 'monadtestnet' }[getChain().id]);
+  const getChainName = () => ({ [monadMainnet.id]: 'monadmainnet' }[getChain().id]);
 
   const getCreateFormArgs = (form: CreatePoolForm) => {
     if (!allowedCreatorPredTokens.includes(form.predictionToken)) throw 'Invalid predictionToken';

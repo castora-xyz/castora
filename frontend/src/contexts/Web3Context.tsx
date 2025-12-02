@@ -2,14 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { ReactNode, useEffect } from 'react';
-import { monadTestnet } from 'viem/chains';
 import { WagmiProvider } from 'wagmi';
+import { monadMainnet } from './chains';
 
 export const queryClient = new QueryClient();
 const projectId = import.meta.env.VITE_WC_PROJECT_ID;
 
 const wagmiConfig = defaultWagmiConfig({
-  chains: [monadTestnet],
+  chains: [monadMainnet],
   projectId,
   metadata: {
     name: 'Castora',
