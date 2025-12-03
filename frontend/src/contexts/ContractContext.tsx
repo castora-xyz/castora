@@ -6,10 +6,10 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
 import { useAccount, useChains, useWalletClient } from 'wagmi';
 
-export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
-export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
-export const GETTERS_ADDRESS_MONAD: `0x${string}` = '0x';
+export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
+export const GETTERS_ADDRESS_MONAD: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
 
 export type ChoiceContract = 'castora' | 'getters' | 'pools-manager';
 export type WriteContractStatus = 'initializing' | 'submitted' | 'waiting';
