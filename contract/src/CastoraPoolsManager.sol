@@ -16,7 +16,6 @@ import {CastoraStructs} from './CastoraStructs.sol';
 
 /// Manages user-created pools with fee collection and creator rewards system.
 /// Users pay creation fees to create pools and receive completion fees when their pools finish.
-/// @custom:oz-upgrades-from build-info-ref:CastoraPoolsManager
 contract CastoraPoolsManager is
   CastoraErrors,
   CastoraEvents,
@@ -107,6 +106,20 @@ contract CastoraPoolsManager is
   /// @return stats The UserCreatedPoolStats struct for the user
   function getUserStats(address user) external view returns (UserCreatedPoolStats memory stats) {
     return userStats[user];
+  }
+
+  /// Gets multiple user statistics
+  /// @param addresses The user addresses to query
+  /// @return statsList Array of UserCreatedPoolStats structs for the users
+  function getUserStatsBulk(address[] calldata addresses)
+    external
+    view
+    returns (UserCreatedPoolStats[] memory statsList)
+  {
+    statsList = new UserCreatedPoolStats[](addresses.length);
+    for (uint256 i = 0; i < addresses.length; i++) {
+      statsList[i] = userStats[addresses[i]];
+    }
   }
 
   /// Gets user creation token fees information
@@ -666,16 +679,14 @@ contract CastoraPoolsManager is
     }
   }
 
-  /// Internal helper to remove an element from a uint256 array while preserving order
+  /// Internal helper to remove an element from a uint256 array
   /// @param array The array to modify
   /// @param value The value to remove
   function _removeFromArray(uint256[] storage array, uint256 value) internal {
     for (uint256 i = 0; i < array.length; i++) {
       if (array[i] == value) {
-        // Shift all elements after the found index one position left
-        for (uint256 j = i; j < array.length - 1; j++) {
-          array[j] = array[j + 1];
-        }
+        array[i] = array[array.length - 1];
+        // Remove last element
         array.pop();
         break;
       }

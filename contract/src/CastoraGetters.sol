@@ -230,6 +230,16 @@ contract CastoraGetters is CastoraErrors, CastoraStructs {
     stats = UserPredictionStats(a, b, c, d, e, f, g, h);
   }
 
+  /// Returns multiple user stats for the provided list of users
+  /// @param users Array of user addresses
+  /// @return statsList Array of UserPredictionStats corresponding to each user
+  function usersStatsBulk(address[] calldata users) external view returns (UserPredictionStats[] memory statsList) {
+    statsList = new UserPredictionStats[](users.length);
+    for (uint256 i = 0; i < users.length; i += 1) {
+      statsList[i] = userStats(users[i]);
+    }
+  }
+
   /// Returns paginated list of pool IDs that a user has joined
   /// @param user Address of the user
   /// @param offset Starting index for pagination

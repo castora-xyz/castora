@@ -12,7 +12,6 @@ import {CastoraStructs} from './CastoraStructs.sol';
 /// Manages validation rules and token permissions for pool creation across the system.
 /// Controls which tokens can be used for staking and predictions, validates stake amounts,
 /// enforces timing constraints, and manages pool multipliers and fee percentages.
-/// @custom:oz-upgrades-from build-info-ref:CastoraPoolsRules
 contract CastoraPoolsRules is
   CastoraErrors,
   CastoraEvents,

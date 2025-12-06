@@ -351,13 +351,13 @@ contract CastoraPoolsManagerUserTest is CastoraErrors, CastoraEvents, CastoraStr
     assertEq(stats.noOfUsers, 2);
     assertEq(stats.noOfUserCreatedPools, 2);
 
-    // Verify user1 is the 1st user
-    UserCreatedPoolStats memory user1Stats = poolsManager.getUserStats(user1);
-    assertEq(user1Stats.nthUserCount, 1);
-
-    // Verify user2 is the 2nd user
-    UserCreatedPoolStats memory user2Stats = poolsManager.getUserStats(user2);
-    assertEq(user2Stats.nthUserCount, 2);
+    // Verify user1 is the 1st user and user2 is the 2nd user
+    address[] memory addresses = new address[](2);
+    addresses[0] = user1;
+    addresses[1] = user2;
+    UserCreatedPoolStats[] memory usersStats = poolsManager.getUserStatsBulk(addresses);
+    assertEq(usersStats[0].nthUserCount, 1);
+    assertEq(usersStats[1].nthUserCount, 2);
   }
 
   function testCreatePoolSameUserMultiplePools() public {

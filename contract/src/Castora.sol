@@ -18,7 +18,6 @@ import {CastoraState} from './CastoraState.sol';
 /// Core prediction gaming contract where users stake tokens to predict future prices.
 /// Participants compete by predicting token prices at specific future timestamps.
 /// Winners are determined by accuracy and share the total staked funds proportionally.
-/// @custom:oz-upgrades-from build-info-ref:Castora
 contract Castora is
   CastoraEvents,
   CastoraState,
