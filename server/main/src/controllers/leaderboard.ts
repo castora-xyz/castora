@@ -54,7 +54,11 @@ export const getMainnetLeaderboard = async () => {
     entry.createdPools = Number(statsPoolsManager[index].noOfPoolsCreated);
   });
 
-  const result = { entries, lastUpdatedTime: lastUpdatedTimestamp.toDate(), totalUsersCount: mainnetUsersCount };
+  const result = {
+    entries,
+    lastUpdatedTime: lastUpdatedTimestamp?.toDate() ?? new Date(),
+    totalUsersCount: mainnetUsersCount
+  };
 
   // Cache the result
   try {
@@ -172,7 +176,11 @@ export const getTestnetLeaderboard = async () => {
     return { address: doc.id, xp: leaderboard?.xp?.testnet || 0, ...monadTestnetStats };
   });
 
-  const result = { entries, lastUpdatedTime: lastUpdatedTimestamp.toDate(), totalUsersCount: monadTestnetUsersCount };
+  const result = {
+    entries,
+    lastUpdatedTime: lastUpdatedTimestamp.toDate() ?? new Date(),
+    totalUsersCount: monadTestnetUsersCount
+  };
 
   // Cache the result
   try {
