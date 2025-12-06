@@ -147,7 +147,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       if (feesPercent === undefined) {
         throw `FATAL: could not get feesPercent from archived pool ${poolId} on ${chain} for winnings volume calculation`;
       }
-      dividedBy = 1 - feesPercent / 10000;
+      dividedBy = 1 - feesPercent / 100;
     }
     let winningsVolume = (winnings.length * pool.winAmount * price) / dividedBy; // winnings volume without fees
 
@@ -195,7 +195,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     const userCached = await redisClient.get(userKey);
     if (userCached) {
       const newUserSnapshot = await userRef.get();
-      const { leaderboard, monadTestnetStats } = newUserSnapshot.data() as any;
+      const { leaderboard, monadTestnetStats, stats } = newUserSnapshot.data() as any;
       const xp = leaderboard.xp[isInTestnet ? 'testnet' : 'mainnet'];
       const totalSnap = await firestore
         .collection('users')
@@ -210,12 +210,17 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
           lastUpdatedTime: leaderboard.lastUpdatedTime.toDate(),
           xp,
           rank,
-          ...(monadTestnetStats ? { monadTestnetStats } : {})
+          ...(monadTestnetStats ? { ...monadTestnetStats } : {}),
+          ...(stats && stats.mainnet ? { ...stats.mainnet } : {})
         }),
         'EX',
         REDIS_CACHE_TTL_SECONDS
       );
-      logger.info(`User ${address} had cached testnet leaderboard info in Redis and have updated it.`);
+      logger.info(
+        `User ${address} had cached ${
+          isInTestnet ? 'testnet' : 'mainnet'
+        } leaderboard info in Redis and have updated it.`
+      );
     }
 
     // update job progress
