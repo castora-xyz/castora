@@ -2434,6 +2434,29 @@ export const castoraGettersAbi = [
   },
   {
     type: 'function',
+    name: 'usersStatsBulk',
+    inputs: [{ name: 'users', type: 'address[]', internalType: 'address[]' }],
+    outputs: [
+      {
+        name: 'statsList',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.UserPredictionStats[]',
+        components: [
+          { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfJoinedPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictions', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedWinnings', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPredictionTokens', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfStakeTokens', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
     name: 'winnerRecordsPaginated',
     inputs: [
       { name: 'offset', type: 'uint256', internalType: 'uint256' },
@@ -3842,6 +3865,28 @@ export const castoraMainnetPoolsManagerAbi = [
         name: 'stats',
         type: 'tuple',
         internalType: 'struct CastoraStructs.UserCreatedPoolStats',
+        components: [
+          { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPoolsCreated', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfPaidCreationFeesPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimableCompletionFeesPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfClaimedCompletionFeesPools', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfCreationFeeTokens', type: 'uint256', internalType: 'uint256' },
+          { name: 'noOfCompletionFeeTokens', type: 'uint256', internalType: 'uint256' }
+        ]
+      }
+    ],
+    stateMutability: 'view'
+  },
+  {
+    type: 'function',
+    name: 'getUserStatsBulk',
+    inputs: [{ name: 'addresses', type: 'address[]', internalType: 'address[]' }],
+    outputs: [
+      {
+        name: 'statsList',
+        type: 'tuple[]',
+        internalType: 'struct CastoraStructs.UserCreatedPoolStats[]',
         components: [
           { name: 'nthUserCount', type: 'uint256', internalType: 'uint256' },
           { name: 'noOfPoolsCreated', type: 'uint256', internalType: 'uint256' },
