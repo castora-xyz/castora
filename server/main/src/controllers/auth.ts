@@ -20,7 +20,7 @@ export const removeUserTelegram = async (userWalletAddress: string): Promise<voi
   // Using the default Firestore here to remove telegram IDs
   await firestore
     .doc(`/users/${userWalletAddress}`)
-    .update({ telegramId: FieldValue.delete(), telegram: FieldValue.delete() });
+    .update({ telegramId: FieldValue.delete(), telegram: { id: FieldValue.delete() } });
   logger.info('User Telegram Removed Successfully.');
 };
 

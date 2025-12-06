@@ -25,6 +25,7 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
     address: string;
     pendingTelegramAuthTime: Timestamp;
     telegram: {
+      firstAuthTime?: Timestamp;
       pendingAuthToken: string;
       pendingAuthTime: Timestamp;
     };
@@ -43,9 +44,6 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
     return ctx.reply('⚠️ Authentication expired. Please restart linking.');
   }
 
-  // Check if the user has ever authenticated with Telegram before
-  const hasEverAuthedTelegram = userSnap.data()?.hasEverAuthedTelegram;
-
   // Save the Telegram ID to the user's document and remove the pending auth details
   await userSnap.ref.set(
     {
@@ -53,10 +51,10 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
       telegramAuthTime: FieldValue.delete(),
       pendingTelegramAuthToken: FieldValue.delete(),
       pendingTelegramAuthTime: FieldValue.delete(),
-      hasEverAuthedTelegram: true,
       telegram: {
         id: ctx.from.id,
-        authTime: FieldValue.serverTimestamp(),
+        ...(!telegram?.firstAuthTime && { firstAuthTime: FieldValue.serverTimestamp() }),
+        lastAuthTime: FieldValue.serverTimestamp(),
         pendingAuthToken: FieldValue.delete(),
         pendingAuthTime: FieldValue.delete()
       }
@@ -64,10 +62,17 @@ export const completeTelegramAuth = async (ctx: CommandContext<Context>) => {
     { merge: true }
   );
 
-  // Globally increment telegram auth counts only if the user has never authenticated before.
-  if (!hasEverAuthedTelegram) {
-    await firestore.doc('/counts/counts').set({ telegram: { auth: FieldValue.increment(1) } }, { merge: true });
-  }
+  // Globally increment telegram auth counts
+  await firestore.doc('/counts/counts').set(
+    {
+      telegram: {
+        auth: FieldValue.increment(1),
+        lastAuthTime: FieldValue.serverTimestamp(),
+        ...(!telegram?.firstAuthTime && { uniqueAuth: FieldValue.increment(1) })
+      }
+    },
+    { merge: true }
+  );
 
   logger.info(`🎉 User ${userWalletAddress} linked Telegram ID ${ctx.from.id}`);
 
