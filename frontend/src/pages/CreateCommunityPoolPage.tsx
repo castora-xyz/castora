@@ -16,13 +16,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
 const formDefaults: CreatePoolForm = {
-  predictionToken: '',
+  predictionToken: 'MON',
   stakeToken: 'MON',
-  stakeAmount: '1',
+  stakeAmount: '100',
   windowCloseTime: null,
   snapshotTime: null,
   multiplier: 'x2',
-  visibility: 'unlisted'
+  visibility: 'public'
 };
 
 const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
@@ -68,11 +68,11 @@ export const CreateCommunityPoolPage = () => {
     { label: '10x (10% winners)', value: 'x10' }
   ];
 
-  const stakeAmountOptions = ['0.2', '0.5', '1', '1.5', '2', '2.5', '5', '10'];
+  const stakeAmountOptions = ['100', '200', '500', '1000', '2000', '5000'];
 
   const visibilityOptions = [
-    { label: 'Unlisted (Default)', value: 'unlisted' },
-    { label: 'Public', value: 'public' }
+    { label: 'Public (Default)', value: 'public' },
+    { label: 'Unlisted', value: 'unlisted' }
   ];
 
   const stakeTokenOptions = [
@@ -164,7 +164,7 @@ export const CreateCommunityPoolPage = () => {
             <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-12 list-disc sm:text-lg">
               <li>
                 Pay
-                <span className="font-bold"> 10 MON </span> to create a pool.
+                <span className="font-bold"> 500 MON </span> to create a pool.
               </li>
               <li>
                 Gain <span className="font-bold">30% </span>of Pool Fees at settlement.
@@ -349,7 +349,7 @@ export const CreateCommunityPoolPage = () => {
             <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-8 list-disc text-lg px-8">
               <li>
                 Pay
-                <span className="font-bold"> 10 MON </span> to create a pool.
+                <span className="font-bold"> 500 MON </span> to create a pool.
               </li>
               <li>
                 Gain <span className="font-bold">30% </span>of Pool Fees at settlement.

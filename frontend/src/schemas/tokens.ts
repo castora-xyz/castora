@@ -206,13 +206,13 @@ export const tokens: Token[] = [
 
 export const landingPageDefaults = {
   baseTimeDiff: 60 * 60,
-  pairImg: 'eth',
-  pairName: 'ETH / USD',
-  pairNameFull: 'Ethereum / US Dollar',
-  pairToken: 'ETH',
-  pythPriceId: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
-  stake: (count: number) => `${count * 0.2} MON`,
+  pairImg: 'mon',
+  pairName: 'MON / USD',
+  pairNameFull: 'Monad / US Dollar',
+  pairToken: 'MON',
+  pythPriceId: '0x31491744e2dbf6df7fcf4ac0820d18a609b49076d45066d3568424e62f686cd1',
+  stake: (count: number) => `${count * 100} MON`,
   multiplier: 2,
   percentWinners: 50,
-  stakeMultiplied: (count: number) => `${count * 0.4} MON`
+  stakeMultiplied: (count: number) => `${count * 200} MON`
 };

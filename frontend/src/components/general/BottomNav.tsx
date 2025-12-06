@@ -4,7 +4,6 @@ import Squares2x2 from '@/assets/squares-2x2.svg?react';
 import { Ripple } from 'primereact/ripple';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MyActivityPagesMenu } from './MyActivityPagesMenu';
-import { PoolsPagesMenu } from './PoolsPagesMenu';
 
 export const BottomNav = () => {
   const location = useLocation();
@@ -15,7 +14,7 @@ export const BottomNav = () => {
       className="hidden max-md:block py-2 fixed bottom-0 left-0 right-0 z-10 border-t border-border-default dark:border-surface-subtle bg-app-bg font-medium text-xs sm:text-base"
     >
       <ul className="flex justify-evenly items-center max-w-lg mx-auto">
-        <li>
+        {/* <li>
           <PoolsPagesMenu placement="footer">
             <button
               className={
@@ -32,6 +31,23 @@ export const BottomNav = () => {
               <Ripple />
             </button>
           </PoolsPagesMenu>
+        </li> */}
+        <li>
+          <NavLink
+            to="/pools"
+            className={
+              'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
+              `${
+                location.pathname.includes('/pools')
+                  ? 'text-primary-darker stroke-primary-darker dark:text-primary-default dark:stroke-primary-default'
+                  : 'text-text-subtitle stroke-text-subtitle'
+              }`
+            }
+          >
+            <RectangleStack className="w-6 h-6" />
+            <span>Pools</span>
+            <Ripple />
+          </NavLink>
         </li>
         <li>
           <NavLink

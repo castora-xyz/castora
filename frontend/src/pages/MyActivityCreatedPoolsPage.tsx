@@ -52,7 +52,7 @@ export const MyActivityCreatedPoolsPage = () => {
             Pools that you have created will appear here. Create your first community pool to get started!
           </p>
           <Link
-            to="/pools/community/create"
+            to="/pools/create"
             className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
             Create Community Pool

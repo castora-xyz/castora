@@ -4,8 +4,6 @@ import {
   CreateCommunityPoolPage,
   LandingPage,
   LeaderboardPage,
-  LiveCommunityPoolsPage,
-  LiveCryptoPoolsPage,
   LiveStocksPoolsPage,
   MainnetPoolsPage,
   MyActivityCreatedPoolsPage,
@@ -52,9 +50,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <main
         className={
           'grow flex flex-col items-stretch' +
-          (location.pathname === '/' || location.pathname === '/pools/community/create'
-            ? ''
-            : ' max-[414px]:px-4 px-8 pb-16')
+          (location.pathname === '/' || location.pathname === '/pools/create' ? '' : ' max-[414px]:px-4 px-8 pb-16')
         }
       >
         {outlet}
@@ -72,10 +68,10 @@ const router = createBrowserRouter(
       <Route errorElement={<NotFoundPage />}>
         <Route index element={<LandingPage />} />
         <Route path="pools" element={<MainnetPoolsPage />} />
-        <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
+        {/* <Route path="pools/crypto" element={<LiveCryptoPoolsPage />} />
         <Route path="pools/stocks" element={<LiveStocksPoolsPage />} />
-        <Route path="pools/community" element={<LiveCommunityPoolsPage />} />
-        <Route path="pools/community/create" element={<CreateCommunityPoolPage />} />
+        <Route path="pools/community" element={<LiveCommunityPoolsPage />} /> */}
+        <Route path="pools/create" element={<CreateCommunityPoolPage />} />
         <Route path="pool/:poolId" element={<PoolDetailPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="predictions" element={<Navigate to="/activity/predictions" />} />

@@ -33,9 +33,9 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   const dxSecs = dxHrs * 3600;
 
   const start = Math.floor(utcNow / 1000 / dxSecs) * dxSecs;
-  const prev = start;
-  const current = start + dxSecs;
-  const next = start + dxSecs * 2;
+  const prev = start - dxSecs;
+  const current = start;
+  const next = start + dxSecs;
 
   return [
     { windowCloseTime: next - waitHrs * 3600, snapshotTime: next },
@@ -103,7 +103,7 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
 };
 
 export const getMainnetCryptoSeeds = (chain: Chain) => {
-  const times = getCryptoTimes(1, 1);
+  const times = [...getCryptoTimes(1.5, 0.5), ...getCryptoTimes(1, 0.25)];
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
     seeds.push(

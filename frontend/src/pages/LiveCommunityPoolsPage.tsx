@@ -39,7 +39,7 @@ export const LiveCommunityPoolsPage = () => {
             <FilterCommunityPools />
             {/* Wide Screen Create Pool Button */}
             <Link
-              to="/pools/community/create"
+              to="/pools/create"
               className="hidden md:block ml-auto py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
             >
               Create Pool
@@ -49,7 +49,7 @@ export const LiveCommunityPoolsPage = () => {
             <div className="md:hidden flex justify-end mb-4">
               <Tooltip target=".create-pool" pt={{ root: { className: 'w-36' } }} />
               <Link
-                to="/pools/community/create"
+                to="/pools/create"
                 className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-primary-default border-2 border-primary-lighter flex items-center justify-center shadow-lg p-ripple"
               >
                 <span className="create-pool text-5xl text-white -mt-2.5" data-pr-tooltip="Create Pool">
@@ -75,7 +75,7 @@ export const LiveCommunityPoolsPage = () => {
                     No community pools at the moment. Create a public one to get started!
                   </p>
                   <Link
-                    to="/pools/community/create"
+                    to="/pools/create"
                     className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                   >
                     Create Pool
@@ -83,9 +83,7 @@ export const LiveCommunityPoolsPage = () => {
                   </Link>
                 </>
               ) : (
-                <p className="text-lg xs:text-xl mb-8 max-md:max-w-sm">
-                  Adjust Filters to view pools
-                </p>
+                <p className="text-lg xs:text-xl mb-8 max-md:max-w-sm">Adjust Filters to view pools</p>
               )}
             </div>
           </div>

@@ -2,7 +2,6 @@ import { Ripple } from 'primereact/ripple';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ConnectWalletButton } from './ConnectWalletButton';
 import { MyActivityPagesMenu } from './MyActivityPagesMenu';
-import { PoolsPagesMenu } from './PoolsPagesMenu';
 import { TelegramNotificationsButton } from './TelegramNotificationButton';
 import { ToggleThemeButton } from './ToggleThemeButton';
 import Castora from '/assets/castora.png';
@@ -20,7 +19,7 @@ export const Header = () => {
         </h1>
 
         <nav className="max-md:hidden grow flex items-center font-medium lg:text-lg">
-          <PoolsPagesMenu placement="header">
+          {/* <PoolsPagesMenu placement="header">
             <button
               className={
                 'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
@@ -30,7 +29,18 @@ export const Header = () => {
               Pools
               <Ripple />
             </button>
-          </PoolsPagesMenu>
+          </PoolsPagesMenu> */}
+
+          <NavLink
+            to="/pools"
+            className={({ isActive }) =>
+              'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
+              `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
+            }
+          >
+            Pools
+            <Ripple />
+          </NavLink>
           <NavLink
             to="/leaderboard"
             className={({ isActive }) =>

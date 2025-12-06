@@ -7,7 +7,7 @@ import { useAccount, useChains } from 'wagmi';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
 
-export const allowedCreatorPredTokens = ['BTC', 'ETH', 'SOL', 'HYPE', 'PUMP'];
+export const allowedCreatorPredTokens = ['MON', 'BTC', 'ETH', 'SOL'];
 
 export interface CreatePoolForm {
   predictionToken: string;

@@ -50,7 +50,7 @@ export const MainnetPoolsPage = () => {
           <FilterCommunityPools />
 
           <Link
-            to="/pools/community/create"
+            to="/pools/create"
             className="hidden md:block ml-auto py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
             Create Pool
@@ -61,7 +61,7 @@ export const MainnetPoolsPage = () => {
           <div className="md:hidden flex justify-end mb-4">
             <Tooltip target=".create-pool" pt={{ root: { className: 'w-36' } }} />
             <Link
-              to="/pools/community/create"
+              to="/pools/create"
               className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-primary-default border-2 border-primary-lighter flex items-center justify-center shadow-lg p-ripple"
             >
               <span className="create-pool text-5xl text-white -mt-2.5" data-pr-tooltip="Create Pool">
@@ -122,7 +122,7 @@ export const MainnetPoolsPage = () => {
                 <p className="text-center text-2xl mt-3 mb-6">Get Started Now</p>
                 <div className="flex justify-center mb-8">
                   <Link
-                    to="/pools/community/create"
+                    to="/pools/create"
                     className="py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                   >
                     Create Pool
