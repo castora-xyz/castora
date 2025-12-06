@@ -25,13 +25,19 @@ export const mainnetOnchainCompletePool = async (
 
   const batchSize = noOfWinners > 1000 ? 1000 : noOfWinners;
   logger.info(`Calling initiatePoolCompletion with batchSize: ${batchSize} ...`);
-  await writeContract(
-    chain,
-    'initiatePoolCompletion',
-    [pool.poolId, snapshotPrice, batchSize],
-    'initiating pool completion'
-  );
-  logger.info('Successfully called initiatePoolCompletion.');
+  try {
+    await writeContract(
+      chain,
+      'initiatePoolCompletion',
+      [pool.poolId, snapshotPrice, batchSize],
+      'initiating pool completion'
+    );
+    logger.info('Successfully called initiatePoolCompletion.');
+  } catch (e) {
+    if (`${e}`.includes('PoolCompletionAlreadyInitiated')) {
+      logger.info('Pool completion already initiated, proceeding to setWinnersInBatch ...');
+    } else throw e;
+  }
 
   // 2. setWinnersInBatch
   logger.info('\nFetching Predictions from Archive ... ');
