@@ -1,10 +1,10 @@
 import {
   AAPL,
   aprMON,
+  CASTORA_SEPOLIA,
   Chain,
-  CONTRACT_ADDRESS_SEPOLIA,
   CRCL,
-  getContractAddress,
+  getCastoraAddress,
   gMON,
   HYPE,
   PoolSeeds,
@@ -50,11 +50,11 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
   const seeds: PoolSeeds[] = [];
 
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
-    for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, PUMP, HYPE]) {
+    for (const predictionToken of [CASTORA_SEPOLIA, SOL, PUMP, HYPE]) {
       seeds.push(
         new PoolSeeds({
           predictionToken,
-          stakeToken: getContractAddress(chain),
+          stakeToken: getCastoraAddress(chain),
           stakeAmount: 2e17,
           snapshotTime,
           windowCloseTime
@@ -64,11 +64,11 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
   }
 
   for (const { windowCloseTime, snapshotTime } of sixHTimes) {
-    for (const predictionToken of [CONTRACT_ADDRESS_SEPOLIA, SOL, HYPE]) {
+    for (const predictionToken of [CASTORA_SEPOLIA, SOL, HYPE]) {
       seeds.push(
         new PoolSeeds({
           predictionToken,
-          stakeToken: getContractAddress(chain),
+          stakeToken: getCastoraAddress(chain),
           stakeAmount: 2e17,
           snapshotTime,
           windowCloseTime
@@ -80,7 +80,7 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
     seeds.push(
       new PoolSeeds({
-        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+        predictionToken: CASTORA_SEPOLIA,
         stakeToken: aprMON,
         stakeAmount: 2e17,
         snapshotTime,
@@ -90,7 +90,7 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
 
     seeds.push(
       new PoolSeeds({
-        predictionToken: CONTRACT_ADDRESS_SEPOLIA,
+        predictionToken: CASTORA_SEPOLIA,
         stakeToken: gMON,
         stakeAmount: 2e17,
         snapshotTime,
@@ -108,8 +108,8 @@ export const getMainnetCryptoSeeds = (chain: Chain) => {
   for (const { windowCloseTime, snapshotTime } of times) {
     seeds.push(
       new PoolSeeds({
-        predictionToken: getContractAddress(chain),
-        stakeToken: getContractAddress(chain),
+        predictionToken: getCastoraAddress(chain),
+        stakeToken: getCastoraAddress(chain),
         stakeAmount: 100e18,
         snapshotTime,
         windowCloseTime,
@@ -199,7 +199,7 @@ export const getTestnetStockSeeds = (chain: Chain) => {
       seeds.push(
         new PoolSeeds({
           predictionToken,
-          stakeToken: getContractAddress(chain),
+          stakeToken: getCastoraAddress(chain),
           stakeAmount: 5e17,
           snapshotTime,
           windowCloseTime

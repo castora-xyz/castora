@@ -11,10 +11,12 @@ import {
 import { Chain } from './index.js';
 import { logger } from './logger.js';
 
-export const CONTRACT_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
-export const CONTRACT_ADDRESS_MONAD: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
-export const POOLS_MANAGER_ADDRESS_MONAD: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
-export const CASTORA_GETTERS_ADDRESS_MONAD: `0x${string}` = '0x';
+export const CASTORA_MONAD_MAINNET: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
+export const CASTORA_MONAD_TESTNET: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CASTORA_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
+export const POOLS_MANAGER_MONAD_MAINNET: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
+export const POOLS_MANAGER_MONAD_TESTNET: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
+export const CASTORA_GETTERS_MONAD_MAINNET: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
 
 const monadTestnet = () => {
   if (!process.env.MONAD_TESTNET_RPC_URL) throw 'Set MONAD_TESTNET_RPC_URL in env';
@@ -61,16 +63,16 @@ export const getConfig = (chain: Chain) =>
     monadmainnet: { chain: monadMainnet(), transport: http() }
   }[chain]);
 
-export const getContractAddress = (chain: Chain) =>
+export const getCastoraAddress = (chain: Chain) =>
   ({
-    monadtestnet: CONTRACT_ADDRESS_MONAD,
-    monadmainnet: CONTRACT_ADDRESS_MONAD
+    monadtestnet: CASTORA_MONAD_TESTNET,
+    monadmainnet: CASTORA_MONAD_MAINNET
   }[chain]);
 
 const getPoolsManagerAddress = (chain: Chain) =>
   ({
-    monadtestnet: POOLS_MANAGER_ADDRESS_MONAD,
-    monadmainnet: POOLS_MANAGER_ADDRESS_MONAD
+    monadtestnet: POOLS_MANAGER_MONAD_TESTNET,
+    monadmainnet: POOLS_MANAGER_MONAD_MAINNET
   }[chain]);
 
 const getPoolsManagerAbi = (chain: Chain) => {
@@ -92,7 +94,7 @@ export const readCastoraContract = async (chain: Chain, functionName: any, args?
   try {
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: getContractAddress(chain),
+      address: getCastoraAddress(chain),
       abi: getCastoraAbi(chain),
       functionName,
       args
@@ -107,7 +109,7 @@ export const readGettersContract = async (chain: Chain, functionName: any, args?
   try {
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: CASTORA_GETTERS_ADDRESS_MONAD,
+      address: CASTORA_GETTERS_MONAD_MAINNET,
       abi: castoraGettersAbi,
       functionName,
       args
@@ -159,7 +161,7 @@ export const writeContract = async (
 
     const prevBalance = await showBalance(chain, account.address);
     const { result, request } = await publicClient.simulateContract({
-      address: getContractAddress(chain),
+      address: getCastoraAddress(chain),
       abi: getCastoraAbi(chain),
       functionName,
       args,

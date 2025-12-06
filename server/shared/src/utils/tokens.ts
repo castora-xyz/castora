@@ -1,4 +1,4 @@
-import { CONTRACT_ADDRESS_MONAD, CONTRACT_ADDRESS_SEPOLIA } from './contract.js';
+import { CASTORA_MONAD_MAINNET, CASTORA_MONAD_TESTNET, CASTORA_SEPOLIA } from './contract.js';
 
 export const cUSD = '0x5610bb814e1e384a4a16065f6d7f7d9cbf9a0d9c';
 export const AAPL = '0x292e9e6837c624b07c204f381375c5a2fc1e6411';
@@ -14,7 +14,7 @@ export const SOL = '0xD31a59c85aE9D8edEFeC411D448f90841571b89c';
 export const SUI = '0x8ab03cff1844ab975dcdd1683020c0599fc5392b';
 export const TRUMP = '0x565b78baec5bd6ff06633318ea20e7f6398d2f32';
 export const TSLA = '0x425ab4f486a2a8a1b49a715617a4be2d585949cf';
-export const USDC = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
+export const USDC = '0x754704bc059f8c67012fed69bc8a327a5aafb603';
 
 // BTC's token is the truncated Pyth Price Feed ID for BTC
 
@@ -72,14 +72,21 @@ export interface Token {
 
 export const tokens: Token[] = [
   {
-    address: CONTRACT_ADDRESS_MONAD,
+    address: CASTORA_MONAD_MAINNET,
     name: 'MON',
     fullName: 'Monad',
     decimals: 18,
     pythPriceId: '0x31491744e2dbf6df7fcf4ac0820d18a609b49076d45066d3568424e62f686cd1'
   },
   {
-    address: CONTRACT_ADDRESS_SEPOLIA,
+    address: CASTORA_MONAD_TESTNET,
+    name: 'MON',
+    fullName: 'Monad',
+    decimals: 18,
+    pythPriceId: ''
+  },
+  {
+    address: CASTORA_SEPOLIA,
     name: 'ETH',
     fullName: 'Ethereum',
     decimals: 18,

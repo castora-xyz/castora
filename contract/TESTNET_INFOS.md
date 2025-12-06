@@ -10,7 +10,7 @@ The permitted settings for user-created pools in the Monad Testnet are as follow
 
 | Symbol | Address                                    |
 | ------ | ------------------------------------------ |
-| BTC    | 0x294C2647D9f3EacA43A364859c6E6a1E0E582DBD |
+| BTC    | 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac6 |
 | ETH    | 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 |
 | SOL    | 0xD31a59c85aE9D8edEFeC411D448f90841571b89c |
 | HYPE   | 0x0ab0Dc55F747ADA00cC15D049CB654bbdc7d5AA6 |
@@ -20,7 +20,7 @@ The permitted settings for user-created pools in the Monad Testnet are as follow
 
 | Symbol | Address                                    |
 | ------ | ------------------------------------------ |
-| USDC   | 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53 |
+| MON    | 0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53 |
 
 ### Stake Amounts
 
