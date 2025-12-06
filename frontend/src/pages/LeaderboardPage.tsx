@@ -313,7 +313,7 @@ export const LeaderboardPage = () => {
         )}
 
         {!isLoading && !hasError && entries.length === 0 && (
-          <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center">
+          <div className="mt-12 max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center">
             <p className="text-lg mb-8">The leaderboard is being prepared. Please check back later.</p>
           </div>
         )}

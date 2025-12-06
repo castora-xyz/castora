@@ -23,7 +23,7 @@ export class PoolSeeds {
     this.windowCloseTime = Number(input['windowCloseTime']);
     if (input['feesPercent']) this.feesPercent = Number(input['feesPercent']);
     if (input['multiplier']) this.multiplier = Number(input['multiplier']);
-    if (input['isUnlisted']) this.isUnlisted = Boolean(input['isUnlisted']);
+    if (input['isUnlisted'] !== undefined) this.isUnlisted = input['isUnlisted'];
   }
 
   /**
