@@ -164,7 +164,7 @@ export const CreateCommunityPoolPage = () => {
             <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-12 list-disc sm:text-lg">
               <li>
                 Pay
-                <span className="font-bold"> 500 MON </span> to create a pool.
+                <span className="font-bold"> 100 MON </span> to create a pool.
               </li>
               <li>
                 Gain <span className="font-bold">30% </span>of Pool Fees at settlement.
@@ -349,7 +349,7 @@ export const CreateCommunityPoolPage = () => {
             <ul className="list-primary-bullet bg-surface-subtle rounded-2xl p-4 pl-8 text-text-subtitle mb-8 list-disc text-lg px-8">
               <li>
                 Pay
-                <span className="font-bold"> 500 MON </span> to create a pool.
+                <span className="font-bold"> 100 MON </span> to create a pool.
               </li>
               <li>
                 Gain <span className="font-bold">30% </span>of Pool Fees at settlement.

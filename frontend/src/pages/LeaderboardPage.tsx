@@ -5,7 +5,7 @@ import { Web3Avatar } from '@/components';
 import { useAuth, useLeaderboard } from '@/contexts';
 import { formatTime } from '@/contexts/format-time';
 import { LeaderboardEntry } from '@/schemas';
-import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { ColumnDef, createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo, useState } from 'react';
 import { Breathing } from 'react-shimmer';
@@ -270,6 +270,7 @@ export const LeaderboardPage = () => {
       }
     }
   });
+  table;
 
   return (
     <>
@@ -312,13 +313,15 @@ export const LeaderboardPage = () => {
           </div>
         )}
 
-        {!isLoading && !hasError && entries.length === 0 && (
+        {!isLoading && !hasError && (
           <div className="mt-12 max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center">
-            <p className="text-lg mb-8">The leaderboard is being prepared. Please check back later.</p>
+            <p className="text-lg mb-8">
+              Keep Creating Pools and Making Predictions for the Leaderboard to Populate later on.
+            </p>
           </div>
         )}
 
-        {!isLoading && !hasError && entries.length > 0 && (
+        {/* {!isLoading && !hasError && entries.length > 0 && (
           <div className="overflow-auto max-h-[80vh]">
             <div className="min-w-full inline-block">
               <table className="w-full border-collapse min-w-[600px]">
@@ -382,7 +385,7 @@ export const LeaderboardPage = () => {
               </table>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </>
   );

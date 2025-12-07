@@ -111,11 +111,12 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         stakeToken: castoraAddress,
         stakeAmount: +form.stakeAmount * 1e18,
         windowCloseTime: Math.trunc(form.windowCloseTime.getTime() / 1000),
-        snapshotTime: Math.trunc(form.snapshotTime.getTime() / 1000)
+        snapshotTime: Math.trunc(form.snapshotTime.getTime() / 1000),
+        feesPercent: 500, // 5% fees
+        multiplier: +form.multiplier.substring(1) * 100,
+        isUnlisted: form.visibility == 'unlisted'
       },
-      poolsManagerAddress,
-      +form.multiplier.substring(1) * 100,
-      form.visibility == 'unlisted'
+      poolsManagerAddress
     ];
   };
 

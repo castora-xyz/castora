@@ -291,7 +291,7 @@ export const CreatePoolModal = ({
         disabled={isCreating || !hasEnoughBalance}
         onClick={createPool}
       >
-        Create Pool (500 MON)
+        Create Pool (100 MON)
         {!isCreating && hasEnoughBalance && <Ripple />}
       </button>
 
