@@ -65,7 +65,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
   // Get the USD price of the stake token at snapshot time if we are in mainnet
   let price = 1;
   if (!isInTestnet) {
-    const stakeTokenSymbol = pool.json?.pool?.stakeToken;
+    const stakeTokenSymbol = pool.json?.pool?.seeds?.stakeToken;
     if (!stakeTokenSymbol) {
       throw `FATAL: could not get stake token symbol for price conversion from archived pool ${poolId} on ${chain}`;
     }
