@@ -128,7 +128,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
         contract: 'pools-manager',
         functionName: 'createPool',
         args: getCreateFormArgs(form),
-        value: 500e18,
+        value: 100e18,
         onSuccessCallback: (hash, rawPoolId) => {
           txHash = hash;
           poolId = Number(rawPoolId);
