@@ -1,4 +1,3 @@
-import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
@@ -15,7 +14,7 @@ export const ActivityPredictCard = ({
   pool,
   pool: { poolId, seeds, snapshotPrice, completionTime },
   prediction,
-  prediction: { explorerUrl, id: predictionId, isAWinner, price: predictionPrice, time },
+  prediction: { id: predictionId, isAWinner, price: predictionPrice, time },
   isInLandingPage = false
 }: {
   count: number;
@@ -95,18 +94,6 @@ export const ActivityPredictCard = ({
             Prediction ID: {predictionId}
           </p>
         </div>
-
-        {!!explorerUrl && (
-          <a
-            href={explorerUrl}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex items-center text-xs text-text-caption hover:underline ml-auto"
-          >
-            View in Explorer
-            <ExternalLink className="w-4 h-4 ml-1 fill-text-caption" />
-          </a>
-        )}
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-3">

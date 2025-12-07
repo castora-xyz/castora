@@ -1,5 +1,4 @@
 import Coin3Fill from '@/assets/coin-3-fill.svg?react';
-import ExternalLink from '@/assets/external-link.svg?react';
 import { SuccessIcon } from '@/components';
 import { useMyPredictActivity } from '@/contexts';
 import { Ripple } from 'primereact/ripple';
@@ -8,19 +7,15 @@ import { Link } from 'react-router-dom';
 
 export const LandingClaimCard = () => {
   const { isFetching, myActivities } = useMyPredictActivity();
-
-  const [explorerUrl, setExplorerUrl] = useState('');
+  const [hasClaimed, setHasClaimed] = useState(false);
 
   useEffect(() => {
-    if (isFetching) {
-      setExplorerUrl('');
-      return;
-    }
+    if (isFetching) return;
 
-    const filtered = myActivities.filter(
-      ({ prediction: { explorerUrl, isAWinner, claimWinningsTime } }) => explorerUrl && isAWinner && claimWinningsTime
+    setHasClaimed(
+      myActivities.filter(({ prediction: { isAWinner, claimWinningsTime } }) => isAWinner && claimWinningsTime).length >
+        0
     );
-    setExplorerUrl(filtered.length > 0 ? filtered[0].prediction.explorerUrl! : '');
   }, [isFetching, myActivities]);
 
   return (
@@ -28,7 +23,7 @@ export const LandingClaimCard = () => {
       <SuccessIcon child={<Coin3Fill className="w-8 h-8 fill-app-bg" />} />
 
       <p className="text-center text-xl mb-6">
-        {explorerUrl ? (
+        {hasClaimed ? (
           <span>You've claimed your rewards!</span>
         ) : (
           <>
@@ -39,19 +34,10 @@ export const LandingClaimCard = () => {
       </p>
 
       <p className="text-sm text-text-caption text-center mb-6 flex items-center justify-center">
-        {explorerUrl ? (
-          <>
-            <ExternalLink className="w-5 h-5 mr-1 fill-text-caption" />
-            <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline">
-              View In Explorer
-            </a>
-          </>
-        ) : (
-          <>Transactions are always live on the explorer</>
-        )}
+        <>Transactions are always live on the explorer</>
       </p>
 
-      {explorerUrl && <p className="mb-8">Predict More for More Winnings</p>}
+      {hasClaimed && <p className="mb-8">Predict More for More Winnings</p>}
 
       <Link
         to="/pools"
