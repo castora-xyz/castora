@@ -1,4 +1,3 @@
-import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { ClaimAllPredictButton, ClaimPredictButton } from '@/components';
@@ -28,22 +27,25 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
     const { fetchMyActivity } = useMyPredictActivity();
     const retrieve = usePredictions();
     const [ids, setIds] = useState<bigint[] | null>(null);
+    const [noOfClaimable, setNoOfClaimable] = useState<number | null>(null);
     const [isExpanded, setIsExpanded] = useState(true);
     const [isFetchingIds, setIsFetchingIds] = useState(true);
     const [isFetchingPreds, setIsFetchingPreds] = useState(true);
     const [myPredictions, setMyPredictions] = useState<Prediction[] | null>([]);
     const [currentPage, setCurrentPage] = useState<number | null>(null);
-    const [unclaimedWins, setUnclaimedWins] = useState<Prediction[]>([]);
+    const [claimableWinnings, setClaimableWinnings] = useState<Prediction[]>([]);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    useImperativeHandle(ref, () => ({ onPredict: fetchMyPredictionIds }));
+    useImperativeHandle(ref, () => ({
+      onPredict: (showLoading) => fetchMyPredictionIds(currentPage, rowsPerPage, showLoading)
+    }));
 
     const getLastPage = (total: number) => {
       const last = Math.ceil(total / rowsPerPage);
       return last == 0 ? 0 : last - 1;
     };
 
-    const fetchMyPredictionIds = async (showLoading = true) => {
+    const fetchMyPredictionIds = async (page = currentPage, rows = rowsPerPage, showLoading = true) => {
       if (!address) {
         setIsFetchingIds(false);
         setIds([]);
@@ -52,10 +54,25 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
 
       setIsFetchingIds(showLoading);
 
-      const fetched = (await readContract({
-        contract: 'castora',
-        functionName: 'getPredictionIdsForAddress',
+      const stats = (await readContract({
+        contract: 'getters',
+        functionName: 'userInPoolPredictionStats',
         args: [BigInt(pool.poolId), address!]
+      })) as any;
+
+      // if silently fetching, don't update on error
+      if (!stats) {
+        setIsFetchingIds(false);
+        setIds(showLoading ? null : ids);
+        return;
+      }
+
+      setNoOfClaimable(Number(stats.noOfClaimableWinnings));
+      if (page === null) page = getLastPage(Number(stats.noOfPredictions));
+      const fetched = (await readContract({
+        contract: 'getters',
+        functionName: 'userInPoolPredictionIdsPaginated',
+        args: [BigInt(pool.poolId), address!, page * rows, rows]
       })) as bigint[] | null;
 
       // if silently fetching, don't update on error
@@ -81,7 +98,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
       });
     };
 
-    const fetchMyPredictions = async (page = currentPage, rows = rowsPerPage) => {
+    const fetchMyPredictions = async () => {
       if (isFetchingIds || !ids || ids.length == 0) {
         setMyPredictions([]);
         setIsFetchingPreds(false);
@@ -89,25 +106,28 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
       }
 
       setIsFetchingPreds(true);
-      if (page === null) page = getLastPage(ids.length);
-      let start = (page + 1) * rows;
-      if (start >= ids.length) start = ids.length;
-      const target = page * rows + 1;
-
-      const predictionIds = [];
-      for (let i = start; i >= target; i--) predictionIds.push(ids[i - 1]);
-      const fetched = await retrieve(pool, predictionIds);
+      const fetched = await retrieve(pool, ids);
       setMyPredictions(fetched);
       setIsFetchingPreds(false);
     };
 
-    useEffect(() => {
-      setUnclaimedWins(
-        myPredictions
-          ? myPredictions.filter(({ claimWinningsTime, isAWinner }) => claimWinningsTime === 0 && isAWinner)
-          : []
-      );
-    }, [myPredictions]);
+    const fetchMyClaimableWins = async () => {
+      if (!address || !noOfClaimable) {
+        setClaimableWinnings([]);
+        return;
+      }
+
+      const claimableIds = (await readContract({
+        contract: 'getters',
+        functionName: 'userInPoolClaimablePredictionIdsPaginated',
+        args: [BigInt(pool.poolId), address!, BigInt(0), BigInt(noOfClaimable + 1)]
+      })) as bigint[] | null;
+
+      if (claimableIds) {
+        const claimablePreds = await retrieve(pool, claimableIds);
+        setClaimableWinnings(claimablePreds);
+      }
+    };
 
     useEffect(() => {
       (async () => {
@@ -123,6 +143,10 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
         }
       })();
     }, [ids]);
+
+    useEffect(() => {
+      fetchMyClaimableWins();
+    }, [noOfClaimable, address]);
 
     useEffect(() => {
       fetchMyPredictions();
@@ -141,7 +165,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
 
     useEffect(() => {
       // Update the IDs silently anytime the user leaves the page and comes back
-      const handleFocus = () => fetchMyPredictionIds(false);
+      const handleFocus = () => fetchMyPredictionIds(currentPage, rowsPerPage, false);
       window.addEventListener('focus', handleFocus);
 
       // Cleanup the event listener
@@ -160,10 +184,10 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
         <div className="flex gap-4 justify-between flex-wrap items-center mb-6">
           <h3 className="font-medium text-xl text-text-subtitle">My Predictions</h3>
 
-          {pool.completionTime > 0 && unclaimedWins.length > 1 && (
+          {pool.completionTime > 0 && claimableWinnings.length > 0 && (
             <ClaimAllPredictButton
-              pools={Array.from(Array(unclaimedWins.length)).map((_) => pool)}
-              predictions={unclaimedWins}
+              pools={Array.from(Array(claimableWinnings.length)).map((_) => pool)}
+              predictions={claimableWinnings}
               onCloseModal={() => fetchMyPredictions()}
             />
           )}
@@ -178,7 +202,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
             onPageChange={(e) => {
               setCurrentPage(e.page);
               setRowsPerPage(e.rows);
-              fetchMyPredictions(e.page, e.rows);
+              fetchMyPredictionIds(e.page, e.rows, true);
             }}
             template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
             currentPageReportTemplate="{first} to {last} of {totalRecords}"
@@ -240,7 +264,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
               }}
             >
               {myPredictions.map((prediction) => {
-                const { explorerUrl, id, price, time, isAWinner } = prediction;
+                const { id, price, time, isAWinner } = prediction;
                 return (
                   <div
                     key={id}
@@ -296,18 +320,6 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
                           </p>
                         )}
                       </>
-                    )}
-
-                    {!!explorerUrl && (
-                      <a
-                        href={explorerUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="flex items-center text-xs text-text-caption hover:underline"
-                      >
-                        View in Explorer
-                        <ExternalLink className="w-4 h-4 ml-1 fill-text-caption" />
-                      </a>
                     )}
                   </div>
                 );

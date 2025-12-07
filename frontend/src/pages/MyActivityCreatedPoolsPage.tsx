@@ -49,13 +49,13 @@ export const MyActivityCreatedPoolsPage = () => {
         <div className="flex flex-col items-center justify-center grow text-center py-16">
           <h2 className="text-2xl font-bold mb-4">My Created Pools</h2>
           <p className="text-lg mb-8 max-w-md">
-            Pools that you have created will appear here. Create your first community pool to get started!
+            Pools that you have created will appear here. Create your first pool to get started!
           </p>
           <Link
             to="/pools/create"
             className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
-            Create Community Pool
+            Create Pool
             <Ripple />
           </Link>
         </div>

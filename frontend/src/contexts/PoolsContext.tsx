@@ -345,7 +345,9 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     if (Number.isNaN(poolId) || +poolId <= 0 || !Number.isInteger(+poolId)) {
       return false;
     } else {
-      const noOfPools = Number(await readContract({ contract: 'castora', functionName: 'noOfPools' }));
+      const stats = await readContract({ contract: 'getters', functionName: 'allStats' });
+      if (!stats) return false;
+      const noOfPools = Number(stats.noOfPools);
       return noOfPools !== Number.NaN ? poolId <= noOfPools : false;
     }
   };

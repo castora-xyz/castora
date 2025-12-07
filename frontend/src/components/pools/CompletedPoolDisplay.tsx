@@ -55,7 +55,7 @@ export const CompletedPoolDisplay = ({
 
       {noOfPredictions > 0 && completionTime === 0 && signature && !telegram.hasLinked && (
         <button
-          className="py-1.5 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple flex gap-2 items-center"
+          className="py-1.5 mt-4 px-4 font-medium rounded-full w-fit sm:text-lg bg-primary-default text-white p-ripple flex gap-2 items-center"
           onClick={async () => {
             await telegram.startAuth();
             recordEvent('clicked_get_telegram_notified_awaiting_pool_completion');

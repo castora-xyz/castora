@@ -3,6 +3,11 @@ import { Pool, Prediction } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+export interface PredictionRecord {
+  poolId: number;
+  predictionId: number;
+}
+
 export interface ActivityPredict {
   pool: Pool;
   prediction: Prediction;
@@ -17,6 +22,7 @@ interface MyPredictActivityContextProps {
   rowsPerPage: number;
   setRowsPerPage: (value: number) => void;
   myActivities: ActivityPredict[];
+  claimableActivities: ActivityPredict[];
   updateActivityCount: () => void;
   updateCurrentPage: (value: number) => void;
 }
@@ -28,6 +34,7 @@ const MyPredictActivityContext = createContext<MyPredictActivityContextProps>({
   isFetching: false,
   hasError: false,
   myActivities: [],
+  claimableActivities: [],
   rowsPerPage: 100,
   setRowsPerPage: () => {},
   updateActivityCount: () => {},
@@ -49,8 +56,10 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
   };
 
   const [noOfPredictions, setNoOfPredictions] = useState<number | null>(null);
+  const [noOfClaimable, setNoOfClaimable] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
   const [myActivities, setMyActivities] = useState<ActivityPredict[]>([]);
+  const [claimableActivities, setClaimableActivities] = useState<ActivityPredict[]>([]);
   const [hasError, setHasError] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -64,9 +73,11 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
       functionName: 'userStats',
       args: [address]
     });
+
     if (stats) {
       if (noOfPredictions == Number(stats.noOfPredictions)) setIsFetching(false);
-      setNoOfPredictions(Number(stats.noOfJoinedPools));
+      setNoOfClaimable(Number(stats.noOfClaimableWinnings));
+      setNoOfPredictions(Number(stats.noOfPredictions));
       setHasError(false);
     } else {
       // Only set error if the previous value was null
@@ -75,6 +86,53 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
       if (noOfPredictions === null) setHasError(true);
       setIsFetching(false);
     }
+  };
+
+  const fetchActivitiesFromRecords = async (records: PredictionRecord[]): Promise<ActivityPredict[]> => {
+    // Group records by poolId to fetch unique pools and batch predictions
+    const uniqPoolIds: number[] = [];
+    const predictionIdsByPool: Record<number, number[]> = {};
+    const seenPools: Record<number, boolean> = {};
+
+    for (const { poolId, predictionId } of records) {
+      if (!seenPools[poolId]) {
+        seenPools[poolId] = true;
+        uniqPoolIds.push(poolId);
+        predictionIdsByPool[poolId] = [];
+      }
+      predictionIdsByPool[poolId].push(predictionId);
+    }
+
+    // Fetch unique pools
+    const rawPools = (await readContract({
+      contract: 'getters',
+      functionName: 'pools',
+      args: [uniqPoolIds]
+    })) as any;
+    const poolsByPoolId: Record<number, Pool> = {};
+    rawPools.forEach((p: any, i: number) => (poolsByPoolId[uniqPoolIds[i]] = new Pool(p)));
+
+    // Fetch predictions batched by pool
+    const predictionsByKey: Record<string, Prediction> = {};
+    for (const poolId of uniqPoolIds) {
+      const predictionIds = predictionIdsByPool[poolId];
+      const rawPredictions = (await readContract({
+        contract: 'getters',
+        functionName: 'predictions',
+        args: [poolId, predictionIds]
+      })) as any;
+
+      // Map each prediction using poolId + predictionId as unique key
+      for (let i = 0; i < predictionIds.length; i++) {
+        predictionsByKey[`${poolId}-${predictionIds[i]}`] = new Prediction(rawPredictions[i]);
+      }
+    }
+
+    // Reconstruct activities in original order
+    return records.map(({ poolId, predictionId }: any) => ({
+      pool: poolsByPoolId[poolId],
+      prediction: predictionsByKey[`${poolId}-${predictionId}`]
+    }));
   };
 
   const fetchMyActivity = async (page = currentPage, rows = rowsPerPage) => {
@@ -88,36 +146,32 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
 
     setIsFetching(true);
     let start = (page + 1) * rows - rows;
-    const rawRecords = (await readContract({
+    const rawPredRecords = (await readContract({
       contract: 'getters',
       functionName: 'userPredictionRecordsPaginated',
       args: [address, start, rows]
     })) as any;
-    if (rawRecords) {
-      // TODO: Optimise later to only fetch pools uniquely
-      const rawPools = (await readContract({
-        contract: 'getters',
-        functionName: 'pools',
-        args: [rawRecords.map(({ poolId }: any) => poolId)]
-      })) as any;
-      const pools = rawPools.map((p: any) => new Pool(p));
 
-      const rawPredictions = (await readContract({
-        contract: 'getters',
-        functionName: 'predictions',
-        args: [rawRecords.map(({ predictionId }: any) => predictionId)]
-      })) as any;
-      const predictions = rawPredictions.map((p: any) => new Prediction(p));
-
-      const activities: ActivityPredict[] = rawRecords.map((_: any, i: number) => ({
-        pool: pools[i],
-        prediction: predictions[i]
-      }));
-      setMyActivities([...activities.reverse()]);
+    if (rawPredRecords) {
+      const predActivities = await fetchActivitiesFromRecords(rawPredRecords);
+      setMyActivities([...predActivities.reverse()]);
       setHasError(false);
     } else {
       setHasError(true);
     }
+
+    if (noOfClaimable) {
+      const rawClaimRecords = (await readContract({
+        contract: 'getters',
+        functionName: 'userClaimableRecordsPaginated',
+        args: [address, 0, noOfClaimable + 1]
+      })) as any;
+      if (rawClaimRecords) {
+        const claimActivities = await fetchActivitiesFromRecords(rawClaimRecords);
+        setClaimableActivities([...claimActivities.reverse()]);
+      }
+    }
+
     setIsFetching(false);
   };
 
@@ -165,6 +219,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
         fetchMyActivity,
         isFetching,
         myActivities,
+        claimableActivities,
         hasError,
         rowsPerPage,
         setRowsPerPage,

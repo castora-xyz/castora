@@ -12,7 +12,6 @@ export class Prediction {
   time: number;
   claimWinningsTime: number;
   isAWinner: boolean;
-  explorerUrl: string | null = null;
 
   constructor(input: any) {
     this.predicter = input['predicter'];

@@ -76,6 +76,7 @@ export class PoolSeeds {
     const { name } = this.predictionTokenDetails;
     if (name == 'AAPL') return 'PYTH:AAPL';
     if (name == 'CRCL') return 'PYTH:CRCL';
+    if (name == 'MON') return 'MONUSD';
     if (name == 'MOODENG') return 'BITGET:MOODENGUSDT';
     if (name == 'PENGU') return 'BITGET:PENGUUSDT';
     if (name == 'SUI') return 'COINBASE:SUIUSD';
@@ -198,20 +199,20 @@ export class PoolSeeds {
     // If it is a crypto pool, pool life depends on difference
     // between snapshotTime and windowCloseTime.
     const diff = this.snapshotTime - this.windowCloseTime;
-    
+
     // For hourly pools: diff is 1 hour and snapshotTime is not aligned to 6-hour intervals
     if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
       return 60 * 60; // 1-hourly pool
     }
-    
+
     // For 6-hourly pools: diff is 1 hour and snapshotTime is aligned to 6-hour intervals
     if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
       return 6 * 60 * 60; // 6-hourly pool
     }
-    
+
     // For 24-hourly pools: diff is 12 hours
     if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 24-hourly pool
-    
+
     // TODO: Handle newer pool types when the time comes
     return 60 * 60;
   }

@@ -62,12 +62,10 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const getCastoraAddress = () => CASTORA_ADDRESS_MONAD;
   const [castoraAddress, setCastoraAddress] = useState(CASTORA_ADDRESS_MONAD);
 
-  const getRpcUrl = () => undefined;
-
   const publicClient = () =>
     createPublicClient({
       chain: currentChain ?? defaultChain,
-      transport: http(getRpcUrl())
+      transport: http()
     });
 
   const read = async (address: any, abi: any, functionName: string, args: any[] = []) => {

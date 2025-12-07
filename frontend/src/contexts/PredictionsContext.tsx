@@ -1,7 +1,7 @@
 import { useContract, useToast } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 
-export const MAX_BULK_PREDICTIONS = 100;
+export const MAX_BULK_PREDICTIONS = 200;
 
 export const usePredictions = () => {
   const { readContract } = useContract();

@@ -5,7 +5,7 @@ import {
   MyActivityPageIntro,
   predictionsActivityType
 } from '@/components/general';
-import { ActivityPredict, rowsPerPageOptions, useMyPredictActivity } from '@/contexts';
+import { rowsPerPageOptions, useMyPredictActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
@@ -21,6 +21,7 @@ export const MyActivityPredictionsPage = () => {
     fetchMyActivity,
     isFetching,
     myActivities,
+    claimableActivities,
     hasError,
     currentPage,
     rowsPerPage,
@@ -28,14 +29,7 @@ export const MyActivityPredictionsPage = () => {
     updateCurrentPage
   } = useMyPredictActivity();
   const { open: connectWallet } = useWeb3Modal();
-  const [unclaimedWins, setUnclaimedWins] = useState<ActivityPredict[]>([]);
   const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
-
-  useEffect(() => {
-    setUnclaimedWins(
-      myActivities.filter(({ prediction: { claimWinningsTime, isAWinner } }) => claimWinningsTime === 0 && isAWinner)
-    );
-  }, [myActivities]);
 
   useEffect(() => {
     document.title = `My Predictions - Castora`;
@@ -53,11 +47,11 @@ export const MyActivityPredictionsPage = () => {
       <MyActivityPageIntro
         myActivityType={predictionsActivityType}
         claimAll={
-          unclaimedWins.length > 1 ? (
+          claimableActivities.length > 0 ? (
             <div className="w-fit ml-auto">
               <ClaimAllPredictButton
-                pools={unclaimedWins.map(({ pool }) => pool)}
-                predictions={unclaimedWins.map(({ prediction }) => prediction)}
+                pools={claimableActivities.map(({ pool }) => pool)}
+                predictions={claimableActivities.map(({ prediction }) => prediction)}
               />
             </div>
           ) : undefined
