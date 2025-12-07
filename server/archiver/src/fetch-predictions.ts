@@ -16,7 +16,7 @@ export const fetchPredictions = async (chain: Chain, pool: Pool): Promise<Predic
     }
   } else {
     for (let i = 1; i <= pool.noOfPredictions; i += 200) {
-      const end = Math.min(i + 200, pool.noOfPredictions);
+      const end = Math.min(i + 201, pool.noOfPredictions + 1);
       const ids = [];
       for (let j = i; j < end; j++) ids.push(BigInt(j));
       const raws = await readGettersContract(chain, 'predictions', [BigInt(pool.poolId), ids]);
