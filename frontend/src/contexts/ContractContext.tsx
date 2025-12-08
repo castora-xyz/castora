@@ -4,7 +4,7 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
-import { useAccount, useChains, useWalletClient } from 'wagmi';
+import { useAccount, useBalance, useChains, useWalletClient } from 'wagmi';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
@@ -54,6 +54,7 @@ export const useContract = () => useContext(ContractContext);
 
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const { address, isConnected, chain: currentChain } = useAccount();
+  const { refetch: refetchBalance } = useBalance();
   const { open: connectWallet } = useWeb3Modal();
   const { toastError } = useToast();
   const walletClient = useWalletClient();
@@ -121,6 +122,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         const hash = await walletClient.data!.writeContract(request);
         bs.next('waiting');
         await publicClient().waitForTransactionReceipt({ hash });
+        refetchBalance();
         onSuccessCallback && onSuccessCallback(hash, result);
         bs.complete();
       } catch (e: any) {

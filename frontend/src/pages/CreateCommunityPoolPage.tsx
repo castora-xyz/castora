@@ -105,7 +105,7 @@ export const CreateCommunityPoolPage = () => {
       if (f.snapshotTime <= now) {
         newErrors.snapshotTime = 'Snapshot time must be in the future';
       }
-      if (f.windowCloseTime && f.snapshotTime <= f.windowCloseTime) {
+      if (f.windowCloseTime && f.snapshotTime < f.windowCloseTime) {
         newErrors.snapshotTime = 'Snapshot time must be after window close time';
       }
     }
@@ -115,7 +115,11 @@ export const CreateCommunityPoolPage = () => {
   };
 
   const onChangeCheckForm = (newForm: CreatePoolForm) => {
-    if (newForm.windowCloseTime !== form.windowCloseTime || newForm.snapshotTime !== form.snapshotTime || hasAttemptedSubmit) {
+    if (
+      newForm.windowCloseTime !== form.windowCloseTime ||
+      newForm.snapshotTime !== form.snapshotTime ||
+      hasAttemptedSubmit
+    ) {
       validateForm(newForm);
     }
   };
@@ -245,7 +249,11 @@ export const CreateCommunityPoolPage = () => {
                 onChange={(e) => {
                   const date = e.value as Date | null;
                   const newForm = { ...form, windowCloseTime: date ? formatTimeToNearest5Minutes(date) : null };
-                  if (newForm.snapshotTime && newForm.windowCloseTime && newForm.snapshotTime <= newForm.windowCloseTime) {
+                  if (
+                    newForm.snapshotTime &&
+                    newForm.windowCloseTime &&
+                    newForm.snapshotTime <= newForm.windowCloseTime
+                  ) {
                     newForm.snapshotTime = null;
                   }
                   setForm(newForm);
@@ -261,8 +269,8 @@ export const CreateCommunityPoolPage = () => {
                 showIcon
                 iconPos="right"
                 inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
-                  errors.windowCloseTime 
-                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default' 
+                  errors.windowCloseTime
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default'
                     : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
                 } focus:!ring-offset-0`}
                 className="w-full"
@@ -270,19 +278,20 @@ export const CreateCommunityPoolPage = () => {
                   root: { className: 'w-full' },
                   panel: { className: 'bg-app-bg border border-border-default' },
                   header: { className: 'bg-app-bg' },
-                  input: { 
-                    root: { 
-                      className: 'w-full !shadow-none focus:!shadow-none' 
-                    } 
+                  input: {
+                    root: {
+                      className: 'w-full !shadow-none focus:!shadow-none'
+                    }
                   }
                 }}
               />
               {form.windowCloseTime && !errors.windowCloseTime && (
                 <p className="text-xs text-text-subtitle mt-1">
-                  Selected: {form.windowCloseTime.toLocaleString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric', 
+                  Selected:{' '}
+                  {form.windowCloseTime.toLocaleString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
@@ -315,8 +324,8 @@ export const CreateCommunityPoolPage = () => {
                 showIcon
                 iconPos="right"
                 inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
-                  errors.snapshotTime 
-                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default' 
+                  errors.snapshotTime
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default'
                     : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
                 } focus:!ring-offset-0 ${!form.windowCloseTime ? 'opacity-50 cursor-not-allowed' : ''}`}
                 className="w-full"
@@ -325,24 +334,23 @@ export const CreateCommunityPoolPage = () => {
                   root: { className: 'w-full' },
                   panel: { className: 'bg-app-bg border border-border-default' },
                   header: { className: 'bg-app-bg' },
-                  input: { 
-                    root: { 
-                      className: 'w-full !shadow-none focus:!shadow-none' 
-                    } 
+                  input: {
+                    root: {
+                      className: 'w-full !shadow-none focus:!shadow-none'
+                    }
                   }
                 }}
               />
               {!form.windowCloseTime && (
-                <p className="text-xs text-text-subtitle mt-1">
-                  Please select Window Close Time first
-                </p>
+                <p className="text-xs text-text-subtitle mt-1">Please select Window Close Time first</p>
               )}
               {form.snapshotTime && !errors.snapshotTime && (
                 <p className="text-xs text-text-subtitle mt-1">
-                  Selected: {form.snapshotTime.toLocaleString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric', 
+                  Selected:{' '}
+                  {form.snapshotTime.toLocaleString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
