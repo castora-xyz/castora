@@ -28,6 +28,9 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
 
       logger.info('\nCreating Pool ... ');
       poolId = Number(await writeContract(chain, 'createPool', [seeds.bigIntified()], `Create Pool on chain ${chain}`));
+
+      if (!poolId) throw 'Pool creation failed';
+
       logger.info(`Created new pool with poolId: ${poolId}`);
 
       await queueJob({
@@ -35,7 +38,7 @@ export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number
         jobName: 'archive-pool',
         jobData: { poolId, chain },
         // 10 seconds after windowCloseTime to allow for transaction finality for last minute predictions
-        delay: (seeds.windowCloseTime - now) * 1000 + 10000 
+        delay: (seeds.windowCloseTime - now) * 1000 + 10000
       });
       logger.info(`Posted job to archive Pool ${poolId} on chain ${chain} at windowCloseTime`);
 

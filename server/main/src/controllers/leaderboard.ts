@@ -117,7 +117,7 @@ export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
       predictions,
       winnings,
       createdPools,
-      ...stats.mainnet
+      ...(stats?.mainnet ?? { winningsVolume: 0, predictionsVolume: 0 })
     };
   } else {
     result = {
