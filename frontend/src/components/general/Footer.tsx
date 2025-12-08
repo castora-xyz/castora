@@ -13,7 +13,7 @@ export const Footer = () => {
     >
       <div className="max-w-screen-xl mx-auto">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
           {/* Brand Section */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
@@ -103,30 +103,7 @@ export const Footer = () => {
             </nav>
           </div>
 
-          {/* Additional Info */}
-          <div className="space-y-4">
-            <h3 className="text-text-titles font-semibold text-base">About</h3>
-            <nav className="flex flex-col gap-3">
-              <a
-                href="https://docs.castora.xyz"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
-              >
-                <Ripple />
-                Documentation
-              </a>
-              <a
-                href="https://github.com/castora"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
-              >
-                <Ripple />
-                GitHub
-              </a>
-            </nav>
-          </div>
+   
         </div>
 
         {/* Bottom Bar */}
