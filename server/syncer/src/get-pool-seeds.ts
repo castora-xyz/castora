@@ -46,7 +46,7 @@ const getTestnetCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
 
 const getMainnetCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
   const now = new Date();
-  const hr = now.getUTCHours() + 1;
+  const hr = now.getUTCHours();
 
   // get timestamp with rollover handled
   const ts = (h: number, m: number) => {
