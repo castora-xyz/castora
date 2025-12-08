@@ -122,7 +122,7 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
 };
 
 export const getMainnetCryptoSeeds = (chain: Chain) => {
-  const times = [...getMainnetCryptoTimes(15), ...getMainnetCryptoTimes(30)];
+  const times = [...getMainnetCryptoTimes(15)];
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
     seeds.push(
