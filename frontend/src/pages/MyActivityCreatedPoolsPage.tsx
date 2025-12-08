@@ -61,29 +61,6 @@ export const MyActivityCreatedPoolsPage = () => {
         </div>
       ) : (
         <div className="w-full">
-          {activityCount && currentPage !== null && (
-            <Paginator
-              first={rowsPerPage * currentPage}
-              rows={rowsPerPage}
-              rowsPerPageOptions={rowsPerPageOptions}
-              totalRecords={activityCount}
-              onPageChange={(e) => {
-                setRowsPerPage(e.rows);
-                updateCurrentPage(e.page);
-                fetchMyActivity(e.page, e.rows);
-              }}
-              template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
-              currentPageReportTemplate="{first} to {last} of {totalRecords}"
-              className="rounded-2xl bg-surface-subtle mb-6"
-              pt={{
-                RPPDropdown: {
-                  root: { className: 'bg-app-bg' },
-                  panel: { className: 'bg-app-bg' }
-                }
-              }}
-            />
-          )}
-
           {hasError ? (
             <div className="flex flex-col items-center justify-center grow text-center py-16">
               <h1 className="text-2xl font-bold mb-4">Error Occured</h1>
@@ -100,20 +77,45 @@ export const MyActivityCreatedPoolsPage = () => {
               </button>
             </div>
           ) : (
-            <div className="lg:grid lg:grid-cols-2 lg:gap-x-6">
-              {isFetching
-                ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
-                    <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
-                  ))
-                : myActivities.map(({ pool, userCreated }, i, total) => (
-                    <ActivityCreateCard
-                      count={currentPage! * rowsPerPage + total.length - i}
-                      key={pool.poolId}
-                      pool={pool}
-                      userCreated={userCreated}
-                    />
-                  ))}
-            </div>
+            <>
+              <div className="lg:grid lg:grid-cols-2 lg:gap-x-6">
+                {isFetching
+                  ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
+                      <Breathing key={i} height={128} className="mb-5 rounded-2xl w-full" />
+                    ))
+                  : myActivities.map(({ pool, userCreated }, i, total) => (
+                      <ActivityCreateCard
+                        count={currentPage! * rowsPerPage + total.length - i}
+                        key={pool.poolId}
+                        pool={pool}
+                        userCreated={userCreated}
+                      />
+                    ))}
+              </div>
+
+              {activityCount && currentPage !== null && (
+                <Paginator
+                  first={rowsPerPage * currentPage}
+                  rows={rowsPerPage}
+                  rowsPerPageOptions={rowsPerPageOptions}
+                  totalRecords={activityCount}
+                  onPageChange={(e) => {
+                    setRowsPerPage(e.rows);
+                    updateCurrentPage(e.page);
+                    fetchMyActivity(e.page, e.rows);
+                  }}
+                  template="FirstPageLink PrevPageLink JumpToPageDropdown CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
+                  currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                  className="rounded-2xl bg-surface-subtle mb-6"
+                  pt={{
+                    RPPDropdown: {
+                      root: { className: 'bg-app-bg' },
+                      panel: { className: 'bg-app-bg' }
+                    }
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       )}
