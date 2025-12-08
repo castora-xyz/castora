@@ -2,7 +2,7 @@ import Cog from '@/assets/cog.svg?react';
 import ExternalLink from '@/assets/external-link.svg?react';
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { rowsPerPageOptions, usePaginators, usePredictions } from '@/contexts';
+import { rowsPerPageOptions, useCurrentTime, usePaginators, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Paginator } from 'primereact/paginator';
@@ -15,13 +15,13 @@ import { useAccount, useChains } from 'wagmi';
 export const PredictionsDisplay = ({ pool: { noOfPredictions, seeds, completionTime }, pool }: { pool: Pool }) => {
   const { address, chain: currentChain } = useAccount();
   const [defaultChain] = useChains();
+  const { now } = useCurrentTime();
   const paginators = usePaginators();
   const retrieve = usePredictions();
 
   const [currentPage, setCurrentPage] = useState(paginators.getLastPage(noOfPredictions));
   const [hasError, setHasError] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [predictions, setPredictions] = useState<Prediction[]>([]);
 
   const load = async (showLoading = true, page = currentPage, rows = paginators.rowsPerPage) => {
@@ -56,11 +56,6 @@ export const PredictionsDisplay = ({ pool: { noOfPredictions, seeds, completionT
     if (str.length < 10) return str;
     return str.substring(0, 5) + '...' + str.split('').reverse().slice(0, 5).reverse().join('');
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
-  }, [now]);
 
   useEffect(() => {
     load();

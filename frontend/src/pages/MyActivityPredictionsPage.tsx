@@ -9,7 +9,7 @@ import { rowsPerPageOptions, useMyPredictActivity } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import { useAccount } from 'wagmi';
@@ -29,18 +29,10 @@ export const MyActivityPredictionsPage = () => {
     updateCurrentPage
   } = useMyPredictActivity();
   const { open: connectWallet } = useWeb3Modal();
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
 
   useEffect(() => {
     document.title = `My Predictions - Castora`;
   }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Math.trunc(Date.now() / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [now]);
 
   return (
     <div className="w-full max-md:max-w-[584px] max-w-screen-xl mx-auto flex flex-col grow">

@@ -1,7 +1,7 @@
 import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { ClaimAllPredictButton, ClaimPredictButton } from '@/components';
-import { useContract, useMyPredictActivity, usePredictions } from '@/contexts';
+import { useContract, useCurrentTime, useMyPredictActivity, usePredictions } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Accordion, AccordionTab } from 'primereact/accordion';
@@ -24,6 +24,7 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
   ({ pool, pool: { seeds, completionTime } }, ref) => {
     const { isConnected, address, chain: currentChain } = useAccount();
     const { readContract } = useContract();
+    const { now } = useCurrentTime();
     const { fetchMyActivity } = useMyPredictActivity();
     const retrieve = usePredictions();
     const [ids, setIds] = useState<bigint[] | null>(null);
@@ -151,13 +152,6 @@ export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsPro
     useEffect(() => {
       fetchMyPredictions();
     }, [completionTime]);
-
-    const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
-
-    useEffect(() => {
-      const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-      return () => clearInterval(interval);
-    }, [now]);
 
     useEffect(() => {
       fetchMyPredictionIds();

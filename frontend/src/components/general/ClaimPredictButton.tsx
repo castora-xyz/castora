@@ -3,7 +3,7 @@ import ExternalLink from '@/assets/external-link.svg?react';
 import Spinner from '@/assets/spinner.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { SuccessIcon } from '@/components';
-import { useFirebase, useMyPredictActivity, usePools } from '@/contexts';
+import { useCurrentTime, useFirebase, useMyPredictActivity, usePools } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
@@ -25,6 +25,7 @@ export const ClaimPredictButton = ({
   onCloseModal?: () => void;
 }) => {
   const { isConnected } = useAccount();
+  const { now } = useCurrentTime();
   const { recordEvent } = useFirebase();
   const { claimWinnings } = usePools();
   const { fetchMyActivity } = useMyPredictActivity();
@@ -67,15 +68,13 @@ export const ClaimPredictButton = ({
     }
   };
 
-  const now = () => Math.trunc(Date.now() / 1000);
-
   const openModal = () => {
     setIsShowingModal(true);
     document.body.classList.add('overflow-hidden');
     recordEvent('opened_claim_modal', { poolId, predictionId });
   };
 
-  if (!isConnected || now() < snapshotTime || !completionTime || !isAWinner) {
+  if (!isConnected || now < snapshotTime || !completionTime || !isAWinner) {
     return <></>;
   }
 

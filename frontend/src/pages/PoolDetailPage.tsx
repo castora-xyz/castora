@@ -10,7 +10,7 @@ import {
   PredictionsDisplay,
   TradingViewChart
 } from '@/components';
-import { usePools } from '@/contexts';
+import { useCurrentTime, usePools } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
@@ -21,13 +21,13 @@ import { useAccount } from 'wagmi';
 
 export const PoolDetailPage = () => {
   const { chain: currentChain } = useAccount();
+  const { now } = useCurrentTime();
   const { poolId } = useParams();
   const { isValidPoolId, fetchOne } = usePools();
 
   const myInPoolPredsRef = useRef<MyInPoolPredsRef>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [pool, setPool] = useState<Pool | null>(null);
   const [prevCurrentChain, setPrevCurrentChain] = useState(currentChain);
 
@@ -43,9 +43,9 @@ export const PoolDetailPage = () => {
         if (fetched) {
           const { seeds, noOfPredictions, completionTime } = fetched;
 
-          if (Math.round(Date.now() / 1000) >= seeds.snapshotTime) {
+          if (now >= seeds.snapshotTime) {
             if (noOfPredictions === 0 || completionTime === 0) {
-              if (Math.round(Date.now() / 1000) - seeds.snapshotTime < 15) {
+              if (now - seeds.snapshotTime < 15) {
                 // Waiting for the snapshot price to be available
                 await new Promise((resolve) => setTimeout(resolve, 15000));
               }
@@ -102,9 +102,6 @@ export const PoolDetailPage = () => {
 
     // Update the pool page contents anytime the user leaves the page and comes back
     window.addEventListener('focus', () => load(false));
-
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <PoolDetailPageShimmer />;

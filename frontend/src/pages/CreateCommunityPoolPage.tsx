@@ -2,7 +2,7 @@ import Globe from '@/assets/globe.svg?react';
 import Link from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import { CountdownNumbers, CreatePoolModal } from '@/components';
-import { allowedCreatorPredTokens, CreatePoolForm, useFirebase, useToast } from '@/contexts';
+import { allowedCreatorPredTokens, CreatePoolForm, useCurrentTime, useFirebase, useToast } from '@/contexts';
 import { tokens } from '@/schemas';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import ms from 'ms';
@@ -26,15 +26,8 @@ const formDefaults: CreatePoolForm = {
 };
 
 const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
+  const { now } = useCurrentTime();
   const [diff, setDiff] = useState(timestamp - now);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Math.trunc(Date.now() / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [now]);
 
   useEffect(() => {
     setDiff(timestamp - now);

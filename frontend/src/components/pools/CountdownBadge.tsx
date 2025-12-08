@@ -1,33 +1,22 @@
 import { CountdownNumbers } from '@/components';
+import { useCurrentTime } from '@/contexts';
 import { PoolSeeds } from '@/schemas';
 import { useEffect, useState } from 'react';
 
-export const CountdownBadge = ({
-  seeds,
-  seeds: { windowCloseTime, snapshotTime }
-}: {
-  seeds: PoolSeeds;
-}) => {
+export const CountdownBadge = ({ seeds, seeds: { windowCloseTime, snapshotTime } }: { seeds: PoolSeeds }) => {
+  const { now } = useCurrentTime();
+
   const getReferenceTime = () => {
-    const now = Math.trunc(Date.now() / 1000);
     const openTime = seeds.openTime();
     if (openTime && openTime > now) return openTime;
     return windowCloseTime;
   };
 
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const [diff, setDiff] = useState(windowCloseTime - now);
   const [timestamp, setTimestamp] = useState(getReferenceTime());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Math.trunc(Date.now() / 1000));
-      setTimestamp(getReferenceTime());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [now]);
-
-  useEffect(() => {
+    setTimestamp(getReferenceTime());
     setDiff(timestamp - now);
   }, [now, timestamp]);
 

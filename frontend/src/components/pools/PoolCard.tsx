@@ -1,9 +1,9 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownBadge } from '@/components';
+import { useCurrentTime } from '@/contexts';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const PoolCard = ({
@@ -14,13 +14,8 @@ export const PoolCard = ({
   pool: Pool;
   isInLandingPage?: boolean;
 }) => {
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
+  const { now } = useCurrentTime();
   const location = useLocation();
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
-  }, [now]);
 
   return (
     <div

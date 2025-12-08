@@ -1,24 +1,17 @@
 import Telegram from '@/assets/telegram-plain.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
-import { useAuth, useFirebase, useTelegram } from '@/contexts';
+import { useAuth, useCurrentTime, useFirebase, useTelegram } from '@/contexts';
 import { Pool } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { useEffect, useState } from 'react';
 import { ClaimCreateButton } from '../general';
 
 export const MyInCreatedPoolDisplay = ({ pool, pool: { seeds, noOfPredictions, userCreated } }: { pool: Pool }) => {
   const { address } = useAuth();
+  const { now } = useCurrentTime();
   const { recordEvent } = useFirebase();
   const telegram = useTelegram();
-
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
-  }, [now]);
 
   if (!userCreated || userCreated.creator.toLowerCase() != address?.toLowerCase()) return <></>;
 

@@ -1,6 +1,6 @@
 import { ActivityPredictCard } from '@/components';
-import { ActivityPredict, CASTORA_ADDRESS_SEPOLIA, useMyPredictActivity } from '@/contexts';
-import { Pool, PoolSeeds, Prediction, USDC } from '@/schemas';
+import { ActivityPredict, CASTORA_ADDRESS_MONAD, useMyPredictActivity } from '@/contexts';
+import { Pool, PoolSeeds, Prediction } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
@@ -22,13 +22,20 @@ export const LandingActivitySnippets = () => {
   const defaultActivity = () => ({
     pool: new Pool({
       poolId: 0,
-      seeds: new PoolSeeds({
-        predictionToken: CASTORA_ADDRESS_SEPOLIA,
-        stakeToken: USDC,
-        stakeAmount: 10000000,
-        windowCloseTime: next2HoursTimestamp() - 15 * 60,
-        snapshotTime: next2HoursTimestamp()
-      }),
+      seeds: new PoolSeeds(
+        {
+          predictionToken: CASTORA_ADDRESS_MONAD,
+          stakeToken: CASTORA_ADDRESS_MONAD,
+          stakeAmount: 100e18,
+          windowCloseTime: next2HoursTimestamp() - 15 * 60,
+          snapshotTime: next2HoursTimestamp(),
+          feesPercent: 500,
+          multiplier: 300,
+          isUnlisted: false
+        },
+        Math.trunc(new Date().getTime() / 1000),
+        false
+      ),
       seedsHash: '0x',
       creationTime: Math.trunc(new Date().getTime() / 1000),
       snapshotPrice: 0,

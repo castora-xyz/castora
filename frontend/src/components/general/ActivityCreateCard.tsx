@@ -5,11 +5,11 @@ import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import Wallet from '@/assets/wallet.svg?react';
 import { ClaimCreateButton, CountdownNumbers } from '@/components';
+import { useCurrentTime } from '@/contexts';
 import { Pool, UserCreatedPool } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const ActivityCreateCard = ({
@@ -28,13 +28,8 @@ export const ActivityCreateCard = ({
   pool: Pool;
   userCreated: UserCreatedPool;
 }) => {
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const location = useLocation();
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
-  }, [now]);
+  const { now } = useCurrentTime();
 
   return (
     <div className="border-2 border-surface-subtle rounded-2xl pt-3 sm:pt-4 pb-5 px-4 sm:px-6 mb-6 gap-4">

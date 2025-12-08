@@ -2,11 +2,11 @@ import MoodSadFilled from '@/assets/mood-sad-filled.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { ClaimPredictButton, CountdownNumbers } from '@/components';
+import { useCurrentTime } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const ActivityPredictCard = ({
@@ -22,13 +22,8 @@ export const ActivityPredictCard = ({
   prediction: Prediction;
   isInLandingPage?: boolean;
 }) => {
-  const [now, setNow] = useState(Math.trunc(Date.now() / 1000));
   const location = useLocation();
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Math.trunc(Date.now() / 1000)), 1000);
-    return () => clearInterval(interval);
-  }, [now]);
+  const { now } = useCurrentTime();
 
   return (
     <div
