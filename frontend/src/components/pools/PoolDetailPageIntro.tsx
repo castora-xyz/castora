@@ -1,4 +1,3 @@
-import Bolt from '@/assets/bolt.svg?react';
 import Briefcase from '@/assets/briefcase.svg?react';
 import ChevronRight from '@/assets/chevron-right.svg?react';
 import InfoCircle from '@/assets/info-circle.svg?react';
@@ -40,14 +39,10 @@ export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { po
         <p
           id="pool-life"
           className="text-sm py-2 px-3.5 rounded-full w-fit border border-border-default dark:border-surface-subtle flex items-center gap-1"
-          data-pr-tooltip={pool.isFlash() ? 'Flash Pool' : 'Pool Life'}
+          data-pr-tooltip="Pool Life"
         >
           <Timer className="fill-primary-default w-4 h-4" />
-          {pool.isFlash() ? (
-            <Bolt className="w-4 h-4 ml-1 text-text-caption" />
-          ) : (
-            <span className="mr-1">{seeds.displayPoolLife()}</span>
-          )}
+          <span className="mr-1">{seeds.displayPoolLife()}</span>
         </p>
 
         <Tooltip target="#pool-multiplier" />
@@ -57,7 +52,7 @@ export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { po
           data-pr-tooltip="Pool Multiplier"
         >
           <Trophy className="stroke-primary-default w-4 h-4" />
-          <span className="mr-1">x{pool.multiplier()}</span>
+          <span className="mr-1">x{pool.seeds.multiplier}</span>
         </p>
       </div>
 

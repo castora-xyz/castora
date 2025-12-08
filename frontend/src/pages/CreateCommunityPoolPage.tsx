@@ -88,7 +88,7 @@ export const CreateCommunityPoolPage = () => {
     }));
 
   useEffect(() => {
-    document.title = 'Create Community Pool | Castora';
+    document.title = 'Create Pool | Castora';
   }, []);
 
   const validateForm = (f: CreatePoolForm = form): boolean => {
@@ -155,8 +155,8 @@ export const CreateCommunityPoolPage = () => {
     <div className="flex flex-col justify-center grow bg-surface-subtle px-4 sm:px-8 pt-20 pb-28">
       <div className="bg-app-bg w-full max-lg:max-w-xl lg:max-w-screen-lg mx-auto px-4 sm:px-8 lg:px-10 lg:pt-12 lg:pb-24 rounded-3xl py-8 border border-border-default dark:border-surface-subtle lg:flex">
         <div className="lg:mr-20">
-          <h1 className="text-3xl font-bold mb-2 text-text-title">Create Community Pool</h1>
-          <p className="text-text-subtitle mb-8">Create a custom pool for anyone in the community to join.</p>
+          <h1 className="text-3xl font-bold mb-2 text-text-title">Create Pool</h1>
+          <p className="text-text-subtitle mb-8">Create a pool for anyone to predict in and join.</p>
 
           <div className="lg:hidden">
             <h2 className="text-2xl mb-2 text-text-title">How it Works</h2>

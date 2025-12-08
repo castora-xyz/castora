@@ -26,7 +26,7 @@ export class Pool {
   constructor(input: any) {
     this.poolId = Number(input.poolId);
     if (input.userCreated) this.userCreated = new UserCreatedPool(input.userCreated);
-    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds, !!this.userCreated);
+    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds);
     this.seedsHash = input.seedsHash;
     this.creationTime = Number(input.creationTime);
     this.noOfPredictions = Number(input.noOfPredictions);
@@ -42,26 +42,9 @@ export class Pool {
   }
 
   /**
-   * Whether it is a special pool.
-   */
-  isFlash() {
-    return this.poolId === 3000 || this.poolId === 5000;
-  }
-
-  /**
-   * The units of stake that winners go with.
-   */
-  multiplier() {
-    if (this.poolId === 3000) return 10;
-    if (this.poolId === 5000) return 5;
-    if (this.userCreated) return this.userCreated.multiplier;
-    return 2;
-  }
-
-  /**
    *
    */
   percentWinners() {
-    return Math.trunc(10000 / this.multiplier()) / 100;
+    return Math.trunc(10000 / this.seeds.multiplier) / 100;
   }
 }

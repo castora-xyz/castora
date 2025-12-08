@@ -299,21 +299,12 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchMany = async (poolIds: number[], includeUserCreateds = false) => {
-    const stats = await readContract({ contract: 'getters', functionName: 'allStats' });
-    if (!stats) return [];
-    
-    const maxValidPoolId = Number(stats.noOfPools);
-    const validPoolIds = poolIds.filter((id) => id > 0 && id <= maxValidPoolId);
-    
-    // If no valid pool IDs, return empty array
-    if (validPoolIds.length === 0) return [];
-    
-    const raw1 = await readContract({ contract: 'getters', functionName: 'pools', args: [validPoolIds] });
+    const raw1 = await readContract({ contract: 'getters', functionName: 'pools', args: [poolIds] });
     if (!raw1) return [];
 
     let raw2;
     if (includeUserCreateds) {
-      raw2 = await readContract({ contract: 'pools-manager', functionName: 'getUserCreatedPools', args: [validPoolIds] });
+      raw2 = await readContract({ contract: 'pools-manager', functionName: 'getUserCreatedPools', args: [poolIds] });
       if (!raw2) return [];
     }
 

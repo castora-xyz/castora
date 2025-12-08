@@ -121,9 +121,9 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                 Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices to Snapshot Price.
               </li>
               <li>
-                Win x{pool?.multiplier() ?? 2} (
+                Win x{pool?.seeds.multiplier ?? 3} (
                 <span className="font-bold">
-                  {pool?.seeds.displayStake(pool.multiplier()) ?? landingPageDefaults.stakeMultiplied(bulkCount)}
+                  {pool?.seeds.displayStake(pool?.seeds.multiplier) ?? landingPageDefaults.stakeMultiplied(bulkCount)}
                 </span>
                 ), if you are in Top{' '}
                 <span className="font-bold">{pool?.percentWinners() ?? landingPageDefaults.percentWinners}%</span>{' '}
@@ -249,7 +249,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                 <li>
                   Each for{' '}
                   <span className="font-bold text-base text-primary-default">
-                    {pool?.seeds.displayStake(pool.multiplier() * bulkCount) ??
+                    {pool?.seeds.displayStake(pool?.seeds.multiplier ?? 3 * bulkCount) ??
                       landingPageDefaults.stakeMultiplied(bulkCount)}{' '}
                   </span>
                   stake.
@@ -268,8 +268,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
             <p className="mt-1 text-center">
               <span className="text-xs">Potential Winnings </span>
               <span className="text-sm font-bold text-primary-default">
-                (x{pool?.multiplier() ?? landingPageDefaults.multiplier}):{' '}
-                {pool?.seeds.displayStake(pool.multiplier() * bulkCount) ??
+                (x{pool?.seeds.multiplier ?? landingPageDefaults.multiplier}):{' '}
+                {pool?.seeds.displayStake(pool?.seeds.multiplier * bulkCount) ??
                   landingPageDefaults.stakeMultiplied(bulkCount)}
               </span>
             </p>

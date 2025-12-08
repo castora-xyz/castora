@@ -12,15 +12,13 @@ export const LiveCryptoPoolsPage = () => {
 
   useEffect(() => {
     setFiltered(
-      liveCryptoPools.filter(
-        (p) =>
-          p.isFlash() ||
-          p.seeds.matchesFilterCrypto({
-            poolLifes,
-            predictionTokens,
-            stakeTokens,
-            statuses
-          })
+      liveCryptoPools.filter((p) =>
+        p.seeds.matchesFilterCrypto({
+          poolLifes,
+          predictionTokens,
+          stakeTokens,
+          statuses
+        })
       )
     );
   }, [poolLifes, predictionTokens, stakeTokens, statuses, liveCryptoPools]);

@@ -26,9 +26,8 @@ export class PoolSeeds {
   multiplierOnchain: number;
   multiplier: number;
   isUnlisted: boolean;
-  isUserCreatedPool: boolean = false;
 
-  constructor(input: any, userCreatedPool?: any) {
+  constructor(input: any) {
     this.predictionToken = input['predictionToken'];
     this.stakeToken = input['stakeToken'];
     this.stakeAmount = Number(input['stakeAmount']);
@@ -49,8 +48,6 @@ export class PoolSeeds {
     const foundS = tokens.find((t) => t.address.toLowerCase() === this.stakeToken.toLowerCase());
     if (!foundS) throw `Token not found in tokens list: ${this.stakeToken}`;
     this.stakeTokenDetails = foundS;
-
-    if (userCreatedPool) this.isUserCreatedPool = true;
   }
 
   /**
@@ -124,36 +121,36 @@ export class PoolSeeds {
    * pool of the same time series.
    */
   openTime() {
-    // If it is a user-created pool, it is automatically open
-    if (this.isUserCreatedPool) return null;
+    // // If it is a user-created pool, it is automatically open
+    // if (this.isUserCreatedPool) return null;
 
-    // If it is a stock pool,
-    if (this.isStockPool()) {
-      // If windowClose is on Monday, open time is 3 days before,
-      // otherwise it is 1 day before.
-      const mul = new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
-      return this.windowCloseTime - mul * 24 * 60 * 60;
-    }
+    // // If it is a stock pool,
+    // if (this.isStockPool()) {
+    //   // If windowClose is on Monday, open time is 3 days before,
+    //   // otherwise it is 1 day before.
+    //   const mul = new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
+    //   return this.windowCloseTime - mul * 24 * 60 * 60;
+    // }
 
-    // If it is a crypto pool, open time depends on difference
-    // between snapshotTime and windowCloseTime.
-    const diff = this.snapshotTime - this.windowCloseTime;
+    // // If it is a crypto pool, open time depends on difference
+    // // between snapshotTime and windowCloseTime.
+    // const diff = this.snapshotTime - this.windowCloseTime;
 
-    // For hourly pools with an hour close window,
-    // the open time is 1 hour before the window close time.
-    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
-      return this.windowCloseTime - 60 * 60;
-    }
+    // // For hourly pools with an hour close window,
+    // // the open time is 1 hour before the window close time.
+    // if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
+    //   return this.windowCloseTime - 60 * 60;
+    // }
 
-    // For 6-hourly pools with an hour close window,
-    // the open time is 6 hours before the window close time.
-    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
-      return this.windowCloseTime - 6 * 60 * 60;
-    }
+    // // For 6-hourly pools with an hour close window,
+    // // the open time is 6 hours before the window close time.
+    // if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
+    //   return this.windowCloseTime - 6 * 60 * 60;
+    // }
 
-    // For 24-hourly pools with a 12-hour close window,
-    // the open time is 24 hours before the window close time.
-    if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
+    // // For 24-hourly pools with a 12-hour close window,
+    // // the open time is 24 hours before the window close time.
+    // if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
 
     // TODO: Handle newer pool types when the time comes
     return null;

@@ -1,8 +1,8 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
-import Bolt from '@/assets/bolt.svg?react';
 import { CountdownBadge } from '@/components';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
+import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -27,8 +27,8 @@ export const PoolCard = ({
       className={
         'border border-border-default dark:border-surface-subtle p-5 rounded-2xl w-full max-w-md mx-auto md:flex md:grow md:flex-col ' +
         `${
-          pool.isFlash()
-            ? 'shadow-[0px_0px_16px_1px_rgba(131,110,249,0.6)] dark:shadow-[0px_0px_16px_1px_rgba(255,255,255,0.6)]'
+          !pool.userCreated
+            ? 'shadow-[0px_0px_12px_0.5px_rgba(131,110,249,0.6)] dark:shadow-[0px_0px_12px_0.5px_rgba(255,255,255,0.6)]'
             : ''
         }`
       }
@@ -51,13 +51,10 @@ export const PoolCard = ({
           </div>
         </div>
 
-        {pool.isFlash() ? (
-          <>
-            <Bolt className="w-5 h-5 mt-1 -mr-1 text-primary-default" />
-          </>
-        ) : (
-          <span className="text-sm text-primary-default mt-1 inline-block">{seeds.displayPoolLife()}</span>
-        )}
+        <Tooltip target="#pool-life" />
+        <span className="text-sm text-primary-default mt-1 inline-block" id="pool-life" data-pr-tooltip="Pool Life">
+          {seeds.displayPoolLife()}
+        </span>
       </div>
 
       <div className="flex gap-2.5 items-start mb-4">
@@ -99,7 +96,7 @@ export const PoolCard = ({
 
       <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
         <span className="mr-4">Multiplier</span>
-        <span className="font-bold text-base -mt-1">x{pool.multiplier()}</span>
+        <span className="font-bold text-base -mt-1">x{pool.seeds.multiplier}</span>
       </div>
 
       {noOfPredictions > 0 && (

@@ -15,15 +15,13 @@ export const MainnetPoolsPage = () => {
 
   useEffect(() => {
     setFiltered(
-      [...liveCryptoPools, ...liveCommunityPools].filter(
-        (p) =>
-          p.isFlash() ||
-          p.seeds.matchesFilterCommunity({
-            multipliers: filters.multipliers,
-            predictionTokens: filters.predictionTokens,
-            stakeTokens: filters.stakeTokens,
-            statuses: filters.statuses
-          })
+      [...liveCryptoPools, ...liveCommunityPools].filter((p) =>
+        p.seeds.matchesFilterCommunity({
+          multipliers: filters.multipliers,
+          predictionTokens: filters.predictionTokens,
+          stakeTokens: filters.stakeTokens,
+          statuses: filters.statuses
+        })
       )
     );
   }, [
@@ -73,7 +71,7 @@ export const MainnetPoolsPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto pt-4">
         {isFetchingLiveCrypto || isFetchingLiveCommunity ? (
           Array.from(Array(shimmerCount).keys()).map((i) => <PoolCardShimmer key={i} />)
         ) : (

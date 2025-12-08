@@ -119,7 +119,7 @@ export const JoinPoolForm = ({
           Winner Predictions are <span className="font-bold">Earliest & Closest </span> Prices to Snapshot Price.
         </li>
         <li>
-          Win x{pool.multiplier()} (<span className="font-bold">{seeds.displayStake(pool.multiplier())}</span>
+          Win x{pool.seeds.multiplier} (<span className="font-bold">{seeds.displayStake(pool.seeds.multiplier)}</span>
           ), if you are in Top <span className="font-bold">{pool.percentWinners()}%</span> Predictions.
         </li>
       </ul>

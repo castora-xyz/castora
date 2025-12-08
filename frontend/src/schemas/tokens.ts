@@ -212,7 +212,7 @@ export const landingPageDefaults = {
   pairToken: 'MON',
   pythPriceId: '0x31491744e2dbf6df7fcf4ac0820d18a609b49076d45066d3568424e62f686cd1',
   stake: (count: number) => `${count * 100} MON`,
-  multiplier: 2,
-  percentWinners: 50,
-  stakeMultiplied: (count: number) => `${count * 200} MON`
+  multiplier: 3,
+  percentWinners: 33.3,
+  stakeMultiplied: (count: number) => `${count * 300} MON`
 };
