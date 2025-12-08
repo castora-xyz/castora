@@ -14,11 +14,14 @@ import { useAccount, useChains } from 'wagmi';
 const shortenAddress = (v: string) => `${v.substring(0, 6)}...${v.substring(v.length - 3)}`;
 
 const formatUSD = (amount: number): string => {
-  if (amount === 0) return '0.00';
-  if (amount < 0.01) return '0.01';
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M`;
-  if (amount >= 1000) return `${(amount / 1000).toFixed(2)}K`;
-  return `${amount.toFixed(2)}`;
+  if (amount <= -1000000) return `-$${(amount / -1000000).toFixed(2)}M`;
+  if (amount <= -1000) return `-$${(amount / -1000).toFixed(2)}K`;
+  if (amount > -0.01 && amount < 0) return '-$0.01';
+  if (amount === 0) return '$0.00';
+  if (amount < 0.01 && amount > 0) return '$0.01';
+  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(2)}M`;
+  if (amount >= 1000) return `$${(amount / 1000).toFixed(2)}K`;
+  return amount < 0 ? `-$${amount.toFixed(2).substring(1)}` : `$${amount.toFixed(2)}`;
 };
 
 const getRankIcon = (rank: number) => {
@@ -206,11 +209,7 @@ export const LeaderboardPage = () => {
           cell: (info) => {
             const { isGap, isPlaceholder } = info.row.original;
             if (isGap || isPlaceholder) return <span className="opacity-50">--</span>;
-            return (
-              <span className="font-bold text-success-darker dark:text-success-default">
-                {formatUSD(info.getValue())}
-              </span>
-            );
+            return <span className="font-bold">{formatUSD(info.getValue())}</span>;
           },
           size: 120,
           meta: { align: 'right' }
@@ -229,6 +228,7 @@ export const LeaderboardPage = () => {
                     : 'text-errors-darker dark:text-errors-default'
                 }`}
               >
+                {profit > 0 && '+'}
                 {formatUSD(profit)}
               </span>
             );

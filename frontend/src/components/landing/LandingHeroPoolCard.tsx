@@ -17,27 +17,21 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     if (basePrice !== 0) {
-      setPriceDiffPercent(
-        parseFloat((((currentPrice - basePrice) / basePrice) * 100).toFixed(2))
-      );
+      setPriceDiffPercent(parseFloat((((currentPrice - basePrice) / basePrice) * 100).toFixed(2)));
     } else setPriceDiffPercent(0);
   }, [currentPrice, basePrice]);
 
   useEffect(() => {
     (async () => {
       try {
-        const baseTimeDiff =
-          pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff;
+        const baseTimeDiff = pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff;
         const priceData = await connection.getPriceFeed(
-          pool?.seeds.predictionTokenDetails.pythPriceId ??
-            landingPageDefaults.pythPriceId,
+          pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId,
           Math.trunc(Date.now() / 1000) - baseTimeDiff
         );
         const { price, expo } = priceData.getPriceUnchecked();
-        const formatted = parseFloat(
-          (+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)
-        );
-        setBasePrice(formatted);
+        const parsed = +price * 10 ** expo;
+        setBasePrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
       } catch (e) {
         setBasePrice(0);
       }
@@ -48,19 +42,11 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
 
   useEffect(() => {
     connection.subscribePriceFeedUpdates(
-      [
-        pool?.seeds.predictionTokenDetails.pythPriceId ??
-          landingPageDefaults.pythPriceId
-      ],
+      [pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
-        setCurrentPrice(
-          parseFloat(
-            (+price * 10 ** expo).toFixed(
-              Math.abs(expo) < 2 ? Math.abs(expo) : 2
-            )
-          )
-        );
+        const parsed = +price * 10 ** expo;
+        setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
       }
     );
     return () => connection.closeWebSocket();
@@ -69,19 +55,12 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   return (
     <div className="border border-border-default dark:border-surface-disabled p-8 bg-app-bg w-full rounded-[24px]">
       <div className="mb-8">
-        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">
-          Building on Monad
-        </p>
-        <p className="font-medium text-xs sm:text-base text-text-disabled text-right mb-2">
-          Powered by PYTH
-        </p>
+        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">Building on Monad</p>
+        <p className="font-medium text-xs sm:text-base text-text-disabled text-right mb-2">Powered by PYTH</p>
 
         <div className="flex gap-2 sm:gap-3 items-start">
           <img
-            src={`/assets/${
-              pool?.seeds.predictionTokenDetails.img ??
-              landingPageDefaults.pairImg
-            }.png`}
+            src={`/assets/${pool?.seeds.predictionTokenDetails.img ?? landingPageDefaults.pairImg}.png`}
             className="w-8 sm:w-12 h-8 sm:h-12 rounded-full"
           />
 
@@ -97,34 +76,19 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
       </div>
 
       <p className="font-medium text-text-subtitle mb-2">Current Price</p>
-      <p className="text-4xl md:text-5xl text-text-title mb-1">
-        {currentPrice} USD
-      </p>
+      <p className="text-4xl md:text-5xl text-text-title mb-1">{currentPrice} USD</p>
 
       {priceDiffPercent !== 0 && currentPrice !== 0 && (
-        <p
-          className={
-            'font-medium mb-8 ' +
-            (priceDiffPercent < 0
-              ? 'text-errors-default'
-              : 'text-success-default')
-          }
-        >
+        <p className={'font-medium mb-8 ' + (priceDiffPercent < 0 ? 'text-errors-default' : 'text-success-default')}>
           {priceDiffPercent > 0 ? '+' : ''}
-          {priceDiffPercent}% in the last{' '}
-          {ms(
-            (pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff) * 1000
-          )}
+          {priceDiffPercent}% in the last {ms((pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff) * 1000)}
         </p>
       )}
 
       <div className="sm:flex justify-between">
-        {!!pool &&
-        pool.seeds.windowCloseTime > Math.trunc(Date.now() / 1000) ? (
+        {!!pool && pool.seeds.windowCloseTime > Math.trunc(Date.now() / 1000) ? (
           <div>
-            <p className="font-medium text-text-subtitle mb-2">
-              Pool Closes In
-            </p>
+            <p className="font-medium text-text-subtitle mb-2">Pool Closes In</p>
 
             <p className="py-1.5 px-4 font-medium rounded-full w-fit  bg-surface-subtle text-text-title sm:mb-4">
               <CountdownNumbers timestamp={pool.seeds.windowCloseTime} />

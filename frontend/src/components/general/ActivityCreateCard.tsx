@@ -15,9 +15,14 @@ import { Link, useLocation } from 'react-router-dom';
 export const ActivityCreateCard = ({
   count,
   pool,
-  pool: { poolId, seeds, noOfPredictions },
+  pool: {
+    poolId,
+    seeds,
+    seeds: { snapshotTime, multiplier, isUnlisted },
+    noOfPredictions
+  },
   userCreated,
-  userCreated: { creationTime, completionTime, completionFeesAmount, multiplier, isUnlisted }
+  userCreated: { creationTime, completionTime, completionFeesAmount }
 }: {
   count: number;
   pool: Pool;
@@ -110,23 +115,23 @@ export const ActivityCreateCard = ({
         </p>
       </div>
 
-      {now <= seeds.snapshotTime && (
+      {now <= snapshotTime && (
         <div className="flex flex-wrap justify-start items-center gap-3">
           <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
             Awaiting Snapshot
           </p>
 
           <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
-            <CountdownNumbers timestamp={seeds.snapshotTime} />
+            <CountdownNumbers timestamp={snapshotTime} />
           </p>
         </div>
       )}
-      {now > seeds.snapshotTime && noOfPredictions > 0 && !completionTime && (
+      {now > snapshotTime && noOfPredictions > 0 && !completionTime && (
         <p className="text-primary-darker bg-primary-subtle py-1 px-4 rounded-full text-sm w-fit">
           Awaiting Processing
         </p>
       )}
-      {now > seeds.snapshotTime && noOfPredictions === 0 && <p className="text-lg">Nobody Joined This Pool</p>}
+      {now > snapshotTime && noOfPredictions === 0 && <p className="text-lg">Nobody Joined This Pool</p>}
 
       {!!completionFeesAmount && (
         <div className="flex flex-wrap justify-end">

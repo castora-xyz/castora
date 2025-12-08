@@ -26,9 +26,12 @@ export class Pool {
   constructor(input: any) {
     this.poolId = Number(input.poolId);
     if (input.userCreated) this.userCreated = new UserCreatedPool(input.userCreated);
-    this.seeds = input.seeds instanceof PoolSeeds ? input.seeds : new PoolSeeds(input.seeds);
-    this.seedsHash = input.seedsHash;
     this.creationTime = Number(input.creationTime);
+    this.seeds =
+      input.seeds instanceof PoolSeeds
+        ? input.seeds
+        : new PoolSeeds(input.seeds, this.creationTime, !!input.userCreated);
+    this.seedsHash = input.seedsHash;
     this.noOfPredictions = Number(input.noOfPredictions);
     this.snapshotPriceOnChain = Number(input.snapshotPrice);
     this.snapshotPrice = parseFloat((this.snapshotPriceOnChain / 10 ** 8).toFixed(8));

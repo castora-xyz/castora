@@ -26,8 +26,10 @@ export class PoolSeeds {
   multiplierOnchain: number;
   multiplier: number;
   isUnlisted: boolean;
+  creationTime: number;
+  isUserCreatedPool: boolean;
 
-  constructor(input: any) {
+  constructor(input: any, creationTime: number, isUserCreatedPool: boolean) {
     this.predictionToken = input['predictionToken'];
     this.stakeToken = input['stakeToken'];
     this.stakeAmount = Number(input['stakeAmount']);
@@ -38,6 +40,8 @@ export class PoolSeeds {
     this.multiplierOnchain = Number(input['multiplier']);
     this.multiplier = this.multiplierOnchain / 100;
     this.isUnlisted = Boolean(input['isUnlisted']);
+    this.creationTime = creationTime;
+    this.isUserCreatedPool = isUserCreatedPool;
 
     const foundP = tokens.find((t) => t.address.toLowerCase() === this.predictionToken.toLowerCase());
     if (!foundP) {
@@ -121,39 +125,23 @@ export class PoolSeeds {
    * pool of the same time series.
    */
   openTime() {
-    // // If it is a user-created pool, it is automatically open
-    // if (this.isUserCreatedPool) return null;
+    // If it is a user-created pool, it is automatically open
+    if (this.isUserCreatedPool) return null;
 
-    // // If it is a stock pool,
-    // if (this.isStockPool()) {
-    //   // If windowClose is on Monday, open time is 3 days before,
-    //   // otherwise it is 1 day before.
-    //   const mul = new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
-    //   return this.windowCloseTime - mul * 24 * 60 * 60;
-    // }
+    // If it is a stock pool,
+    if (this.isStockPool()) {
+      // If windowClose is on Monday, open time is 3 days before,
+      // otherwise it is 1 day before.
+      const mul = new Date(this.windowCloseTime * 1000).getUTCDay() == 1 ? 3 : 1;
+      return this.windowCloseTime - mul * 24 * 60 * 60;
+    }
 
-    // // If it is a crypto pool, open time depends on difference
-    // // between snapshotTime and windowCloseTime.
-    // const diff = this.snapshotTime - this.windowCloseTime;
-
-    // // For hourly pools with an hour close window,
-    // // the open time is 1 hour before the window close time.
-    // if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
-    //   return this.windowCloseTime - 60 * 60;
-    // }
-
-    // // For 6-hourly pools with an hour close window,
-    // // the open time is 6 hours before the window close time.
-    // if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
-    //   return this.windowCloseTime - 6 * 60 * 60;
-    // }
-
-    // // For 24-hourly pools with a 12-hour close window,
-    // // the open time is 24 hours before the window close time.
-    // if (diff === 12 * 60 * 60) return this.windowCloseTime - 24 * 60 * 60;
+    // If it is a crypto pool, we currently have 1 hr pools,
+    // so open time is an hour earlier than windowCloseTime
+    return this.windowCloseTime - 60 * 60;
 
     // TODO: Handle newer pool types when the time comes
-    return null;
+    // return null;
   }
 
   /**
@@ -179,9 +167,12 @@ export class PoolSeeds {
 
   /**
    * The number of hours (in seconds) of the pool's life.
-   * That is from when it opens till snapshotTime.
+   * That is from when it opens till it closes.
    */
   poolLife() {
+    // If user created, creation time - windowClose is the life
+    if (this.isUserCreatedPool) return this.windowCloseTime - this.creationTime;
+
     // If it is a stock pool,
     if (this.isStockPool()) {
       // If windowClose is on Monday, pool life is 3 days, otherwise 1 day.
@@ -193,24 +184,7 @@ export class PoolSeeds {
       }
     }
 
-    // If it is a crypto pool, pool life depends on difference
-    // between snapshotTime and windowCloseTime.
-    const diff = this.snapshotTime - this.windowCloseTime;
-
-    // For hourly pools: diff is 1 hour and snapshotTime is not aligned to 6-hour intervals
-    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) !== 0) {
-      return 60 * 60; // 1-hourly pool
-    }
-
-    // For 6-hourly pools: diff is 1 hour and snapshotTime is aligned to 6-hour intervals
-    if (diff === 60 * 60 && this.snapshotTime % (6 * 60 * 60) === 0) {
-      return 6 * 60 * 60; // 6-hourly pool
-    }
-
-    // For 24-hourly pools: diff is 12 hours
-    if (diff === 12 * 60 * 60) return 12 * 60 * 60; // 24-hourly pool
-
-    // TODO: Handle newer pool types when the time comes
+    // If crypto pools, we currently have 1 hr pools for now
     return 60 * 60;
   }
 

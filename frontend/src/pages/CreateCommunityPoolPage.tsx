@@ -404,7 +404,6 @@ export const CreateCommunityPoolPage = () => {
                   )}
                 </div>
               </div>
-
               <div className="flex gap-2.5 items-start mb-4">
                 {form.predictionToken ? (
                   <img src={`/assets/${form.predictionToken.toLowerCase()}.png`} className="w-8 h-8 rounded-full" />
@@ -416,12 +415,13 @@ export const CreateCommunityPoolPage = () => {
                 </div>
               </div>
 
-              <div className="font-medium text-xs md:text-sm text-text-subtitle mb-2">Pool Closes In</div>
+              <div className="text-xs md:text-sm text-text-subtitle mb-2">
+                Pool <span className="font-black">Closes</span> In
+              </div>
 
               <CountdownBadgePreview
                 timestamp={form.windowCloseTime ? Math.trunc(form.windowCloseTime.getTime() / 1000) : 0}
               />
-
               <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-3">
                 <span className="mr-4">Entry Fee</span>
                 {form.stakeToken && form.stakeAmount && (
@@ -431,7 +431,6 @@ export const CreateCommunityPoolPage = () => {
                   </div>
                 )}
               </div>
-
               <div className="flex justify-between font-medium text-sm md:text-md text-text-subtitle mb-4">
                 <span className="mr-4">Multiplier</span>
                 <span className="font-bold text-base -mt-1">{form.multiplier}</span>

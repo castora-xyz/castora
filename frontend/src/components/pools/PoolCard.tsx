@@ -64,23 +64,47 @@ export const PoolCard = ({
         <div className="font-medium text-2xl text-text-title">{seeds.pairName()}</div>
       </div>
 
-      {(now > seeds.windowCloseTime || isInLandingPage) && (
-        <div
-          className={
-            'py-1.5 px-4 font-medium rounded-full w-fit text-sm sm:text-md bg-primary-default text-white ' +
-            (isInLandingPage ? 'mb-6' : 'mb-4')
-          }
-        >
+      {isInLandingPage && (
+        <>
+          <div className="py-1.5 px-4 font-medium rounded-full w-fit text-sm sm:text-md mb-6 bg-primary-default text-white">
+            {!!winAmount
+              ? `Win Amount: ${winAmount} ${seeds.stakeTokenDetails.name}`
+              : `Snapshot: ${seeds.formattedSnapshotTime().reverse().join(' ')}`}
+          </div>
+        </>
+      )}
+
+      <div className="text-xs md:text-sm text-text-subtitle mb-2">
+        {seeds.status() === 'Upcoming' && (
+          <span>
+            Pool <span className="font-black">Opens</span> In
+          </span>
+        )}
+        {seeds.status() === 'Open' && (
+          <span>
+            Pool <span className="font-black">Closes</span> In
+          </span>
+        )}
+        {seeds.status() === 'Closed' && (
+          <span>
+            Awaiting <span className="font-black">Settlement</span>
+          </span>
+        )}
+        {seeds.status() === 'Completed' && (
+          <span>
+            Was <span className="font-black">Settled</span>
+            <span>{!!winAmount ? ' With' : ' At'}</span>
+          </span>
+        )}
+      </div>
+
+      {now > seeds.windowCloseTime && !isInLandingPage && (
+        <div className="py-1.5 px-4 font-medium rounded-full w-fit text-sm sm:text-md mb-4 border-primary-lighter bg-primary-subtle text-primary-darker">
           {!!winAmount
             ? `Win Amount: ${winAmount} ${seeds.stakeTokenDetails.name}`
             : `Snapshot: ${seeds.formattedSnapshotTime().reverse().join(' ')}`}
         </div>
       )}
-
-      <div className="font-medium text-xs md:text-sm text-text-subtitle mb-2">
-        {seeds.status() === 'Upcoming' ? 'Pool Opens In' : ''}
-        {seeds.status() === 'Open' ? 'Pool Closes In' : ''}
-      </div>
 
       <CountdownBadge seeds={seeds} />
 

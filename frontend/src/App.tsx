@@ -50,7 +50,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       <main
         className={
           'grow flex flex-col items-stretch' +
-          (location.pathname === '/' || location.pathname === '/pools/create' ? '' : ' max-[414px]:px-4 px-8 pb-16')
+          (['/', '/pools', '/pools/create'].includes(location.pathname) ? '' : ' max-[414px]:px-4 px-8 pb-16')
         }
       >
         {outlet}

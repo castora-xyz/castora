@@ -71,7 +71,8 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
       [pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId],
       (priceFeed) => {
         const { price, expo } = priceFeed.getPriceUnchecked();
-        setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)));
+        const parsed = +price * 10 ** expo;
+        setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
       }
     );
     return () => connection.closeWebSocket();

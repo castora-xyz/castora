@@ -23,12 +23,8 @@ export const LandingPage = () => {
 
   useEffect(() => {
     if (liveCryptoPools.length > 0) {
-      const activePools = liveCryptoPools.filter(
-        ({ seeds }) => seeds.status() === 'Open'
-      );
-      const upcomingPools = liveCryptoPools.filter(
-        ({ seeds }) => seeds.status() === 'Upcoming'
-      );
+      const activePools = liveCryptoPools.filter(({ seeds }) => seeds.status() === 'Open');
+      const upcomingPools = liveCryptoPools.filter(({ seeds }) => seeds.status() === 'Upcoming');
       const sorter = (a: Pool, b: Pool) => {
         const bST = b.seeds.snapshotTime;
         const bWCT = b.seeds.windowCloseTime;
@@ -57,18 +53,12 @@ export const LandingPage = () => {
     <div className="flex flex-col justify-center grow bg-surface-subtle pt-20 md:py-32">
       {/* HERO SECTION */}
       <p className="px-8 text-center text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-text-title mb-8 md:mb-12">
-        Predict{' '}
-        <span className="text-primary-darker dark:text-primary-default">
-          Prices,{' '}
-        </span>
+        Predict <span className="text-primary-darker dark:text-primary-default">Prices, </span>
         <span className="sm:hidden">
           <br />
         </span>
         Win
-        <span className="text-primary-darker dark:text-primary-default">
-          {' '}
-          Prizes,{' '}
-        </span>
+        <span className="text-primary-darker dark:text-primary-default"> Prizes, </span>
         <br />
         Fun stuff like that...
       </p>
@@ -92,25 +82,15 @@ export const LandingPage = () => {
 
       {/* DISCOVER POOLS SECTION */}
       <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32">
-        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">
-          Discover Pools
-        </h2>
+        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">Discover Pools</h2>
         <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
-          Explore variety of pools in which to make predictions. Various pools
-          have their Pool Pairs, Entry Fees, Pool Closing Times as well as
-          Snapshot Times.
+          Explore variety of pools in which to make predictions. Various pools have their Pool Pairs, Entry Fees, Pool
+          Closing Times as well as Snapshot Times.
         </p>
         <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
           <div className="max-[414px]:p-4 p-8 rounded-[32px] bg-surface-subtle border border-border-default dark:border-surface-disabled max-lg:max-w-lg max-lg:mx-auto lg:basis-1/2 w-full flex flex-col grow">
             <div className="border border-border-default dark:border-surface-subtle rounded-[24px] w-full bg-app-bg flex flex-col grow">
-              {activePool ? (
-                <PoolCard
-                  pool={activePool ?? upcomingPool}
-                  isInLandingPage={true}
-                />
-              ) : (
-                <PoolCardShimmer />
-              )}
+              {activePool ? <PoolCard pool={activePool ?? upcomingPool} isInLandingPage={true} /> : <PoolCardShimmer />}
             </div>
           </div>
 
@@ -125,12 +105,10 @@ export const LandingPage = () => {
 
       {/* WIN AND CLAIM REWARDS SECTION */}
       <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32 text-center">
-        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
-          Win and Claim Rewards
-        </h2>
+        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4">Win and Claim Rewards</h2>
         <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl">
-          You are a winner if your prediction is closest to the price at the
-          snapshot time. You share entire pools' stake with other winners.
+          You are a winner if your prediction is closest to the price at the snapshot time. You share entire pools'
+          stake with other winners.
         </p>
         <div className="py-12 md:pt-20 lg:pt-32 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-screen-lg mx-auto border border-border-default dark:border-surface-disabled relative">
           <div className="md:flex md:max-w-screen-md md:mx-auto gap-4">
@@ -144,12 +122,9 @@ export const LandingPage = () => {
 
       {/* MANAGE PREDICTIONS SECTION */}
       <div className="bg-app-bg rounded-[48px] px-4 xs:px-6 py-16 mb-20 md:py-24 md:mb-32">
-        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">
-          Manage your Predictions
-        </h2>
+        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl mb-4 text-center">Manage your Predictions</h2>
         <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
-          Easily track the status of your all your predictions from your
-          activity panel.
+          Easily track the status of your all your predictions from your activity panel.
         </p>
         <div className="pt-8 md:pt-20 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-screen-lg mx-auto border border-border-default dark:border-surface-disabled lg:flex">
           <h3 className="font-bold text-surface-default text-4xl max-md:mb-12 max-sm:pl-4 md:text-6xl md:mb-20">
@@ -170,8 +145,7 @@ export const LandingPage = () => {
         </h2>
 
         <p className="text-2xl lg:text-3xl max-lg:max-w-lg lg:max-w-3xl mx-auto mb-12 lg:mb-20">
-          Explore pools, enter your predictions, and get your share of rewards
-          up for grabs.
+          Explore pools, enter your predictions, and get your share of rewards up for grabs.
         </p>
 
         <Link
