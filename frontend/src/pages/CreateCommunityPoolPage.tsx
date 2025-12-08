@@ -86,6 +86,7 @@ export const CreateCommunityPoolPage = () => {
 
   const validateForm = (f: CreatePoolForm = form): boolean => {
     const newErrors: Record<string, string> = {};
+    const now = new Date();
 
     if (!f.predictionToken) newErrors.predictionToken = 'Required';
     if (!f.stakeToken) newErrors.stakeToken = 'Required';
@@ -95,12 +96,16 @@ export const CreateCommunityPoolPage = () => {
     if (!f.multiplier) newErrors.multiplier = 'Required';
     if (!f.visibility) newErrors.visibility = 'Required';
 
-    if (f.windowCloseTime && f.snapshotTime) {
-      if (f.snapshotTime < f.windowCloseTime) {
-        newErrors.snapshotTime = 'Snapshot time must be after window close time';
+    if (f.windowCloseTime && f.windowCloseTime <= now) {
+      newErrors.windowCloseTime = 'Window close time must be in the future';
+    }
+
+    if (f.snapshotTime) {
+      if (f.snapshotTime <= now) {
+        newErrors.snapshotTime = 'Snapshot time must be in the future';
       }
-      if (f.windowCloseTime <= new Date()) {
-        newErrors.windowCloseTime = 'Window close time must be in the future';
+      if (f.windowCloseTime && f.snapshotTime <= f.windowCloseTime) {
+        newErrors.snapshotTime = 'Snapshot time must be after window close time';
       }
     }
 
@@ -109,8 +114,9 @@ export const CreateCommunityPoolPage = () => {
   };
 
   const onChangeCheckForm = (newForm: CreatePoolForm) => {
-    if (!hasAttemptedSubmit) return;
-    validateForm(newForm);
+    if (newForm.windowCloseTime !== form.windowCloseTime || newForm.snapshotTime !== form.snapshotTime || hasAttemptedSubmit) {
+      validateForm(newForm);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,67 +238,117 @@ export const CreateCommunityPoolPage = () => {
             {/* Window Close Time */}
             <div>
               <label className="block text-sm font-medium mb-2 text-text-title">Window Close Time *</label>
-              <button className="w-full" onClick={() => windowCloseRef.current?.show()} type="button">
-                <Calendar
-                  readOnlyInput
-                  dateFormat="D dd M yy  "
-                  ref={windowCloseRef}
-                  value={form.windowCloseTime}
-                  onFocus={() => windowCloseRef.current?.show()}
-                  onChange={(e) => {
-                    const date = e.value as Date | null;
-                    if (date) {
-                      setForm({ ...form, windowCloseTime: formatTimeToNearest5Minutes(date) });
-                      onChangeCheckForm({ ...form, windowCloseTime: formatTimeToNearest5Minutes(date) });
-                    }
-                  }}
-                  showTime
-                  hourFormat="24"
-                  stepMinute={5}
-                  minDate={new Date()}
-                  placeholder="Select window close time"
-                  className="w-full"
-                  pt={{
-                    root: { className: 'w-full p-3 rounded-md bg-surface-subtle' },
-                    panel: { className: 'bg-app-bg' },
-                    header: { className: 'bg-app-bg' },
-                    input: { root: { className: 'cursor-pointer !shadow-none focus:!shadow-none' } }
-                  }}
-                />
-              </button>
+              <Calendar
+                ref={windowCloseRef}
+                value={form.windowCloseTime}
+                onChange={(e) => {
+                  const date = e.value as Date | null;
+                  const newForm = { ...form, windowCloseTime: date ? formatTimeToNearest5Minutes(date) : null };
+                  if (newForm.snapshotTime && newForm.windowCloseTime && newForm.snapshotTime <= newForm.windowCloseTime) {
+                    newForm.snapshotTime = null;
+                  }
+                  setForm(newForm);
+                  validateForm(newForm);
+                }}
+                showTime
+                hourFormat="24"
+                stepMinute={5}
+                minDate={new Date()}
+                placeholder="Select date and time"
+                dateFormat="dd/mm/yy"
+                timeOnly={false}
+                showIcon
+                iconPos="right"
+                inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
+                  errors.windowCloseTime 
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default' 
+                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
+                } focus:!ring-offset-0`}
+                className="w-full"
+                pt={{
+                  root: { className: 'w-full' },
+                  panel: { className: 'bg-app-bg border border-border-default' },
+                  header: { className: 'bg-app-bg' },
+                  input: { 
+                    root: { 
+                      className: 'w-full !shadow-none focus:!shadow-none' 
+                    } 
+                  }
+                }}
+              />
+              {form.windowCloseTime && !errors.windowCloseTime && (
+                <p className="text-xs text-text-subtitle mt-1">
+                  Selected: {form.windowCloseTime.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                </p>
+              )}
               {errors.windowCloseTime && <Message severity="error" text={errors.windowCloseTime} className="mt-2" />}
             </div>
 
             {/* Snapshot Time */}
             <div>
               <label className="block text-sm font-medium mb-2 text-text-title">Snapshot Time *</label>
-              <button className="w-full" onClick={() => snapshotRef.current?.show()} type="button">
-                <Calendar
-                  readOnlyInput
-                  value={form.snapshotTime}
-                  dateFormat="D dd M yy  "
-                  ref={snapshotRef}
-                  onChange={(e) => {
-                    const date = e.value as Date | null;
-                    if (date) {
-                      setForm({ ...form, snapshotTime: formatTimeToNearest5Minutes(date) });
-                      onChangeCheckForm({ ...form, snapshotTime: formatTimeToNearest5Minutes(date) });
-                    }
-                  }}
-                  showTime
-                  hourFormat="24"
-                  stepMinute={5}
-                  minDate={form.windowCloseTime || new Date()}
-                  placeholder="Select snapshot time"
-                  className="w-full"
-                  pt={{
-                    root: { className: 'p-3 rounded-md w-full bg-surface-subtle' },
-                    panel: { className: 'bg-app-bg' },
-                    header: { className: 'bg-app-bg' },
-                    input: { root: { className: 'cursor-pointer !shadow-none focus:!shadow-none' } }
-                  }}
-                />
-              </button>
+              <Calendar
+                ref={snapshotRef}
+                value={form.snapshotTime}
+                onChange={(e) => {
+                  const date = e.value as Date | null;
+                  const newForm = { ...form, snapshotTime: date ? formatTimeToNearest5Minutes(date) : null };
+                  setForm(newForm);
+                  onChangeCheckForm(newForm);
+                }}
+                showTime
+                hourFormat="24"
+                stepMinute={5}
+                minDate={form.windowCloseTime || new Date()}
+                placeholder="Select date and time"
+                dateFormat="dd/mm/yy"
+                timeOnly={false}
+                showIcon
+                iconPos="right"
+                inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
+                  errors.snapshotTime 
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default' 
+                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
+                } focus:!ring-offset-0 ${!form.windowCloseTime ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="w-full"
+                disabled={!form.windowCloseTime}
+                pt={{
+                  root: { className: 'w-full' },
+                  panel: { className: 'bg-app-bg border border-border-default' },
+                  header: { className: 'bg-app-bg' },
+                  input: { 
+                    root: { 
+                      className: 'w-full !shadow-none focus:!shadow-none' 
+                    } 
+                  }
+                }}
+              />
+              {!form.windowCloseTime && (
+                <p className="text-xs text-text-subtitle mt-1">
+                  Please select Window Close Time first
+                </p>
+              )}
+              {form.snapshotTime && !errors.snapshotTime && (
+                <p className="text-xs text-text-subtitle mt-1">
+                  Selected: {form.snapshotTime.toLocaleString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                </p>
+              )}
               {errors.snapshotTime && <Message severity="error" text={errors.snapshotTime} className="mt-2" />}
             </div>
 
