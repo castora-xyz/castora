@@ -9,3 +9,5 @@ export * from './MyActivityCreatedPoolsPage';
 export * from './MyActivityPredictionsPage';
 export * from './NotFoundPage';
 export * from './PoolDetailPage';
+export * from './PrivacyPage';
+export * from './TermsPage';

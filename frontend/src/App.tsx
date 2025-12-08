@@ -9,7 +9,9 @@ import {
   MyActivityCreatedPoolsPage,
   MyActivityPredictionsPage,
   NotFoundPage,
-  PoolDetailPage
+  PoolDetailPage,
+  PrivacyPage,
+  TermsPage
 } from '@/pages';
 import { ReactNode, useEffect } from 'react';
 import {
@@ -36,7 +38,9 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
       '/pools/community': 'Community Pools',
       '/leaderboard': 'Leaderboard',
       '/activity/predictions': 'My Activity - Predictions',
-      '/activity/created-pools': 'My Activity - Created Pools'
+      '/activity/created-pools': 'My Activity - Created Pools',
+      '/terms': 'Terms of Service',
+      '/privacy': 'Privacy Policy'
     };
     let name = names[location.pathname];
     if (!name && location.pathname.startsWith('/pool/')) name = 'Pool Detail';
@@ -79,6 +83,8 @@ const router = createBrowserRouter(
         <Route path="activity" element={<Navigate to="predictions" replace />} />
         <Route path="activity/predictions" element={<MyActivityPredictionsPage />} />
         <Route path="activity/created-pools" element={<MyActivityCreatedPoolsPage />} />
+        <Route path="terms" element={<TermsPage />} />
+        <Route path="privacy" element={<PrivacyPage />} />
       </Route>
     </Route>
   )
