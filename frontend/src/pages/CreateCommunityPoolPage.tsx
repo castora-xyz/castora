@@ -1,5 +1,5 @@
 import Globe from '@/assets/globe.svg?react';
-import Link from '@/assets/link.svg?react';
+import LinkIcon from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import { CountdownNumbers, CreatePoolModal } from '@/components';
 import { allowedCreatorPredTokens, CreatePoolForm, useCurrentTime, useFirebase, useToast } from '@/contexts';
@@ -13,6 +13,7 @@ import { Message } from 'primereact/message';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 
 const formDefaults: CreatePoolForm = {
@@ -439,7 +440,7 @@ export const CreateCommunityPoolPage = () => {
 
                   <Tooltip target="#preview-pool-visibility" />
                   {form.visibility == 'unlisted' ? (
-                    <Link
+                    <LinkIcon
                       id="preview-pool-visibility"
                       className="mt-5 w-5 h-5 -mr-1 text-primary-default"
                       data-pr-tooltip="Unlisted"
@@ -487,14 +488,22 @@ export const CreateCommunityPoolPage = () => {
             </div>
 
             <div className="lg:flex lg:justify-center">
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                className="w-full lg:max-w-80 lg:-mr-24 py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Create Pool
-                <Ripple />
-              </button>
+              <div className="w-full lg:max-w-80 lg:-mr-24">
+                <p className="text-xs text-text-subtitle mb-3 text-center">
+                  By creating this pool, you agree to our{' '}
+                  <Link to="/terms" className="text-primary-default underline hover:text-primary-darker">
+                    Terms of Service
+                  </Link>
+                </p>
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  className="w-full py-3 px-6 rounded-full bg-primary-default text-white font-medium p-ripple disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create Pool
+                  <Ripple />
+                </button>
+              </div>
             </div>
           </div>
         </div>
