@@ -16,7 +16,7 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
     queueName: 'mainnet-pool-syncer',
     jobName: 'sync-mainnet-pools',
     jobData: { chain: 'monadmainnet' },
-    repeat: { pattern: '5 0 */1 * * *' }, // every 1 hour at 0 mins 5 secs
+    repeat: { pattern: '0 0 */1 * * *' }, // every 1 hour
     jobId: 'sync-pools-on-monadmainnet'
   });
 
@@ -24,7 +24,7 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
     queueName: 'testnet-community-pools-checker',
     jobName: 'check-testnet-community-pools',
     jobData: { chain: 'monadtestnet' },
-    repeat: { pattern: '5 */1,*/31 * * * *' }, // every 1 min & 31 min at :05 seconds
+    repeat: { pattern: '5 */1 * * * *' }, // every 1 min at :05 seconds
     jobId: 'check-community-pools-on-monadtestnet'
   });
 

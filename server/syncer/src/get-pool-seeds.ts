@@ -27,7 +27,7 @@ interface PoolTimes {
  * @return {Array} An array of objects containing the windowCloseTime and snapshotTime
  * for each of the three periods.
  */
-const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
+const getTestnetCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   const now = new Date();
   const utcNow = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours());
   const dxSecs = dxHrs * 3600;
@@ -44,9 +44,28 @@ const getCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   ];
 };
 
+const getMainnetCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
+  const now = new Date();
+  const hr = now.getUTCHours() + 1;
+
+  // get timestamp with rollover handled
+  const ts = (h: number, m: number) => {
+    const d = new Date(now);
+    d.setUTCHours(h, m, 0, 0);
+    return Math.floor(d.getTime() / 1000);
+  };
+  const mins = 60 - windowCloseGapMins;
+
+  return [
+    { windowCloseTime: ts(hr - 1, mins), snapshotTime: ts(hr, 0) },
+    { windowCloseTime: ts(hr, mins), snapshotTime: ts(hr + 1, 0) },
+    { windowCloseTime: ts(hr + 1, mins), snapshotTime: ts(hr + 2, 0) }
+  ];
+};
+
 export const getTestnetCryptoSeeds = (chain: Chain) => {
-  const sixHTimes = getCryptoTimes(6, 1);
-  const twenty4HTimes = getCryptoTimes(12, 12);
+  const sixHTimes = getTestnetCryptoTimes(6, 1);
+  const twenty4HTimes = getTestnetCryptoTimes(12, 12);
   const seeds: PoolSeeds[] = [];
 
   for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
@@ -103,7 +122,7 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
 };
 
 export const getMainnetCryptoSeeds = (chain: Chain) => {
-  const times = [...getCryptoTimes(1.5, 0.5), ...getCryptoTimes(1, 0.25)];
+  const times = [...getMainnetCryptoTimes(15), ...getMainnetCryptoTimes(30)];
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
     seeds.push(
@@ -127,7 +146,7 @@ export const getMainnetCryptoSeeds = (chain: Chain) => {
  * for the previous, current, and next "hour duration"s (6h or 24h) with context of
  * Stock Markets.
  *
- * There are 2 difference between this and {@link getCryptoTimes}:
+ * There are 2 difference between this and {@link getTestnetCryptoTimes}:
  * 1. Stock markets are not naturally active in weekends. So the generated times, if
  *    including weekends, will be a pool whose snapshot is on the next Monday. That is
  *    the weekend days are joined to one long pool.

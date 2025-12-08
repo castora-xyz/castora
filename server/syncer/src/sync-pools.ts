@@ -40,17 +40,26 @@ export const syncPools = async (job: Job): Promise<void> => {
     await firestore.doc(`/chains/${chain}/live/stocks`).set({ poolIds: stocksPoolIds }, { merge: true });
   } else {
     logger.info(`Starting Sync for Live Crypto Pools on chain: ${chain}`);
-    const cryptoSeeds = getMainnetCryptoSeeds(chain);
-    const cryptoPoolIds: number[] = [];
-    for (const seed of cryptoSeeds) {
-      const poolId =
-        seed.windowCloseTime <= Math.trunc(Date.now() / 1000)
-          ? await getPoolId(chain, seed)
-          : await createPool(chain, seed);
-      if (poolId) cryptoPoolIds.push(poolId);
-      logger.info('\n');
-    }
-    logger.info(cryptoPoolIds, 'Live Crypto PoolIds');
-    await firestore.doc(`/chains/${chain}/live/crypto`).set({ poolIds: cryptoPoolIds }, { merge: true });
+    logger.info('First Pass Call, Main Sync');
+    const getIds = async () => {
+      const ids: number[] = [];
+      const seeds = getMainnetCryptoSeeds(chain);
+      for (const seed of seeds) {
+        const poolId =
+          seed.windowCloseTime <= Math.trunc(Date.now() / 1000)
+            ? await getPoolId(chain, seed)
+            : await createPool(chain, seed);
+        if (poolId) ids.push(poolId);
+        logger.info('\n');
+      }
+      return ids;
+    };
+    getIds();
+
+    logger.info('Second Pass Call for Failed Creations');
+    const poolIds = await getIds();
+
+    logger.info(poolIds, 'Live PoolIds');
+    await firestore.doc(`/chains/${chain}/live/crypto`).set({ poolIds }, { merge: true });
   }
 };
