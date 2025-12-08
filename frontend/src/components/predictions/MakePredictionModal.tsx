@@ -164,7 +164,7 @@ export const MakePredictionModal = ({
     const connection = new PriceServiceConnection('https://hermes.pyth.network');
     connection.subscribePriceFeedUpdates([seeds.predictionTokenDetails.pythPriceId], (priceFeed) => {
       const { price, expo } = priceFeed.getPriceUnchecked();
-      setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)));
+      setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 8 ? Math.abs(expo) : 8)));
     });
     return () => connection.closeWebSocket();
   }, []);

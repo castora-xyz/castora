@@ -35,7 +35,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
         );
         const { price, expo } = priceData.getPriceUnchecked();
         const formatted = parseFloat(
-          (+price * 10 ** expo).toFixed(Math.abs(expo) < 2 ? Math.abs(expo) : 2)
+          (+price * 10 ** expo).toFixed(Math.abs(expo) < 8 ? Math.abs(expo) : 8)
         );
         setBasePrice(formatted);
       } catch (e) {
@@ -57,7 +57,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
         setCurrentPrice(
           parseFloat(
             (+price * 10 ** expo).toFixed(
-              Math.abs(expo) < 2 ? Math.abs(expo) : 2
+              Math.abs(expo) < 8 ? Math.abs(expo) : 8
             )
           )
         );
