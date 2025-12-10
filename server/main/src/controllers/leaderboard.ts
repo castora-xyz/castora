@@ -42,7 +42,12 @@ export const getMainnetLeaderboard = async () => {
   const snapshot = await firestore.collection('users').orderBy('leaderboard.xp.mainnet', 'desc').limit(100).get();
   const entries = snapshot.docs.map((doc, index) => {
     const { leaderboard, stats } = doc.data();
-    return { address: doc.id, xp: leaderboard?.xp?.mainnet || 0, ...stats.mainnet, rank: index + 1 };
+    return {
+      address: doc.id,
+      xp: leaderboard?.xp?.mainnet || 0,
+      ...(stats?.mainnet ?? { predictionsVolume: 0, winningsVolume: 0 }),
+      rank: index + 1
+    };
   });
   const addresses = entries.map((e) => e.address);
   const statsCastora = await readGettersContract('monadmainnet', 'usersStatsBulk', [addresses]);
