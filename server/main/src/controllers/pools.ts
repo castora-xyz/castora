@@ -71,7 +71,6 @@ export const settlePool = async (chain: Chain, poolId: any): Promise<void> => {
  * @param chain The chain to sync the pools on.
  */
 export const syncPools = async (chain: Chain): Promise<void> => {
-  const net = chain === 'monadmainnet' ? 'mainnet' : 'testnet';
-  await queueJob({ queueName: `${net}-pool-syncer`, jobName: `sync-${net}-pools`, jobData: { chain } });
+  await queueJob({ queueName: 'pool-syncer', jobName: `sync-pools`, jobData: { chain } });
   logger.info(`Posted job to sync Pools on chain ${chain}`);
 };
