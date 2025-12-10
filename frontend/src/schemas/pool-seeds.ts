@@ -137,8 +137,8 @@ export class PoolSeeds {
     }
 
     // If it is a crypto pool, we currently have 12 hr pools,
-    // so open time is 12 hours earlier than windowCloseTime
-    return this.windowCloseTime - 12 * 60 * 60;
+    // so open time is 24 hours earlier than windowCloseTime
+    return this.windowCloseTime - 24 * 60 * 60;
 
     // TODO: Handle newer pool types when the time comes
     // return null;
@@ -256,12 +256,7 @@ export class PoolSeeds {
     const { name: stkToken } = this.stakeTokenDetails;
     if (!predictionTokens.includes(prdToken)) return false;
     if (!stakeTokens.includes(stkToken)) return false;
-
-    // For community pools, we need to determine the multiplier
-    // This would need to be implemented based on how community pools store their multiplier
-    // For now, we'll assume all community pools are 2x (this should be updated when the contract is ready)
-    const poolMultiplier = 'x2'; // This should come from the pool data
-    if (!multipliers.includes(poolMultiplier)) return false;
+    if (!multipliers.includes(`x${this.multiplier}`)) return false;
 
     return true;
   }
