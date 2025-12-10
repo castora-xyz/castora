@@ -1,6 +1,7 @@
 import {
   AAPL,
   aprMON,
+  BTC,
   CASTORA_SEPOLIA,
   Chain,
   CRCL,
@@ -44,7 +45,7 @@ const getTestnetCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
   ];
 };
 
-const getMainnetCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
+export const getMinsCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
   const now = new Date();
   const hr = now.getUTCHours();
 
@@ -61,6 +62,23 @@ const getMainnetCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
     { windowCloseTime: ts(hr, mins), snapshotTime: ts(hr + 1, 0) },
     { windowCloseTime: ts(hr + 1, mins), snapshotTime: ts(hr + 2, 0) }
   ];
+};
+
+const getDailyPoolTimes = () => {
+  const now = new Date();
+  const todayMidnight = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0) / 1000);
+  const oneDay = 24 * 3600;
+
+  const prevSnap = todayMidnight;
+  const currSnap = todayMidnight + oneDay;
+  const nextSnap = todayMidnight + 2 * oneDay;
+
+  const mk = (snap: number) => ({
+    snapshotTime: snap,
+    windowCloseTime: snap - 12 * 3600 // always noon UTC previous day
+  });
+
+  return [mk(prevSnap), mk(currSnap), mk(nextSnap)];
 };
 
 export const getTestnetCryptoSeeds = (chain: Chain) => {
@@ -122,21 +140,23 @@ export const getTestnetCryptoSeeds = (chain: Chain) => {
 };
 
 export const getMainnetCryptoSeeds = (chain: Chain) => {
-  const times = [...getMainnetCryptoTimes(15)];
+  const times = getDailyPoolTimes();
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
-    seeds.push(
-      new PoolSeeds({
-        predictionToken: getCastoraAddress(chain),
-        stakeToken: getCastoraAddress(chain),
-        stakeAmount: 100e18,
-        snapshotTime,
-        windowCloseTime,
-        feesPercent: 500,
-        multiplier: 300,
-        isUnlisted: false
-      })
-    );
+    for (const predictionToken of [BTC, SOL, CASTORA_SEPOLIA]) {
+      seeds.push(
+        new PoolSeeds({
+          predictionToken,
+          stakeToken: getCastoraAddress(chain),
+          stakeAmount: 100e18,
+          snapshotTime,
+          windowCloseTime,
+          feesPercent: 500,
+          multiplier: 300,
+          isUnlisted: false
+        })
+      );
+    }
   }
   return seeds;
 };

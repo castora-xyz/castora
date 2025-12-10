@@ -5,44 +5,24 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
 
 (async () => {
   await queueJob({
-    queueName: 'testnet-pool-syncer',
-    jobName: 'sync-testnet-pools',
-    jobData: { chain: 'monadtestnet' },
-    repeat: { pattern: '5 0 0,1,5,6,7,11,12,13,17,18,19,23 * * *' },
-    jobId: 'sync-pools-on-monadtestnet'
-  });
-
-  await queueJob({
-    queueName: 'mainnet-pool-syncer',
-    jobName: 'sync-mainnet-pools',
+    queueName: 'pool-syncer',
+    jobName: 'sync-pools',
     jobData: { chain: 'monadmainnet' },
-    repeat: { pattern: '0 0 */1 * * *' }, // every 1 hour
-    jobId: 'sync-pools-on-monadmainnet'
+    repeat: { pattern: '10 0 0 * * *' }, // 10 secs every midnight
+    jobId: 'sync-pools'
   });
 
   await queueJob({
-    queueName: 'testnet-community-pools-checker',
-    jobName: 'check-testnet-community-pools',
-    jobData: { chain: 'monadtestnet' },
-    repeat: { pattern: '5 */1 * * * *' }, // every 1 min at :05 seconds
-    jobId: 'check-community-pools-on-monadtestnet'
-  });
-
-  await queueJob({
-    queueName: 'mainnet-community-pools-checker',
-    jobName: 'check-mainnet-community-pools',
+    queueName: 'community-pools-checker',
+    jobName: 'check-community-pools',
     jobData: { chain: 'monadmainnet' },
     repeat: { pattern: '*/15 * * * * *' }, // every 15 seconds
-    jobId: 'check-community-pools-on-monadmainnet'
+    jobId: 'check-community-pools'
   });
 })();
 
-setWorker({ workerName: 'testnet-pool-syncer', handler: syncPools });
+setWorker({ workerName: 'pool-syncer', handler: syncPools });
 
-setWorker({ workerName: 'mainnet-pool-syncer', handler: syncPools });
-
-setWorker({ workerName: 'testnet-community-pools-checker', handler: checkCommunityPools });
-
-setWorker({ workerName: 'mainnet-community-pools-checker', handler: checkCommunityPools });
+setWorker({ workerName: 'community-pools-checker', handler: checkCommunityPools });
 
 setWorker({ workerName: 'community-pools-unlister', handler: unlistCommunityPool });
