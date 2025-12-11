@@ -205,7 +205,7 @@ export const MyActivityCreatedPoolsPage = () => {
 
             return null;
           },
-          size: 200
+          size: 120
         }),
         columnHelper.accessor((row) => ({ pool: row.pool, userCreated: row.userCreated }), {
           id: 'gained',
@@ -224,7 +224,7 @@ export const MyActivityCreatedPoolsPage = () => {
 
             return null;
           },
-          size: 150
+          size: 120
         }),
         columnHelper.accessor((row) => ({ pool: row.pool, userCreated: row.userCreated }), {
           id: 'claim',
