@@ -217,8 +217,7 @@ export const MyActivityCreatedPoolsPage = () => {
             if (!!completionTime) {
               return (
                 <span className="text-white font-medium flex items-center bg-success-default py-1 px-3 rounded-full text-xs w-fit">
-                  <Trophy className="fill-white w-4 h-4 mr-1" />
-                  Gained {userCreated.getGainedDisplay()}
+                  {userCreated.getGainedDisplay()}
                 </span>
               );
             }
