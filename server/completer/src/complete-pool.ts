@@ -6,11 +6,9 @@ import {
   queueJob,
   readPoolsManagerContract
 } from '@castora/shared';
-import { PoolMultiplier } from './get-no-of-winners.js';
 import { getSnapshotPrice } from './get-snapshot-price.js';
 import { mainnetOnchainCompletePool } from './mainnet-onchain-complete-pool.js';
 import { rearchivePool } from './rearchive-pool.js';
-import { setWinnersTestnet } from './set-winners-testnet.js';
 
 /**
  * Completes a pool by taking its snapshot and computing its winners.
@@ -20,6 +18,7 @@ import { setWinnersTestnet } from './set-winners-testnet.js';
  */
 export const completePool = async (job: Job): Promise<void> => {
   const { chain, poolId } = job.data;
+  if (chain == 'monadtestnet') return; // Completing disabled for testnet pools
   logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
@@ -48,7 +47,6 @@ export const completePool = async (job: Job): Promise<void> => {
     // Check if this is a community created pool and use accompanying data
     let creator: string | undefined;
     let creatorCompletionFees: string | undefined;
-    let multiplier: PoolMultiplier = 2;
     const isCommunity = await readPoolsManagerContract(chain, 'doesUserCreatedPoolExist', [poolId]);
 
     // if this is a community created pool, extract creator details to re-archival
@@ -57,21 +55,13 @@ export const completePool = async (job: Job): Promise<void> => {
       logger.info('Community Created Pool found, gathering extra data ...');
       const userCreatedPool = (await readPoolsManagerContract(chain, 'getUserCreatedPool', [poolId])) as any;
       creator = userCreatedPool.creator;
-
-      // multiplier is store in contract with 2 decimal places
-      multiplier = (Number(userCreatedPool.multiplier) / 100) as PoolMultiplier;
-      logger.info(
-        `Have noted pool creator ${creator} and their pool multiplier ${multiplier}. Proceeding to split result ...`
-      );
+      logger.info(`Have noted pool creator ${creator}. Proceeding to split result ...`);
     } else {
       logger.info('Not a Community Created Pool, proceeding to split result ...');
     }
 
     // Make on-chain call for completion
-    const splitResult =
-      chain === 'monadtestnet'
-        ? await setWinnersTestnet(chain, pool, snapshotPrice, multiplier)
-        : await mainnetOnchainCompletePool(chain, pool, snapshotPrice);
+    const splitResult = await mainnetOnchainCompletePool(chain, pool, snapshotPrice);
 
     // refetching the pool here so that the winAmount and completionTime will now be valid
     pool = await fetchPool(chain, poolId);

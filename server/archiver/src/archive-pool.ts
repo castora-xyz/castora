@@ -26,6 +26,7 @@ const queueCompletionJob = async (poolId: any, chain: Chain, seeds: PoolSeeds): 
  */
 export const archivePool = async (job: Job): Promise<void> => {
   const { chain, poolId, shouldComplete } = job.data;
+  if (chain == 'monadtestnet') return; // Archiving disabled for testnet pools
   logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
 
   const pool = await fetchPool(chain, poolId);

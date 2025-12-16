@@ -26,10 +26,7 @@ export type PoolMultiplier = 2 | 3 | 4 | 5 | 10;
  * @param poolMultiplier How much of stake winners go with, that's x2, x3, x4, x5, or x10
  * @returns The calculated noOfWinners.
  */
-export const getNoOfWinners = (
-  noOfPredictions: number,
-  poolMultiplier: PoolMultiplier
-): number => {
+export const getNoOfWinners = (noOfPredictions: number, poolMultiplier: PoolMultiplier): number => {
   if (noOfPredictions == 1) return 1;
 
   let computed = Math.floor(noOfPredictions / poolMultiplier);

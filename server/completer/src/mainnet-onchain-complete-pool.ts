@@ -19,8 +19,8 @@ export const mainnetOnchainCompletePool = async (
   pool: Pool,
   snapshotPrice: number
 ): Promise<SplitPredictionResult> => {
-  // 1. initiatePoolCompletion
-  let noOfWinners = getNoOfWinners(pool.noOfPredictions, pool.seeds.multiplier as PoolMultiplier);
+  // 1. initiatePoolCompletion, multiplier is in 2 decimals on chain
+  let noOfWinners = getNoOfWinners(pool.noOfPredictions, (pool.seeds.multiplier / 100) as PoolMultiplier);
   logger.info(`\nCalculated noOfWinners off-chain as: ${noOfWinners}`);
 
   const batchSize = noOfWinners > 1000 ? 1000 : noOfWinners;

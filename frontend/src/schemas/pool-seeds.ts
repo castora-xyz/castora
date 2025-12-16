@@ -136,7 +136,7 @@ export class PoolSeeds {
       return this.windowCloseTime - mul * 24 * 60 * 60;
     }
 
-    // If it is a crypto pool, we currently have 12 hr pools,
+    // If it is a crypto pool, we currently have 24 hr pools,
     // so open time is 24 hours earlier than windowCloseTime
     return this.windowCloseTime - 24 * 60 * 60;
 

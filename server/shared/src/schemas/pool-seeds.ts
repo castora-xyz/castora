@@ -11,9 +11,9 @@ export class PoolSeeds {
   stakeAmount: number;
   windowCloseTime: number;
   snapshotTime: number;
-  feesPercent?: number;
-  multiplier?: number;
-  isUnlisted?: boolean;
+  feesPercent: number;
+  multiplier: number;
+  isUnlisted: boolean;
 
   constructor(input: any) {
     this.predictionToken = input['predictionToken'];
@@ -21,9 +21,9 @@ export class PoolSeeds {
     this.stakeAmount = Number(input['stakeAmount']);
     this.snapshotTime = Number(input['snapshotTime']);
     this.windowCloseTime = Number(input['windowCloseTime']);
-    if (input['feesPercent']) this.feesPercent = Number(input['feesPercent']);
-    if (input['multiplier']) this.multiplier = Number(input['multiplier']);
-    if (input['isUnlisted'] !== undefined) this.isUnlisted = input['isUnlisted'];
+    this.feesPercent = Number(input['feesPercent']);
+    this.multiplier = Number(input['multiplier']);
+    this.isUnlisted = input['isUnlisted'] !== undefined ? input['isUnlisted'] : false;
   }
 
   /**
@@ -36,9 +36,9 @@ export class PoolSeeds {
       stakeAmount: BigInt(this.stakeAmount),
       windowCloseTime: BigInt(this.windowCloseTime),
       snapshotTime: BigInt(this.snapshotTime),
-      ...(this.feesPercent ? { feesPercent: BigInt(this.feesPercent) } : {}),
-      ...(this.multiplier ? { multiplier: BigInt(this.multiplier) } : {}),
-      ...(this.isUnlisted !== undefined ? { isUnlisted: this.isUnlisted } : {})
+      feesPercent: BigInt(this.feesPercent),
+      multiplier: BigInt(this.multiplier),
+      isUnlisted: this.isUnlisted
     };
   }
 
@@ -78,9 +78,9 @@ export class PoolSeeds {
       windowCloseTime: this.windowCloseTime,
       snapshotTime: this.snapshotTime,
       // fees percent and multiplier are in 2 decimals on chain so we divide here
-      ...(this.feesPercent ? { feesPercent: this.feesPercent / 100 } : {}),
-      ...(this.multiplier ? { multiplier: this.multiplier / 100 } : {}),
-      ...(this.isUnlisted !== undefined ? { isUnlisted: this.isUnlisted } : {})
+      feesPercent: this.feesPercent / 100,
+      multiplier: this.multiplier / 100,
+      isUnlisted: this.isUnlisted
     };
   }
 }
