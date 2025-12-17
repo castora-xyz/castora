@@ -1,7 +1,6 @@
 import {
   AAPL,
   aprMON,
-  BTC,
   CASTORA_SEPOLIA,
   Chain,
   CRCL,
@@ -143,20 +142,20 @@ export const getMainnetCryptoSeeds = (chain: Chain) => {
   const times = getDailyPoolTimes();
   const seeds: PoolSeeds[] = [];
   for (const { windowCloseTime, snapshotTime } of times) {
-    for (const predictionToken of [BTC, SOL, CASTORA_SEPOLIA]) {
-      seeds.push(
-        new PoolSeeds({
-          predictionToken,
-          stakeToken: getCastoraAddress(chain),
-          stakeAmount: 100e18,
-          snapshotTime,
-          windowCloseTime,
-          feesPercent: 500,
-          multiplier: 300,
-          isUnlisted: false
-        })
-      );
-    }
+    // for (const predictionToken of [BTC, SOL, CASTORA_SEPOLIA]) {
+    seeds.push(
+      new PoolSeeds({
+        predictionToken: CASTORA_SEPOLIA,
+        stakeToken: getCastoraAddress(chain),
+        stakeAmount: 100e18,
+        snapshotTime,
+        windowCloseTime,
+        feesPercent: 500,
+        multiplier: 300,
+        isUnlisted: false
+      })
+    );
+    // }
   }
   return seeds;
 };
