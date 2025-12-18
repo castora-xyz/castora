@@ -10,6 +10,8 @@ import { Chain, logger, Pool, PoolSeeds, queueJob, readCastoraContract, writeCon
  * is in the past.
  */
 export const createPool = async (chain: Chain, seeds: PoolSeeds): Promise<number | null> => {
+  if (chain === 'monadtestnet') return null; // not creating pools in testnet anymore
+
   logger.info('Create Pool => Got PoolSeeds');
   const seedsHash = await readCastoraContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
   logger.info(`Hashed PoolSeeds: ${seedsHash}`);

@@ -10,6 +10,7 @@ import { getMainnetCryptoSeeds, getTestnetCryptoSeeds, getTestnetStockSeeds } fr
  */
 export const syncPools = async (job: Job): Promise<void> => {
   const { chain } = job.data;
+  if (chain === 'monadtestnet') return; // not syncing in testnet again
   if (chain === 'monadtestnet') {
     logger.info(`Starting Sync for Live Crypto Pools on chain: ${chain}`);
     const cryptoSeeds = getTestnetCryptoSeeds(chain);

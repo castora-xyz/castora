@@ -8,6 +8,8 @@ import { Chain, logger, Pool, PoolSeeds, readCastoraContract } from '@castora/sh
  * @returns The poolId of the pool with seeds or null if it doesn't exist.
  */
 export const getPoolId = async (chain: Chain, seeds: PoolSeeds): Promise<number | null> => {
+  if (chain === 'monadtestnet') return null; // not getting pools in testnet anymore
+
   logger.info('GetPoolId => Got PoolSeeds');
   const seedsHash = await readCastoraContract(chain, 'hashPoolSeeds', [seeds.bigIntified()]);
   logger.info(`Hashed PoolSeeds: ${seedsHash}`);

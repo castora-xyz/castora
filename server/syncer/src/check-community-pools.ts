@@ -22,6 +22,7 @@ import {
  */
 export const checkCommunityPools = async (job: Job): Promise<void> => {
   const { chain } = job.data;
+  if (chain === 'monadtestnet') return; // not checking in testnet anymore
 
   // Retrieve the last handled nth community pool from redis
   const redisKey = `last-handled-community-pool-index:chain-${chain}`;
