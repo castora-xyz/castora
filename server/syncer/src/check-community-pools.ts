@@ -10,6 +10,8 @@ import {
   redisClient
 } from '@castora/shared';
 
+const IDLE_LOG_INTERVAL_SECS = 20 * 60; // 20 minutes
+
 /**
  * Checks for newly created community pools and
  * 1. post the target time archive and complete jobs for the pools
@@ -33,7 +35,6 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
   }
 
   const lastHandledNth = +lastHandledNthRaw;
-  logger.info(`Last handled nth community pool from Redis for chain ${chain} is ${lastHandledNth}`);
   if (isNaN(lastHandledNth)) {
     throw `Invalid last handled nth community pool found in redis for chain: ${chain} value: ${lastHandledNthRaw}`;
   }
@@ -45,7 +46,6 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
   }
 
   const noOfUserCreatedPools = Number(allStats['noOfUserCreatedPools']);
-  logger.info(`noOfUserCreatedPools from Pools Manager Contract for chain ${chain} is ${noOfUserCreatedPools}`);
   if (isNaN(noOfUserCreatedPools)) {
     throw (
       `Invalid noOfUserCreatedPools from Pools Manager Contract for chain: ${chain},` +
@@ -53,9 +53,21 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
     );
   }
 
+  const lastIdleLogTimeKey = `community-pools-checker-last-idle-log-time:chain-${chain}`;
+  const lastIdleLogTimeRaw = await redisClient.get(lastIdleLogTimeKey);
+  const lastIdleLogTime = !lastIdleLogTimeRaw || isNaN(+lastIdleLogTimeRaw) ? 0 : +lastIdleLogTimeRaw;
+  const now = Math.trunc(Date.now() / 1000);
+  const shouldLogIdle = now - lastIdleLogTime >= IDLE_LOG_INTERVAL_SECS;
+  if (shouldLogIdle) await redisClient.set(lastIdleLogTimeKey, now);
+
   // Compare the retrieved numbers, if equal, return, no new pool yet
   if (lastHandledNth === noOfUserCreatedPools) {
-    logger.info('Redis Processed Count and Contract Counts are the same. No new pools to process. Ending Job.');
+    if (shouldLogIdle) {
+      logger.info(
+        `Live Health Logging 🫡:  No new community pools to handle on chain: ${chain} yet, ` +
+          `noOfUserCreatedPools: ${noOfUserCreatedPools}, lastHandledNth: ${lastHandledNth}`
+      );
+    }
     return;
   }
 
@@ -69,6 +81,11 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
 
   // If we are still here, then contract retrieved is greater than last handled and there are new pools
   // Retrieve all the new pool IDs from the poolsManager contract
+
+  logger.info(
+    `Processing ${noOfUserCreatedPools - lastHandledNth} unhandled community pools on chain ${chain}, ` +
+      `noOfUserCreatedPools: ${noOfUserCreatedPools}, lastHandledNth: ${lastHandledNth}`
+  );
   const newPoolIds = await readPoolsManagerContract(chain, 'getAllCreatedPoolIdsPaginated', [
     lastHandledNth,
     noOfUserCreatedPools - lastHandledNth
@@ -168,4 +185,5 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
 
   // finally, record the last handled nth community pool to Redis
   await redisClient.set(redisKey, noOfUserCreatedPools);
+  if (shouldLogIdle) logger.info(`Live Health Logging for Community Pools Checker 🫡 on chain: ${chain}.`);
 };

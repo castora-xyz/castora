@@ -23,6 +23,6 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
 
 setWorker({ workerName: 'pool-syncer', handler: syncPools });
 
-setWorker({ workerName: 'community-pools-checker', handler: checkCommunityPools });
+setWorker({ workerName: 'community-pools-checker', handler: checkCommunityPools, reduceLogs: true });
 
 setWorker({ workerName: 'community-pools-unlister', handler: unlistCommunityPool });

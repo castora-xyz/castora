@@ -35,9 +35,10 @@ export const queueJob = async ({ queueName, jobName, jobData, delay, repeat, job
 export interface SetWorkerOpts {
   workerName: string;
   handler: (job: Job) => Promise<void>;
+  reduceLogs?: boolean;
 }
 
-export const setWorker = ({ workerName, handler }: SetWorkerOpts) => {
+export const setWorker = ({ workerName, handler, reduceLogs }: SetWorkerOpts) => {
   const worker = new Worker(workerName, handler, { connection });
 
   worker.on('ready', () => {
@@ -45,11 +46,11 @@ export const setWorker = ({ workerName, handler }: SetWorkerOpts) => {
   });
 
   worker.on('active', (job) => {
-    logger.info(`\n\n\n🔄 Job ${job.id} started processing`);
+    if (!reduceLogs) logger.info(`\n\n\n🔄 Job ${job.id} started processing`);
   });
 
   worker.on('completed', (job) => {
-    logger.info(`✅ Job ${job.id} completed successfully`);
+    if (!reduceLogs) logger.info(`✅ Job ${job.id} completed successfully`);
   });
 
   worker.on('failed', (job, e) => {
