@@ -196,7 +196,15 @@ export const writeContract = async (
 
     logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 
-    if (chain === 'monadtestnet' && `${e}`.includes('TransactionReceiptNotFoundError')) {
+    if (
+      chain === 'monadmainnet' &&
+      (`${e}`.includes('An existing transaction had higher priority') || `${e}`.includes('txpool not responding'))
+    ) {
+      // When these errors happen, the transaction actually went through because on the retry, the pool then exists
+      // already. However, we wait for mining to be sure before proceeding.
+      logger.info('Waiting 5 seconds to allow transaction to be mined ...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } else if (chain === 'monadtestnet' && `${e}`.includes('TransactionReceiptNotFoundError')) {
       // Surprisingly, this receipt not found error happens when
       // the transaction succeeded, so we don't rethrow to not stop execution
       // but we wait 10 seconds to allow the transaction to be mined
