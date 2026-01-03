@@ -9,6 +9,7 @@ import {
   REDIS_CACHE_TTL_SECONDS,
   redisClient,
   storage,
+  updateMainnetLeaderboardLastUpdatedTime,
   updateTestnetLeaderboardLastUpdatedTime
 } from '@castora/shared';
 import { getTokenPrice } from './get-token-price.js';
@@ -258,8 +259,9 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
   }
 
   // Note the last updated time of the pool as now
-  await updateTestnetLeaderboardLastUpdatedTime(new Date());
-  logger.info('Updated last update time for testnet leaderboard in Redis');
+  if (isInTestnet) await updateTestnetLeaderboardLastUpdatedTime(new Date());
+  else await updateMainnetLeaderboardLastUpdatedTime(new Date());
+  logger.info(`Updated last update time for ${isInTestnet ? 'testnet' : 'mainnet'} leaderboard in Redis`);
 
   // Update the pool to mark the leaderboard processed
   try {
