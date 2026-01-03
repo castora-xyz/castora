@@ -1,26 +1,27 @@
 import {
+  Chain,
   firestore,
-  getMainnetLeaderboardLastUpdatedTime,
-  LDB_MAINNET_TOP100_KEY,
-  LDB_MAINNET_USER_PREFIX,
+  getLdbUserPrefix,
+  getLeaderboardLastUpdatedTime,
+  LDB_TOP100_KEY_PREFIX,
   logger,
   readGettersContract,
   readPoolsManagerContract,
-  REDIS_CACHE_TTL_SECONDS,
+  REDIS_LDB_CACHE_TTL_SECONDS,
   redisClient
 } from '@castora/shared';
 
-export const getMainnetLeaderboard = async () => {
-  logger.info('Getting Mainnet Leaderboard ... ');
+export const getLeaderboard = async (chain: Chain) => {
+  logger.info(`Getting Leaderboard for chain: ${chain} ... `);
 
   // Try to get from cache
-  const cached = await redisClient.get(LDB_MAINNET_TOP100_KEY);
+  const cached = await redisClient.get(`${LDB_TOP100_KEY_PREFIX}${chain}`);
   if (cached) {
     const parsed = JSON.parse(cached);
     const parsedLastUpdatedTime = new Date(parsed.lastUpdatedTime);
 
     // if cached data time is equal to or greater than last updated time, return cached
-    const lastUpdatedTime = await getMainnetLeaderboardLastUpdatedTime();
+    const lastUpdatedTime = await getLeaderboardLastUpdatedTime(chain);
     if (parsedLastUpdatedTime >= lastUpdatedTime) {
       logger.info('Returning cached leaderboard');
       return parsed;
@@ -28,27 +29,33 @@ export const getMainnetLeaderboard = async () => {
   }
 
   // Otherwise cache a new leaderboard and return it
-  logger.info('Fetching Mainnet Leaderboard from Firestore ... ');
+  logger.info('Fetching Leaderboard from Firestore ... ');
   const {
     leaderboard: {
-      lastUpdatedTime: { mainnet: lastUpdatedTimestamp }
-    },
-    mainnetUsersCount
+      lastUpdatedTime: {
+        chains: { [chain]: lastUpdatedTimestamp }
+      }
+    }
   } = (await firestore.doc('/counts/counts').get()).data() as any;
 
-  const snapshot = await firestore.collection('users').orderBy('leaderboard.xp.mainnet', 'desc').limit(100).get();
+  const snapshot = await firestore
+    .collection('users')
+    .orderBy(`leaderboard.xp.chains.${chain}`, 'desc')
+    .limit(100)
+    .get();
   const entries = snapshot.docs.map((doc, index) => {
     const { leaderboard, stats } = doc.data();
     return {
       address: doc.id,
-      xp: leaderboard?.xp?.mainnet || 0,
-      ...(stats?.mainnet ?? { predictionsVolume: 0, winningsVolume: 0 }),
+      xp: leaderboard?.xp?.chains?.[chain] || 0,
+      ...(stats?.[chain] ?? { predictionsVolume: 0, winningsVolume: 0 }),
       rank: index + 1
     };
   });
   const addresses = entries.map((e) => e.address);
-  const statsCastora = await readGettersContract('monadmainnet', 'usersStatsBulk', [addresses]);
-  const statsPoolsManager = await readPoolsManagerContract('monadmainnet', 'getUserStatsBulk', [addresses]);
+  const totalUsersCount = Number((await readGettersContract(chain, 'allStats')).noOfUsers);
+  const statsCastora = await readGettersContract(chain, 'usersStatsBulk', [addresses]);
+  const statsPoolsManager = await readPoolsManagerContract(chain, 'getUserStatsBulk', [addresses]);
   entries.forEach((entry, index) => {
     entry.joinedPools = Number(statsCastora[index].noOfJoinedPools);
     entry.predictions = Number(statsCastora[index].noOfPredictions);
@@ -59,23 +66,28 @@ export const getMainnetLeaderboard = async () => {
   const result = {
     entries,
     lastUpdatedTime: lastUpdatedTimestamp?.toDate() ?? new Date(),
-    totalUsersCount: mainnetUsersCount
+    totalUsersCount
   };
 
   // Cache the result
   try {
-    await redisClient.set(LDB_MAINNET_TOP100_KEY, JSON.stringify(result), 'EX', REDIS_CACHE_TTL_SECONDS);
+    await redisClient.set(
+      `${LDB_TOP100_KEY_PREFIX}${chain}`,
+      JSON.stringify(result),
+      'EX',
+      REDIS_LDB_CACHE_TTL_SECONDS
+    );
   } catch (e) {
-    logger.error(e, 'Failed to cache mainnet leaderboard');
+    logger.error(e, `Failed to cache leaderboard for chain: ${chain}`);
   }
 
   return result;
 };
 
-export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
-  logger.info('Getting My Mainnet Leaderboard ... ');
+export const getMyLeaderboard = async (userWalletAddress: string, chain: Chain) => {
+  logger.info(`Getting My Leaderboard for chain: ${chain} ... `);
   logger.info(`User Wallet Address: ${userWalletAddress}`);
-  const cacheKey = `${LDB_MAINNET_USER_PREFIX}${userWalletAddress}`;
+  const cacheKey = getLdbUserPrefix(userWalletAddress, chain);
 
   // Try to get from cache
   const cached = await redisClient.get(cacheKey);
@@ -86,24 +98,28 @@ export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
   }
 
   // Otherwise cache a new leaderboard and return it
-  logger.info('Fetching User Mainnet Leaderboard from Firestore ... ');
-  const { mainnetUsersCount } = (await firestore.doc('/counts/counts').get()).data() as any;
+  logger.info(`Fetching User Leaderboard for chain: ${chain}, from Firestore ... `);
+  const totalUsersCount = Number((await readGettersContract(chain, 'allStats')).noOfUsers);
   const snapshot = await firestore.doc(`/users/${userWalletAddress}`).get();
 
   let result;
   if (snapshot.exists) {
     const { leaderboard, stats } = snapshot.data() as any;
-    const xp = leaderboard?.xp?.mainnet || 0;
-    let rank = mainnetUsersCount + 1;
+    const xp = leaderboard?.xp?.chains?.[chain] || 0;
+    let rank = totalUsersCount + 1;
     let joinedPools = 0;
     let predictions = 0;
     let winnings = 0;
     let createdPools = 0;
     if (xp > 0) {
-      const totalSnap = await firestore.collection('users').where('leaderboard.xp.mainnet', '>', xp).count().get();
+      const totalSnap = await firestore
+        .collection('users')
+        .where(`leaderboard.xp.chains.${chain}`, '>', xp)
+        .count()
+        .get();
       rank = totalSnap.data().count + 1;
-      const statsCastora = await readGettersContract('monadmainnet', 'usersStats', userWalletAddress);
-      const statsPoolsManager = await readPoolsManagerContract('monadmainnet', 'getUserStats', userWalletAddress);
+      const statsCastora = await readGettersContract(chain, 'userStats', [userWalletAddress]);
+      const statsPoolsManager = await readPoolsManagerContract(chain, 'getUserStats', [userWalletAddress]);
       joinedPools = Number(statsCastora.noOfJoinedPools);
       predictions = Number(statsCastora.noOfPredictions);
       winnings = Number(statsCastora.noOfWinnings);
@@ -119,13 +135,13 @@ export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
       predictions,
       winnings,
       createdPools,
-      ...(stats?.mainnet ?? { winningsVolume: 0, predictionsVolume: 0 })
+      ...(stats?.[chain] ?? { winningsVolume: 0, predictionsVolume: 0 })
     };
   } else {
     result = {
       address: userWalletAddress,
       lastUpdatedTime: new Date(),
-      rank: mainnetUsersCount + 1,
+      rank: totalUsersCount + 1,
       xp: 0,
       joinedPools: 0,
       predictions: 0,
@@ -138,9 +154,9 @@ export const getMyMainnetLeaderboard = async (userWalletAddress: string) => {
 
   // Cache the result
   try {
-    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', REDIS_CACHE_TTL_SECONDS);
+    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', REDIS_LDB_CACHE_TTL_SECONDS);
   } catch (e) {
-    logger.error(e, 'Failed to cache user mainnet leaderboard');
+    logger.error(e, `Failed to cache user leaderboard for chain: ${chain}`);
   }
 
   return result;

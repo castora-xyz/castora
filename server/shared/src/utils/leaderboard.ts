@@ -1,11 +1,10 @@
 import { redisClient } from './jobs.js';
 
 const LDB_POOLS_KEY = 'pools-for-leaderboard-update';
-const LDB_MAINNET_LAST_UPDATED_TIME_KEY = 'leaderboard:mainnet:lastUpdatedTime';
-
-export const LDB_MAINNET_TOP100_KEY = 'leaderboard:mainnet:top100';
-export const LDB_MAINNET_USER_PREFIX = 'leaderboard:mainnet:user:';
-export const REDIS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+const LDB_LAST_UPDATED_TIME_KEY_PREFIX = 'leaderboard:lastUpdatedTime:chain:';
+export const LDB_TOP100_KEY_PREFIX = 'leaderboard:top100:chain:';
+export const REDIS_LDB_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+export const getLdbUserPrefix = (user: string, chain: string) => `leaderboard:user:${user}:chain:${chain}:`;
 
 /**
  * Adds a pool to be used to update the leaderboard later on
@@ -34,22 +33,24 @@ export const clearPoolsForLeaderboardUpdate = async () => {
 };
 
 /**
- * Updates the last updated time for the mainnet leaderboard.
+ * Updates the last updated time for a specific chain leaderboard.
  *
+ * @param chain - The blockchain network identifier
  * @param lastUpdatedTime - The Date object representing the last updated time.
  */
-export const updateMainnetLeaderboardLastUpdatedTime = async (lastUpdatedTime: Date) => {
-  await redisClient.set(LDB_MAINNET_LAST_UPDATED_TIME_KEY, lastUpdatedTime.toISOString());
+export const updateLeaderboardLastUpdatedTime = async (chain: string, lastUpdatedTime: Date) => {
+  await redisClient.set(`${LDB_LAST_UPDATED_TIME_KEY_PREFIX}${chain}`, lastUpdatedTime.toISOString());
 };
 
 /**
- * Retrieves the last updated time for the mainnet leaderboard.
+ * Retrieves the last updated time for a specific chain leaderboard.
  * If no time is set, it returns the current date.
  *
+ * @param chain - The blockchain network identifier
  * @returns A Promise that resolves to a Date object representing the last updated time.
  */
-export const getMainnetLeaderboardLastUpdatedTime = async (): Promise<Date> => {
-  const lastUpdatedTime = await redisClient.get(LDB_MAINNET_LAST_UPDATED_TIME_KEY);
+export const getLeaderboardLastUpdatedTime = async (chain: string): Promise<Date> => {
+  const lastUpdatedTime = await redisClient.get(`${LDB_LAST_UPDATED_TIME_KEY_PREFIX}${chain}`);
   if (!lastUpdatedTime) return new Date();
   return new Date(lastUpdatedTime as string);
 };

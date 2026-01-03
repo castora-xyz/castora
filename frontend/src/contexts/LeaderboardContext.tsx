@@ -2,6 +2,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServer } from '@/contexts/ServerContext';
 import { LeaderboardEntry } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { useAccount, useChains } from 'wagmi';
+import { monadMainnet } from './chains';
 
 interface LeaderboardContextProps {
   entries: LeaderboardEntry[];
@@ -26,6 +28,8 @@ const LeaderboardContext = createContext<LeaderboardContextProps>({
 export const useLeaderboard = () => useContext(LeaderboardContext);
 
 export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
+  const { chain: currentChain } = useAccount();
+  const [defaultChain] = useChains();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -35,12 +39,16 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
   const server = useServer();
   const { address } = useAuth();
 
+  const getChain = () => defaultChain ?? currentChain;
+  const getChainName = () => {
+    return { [monadMainnet.id]: 'monadmainnet' }[getChain().id];
+  };
 
   const fetchLeaderboard = async () => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await server.get(`/leaderboard/mainnet/top`);
+      const data = await server.get(`/leaderboard/top`, { chain: getChainName() });
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -71,7 +79,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const data = await server.get(`/leaderboard/mainnet/mine`);
+      const data = await server.get(`/leaderboard/mine`, { chain: getChainName() });
       if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);
@@ -80,11 +88,11 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [currentChain]);
 
   useEffect(() => {
     if (!isLoading && entries.length > 0) fetchMine();
-  }, [address, entries, isLoading]);
+  }, [address, entries, isLoading, currentChain]);
 
   return (
     <LeaderboardContext.Provider

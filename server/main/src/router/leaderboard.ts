@@ -1,17 +1,18 @@
 import { Router } from 'express';
-import { getMainnetLeaderboard, getMyMainnetLeaderboard } from '../controllers/leaderboard.js';
+import { getLeaderboard, getMyLeaderboard } from '../controllers/leaderboard.js';
 import { validateAuth } from '../middleware/validate-auth.js';
+import { validateChain } from '../middleware/validate-chain.js';
 import { wrapper } from './index.js';
 
 const router = Router();
 
-router.get('/leaderboard/mainnet/top', async (_, res) => {
-  await wrapper(async () => await getMainnetLeaderboard(), 'getting mainnet leaderboard', res);
+router.get('/leaderboard/top', validateChain, async (_, res) => {
+  await wrapper(async () => await getLeaderboard(res.locals.chain), 'getting mainnet leaderboard', res);
 });
 
-router.get('/leaderboard/mainnet/mine', validateAuth, async (_, res) => {
+router.get('/leaderboard/mine', validateAuth, validateChain, async (_, res) => {
   await wrapper(
-    async () => await getMyMainnetLeaderboard(res.locals.userWalletAddress),
+    async () => await getMyLeaderboard(res.locals.userWalletAddress, res.locals.chain),
     'getting my mainnet leaderboard',
     res
   );

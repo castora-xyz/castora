@@ -3,7 +3,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { ReactNode, createContext, useContext } from 'react';
 
 export interface ServerCallOptions {
-  noToast: boolean;
+  noToast?: boolean;
+  chain?: string;
 }
 
 const ServerContext = createContext<ServerContextProps>({
@@ -31,7 +32,8 @@ export const ServerProvider = ({ children }: { children: ReactNode }) => {
             headers: {
               Accept: 'application/json',
               'Content-Type': 'application/json',
-              ...(address && signature ? { Authorization: `Bearer ${signature}`, 'user-wallet-address': address } : {})
+              ...(address && signature ? { Authorization: `Bearer ${signature}`, 'user-wallet-address': address } : {}),
+              ...(opts?.chain ? { chain: opts.chain } : {})
             },
             ...(body ? { body: JSON.stringify(body) } : {})
           })

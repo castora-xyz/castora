@@ -2,13 +2,12 @@ import {
   fetchPool,
   FieldValue,
   firestore,
+  getLdbUserPrefix,
   Job,
-  LDB_MAINNET_USER_PREFIX,
   logger,
-  REDIS_CACHE_TTL_SECONDS,
   redisClient,
   storage,
-  updateMainnetLeaderboardLastUpdatedTime
+  updateLeaderboardLastUpdatedTime
 } from '@castora/shared';
 import { getTokenPrice } from './get-token-price.js';
 import { Pool, Prediction } from './schemas.js';
@@ -106,8 +105,8 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       leftover = userData?.leaderboard?.leftoverStakeAmounts?.[chain] ?? 0;
     }
 
+    // on mainnets OVERALL, we've never updated leaderboard stats for this user so we increment global count
     if (!userSnap.exists || !userSnap.data()?.leaderboard || !userSnap.data()?.leaderboard?.xp.mainnet) {
-      // on mainnet, we've never updated leaderboard stats for this user so we increment global count
       await firestore.doc('/counts/counts').set({ mainnetUsersCount: FieldValue.increment(1) }, { merge: true });
       logger.info(`\n📝 Incremented global mainnetUsersCount by 1 for user: ${address}`);
     }
@@ -158,29 +157,14 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       { merge: true }
     );
 
-    // Update the user leaderboard data in Redis cache only if it exists already
-    // as it was easier to invalidate the cache individually from here
-    const userKey = `${LDB_MAINNET_USER_PREFIX}${address}`;
+    // Remove the user leaderboard data in Redis cache only if it exists already
+    // as it was easier to invalidate the cache individually from here.
+    // When the user requests their leaderboard data next time, it will be re-cached.
+    const userKey = getLdbUserPrefix(address, chain);
     const userCached = await redisClient.get(userKey);
     if (userCached) {
-      const newUserSnapshot = await userRef.get();
-      const { leaderboard, stats } = newUserSnapshot.data() as any;
-      const xp = leaderboard.xp.mainnet;
-      const totalSnap = await firestore.collection('users').where(`leaderboard.xp.mainnet`, '>', xp).count().get();
-      const rank = totalSnap.data().count + 1;
-
-      await redisClient.set(
-        userKey,
-        JSON.stringify({
-          lastUpdatedTime: leaderboard.lastUpdatedTime.toDate(),
-          xp,
-          rank,
-          ...(stats && stats.mainnet ? { ...stats.mainnet } : {})
-        }),
-        'EX',
-        REDIS_CACHE_TTL_SECONDS
-      );
-      logger.info(`User ${address} had cached mainnet leaderboard info in Redis and have updated it.`);
+      await redisClient.del(userKey);
+      logger.info(`User ${address} had cached ${chain} leaderboard info in Redis and have deleted it.`);
     }
 
     // update job progress
@@ -211,8 +195,8 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
   }
 
   // Note the last updated time of the pool as now
-  await updateMainnetLeaderboardLastUpdatedTime(new Date());
-  logger.info(`Updated last update time for mainnet leaderboard in Redis`);
+  await updateLeaderboardLastUpdatedTime(chain, new Date());
+  logger.info(`Updated last update time for mainnet ${chain} leaderboard in Redis`);
 
   // Update the pool to mark the leaderboard processed
   try {
