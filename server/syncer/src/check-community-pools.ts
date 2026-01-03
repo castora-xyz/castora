@@ -4,7 +4,6 @@ import {
   Job,
   logger,
   queueJob,
-  readCastoraContract,
   readGettersContract,
   readPoolsManagerContract,
   redisClient
@@ -24,7 +23,6 @@ const IDLE_LOG_INTERVAL_SECS = 20 * 60; // 20 minutes
  */
 export const checkCommunityPools = async (job: Job): Promise<void> => {
   const { chain } = job.data;
-  if (chain === 'monadtestnet') return; // not checking in testnet anymore
 
   // Retrieve the last handled nth community pool from redis
   const redisKey = `last-handled-community-pool-index:chain-${chain}`;
@@ -99,18 +97,14 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
     );
   }
 
-  // Fetch their UserCreatedPools and main Pools from Castora contract
-  const userCreatedPools = (await readPoolsManagerContract(chain, 'getUserCreatedPools', [newPoolIds])) as any[];
-  const pools =
-    chain == 'monadtestnet'
-      ? await readCastoraContract(chain, 'getPools', [newPoolIds])
-      : await readGettersContract(chain, 'pools', [newPoolIds]);
-  logger.info('Fetched their userCreatedPools and main Castora pools equivalents. Started processing each ...');
+  // Fetch their  Pools from Castora contract
+  const pools = await readGettersContract(chain, 'pools', [newPoolIds]);
+  logger.info('Fetched their Castora pools equivalents. Started processing each ...');
 
   // Loop across the pool IDs and pools and act on each.
   for (let i = 0; i < newPoolIds.length; i++) {
     const poolId = Number(newPoolIds[i]);
-    const isUnlisted = chain == 'monadtestnet' ? userCreatedPools[i].isUnlisted : pools[i].seeds.isUnlisted;
+    const isUnlisted = pools[i].seeds.isUnlisted;
     const windowCloseTime = Number(pools[i].seeds.windowCloseTime);
     const snapshotTime = Number(pools[i].seeds.snapshotTime);
     const now = Math.trunc(Date.now() / 1000);

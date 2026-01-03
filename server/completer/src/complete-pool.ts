@@ -6,8 +6,8 @@ import {
   queueJob,
   readPoolsManagerContract
 } from '@castora/shared';
+import { completePoolOnchain } from './complete-pool-onchain.js';
 import { getSnapshotPrice } from './get-snapshot-price.js';
-import { mainnetOnchainCompletePool } from './mainnet-onchain-complete-pool.js';
 import { rearchivePool } from './rearchive-pool.js';
 
 /**
@@ -18,7 +18,6 @@ import { rearchivePool } from './rearchive-pool.js';
  */
 export const completePool = async (job: Job): Promise<void> => {
   const { chain, poolId } = job.data;
-  if (chain == 'monadtestnet') return; // Completing disabled for testnet pools
   logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;
@@ -61,7 +60,7 @@ export const completePool = async (job: Job): Promise<void> => {
     }
 
     // Make on-chain call for completion
-    const splitResult = await mainnetOnchainCompletePool(chain, pool, snapshotPrice);
+    const splitResult = await completePoolOnchain(chain, pool, snapshotPrice);
 
     // refetching the pool here so that the winAmount and completionTime will now be valid
     pool = await fetchPool(chain, poolId);

@@ -14,7 +14,7 @@ import { getSplittedPredictions } from './get-splitted-predictions.js';
  * @param snapshotPrice The price snapshot used for winner calculation.
  * @returns The result containing winner prediction IDs.
  */
-export const mainnetOnchainCompletePool = async (
+export const completePoolOnchain = async (
   chain: Chain,
   pool: Pool,
   snapshotPrice: number

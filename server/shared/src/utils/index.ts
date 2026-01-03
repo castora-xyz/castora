@@ -14,7 +14,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-export type Chain = 'monadmainnet' | 'monadtestnet';
+export type Chain = 'monadmainnet';
 export const AUTH_MESSAGE = 'authentication';
 
 // Initialize Firebase Admin SDK with custom service account in dotenv

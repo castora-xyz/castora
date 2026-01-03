@@ -1,48 +1,9 @@
-import {
-  AAPL,
-  aprMON,
-  CASTORA_SEPOLIA,
-  Chain,
-  CRCL,
-  getCastoraAddress,
-  gMON,
-  HYPE,
-  PoolSeeds,
-  PUMP,
-  SOL,
-  TSLA
-} from '@castora/shared';
+import { CASTORA_SEPOLIA, Chain, getCastoraAddress, PoolSeeds } from '@castora/shared';
 
 interface PoolTimes {
   windowCloseTime: number;
   snapshotTime: number;
 }
-
-/**
- * Generates and returns the windowClose and snapshot times as UTC seconds timestamps
- * for the previous, current, and next "hour duration"s (6h or 24h).
- *
- * @param {number} [dxHrs] - The duration in hours for each pool.
- * @param {number} [waitHrs] - The number of hours to wait between windowClose and snapshot.
- * @return {Array} An array of objects containing the windowCloseTime and snapshotTime
- * for each of the three periods.
- */
-const getTestnetCryptoTimes = (dxHrs: number, waitHrs: number): PoolTimes[] => {
-  const now = new Date();
-  const utcNow = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours());
-  const dxSecs = dxHrs * 3600;
-
-  const start = Math.floor(utcNow / 1000 / dxSecs) * dxSecs;
-  const prev = start - dxSecs;
-  const current = start;
-  const next = start + dxSecs;
-
-  return [
-    { windowCloseTime: next - waitHrs * 3600, snapshotTime: next },
-    { windowCloseTime: current - waitHrs * 3600, snapshotTime: current },
-    { windowCloseTime: prev - waitHrs * 3600, snapshotTime: prev }
-  ];
-};
 
 export const getMinsCryptoTimes = (windowCloseGapMins: number): PoolTimes[] => {
   const now = new Date();
@@ -80,64 +41,6 @@ const getDailyPoolTimes = () => {
   return [mk(prevSnap), mk(currSnap), mk(nextSnap)];
 };
 
-export const getTestnetCryptoSeeds = (chain: Chain) => {
-  const sixHTimes = getTestnetCryptoTimes(6, 1);
-  const twenty4HTimes = getTestnetCryptoTimes(12, 12);
-  const seeds: PoolSeeds[] = [];
-
-  for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
-    for (const predictionToken of [CASTORA_SEPOLIA, SOL, PUMP, HYPE]) {
-      seeds.push(
-        new PoolSeeds({
-          predictionToken,
-          stakeToken: getCastoraAddress(chain),
-          stakeAmount: 2e17,
-          snapshotTime,
-          windowCloseTime
-        })
-      );
-    }
-  }
-
-  for (const { windowCloseTime, snapshotTime } of sixHTimes) {
-    for (const predictionToken of [CASTORA_SEPOLIA, SOL, HYPE]) {
-      seeds.push(
-        new PoolSeeds({
-          predictionToken,
-          stakeToken: getCastoraAddress(chain),
-          stakeAmount: 2e17,
-          snapshotTime,
-          windowCloseTime
-        })
-      );
-    }
-  }
-
-  for (const { windowCloseTime, snapshotTime } of twenty4HTimes) {
-    seeds.push(
-      new PoolSeeds({
-        predictionToken: CASTORA_SEPOLIA,
-        stakeToken: aprMON,
-        stakeAmount: 2e17,
-        snapshotTime,
-        windowCloseTime
-      })
-    );
-
-    seeds.push(
-      new PoolSeeds({
-        predictionToken: CASTORA_SEPOLIA,
-        stakeToken: gMON,
-        stakeAmount: 2e17,
-        snapshotTime,
-        windowCloseTime
-      })
-    );
-  }
-
-  return seeds;
-};
-
 export const getMainnetCryptoSeeds = (chain: Chain) => {
   const times = getDailyPoolTimes();
   const seeds: PoolSeeds[] = [];
@@ -165,7 +68,7 @@ export const getMainnetCryptoSeeds = (chain: Chain) => {
  * for the previous, current, and next "hour duration"s (6h or 24h) with context of
  * Stock Markets.
  *
- * There are 2 difference between this and {@link getTestnetCryptoTimes}:
+ * Notes on Stock Markets:
  * 1. Stock markets are not naturally active in weekends. So the generated times, if
  *    including weekends, will be a pool whose snapshot is on the next Monday. That is
  *    the weekend days are joined to one long pool.
@@ -175,7 +78,7 @@ export const getMainnetCryptoSeeds = (chain: Chain) => {
  * @return {Array} An array of objects containing the windowCloseTime and snapshotTime
  * for each of the three periods.
  */
-const getStocksTimes = (): PoolTimes[] => {
+export const getStocksTimes = (): PoolTimes[] => {
   // Get preparatory values
   const now = new Date();
   const yrs = now.getUTCFullYear();
@@ -228,22 +131,4 @@ const getStocksTimes = (): PoolTimes[] => {
     { windowCloseTime: current - 21600, snapshotTime: current },
     { windowCloseTime: prev - 21600, snapshotTime: prev }
   ];
-};
-
-export const getTestnetStockSeeds = (chain: Chain) => {
-  const seeds: PoolSeeds[] = [];
-  for (const { windowCloseTime, snapshotTime } of getStocksTimes()) {
-    for (const predictionToken of [AAPL, TSLA, CRCL]) {
-      seeds.push(
-        new PoolSeeds({
-          predictionToken,
-          stakeToken: getCastoraAddress(chain),
-          stakeAmount: 5e17,
-          snapshotTime,
-          windowCloseTime
-        })
-      );
-    }
-  }
-  return seeds;
 };

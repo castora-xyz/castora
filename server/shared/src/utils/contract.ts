@@ -1,39 +1,14 @@
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import {
-  castoraGettersAbi,
-  castoraMainnetAbi,
-  castoraMainnetPoolsManagerAbi,
-  castoraTestnetAbi,
-  castoraTestnetPoolsManagerAbi
-} from './abi.js';
+import { castoraAbi, gettersAbi, poolsManagerAbi } from './abi.js';
 import { Chain } from './index.js';
 import { logger } from './logger.js';
 
-export const CASTORA_MONAD_MAINNET: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
-export const CASTORA_MONAD_TESTNET: `0x${string}` = '0xa0742C672e713327b0D6A4BfF34bBb4cbb319C53';
+export const CASTORA_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
 export const CASTORA_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
-export const POOLS_MANAGER_MONAD_MAINNET: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
-export const POOLS_MANAGER_MONAD_TESTNET: `0x${string}` = '0xb4a03C32C7cAa4069f89184f93dfAe065C141061';
-export const CASTORA_GETTERS_MONAD_MAINNET: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
-
-const monadTestnet = () => {
-  if (!process.env.MONAD_TESTNET_RPC_URL) throw 'Set MONAD_TESTNET_RPC_URL in env';
-
-  return defineChain({
-    id: 10143,
-    name: 'Monad Testnet',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Monad',
-      symbol: 'MON'
-    },
-    rpcUrls: {
-      default: { http: [process.env.MONAD_TESTNET_RPC_URL!] }
-    }
-  });
-};
+export const POOLS_MANAGER_MONAD: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
+export const CASTORA_GETTERS_MONAD: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
 
 const monadMainnet = () => {
   if (!process.env.MONAD_MAINNET_RPC_URL) throw 'Set MONAD_MAINNET_RPC_URL in env';
@@ -52,42 +27,26 @@ const monadMainnet = () => {
   });
 };
 
-const getCastoraAbi = (chain: Chain) => {
-  if (chain === 'monadtestnet') return castoraTestnetAbi;
-  return castoraMainnetAbi;
-};
-
 export const getConfig = (chain: Chain) =>
   ({
-    monadtestnet: { chain: monadTestnet(), transport: http() },
     monadmainnet: { chain: monadMainnet(), transport: http() }
   }[chain]);
 
 export const getCastoraAddress = (chain: Chain) =>
   ({
-    monadtestnet: CASTORA_MONAD_TESTNET,
-    monadmainnet: CASTORA_MONAD_MAINNET
+    monadmainnet: CASTORA_MONAD
   }[chain]);
 
 const getPoolsManagerAddress = (chain: Chain) =>
   ({
-    monadtestnet: POOLS_MANAGER_MONAD_TESTNET,
-    monadmainnet: POOLS_MANAGER_MONAD_MAINNET
+    monadmainnet: POOLS_MANAGER_MONAD
   }[chain]);
 
-const getPoolsManagerAbi = (chain: Chain) => {
-  if (chain === 'monadtestnet') return castoraTestnetPoolsManagerAbi;
-  return castoraMainnetPoolsManagerAbi;
-};
-
 const getAccount = (chain: Chain) => {
-  const adminTestnetKey = process.env.ADMIN_KEY_MONAD_TESTNET as `0x${string}`;
-  if (!adminTestnetKey) throw 'Set ADMIN_KEY_MONAD_TESTNET in env';
-
   const adminMainnetKey = process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`;
   if (!adminMainnetKey) throw 'Set ADMIN_KEY_MONAD_MAINNET in env';
 
-  return privateKeyToAccount({ monadtestnet: adminTestnetKey, monadmainnet: adminMainnetKey }[chain]);
+  return privateKeyToAccount({ monadmainnet: adminMainnetKey }[chain]);
 };
 
 export const readCastoraContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
@@ -95,7 +54,7 @@ export const readCastoraContract = async (chain: Chain, functionName: any, args?
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
       address: getCastoraAddress(chain),
-      abi: getCastoraAbi(chain),
+      abi: castoraAbi,
       functionName,
       args
     });
@@ -109,8 +68,8 @@ export const readGettersContract = async (chain: Chain, functionName: any, args?
   try {
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: CASTORA_GETTERS_MONAD_MAINNET,
-      abi: castoraGettersAbi,
+      address: CASTORA_GETTERS_MONAD,
+      abi: gettersAbi,
       functionName,
       args
     });
@@ -125,7 +84,7 @@ export const readPoolsManagerContract = async (chain: Chain, functionName: any, 
     // @ts-ignore
     return await createPublicClient({ ...getConfig(chain) }).readContract({
       address: getPoolsManagerAddress(chain),
-      abi: getPoolsManagerAbi(chain),
+      abi: poolsManagerAbi,
       functionName,
       args
     });
@@ -145,13 +104,7 @@ const showBalance = async (chain: Chain, address: `0x${string}`) => {
   return balance;
 };
 
-export const writeContract = async (
-  chain: Chain,
-  functionName: any,
-  args: any,
-  errorContext: string,
-  useExtraGas = false
-) => {
+export const writeContract = async (chain: Chain, functionName: any, args: any, errorContext: string) => {
   let outcome;
 
   try {
@@ -162,24 +115,15 @@ export const writeContract = async (
     const prevBalance = await showBalance(chain, account.address);
     const { result, request } = await publicClient.simulateContract({
       address: getCastoraAddress(chain),
-      abi: getCastoraAbi(chain),
+      abi: castoraAbi,
       functionName,
       args,
       account
     });
 
-    let estimatedGas;
-    if (useExtraGas) {
-      estimatedGas = await publicClient.estimateContractGas(request);
-      logger.info(`Will use extra estimated gas: ${estimatedGas} * 2.5`);
-    }
-
     outcome = result;
     const walletClient = createWalletClient({ account, ...config });
-    const hash = await walletClient.writeContract({
-      ...request,
-      ...(useExtraGas && estimatedGas ? { gas: (estimatedGas * 5n) / 2n } : {})
-    });
+    const hash = await walletClient.writeContract(request);
 
     logger.info(`Transaction Hash: ${hash}`);
     logger.info('Waiting for On-Chain Confirmation ...');
@@ -204,12 +148,6 @@ export const writeContract = async (
       // already. However, we wait for mining to be sure before proceeding.
       logger.info('Waiting 5 seconds to allow transaction to be mined ...');
       await new Promise((resolve) => setTimeout(resolve, 5000));
-    } else if (chain === 'monadtestnet' && `${e}`.includes('TransactionReceiptNotFoundError')) {
-      // Surprisingly, this receipt not found error happens when
-      // the transaction succeeded, so we don't rethrow to not stop execution
-      // but we wait 10 seconds to allow the transaction to be mined
-      logger.info('Waiting 10 seconds to allow transaction to be mined ...');
-      await new Promise((resolve) => setTimeout(resolve, 10000));
     } else {
       throw e;
     }

@@ -4,13 +4,11 @@ import {
   firestore,
   Job,
   LDB_MAINNET_USER_PREFIX,
-  LDB_TESTNET_USER_PREFIX,
   logger,
   REDIS_CACHE_TTL_SECONDS,
   redisClient,
   storage,
-  updateMainnetLeaderboardLastUpdatedTime,
-  updateTestnetLeaderboardLastUpdatedTime
+  updateMainnetLeaderboardLastUpdatedTime
 } from '@castora/shared';
 import { getTokenPrice } from './get-token-price.js';
 import { Pool, Prediction } from './schemas.js';
@@ -61,29 +59,24 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     );
   }
 
-  const isInTestnet = chain === 'monadtestnet';
-
-  // Get the USD price of the stake token at snapshot time if we are in mainnet
-  let price = 1;
-  if (!isInTestnet) {
-    const stakeTokenSymbol = pool.json?.pool?.seeds?.stakeToken;
-    if (!stakeTokenSymbol) {
-      throw `FATAL: could not get stake token symbol for price conversion from archived pool ${poolId} on ${chain}`;
-    }
-
-    const snapshotTime = pool.json?.pool?.seeds?.snapshotTime;
-    if (!snapshotTime) {
-      throw `FATAL: could not get snapshotTime for price conversion from archived pool ${poolId} on ${chain}`;
-    }
-
-    // TODO: Reconcile other tokens when added for staking
-    if (stakeTokenSymbol !== 'MON') {
-      throw `FATAL: handle price conversion of stake token ${stakeTokenSymbol} in pool ${poolId} on ${chain}`;
-    }
-
-    price = await getTokenPrice(stakeTokenSymbol, snapshotTime);
-    logger.info(`Obtained stake token price for ${stakeTokenSymbol} at snapshotTime ${snapshotTime}: ${price} USD`);
+  // Get the USD price of the stake token at snapshot time for volume calculations
+  const stakeTokenSymbol = pool.json?.pool?.seeds?.stakeToken;
+  if (!stakeTokenSymbol) {
+    throw `FATAL: could not get stake token symbol for price conversion from archived pool ${poolId} on ${chain}`;
   }
+
+  const snapshotTime = pool.json?.pool?.seeds?.snapshotTime;
+  if (!snapshotTime) {
+    throw `FATAL: could not get snapshotTime for price conversion from archived pool ${poolId} on ${chain}`;
+  }
+
+  // TODO: Reconcile other tokens when added for staking
+  if (stakeTokenSymbol !== 'MON') {
+    throw `FATAL: handle price conversion of stake token ${stakeTokenSymbol} in pool ${poolId} on ${chain}`;
+  }
+
+  const price = await getTokenPrice(stakeTokenSymbol, snapshotTime);
+  logger.info(`Obtained stake token price for ${stakeTokenSymbol} at snapshotTime ${snapshotTime}: ${price} USD`);
 
   // Group predictions by user addresses
   const grouped: Record<string, Prediction[]> = {};
@@ -113,16 +106,7 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       leftover = userData?.leaderboard?.leftoverStakeAmounts?.[chain] ?? 0;
     }
 
-    if (chain === 'monadtestnet' && (!userSnap.exists || !userSnap.data()?.leaderboard)) {
-      // on monadtestnet, we've never updated leaderboard stats for this user so we increment global count
-      await firestore.doc('/counts/counts').set({ monadTestnetUsersCount: FieldValue.increment(1) }, { merge: true });
-      logger.info(`\n📝 Incremented global monadTestnetUsersCount by 1 for user: ${address}`);
-    }
-
-    if (
-      !isInTestnet &&
-      (!userSnap.exists || !userSnap.data()?.leaderboard || !userSnap.data()?.leaderboard?.xp.mainnet)
-    ) {
+    if (!userSnap.exists || !userSnap.data()?.leaderboard || !userSnap.data()?.leaderboard?.xp.mainnet) {
       // on mainnet, we've never updated leaderboard stats for this user so we increment global count
       await firestore.doc('/counts/counts').set({ mainnetUsersCount: FieldValue.increment(1) }, { merge: true });
       logger.info(`\n📝 Incremented global mainnetUsersCount by 1 for user: ${address}`);
@@ -139,50 +123,34 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     xp += winnings.length; // Using 1 winning for 1 XP
 
     let predictionsVolume = predictions.length * pool.stakeAmount * price;
-    let dividedBy;
-    if (isInTestnet) {
-      dividedBy = 0.95; // assuming 5% fees on testnet
-    } else {
-      // mainnet fees percent from pool seeds, subtract from 1
-      const feesPercent = pool.json?.pool?.seeds?.feesPercent;
-      if (feesPercent === undefined) {
-        throw `FATAL: could not get feesPercent from archived pool ${poolId} on ${chain} for winnings volume calculation`;
-      }
-      dividedBy = 1 - feesPercent / 100;
+    // mainnet fees percent from pool seeds, subtract from 1
+    const feesPercent = pool.json?.pool?.seeds?.feesPercent;
+    if (feesPercent === undefined) {
+      throw `FATAL: could not get feesPercent from archived pool ${poolId} on ${chain} for winnings volume calculation`;
     }
+    const dividedBy = 1 - feesPercent / 100;
+
     let winningsVolume = (winnings.length * pool.winAmount * price) / dividedBy; // winnings volume without fees
 
     // save user to firestore
     await userRef.set(
       {
-        ...(chain === 'monadtestnet'
-          ? {
-              monadTestnetStats: {
-                pools: FieldValue.increment(1),
-                predictions: FieldValue.increment(predictions.length),
-                predictionsVolume: FieldValue.increment(predictionsVolume),
-                winnings: FieldValue.increment(winnings.length),
-                winningsVolume: FieldValue.increment(winningsVolume) // winnings volume without fees
-              }
-            }
-          : {
-              stats: {
-                [chain]: {
-                  predictionsVolume: FieldValue.increment(predictionsVolume),
-                  winningsVolume: FieldValue.increment(winningsVolume)
-                },
-                mainnet: {
-                  predictionsVolume: FieldValue.increment(predictionsVolume),
-                  winningsVolume: FieldValue.increment(winningsVolume)
-                }
-              }
-            }),
+        stats: {
+          [chain]: {
+            predictionsVolume: FieldValue.increment(predictionsVolume),
+            winningsVolume: FieldValue.increment(winningsVolume)
+          },
+          mainnet: {
+            predictionsVolume: FieldValue.increment(predictionsVolume),
+            winningsVolume: FieldValue.increment(winningsVolume)
+          }
+        },
         leaderboard: {
           leftoverStakeAmounts: { [chain]: leftover },
           lastUpdatedTime: FieldValue.serverTimestamp(),
           xp: {
             chains: { [chain]: FieldValue.increment(xp) },
-            [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(xp),
+            mainnet: FieldValue.increment(xp),
             total: FieldValue.increment(xp)
           }
         }
@@ -192,17 +160,13 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
 
     // Update the user leaderboard data in Redis cache only if it exists already
     // as it was easier to invalidate the cache individually from here
-    const userKey = `${isInTestnet ? LDB_TESTNET_USER_PREFIX : LDB_MAINNET_USER_PREFIX}${address}`;
+    const userKey = `${LDB_MAINNET_USER_PREFIX}${address}`;
     const userCached = await redisClient.get(userKey);
     if (userCached) {
       const newUserSnapshot = await userRef.get();
-      const { leaderboard, monadTestnetStats, stats } = newUserSnapshot.data() as any;
-      const xp = leaderboard.xp[isInTestnet ? 'testnet' : 'mainnet'];
-      const totalSnap = await firestore
-        .collection('users')
-        .where(`leaderboard.xp.${isInTestnet ? 'testnet' : 'mainnet'}`, '>', xp)
-        .count()
-        .get();
+      const { leaderboard, stats } = newUserSnapshot.data() as any;
+      const xp = leaderboard.xp.mainnet;
+      const totalSnap = await firestore.collection('users').where(`leaderboard.xp.mainnet`, '>', xp).count().get();
       const rank = totalSnap.data().count + 1;
 
       await redisClient.set(
@@ -211,17 +175,12 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
           lastUpdatedTime: leaderboard.lastUpdatedTime.toDate(),
           xp,
           rank,
-          ...(monadTestnetStats ? { ...monadTestnetStats } : {}),
           ...(stats && stats.mainnet ? { ...stats.mainnet } : {})
         }),
         'EX',
         REDIS_CACHE_TTL_SECONDS
       );
-      logger.info(
-        `User ${address} had cached ${
-          isInTestnet ? 'testnet' : 'mainnet'
-        } leaderboard info in Redis and have updated it.`
-      );
+      logger.info(`User ${address} had cached mainnet leaderboard info in Redis and have updated it.`);
     }
 
     // update job progress
@@ -237,18 +196,11 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
     const creatorRef = firestore.doc(`/users/${pool.creator}`);
     await creatorRef.set(
       {
-        ...(chain === 'monadtestnet'
-          ? {
-              monadTestnetStats: {
-                createdPools: FieldValue.increment(1)
-              }
-            }
-          : {}),
         leaderboard: {
           lastUpdatedTime: FieldValue.serverTimestamp(),
           xp: {
             chains: { [chain]: FieldValue.increment(3) }, // Using x3 XP for creators
-            [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(3), // Using x3 XP for creators
+            mainnet: FieldValue.increment(3), // Using x3 XP for creators
             total: FieldValue.increment(3) // Using x3 XP for creators
           }
         }
@@ -259,9 +211,8 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
   }
 
   // Note the last updated time of the pool as now
-  if (isInTestnet) await updateTestnetLeaderboardLastUpdatedTime(new Date());
-  else await updateMainnetLeaderboardLastUpdatedTime(new Date());
-  logger.info(`Updated last update time for ${isInTestnet ? 'testnet' : 'mainnet'} leaderboard in Redis`);
+  await updateMainnetLeaderboardLastUpdatedTime(new Date());
+  logger.info(`Updated last update time for mainnet leaderboard in Redis`);
 
   // Update the pool to mark the leaderboard processed
   try {
@@ -278,12 +229,12 @@ export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
       leaderboard: {
         lastUpdatedTime: {
           chains: { [chain]: FieldValue.serverTimestamp() },
-          [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.serverTimestamp(),
+          mainnet: FieldValue.serverTimestamp(),
           total: FieldValue.serverTimestamp()
         },
         processedPools: {
           chains: { [chain]: FieldValue.increment(1) },
-          [isInTestnet ? 'testnet' : 'mainnet']: FieldValue.increment(1),
+          mainnet: FieldValue.increment(1),
           total: FieldValue.increment(1)
         }
       }

@@ -4,21 +4,27 @@ import LinkIcon from '@/assets/link.svg?react';
 import RectangleStack from '@/assets/rectangle-stack.svg?react';
 import Squares2x2 from '@/assets/squares-2x2.svg?react';
 import Timer from '@/assets/timer.svg?react';
-import Trophy from '@/assets/trophy.svg?react';
 import Wallet from '@/assets/wallet.svg?react';
-import { ActivityCreateCard, ClaimAllCreateButton, ClaimCreateButton, CountdownNumbers, createdPoolsActivityType, MyActivityPageIntro } from '@/components';
+import {
+  ActivityCreateCard,
+  ClaimAllCreateButton,
+  ClaimCreateButton,
+  CountdownNumbers,
+  createdPoolsActivityType,
+  MyActivityPageIntro
+} from '@/components';
 import { rowsPerPageOptions, useCurrentTime, useMyCreateActivity } from '@/contexts';
 import { ActivityCreate } from '@/contexts/MyCreateActivityContext';
 import { useViewPreference } from '@/hooks/useViewPreference';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
+import ms from 'ms';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
-import ms from 'ms';
 import { useAccount } from 'wagmi';
 
 type CreatePoolTableRow = ActivityCreate & {
@@ -332,13 +338,7 @@ export const MyActivityCreatedPoolsPage = () => {
                   onClick={() => setView('grid')}
                   aria-label="Grid View"
                 >
-                  <Squares2x2
-                    className={`w-5 h-5 ${
-                      view === 'grid'
-                        ? 'fill-white'
-                        : 'fill-text-subtitle'
-                    }`}
-                  />
+                  <Squares2x2 className={`w-5 h-5 ${view === 'grid' ? 'fill-white' : 'fill-text-subtitle'}`} />
                   <Ripple />
                 </button>
                 <Tooltip target=".view-toggle-table" />
@@ -352,13 +352,7 @@ export const MyActivityCreatedPoolsPage = () => {
                   onClick={() => setView('table')}
                   aria-label="Table View"
                 >
-                  <RectangleStack
-                    className={`w-5 h-5 ${
-                      view === 'table'
-                        ? 'fill-white'
-                        : 'fill-text-subtitle'
-                    }`}
-                  />
+                  <RectangleStack className={`w-5 h-5 ${view === 'table' ? 'fill-white' : 'fill-text-subtitle'}`} />
                   <Ripple />
                 </button>
               </div>
