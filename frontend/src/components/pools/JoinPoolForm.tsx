@@ -1,7 +1,7 @@
 import { MakePredictionModal } from '@/components';
 import { useFirebase } from '@/contexts';
 import { Pool } from '@/schemas';
-import { PriceServiceConnection } from '@pythnetwork/price-service-client';
+import { HermesClient } from '@pythnetwork/hermes-client';
 import { useAppKit } from '@reown/appkit/react';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
@@ -16,7 +16,7 @@ export const JoinPoolForm = ({
   pool: Pool;
   handlePredictionSuccess: () => void;
 }) => {
-  const connection = new PriceServiceConnection('https://hermes.pyth.network');
+  const client = new HermesClient('https://hermes.pyth.network', {});
 
   const { isConnected } = useConnection();
   const { recordEvent } = useFirebase();
@@ -81,10 +81,24 @@ export const JoinPoolForm = ({
       );
     }
 
-    connection.subscribePriceFeedUpdates([pool.seeds.predictionTokenDetails.pythPriceId], (priceFeed) => {
-      const { price, expo } = priceFeed.getPriceUnchecked();
-      setCurrentPrice(parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo) < 8 ? Math.abs(expo) : 8)));
-    });
+    let eventSource: EventSource | null = null;
+
+    (async () => {
+      try {
+        eventSource = await client.getPriceUpdatesStream([pool.seeds.predictionTokenDetails.pythPriceId]);
+        eventSource.onmessage = (event) => {
+          const payload = JSON.parse(event.data);
+          if (payload.parsed && payload.parsed.length > 0) {
+            const priceData = payload.parsed[0];
+            const { price, expo } = priceData.price;
+            const parsed = +price * 10 ** expo;
+            setCurrentPrice(parseFloat(parsed.toFixed(Math.abs(expo) < 8 ? Math.abs(expo) : 8)));
+          }
+        };
+      } catch (e) {
+        // ignore
+      }
+    })();
 
     setTimeout(() => {
       const input = document.querySelector('input#prediction-input[type=number]') as HTMLInputElement;
@@ -100,7 +114,9 @@ export const JoinPoolForm = ({
       });
     });
 
-    return () => connection.closeWebSocket();
+    return () => {
+      eventSource?.close();
+    };
   }, []);
 
   if (seeds.status() != 'Open') return <></>;

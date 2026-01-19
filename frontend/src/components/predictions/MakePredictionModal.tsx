@@ -12,7 +12,7 @@ import {
   useTelegram
 } from '@/contexts';
 import { Pool } from '@/schemas';
-import { PriceServiceConnection } from '@pythnetwork/price-service-client';
+import { HermesClient } from '@pythnetwork/hermes-client';
 import { InputNumber } from 'primereact/inputnumber';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
@@ -161,13 +161,29 @@ export const MakePredictionModal = ({
   useEffect(() => {
     checkBalance();
 
-    const connection = new PriceServiceConnection('https://hermes.pyth.network');
-    connection.subscribePriceFeedUpdates([seeds.predictionTokenDetails.pythPriceId], (priceFeed) => {
-      const { price, expo } = priceFeed.getPriceUnchecked();
-      const parsed = +price * 10 ** expo;
-      setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
-    });
-    return () => connection.closeWebSocket();
+    const client = new HermesClient('https://hermes.pyth.network', {});
+    let eventSource: EventSource | null = null;
+
+    (async () => {
+      try {
+        eventSource = await client.getPriceUpdatesStream([seeds.predictionTokenDetails.pythPriceId]);
+        eventSource.onmessage = (event) => {
+          const payload = JSON.parse(event.data);
+          if (payload.parsed && payload.parsed.length > 0) {
+            const priceData = payload.parsed[0];
+            const { price, expo } = priceData.price;
+            const parsed = +price * 10 ** expo;
+            setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
+          }
+        };
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      eventSource?.close();
+    };
   }, []);
 
   if (seeds.status() !== 'Open') return <></>;

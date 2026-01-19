@@ -13,7 +13,6 @@ import {
 import { useCurrentTime, usePools } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Pool } from '@/schemas';
-import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -50,17 +49,18 @@ export const PoolDetailPage = () => {
                 await new Promise((resolve) => setTimeout(resolve, 15000));
               }
 
-              // Fetching the snapshot price from Pyth Network
               try {
-                const { price, expo } = (
-                  await new PriceServiceConnection('https://hermes.pyth.network').getPriceFeed(
-                    seeds.predictionTokenDetails.pythPriceId,
-                    seeds.snapshotTime
-                  )
-                ).getPriceUnchecked();
-                fetched.snapshotPrice = parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo)));
-                if (noOfPredictions === 0) {
-                  fetched.completionTime = Math.trunc(Date.now() / 1000);
+                const response = await fetch(
+                  `https://benchmarks.pyth.network/v1/updates/price/${seeds.snapshotTime}?ids=${seeds.predictionTokenDetails.pythPriceId}&parsed=true`
+                );
+                const data = await response.json();
+                if (data.parsed && data.parsed.length > 0) {
+                  const priceData = data.parsed[0];
+                  const { price, expo } = priceData.price;
+                  fetched.snapshotPrice = parseFloat((+price * 10 ** expo).toFixed(Math.abs(expo)));
+                  if (noOfPredictions === 0) {
+                    fetched.completionTime = Math.trunc(Date.now() / 1000);
+                  }
                 }
               } catch (e) {
                 console.log(e);

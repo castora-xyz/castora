@@ -1,14 +1,14 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownNumbers } from '@/components';
 import { landingPageDefaults, Pool } from '@/schemas';
-import { PriceServiceConnection } from '@pythnetwork/price-service-client';
+import { HermesClient } from '@pythnetwork/hermes-client';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
-  const connection = new PriceServiceConnection('https://hermes.pyth.network');
+  const client = new HermesClient('https://hermes.pyth.network', {});
 
   const [basePrice, setBasePrice] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -25,13 +25,18 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
     (async () => {
       try {
         const baseTimeDiff = pool?.seeds.poolLife() ?? landingPageDefaults.baseTimeDiff;
-        const priceData = await connection.getPriceFeed(
-          pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId,
-          Math.trunc(Date.now() / 1000) - baseTimeDiff
+        const timestamp = Math.trunc(Date.now() / 1000) - baseTimeDiff;
+        const priceId = pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId;
+        const response = await fetch(
+          `https://benchmarks.pyth.network/v1/updates/price/${timestamp}?ids=${priceId}&parsed=true`
         );
-        const { price, expo } = priceData.getPriceUnchecked();
-        const parsed = +price * 10 ** expo;
-        setBasePrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
+        const data = await response.json();
+        if (data.parsed && data.parsed.length > 0) {
+          const priceData = data.parsed[0];
+          const { price, expo } = priceData.price;
+          const parsed = +price * 10 ** expo;
+          setBasePrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
+        }
       } catch (e) {
         setBasePrice(0);
       }
@@ -41,15 +46,29 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   }, [mins, pool]);
 
   useEffect(() => {
-    connection.subscribePriceFeedUpdates(
-      [pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId],
-      (priceFeed) => {
-        const { price, expo } = priceFeed.getPriceUnchecked();
-        const parsed = +price * 10 ** expo;
-        setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
+    const priceId = pool?.seeds.predictionTokenDetails.pythPriceId ?? landingPageDefaults.pythPriceId;
+    let eventSource: EventSource | null = null;
+
+    (async () => {
+      try {
+        eventSource = await client.getPriceUpdatesStream([priceId]);
+        eventSource.onmessage = (event) => {
+          const payload = JSON.parse(event.data);
+          if (payload.parsed && payload.parsed.length > 0) {
+            const priceData = payload.parsed[0];
+            const { price, expo } = priceData.price;
+            const parsed = +price * 10 ** expo;
+            setCurrentPrice(parseFloat(parsed.toFixed(parsed < 1 ? 8 : 3)));
+          }
+        };
+      } catch (e) {
+        // ignore
       }
-    );
-    return () => connection.closeWebSocket();
+    })();
+
+    return () => {
+      eventSource?.close();
+    };
   }, [pool]);
 
   return (
