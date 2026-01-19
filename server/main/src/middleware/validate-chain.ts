@@ -1,7 +1,7 @@
 import { Chain, logger } from '@castora/shared';
 import { NextFunction, Request, Response } from 'express';
 
-const isChain = (chain: any): chain is Chain => chain === 'monad' || chain === 'megaeth';
+const isChain = (chain: any): chain is Chain => chain === 'monad' || chain === 'megaethtestnet';
 
 export const validateChain = async ({ headers }: Request, res: Response, next: NextFunction) => {
   let { chain } = headers;

@@ -14,7 +14,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-export type Chain = 'monadmainnet' | 'megaeth';
+export type Chain = 'monad' | 'megaethtestnet';
 
 export const AUTH_MESSAGE = 'authentication';
 
