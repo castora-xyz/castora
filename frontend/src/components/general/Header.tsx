@@ -5,10 +5,12 @@ import { MyActivityPagesMenu } from './MyActivityPagesMenu';
 import { TelegramNotificationsButton } from './TelegramNotificationButton';
 import { ToggleThemeButton } from './ToggleThemeButton';
 import Castora from '/assets/castora.png';
-
+import { useConnection } from 'wagmi';
 export const Header = () => {
   const location = useLocation();
+  const { chain: currentChain} = useConnection();
 
+  let chainName = currentChain?.name.toLowerCase() ?? 'monad';
   return (
     <header className="max-[414px]:px-4 xs:px-8 py-4 fixed top-0 left-0 right-0 z-30 border-b border-border-default dark:border-surface-subtle bg-app-bg h-16 sm:h-[72px]">
       <div className="flex items-center max-w-(--breakpoint-xl) mx-auto">
@@ -32,7 +34,7 @@ export const Header = () => {
           </PoolsPagesMenu> */}
 
           <NavLink
-            to="/pools"
+            to={`${chainName}/pools`}
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
@@ -42,7 +44,7 @@ export const Header = () => {
             <Ripple />
           </NavLink>
           <NavLink
-            to="/leaderboard"
+            to={`${chainName}/leaderboard`}
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
@@ -51,11 +53,11 @@ export const Header = () => {
             Leaderboard
             <Ripple />
           </NavLink>
-          <MyActivityPagesMenu placement="header">
+          <MyActivityPagesMenu placement="header" chain={chainName}>
             <button
               className={
                 'p-ripple py-1 px-4 lg:px-6 rounded-full  ' +
-                `${location.pathname.includes('/activity') ? 'text-primary-darker dark:text-primary-default' : ''}`
+                `${location.pathname.includes(`${chainName}/activity`) ? 'text-primary-darker dark:text-primary-default' : ''}`
               }
             >
               <span className="max-xl:hidden">My </span>
