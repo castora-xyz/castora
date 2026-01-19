@@ -31,6 +31,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [mode, setMode] = useState<ThemeMode>('System Mode');
 
   const setDark = () => {
+    document.documentElement.classList.add('dark');
     document.body.classList.add('dark');
     setThemeMode('dark');
     setIsDarkDisplay(true);
@@ -39,6 +40,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setLight = () => {
+    document.documentElement.classList.remove('dark');
     document.body.classList.remove('dark');
     setThemeMode('light');
     setIsDarkDisplay(false);
