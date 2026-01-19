@@ -40,7 +40,7 @@ export const MainnetPoolsPage = () => {
   return (
     <>
       <div className="w-full top-16 sm:top-[72px] sticky z-10 bg-app-bg p-6 text-sm text-text-subtitle max-[414px]:px-4 px-8">
-        <div className="flex flex-wrap gap-4 max-w-screen-xl mx-auto">
+        <div className="flex flex-wrap gap-4 max-w-(--breakpoint-xl) mx-auto">
           <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle">
             Pools
           </p>
@@ -72,7 +72,7 @@ export const MainnetPoolsPage = () => {
       </div>
 
       <div className=" max-[414px]:px-4 px-8 pb-16">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-screen-xl mx-auto pt-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-(--breakpoint-xl) mx-auto pt-4">
           {isFetchingLiveCrypto || isFetchingLiveCommunity ? (
             Array.from(Array(shimmerCount).keys()).map((i) => <PoolCardShimmer key={i} />)
           ) : (

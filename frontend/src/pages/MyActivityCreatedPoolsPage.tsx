@@ -277,7 +277,7 @@ export const MyActivityCreatedPoolsPage = () => {
   });
 
   return (
-    <div className="w-full max-md:max-w-[600px] max-w-screen-xl mx-auto flex flex-col grow">
+    <div className="w-full max-md:max-w-[600px] max-w-(--breakpoint-xl) mx-auto flex flex-col grow">
       <MyActivityPageIntro myActivityType={createdPoolsActivityType} claimAll={<ClaimAllCreateButton />} />
 
       {!isConnected ? (

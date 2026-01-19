@@ -12,7 +12,7 @@ export const MyActivityPageIntro = ({
 }) => {
   return (
     <div className="w-full pl-0 top-16 sm:top-[72px] sticky z-10 bg-app-bg p-6 text-sm text-text-subtitle">
-      <div className="flex flex-wrap gap-4 max-w-screen-xl mx-auto">
+      <div className="flex flex-wrap gap-4 max-w-(--breakpoint-xl) mx-auto">
         <p className="text-sm py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle text-text-subtitle max-sm:hidden">
           My Activity
         </p>

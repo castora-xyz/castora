@@ -275,7 +275,7 @@ export const MakePredictionModal = ({
           <p className="pl-1 mb-2 text-xs">How many times?</p>
           <InputNumber
             className="border border-surface-subtle rounded-xl text-lg font-medium"
-            inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
+            inputClassName="w-16 focus:shadow! focus:shadow-transparent! pl-4"
             allowEmpty={false}
             pt={{
               incrementButton: {

@@ -102,7 +102,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
         predictions to the price at the snapshot time (Snapshot Price) are the winners.
       </p>
 
-      <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
+      <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-(--breakpoint-lg)">
         <div className="max-[414px]:p-4 p-8 rounded-[32px] bg-surface-subtle border border-border-default dark:border-surface-disabled max-lg:max-w-lg max-lg:mx-auto lg:basis-1/2">
           <div className="border border-border-default dark:border-surface-subtle p-6 rounded-[24px] w-full bg-app-bg">
             <h3 className="font-medium text-xl text-text-subtitle mb-4">Join Pool</h3>
@@ -215,7 +215,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
                 <p className="pl-1 mb-2 text-xs">How many times?</p>
                 <InputNumber
                   className="border border-surface-subtle rounded-xl text-lg font-medium"
-                  inputClassName="w-16 focus:!shadow focus:!shadow-transparent pl-4"
+                  inputClassName="w-16 focus:shadow! focus:shadow-transparent! pl-4"
                   allowEmpty={false}
                   pt={{
                     incrementButton: {

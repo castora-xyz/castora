@@ -138,7 +138,7 @@ export const PoolDetailPage = () => {
           {now > pool.seeds.windowCloseTime && pool.noOfPredictions > 0 && <MyInPoolPredictions pool={pool} />}
         </div>
 
-        <div className="lg:w-full lg:max-w-screen-xl lg:mx-auto lg:flex">
+        <div className="lg:w-full lg:max-w-(--breakpoint-xl) lg:mx-auto lg:flex">
           <div className={'lg:relative lg:grow ' + (pool.seeds.status() === 'Completed' ? ' lg:basis-1/2' : '')}>
             <div className="mb-8 lg:mb-px lg:mr-8 lg:sticky lg:top-0">
               {pool.seeds.status() !== 'Completed' ? (

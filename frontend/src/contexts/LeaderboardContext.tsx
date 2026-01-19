@@ -4,7 +4,6 @@ import { LeaderboardEntry } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { useAccount, useChains } from 'wagmi';
 import { monadMainnet } from './chains';
-
 interface LeaderboardContextProps {
   entries: LeaderboardEntry[];
   isLoading: boolean;

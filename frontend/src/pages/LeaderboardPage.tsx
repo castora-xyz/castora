@@ -275,7 +275,7 @@ export const LeaderboardPage = () => {
   return (
     <>
       <div className="w-full bg-app-bg pt-6 text-sm text-text-subtitle">
-        <div className="flex flex-wrap gap-4 max-w-screen-xl mx-auto">
+        <div className="flex flex-wrap gap-4 max-w-(--breakpoint-xl) mx-auto">
           <p className="py-2 px-5 rounded-full w-fit border border-border-default dark:border-surface-subtle">
             <span>Leaderboard</span>
           </p>
@@ -292,7 +292,7 @@ export const LeaderboardPage = () => {
         </div>
       </div>
 
-      <div className="w-full max-w-screen-xl mx-auto">
+      <div className="w-full max-w-(--breakpoint-xl) mx-auto">
         {isLoading && (
           <div className="mt-6 flex justify-center items-center gap-2 max-sm:grow max-sm:text-center py-20 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:px-16 md:px-4 lg:px-8 sm:text-center">
             <Breathing width={18} height={18} className="rounded-full" />

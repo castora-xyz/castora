@@ -157,7 +157,7 @@ export const CreateCommunityPoolPage = () => {
 
   return (
     <div className="flex flex-col justify-center grow bg-surface-subtle px-4 sm:px-8 pt-20 pb-28">
-      <div className="bg-app-bg w-full max-lg:max-w-xl lg:max-w-screen-lg mx-auto px-4 sm:px-8 lg:px-10 lg:pt-12 lg:pb-24 rounded-3xl py-8 border border-border-default dark:border-surface-subtle lg:flex">
+      <div className="bg-app-bg w-full max-lg:max-w-xl lg:max-w-(--breakpoint-lg) mx-auto px-4 sm:px-8 lg:px-10 lg:pt-12 lg:pb-24 rounded-3xl py-8 border border-border-default dark:border-surface-subtle lg:flex">
         <div className="lg:mr-20">
           <h1 className="text-3xl font-bold mb-2 text-text-title">Create Pool</h1>
           <p className="text-text-subtitle mb-8">Create a pool for anyone to predict in and join.</p>
@@ -270,9 +270,9 @@ export const CreateCommunityPoolPage = () => {
                 iconPos="right"
                 inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
                   errors.windowCloseTime
-                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default'
-                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
-                } focus:!ring-offset-0`}
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:ring-2! focus:!ring-errors-default'
+                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:ring-2! focus:!ring-primary-default'
+                } focus:ring-offset-0!`}
                 className="w-full"
                 pt={{
                   root: { className: 'w-full' },
@@ -280,7 +280,7 @@ export const CreateCommunityPoolPage = () => {
                   header: { className: 'bg-app-bg' },
                   input: {
                     root: {
-                      className: 'w-full !shadow-none focus:!shadow-none'
+                      className: 'w-full shadow-none! focus:shadow-none!'
                     }
                   }
                 }}
@@ -325,9 +325,9 @@ export const CreateCommunityPoolPage = () => {
                 iconPos="right"
                 inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
                   errors.snapshotTime
-                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:!ring-2 focus:!ring-errors-default'
-                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:!ring-2 focus:!ring-primary-default'
-                } focus:!ring-offset-0 ${!form.windowCloseTime ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:ring-2! focus:!ring-errors-default'
+                    : 'border-border-default hover:border-primary-default focus:border-primary-default focus:ring-2! focus:!ring-primary-default'
+                } focus:ring-offset-0! ${!form.windowCloseTime ? 'opacity-50 cursor-not-allowed' : ''}`}
                 className="w-full"
                 disabled={!form.windowCloseTime}
                 pt={{
@@ -336,7 +336,7 @@ export const CreateCommunityPoolPage = () => {
                   header: { className: 'bg-app-bg' },
                   input: {
                     root: {
-                      className: 'w-full !shadow-none focus:!shadow-none'
+                      className: 'w-full shadow-none! focus:shadow-none!'
                     }
                   }
                 }}

@@ -11,7 +11,7 @@ export const Footer = () => {
       id="footer"
       className="mt-auto max-[414px]:px-4 px-8 py-12 lg:px-16 border-t border-border-default dark:border-surface-subtle bg-app-bg"
     >
-      <div className="max-w-screen-xl mx-auto">
+      <div className="max-w-(--breakpoint-xl) mx-auto">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
           {/* Brand Section */}

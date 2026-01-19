@@ -87,7 +87,7 @@ export const LandingPage = () => {
           Explore variety of pools in which to make predictions. Various pools have their Pool Pairs, Entry Fees, Pool
           Closing Times as well as Snapshot Times.
         </p>
-        <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-screen-lg">
+        <div className="flex flex-col gap-8 lg:flex-row mx-auto max-w-(--breakpoint-lg)">
           <div className="max-[414px]:p-4 p-8 rounded-[32px] bg-surface-subtle border border-border-default dark:border-surface-disabled max-lg:max-w-lg max-lg:mx-auto lg:basis-1/2 w-full flex flex-col grow">
             <div className="border border-border-default dark:border-surface-subtle rounded-[24px] w-full bg-app-bg flex flex-col grow">
               {activePool ? <PoolCard pool={activePool ?? upcomingPool} isInLandingPage={true} /> : <PoolCardShimmer />}
@@ -110,8 +110,8 @@ export const LandingPage = () => {
           You are a winner if your prediction is closest to the price at the snapshot time. You share entire pools'
           stake with other winners.
         </p>
-        <div className="py-12 md:pt-20 lg:pt-32 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-screen-lg mx-auto border border-border-default dark:border-surface-disabled relative">
-          <div className="md:flex md:max-w-screen-md md:mx-auto gap-4">
+        <div className="py-12 md:pt-20 lg:pt-32 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-(--breakpoint-lg) mx-auto border border-border-default dark:border-surface-disabled relative">
+          <div className="md:flex md:max-w-(--breakpoint-md) md:mx-auto gap-4">
             <ConfettiBall className="w-100px h-100px mx-auto mb-4 md:absolute md:left-[50%] md:-translate-x-12 md:top-8 lg:top-20" />
             <LandingWinCard />
             <div className="md:hidden mb-6 sm:mb-8"> </div>
@@ -126,7 +126,7 @@ export const LandingPage = () => {
         <p className="mb-12 max-md:max-w-lg md:max-w-[800px] mx-auto text-xl md:text-2xl text-center">
           Easily track the status of your all your predictions from your activity panel.
         </p>
-        <div className="pt-8 md:pt-20 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-screen-lg mx-auto border border-border-default dark:border-surface-disabled lg:flex">
+        <div className="pt-8 md:pt-20 px-4 sm:px-12 rounded-[32px] bg-surface-subtle max-md:max-w-lg md:max-w-(--breakpoint-lg) mx-auto border border-border-default dark:border-surface-disabled lg:flex">
           <h3 className="font-bold text-surface-default text-4xl max-md:mb-12 max-sm:pl-4 md:text-6xl md:mb-20">
             Castora
           </h3>
