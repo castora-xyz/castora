@@ -10,7 +10,7 @@ import { useServer } from './ServerContext';
 interface FirebaseContextProps {
   auth: Auth;
   firestore: Firestore;
-  recordEvent: (event: string, params?: any) => void;
+  recordEvent: (event: string, params?: any, chain?: string) => void;
   recordNavigation: (path: string, name: string) => void;
 }
 
@@ -57,8 +57,9 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const recordEvent = (event: string, params?: any) => {
-    logEvent(analytics, event, params);
+  const recordEvent = (event: string, params?: any, chain?: string) => {
+    const eventParams = chain ? { ...params, chain } : params;
+    logEvent(analytics, event, eventParams);
   };
 
   const recordNavigation = (path: string, name: string) => {
