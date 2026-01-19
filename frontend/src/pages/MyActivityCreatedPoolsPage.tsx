@@ -17,7 +17,7 @@ import { rowsPerPageOptions, useCurrentTime, useMyCreateActivity } from '@/conte
 import { ActivityCreate } from '@/contexts/MyCreateActivityContext';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import ms from 'ms';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
@@ -50,7 +50,7 @@ export const MyActivityCreatedPoolsPage = () => {
     updateCurrentPage,
     updateUnclaimed
   } = useMyCreateActivity();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
 
   useEffect(() => {
     document.title = 'My Created Pools | Castora';

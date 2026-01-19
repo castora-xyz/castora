@@ -4,7 +4,7 @@ import Timer from '@/assets/timer.svg?react';
 import { CountdownNumbers, CreatePoolModal } from '@/components';
 import { allowedCreatorPredTokens, CreatePoolForm, useCurrentTime, useFirebase, useToast } from '@/contexts';
 import { tokens } from '@/schemas';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import ms from 'ms';
 import { Calendar } from 'primereact/calendar';
 import { Dialog } from 'primereact/dialog';
@@ -45,7 +45,7 @@ export const CreateCommunityPoolPage = () => {
   const [isShowingModal, setIsShowingModal] = useState(false);
   const [showModalHeading, setShowModalHeading] = useState(true);
   const { isConnected } = useConnection();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
   const { recordEvent } = useFirebase();
   const { toastError } = useToast();
   const [form, setForm] = useState<CreatePoolForm>({ ...formDefaults });

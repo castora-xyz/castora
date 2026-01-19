@@ -1,7 +1,7 @@
 import { MAX_BULK_PREDICTIONS, useContract } from '@/contexts';
 import { Pool, landingPageDefaults } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { InputNumber } from 'primereact/inputnumber';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
@@ -14,7 +14,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
   const { isConnected } = useConnection();
   const { balance } = useContract();
   const navigate = useNavigate();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
 
   const [bulkCount, setBulkCount] = useState(2);
   const [currentPrice, setCurrentPrice] = useState(0);

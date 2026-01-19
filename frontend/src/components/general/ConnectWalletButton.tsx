@@ -1,14 +1,14 @@
 import ChevronDown from '@/assets/chevron-down.svg?react';
 import Wallet from '@/assets/wallet.svg?react';
 import { useFirebase } from '@/contexts';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { Ripple } from 'primereact/ripple';
 import { Web3Avatar } from './Web3Avatar';
 import {useConnection } from 'wagmi'
 export const ConnectWalletButton = () => {
   const {  address } = useConnection()
   const { recordEvent } = useFirebase();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
 
   const shorten = (str: string) => {
     if (str.length < 10) return str;

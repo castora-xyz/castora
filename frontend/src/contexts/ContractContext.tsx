@@ -1,6 +1,6 @@
 import { useToast } from '@/contexts/ToastContext';
 import { castoraAbi, castoraGettersAbi, castoraPoolsManagerAbi, erc20Abi } from '@/contexts/abis';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
@@ -55,7 +55,7 @@ export const useContract = () => useContext(ContractContext);
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const { address, isConnected, chain: currentChain } = useConnection();
   const { refetch: refetchBalance } = useBalance();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
   const { toastError } = useToast();
   const walletClient = useWalletClient();
 

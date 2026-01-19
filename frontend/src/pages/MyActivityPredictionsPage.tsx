@@ -8,7 +8,7 @@ import { ActivityPredictCard, ClaimPredictButton, ClaimAllPredictButton, Countdo
 import { rowsPerPageOptions, useCurrentTime, useMyPredictActivity } from '@/contexts';
 import { ActivityPredict } from '@/contexts/MyPredictActivityContext';
 import { useViewPreference } from '@/hooks/useViewPreference';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
@@ -42,7 +42,7 @@ export const MyActivityPredictionsPage = () => {
     setRowsPerPage,
     updateCurrentPage
   } = useMyPredictActivity();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
 
   useEffect(() => {
     document.title = `My Predictions - Castora`;

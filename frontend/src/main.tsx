@@ -24,10 +24,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { CacheProvider } from './contexts/CacheContext';
 import './main.css';
-import { config } from './utils/config';
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-const queryClient = new QueryClient()
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <CurrentTimeProvider>
@@ -35,9 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <PaginatorsProvider>
           <PrimeReactProvider value={{ ripple: true }}>
             <ToastProvider>
-              <WagmiProvider config={config}>
-                <QueryClientProvider client={queryClient}>
-                <Web3Provider>
+              <Web3Provider>
                   <ThemeProvider>
                     <AuthProvider>
                       <ServerProvider>
@@ -67,9 +61,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                       </ServerProvider>
                     </AuthProvider>
                   </ThemeProvider>
-                </Web3Provider>
-                </QueryClientProvider>
-              </WagmiProvider>
+              </Web3Provider>
             </ToastProvider>
           </PrimeReactProvider>
         </PaginatorsProvider>

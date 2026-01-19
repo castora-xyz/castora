@@ -1,4 +1,5 @@
-import { useWeb3ModalTheme } from '@web3modal/wagmi/react';
+import { modal } from '@reown/appkit/react';
+
 import {
   ReactNode,
   createContext,
@@ -26,14 +27,13 @@ const ThemeContext = createContext<ThemeContextProps>({
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const { setThemeMode } = useWeb3ModalTheme();
   const [isDarkDisplay, setIsDarkDisplay] = useState<boolean>(false);
   const [mode, setMode] = useState<ThemeMode>('System Mode');
 
   const setDark = () => {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark');
-    setThemeMode('dark');
+    modal?.setThemeMode('dark');
     setIsDarkDisplay(true);
     const themeLink = document.querySelector('#theme-link') as HTMLLinkElement;
     if (themeLink) themeLink.href = themeLink.href.replace('light', 'dark');
@@ -42,7 +42,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const setLight = () => {
     document.documentElement.classList.remove('dark');
     document.body.classList.remove('dark');
-    setThemeMode('light');
+    modal?.setThemeMode('light');
     setIsDarkDisplay(false);
     const themeLink = document.querySelector('#theme-link') as HTMLLinkElement;
     if (themeLink) themeLink.href = themeLink.href.replace('dark', 'light');

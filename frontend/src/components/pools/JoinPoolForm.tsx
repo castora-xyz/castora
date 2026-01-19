@@ -2,7 +2,7 @@ import { MakePredictionModal } from '@/components';
 import { useFirebase } from '@/contexts';
 import { Pool } from '@/schemas';
 import { PriceServiceConnection } from '@pythnetwork/price-service-client';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +20,7 @@ export const JoinPoolForm = ({
 
   const { isConnected } = useConnection();
   const { recordEvent } = useFirebase();
-  const { open: connectWallet } = useWeb3Modal();
+  const { open: connectWallet } = useAppKit();
 
   const [currentPrice, setCurrentPrice] = useState(0);
   const [predictionError, setPredictionError] = useState('');
