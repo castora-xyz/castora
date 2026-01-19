@@ -1,12 +1,28 @@
-import { useEffect, useRef } from 'react';
-import createWeb3Avatar from 'web3-avatar';
+import { useConnection } from 'wagmi';
+import type { Chain } from 'wagmi/chains';
+const getChainLogo = (chain?: Chain): string => {
+
+  
+  if (chain?.id === 143) {
+    return '/assets/mon.png';
+  }
+  if (chain?.id === 6342) {
+    return '/assets/eth.png';
+  }
+  
+  // Default fallback
+  return '/assets/eth.png';
+};
 
 export const Web3Avatar = ({ address, className }: { address: string; className?: string }) => {
-  const ref = useRef(null);
+  const { chain } = useConnection();
+  const chainLogo = getChainLogo(chain);
 
-  useEffect(() => {
-    createWeb3Avatar(ref.current!, address);
-  }, [address]);
-
-  return <div ref={ref} className={className ?? 'w-8 h-8'}></div>;
+  return (
+    <img
+      src={chainLogo}
+      alt={chain?.name || 'Chain'}
+      className={`${className ?? 'w-8 h-8'} rounded-full object-cover`}
+    />
+  );
 };
