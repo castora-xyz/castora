@@ -8,10 +8,10 @@ import { Token } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi'
 
 export const ClaimAllCreateButton = () => {
-  const { isConnected } = useAccount();
+  const {isConnected} = useConnection()
   const { recordEvent } = useFirebase();
   const { claimPoolCompletionFeesBulk } = usePools();
   const {

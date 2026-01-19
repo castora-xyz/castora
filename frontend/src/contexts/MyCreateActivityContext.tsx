@@ -1,7 +1,7 @@
 import { useContract } from '@/contexts';
 import { Pool, UserCreatedPool } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export interface ActivityCreate {
   pool: Pool;
@@ -45,7 +45,7 @@ const MyCreateActivityContext = createContext<MyCreateActivityContextProps>({
 export const useMyCreateActivity = () => useContext(MyCreateActivityContext);
 
 export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) => {
-  const { address, chain: currentChain } = useAccount();
+  const { address, chain: currentChain } = useConnection();
   const { readContract } = useContract();
   const [rowsPerPage, setRowsPerPage] = useState(Number(localStorage.getItem('myActivityCreationsRowsPerPage')) || 100);
 

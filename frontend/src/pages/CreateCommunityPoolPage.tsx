@@ -14,7 +14,7 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 const formDefaults: CreatePoolForm = {
   predictionToken: 'MON',
@@ -44,7 +44,7 @@ const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
 export const CreateCommunityPoolPage = () => {
   const [isShowingModal, setIsShowingModal] = useState(false);
   const [showModalHeading, setShowModalHeading] = useState(true);
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const { open: connectWallet } = useWeb3Modal();
   const { recordEvent } = useFirebase();
   const { toastError } = useToast();

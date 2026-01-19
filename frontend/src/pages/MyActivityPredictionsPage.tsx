@@ -17,7 +17,7 @@ import { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import ms from 'ms';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 type PredictionTableRow = ActivityPredict & {
   count: number;
@@ -26,7 +26,7 @@ type PredictionTableRow = ActivityPredict & {
 const columnHelper = createColumnHelper<PredictionTableRow>();
 
 export const MyActivityPredictionsPage = () => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const location = useLocation();
   const { now } = useCurrentTime();
   const [view, setView] = useViewPreference('myPredictionsView', 'grid');

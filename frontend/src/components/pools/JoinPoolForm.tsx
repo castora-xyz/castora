@@ -6,7 +6,7 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export const JoinPoolForm = ({
   pool,
@@ -18,7 +18,7 @@ export const JoinPoolForm = ({
 }) => {
   const connection = new PriceServiceConnection('https://hermes.pyth.network');
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const { recordEvent } = useFirebase();
   const { open: connectWallet } = useWeb3Modal();
 

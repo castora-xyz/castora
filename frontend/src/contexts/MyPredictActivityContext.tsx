@@ -1,7 +1,7 @@
 import { useContract } from '@/contexts';
 import { Pool, Prediction } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export interface PredictionRecord {
   poolId: number;
@@ -44,7 +44,7 @@ const MyPredictActivityContext = createContext<MyPredictActivityContextProps>({
 export const useMyPredictActivity = () => useContext(MyPredictActivityContext);
 
 export const MyPredictActivityProvider = ({ children }: { children: ReactNode }) => {
-  const { address, chain: currentChain } = useAccount();
+  const { address, chain: currentChain } = useConnection();
   const { readContract } = useContract();
   const [rowsPerPage, setRowsPerPage] = useState(
     Number(localStorage.getItem('myActivityPredictionsRowsPerPage')) || 100

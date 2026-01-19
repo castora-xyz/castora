@@ -25,7 +25,7 @@ import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 type CreatePoolTableRow = ActivityCreate & {
   count: number;
@@ -34,7 +34,7 @@ type CreatePoolTableRow = ActivityCreate & {
 const columnHelper = createColumnHelper<CreatePoolTableRow>();
 
 export const MyActivityCreatedPoolsPage = () => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const location = useLocation();
   const { now } = useCurrentTime();
   const [view, setView] = useViewPreference('myCreatedPoolsView', 'grid');

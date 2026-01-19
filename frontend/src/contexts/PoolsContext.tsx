@@ -3,7 +3,7 @@ import { Pool, tokens } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Observable } from 'rxjs';
-import { useAccount, useChains } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export type WriteContractPoolStatus = WriteContractStatus | 'finalizing';
 
@@ -80,8 +80,7 @@ const PoolsContext = createContext<PoolsContextProps>({
 export const usePools = () => useContext(PoolsContext);
 
 export const PoolsProvider = ({ children }: { children: ReactNode }) => {
-  const { chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
+  const { chain: currentChain } = useConnection();
   const { castoraAddress, poolsManagerAddress, readContract, writeContract } = useContract();
   const { firestore, recordEvent } = useFirebase();
   const { toastSuccess } = useToast();
@@ -96,8 +95,6 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   const [liveCommunityPools, setLiveCommunityPools] = useState<Pool[]>([]);
   const [liveCommunityPoolIds, setLiveCommunityPoolIds] = useState<number[]>([]);
 
-  const getChain = () => currentChain ?? defaultChain;
-  const getChainName = () => 'monadmainnet';
 
   const getCreateFormArgs = (form: CreatePoolForm) => {
     if (!allowedCreatorPredTokens.includes(form.predictionToken)) throw 'Invalid predictionToken';
@@ -144,7 +141,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('created_pool', { poolId });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Creation Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallBack && onSuccessCallBack(explorerUrl, poolId);
           subscriber.complete();
@@ -172,7 +169,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_pool_completion_fees', { poolId });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Withdrawal Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -200,7 +197,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_winnings_bulk', { poolIds });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Bulk Withdrawals Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -234,7 +231,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_winnings', { poolId, predictionId });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Withdrawal Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -266,7 +263,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
 
           subscriber.next('finalizing');
           recordEvent('claimed_winnings_bulk', { poolIds, predictionIds });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Bulk Withdrawals Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -394,7 +391,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
             poolId,
             predictionIds
           });
-          const explorerUrl = `${getChain().blockExplorers?.default.url}/tx/${txHash}`;
+          const explorerUrl = `${currentChain?.blockExplorers?.default.url}/tx/${txHash}`;
           toastSuccess('Prediction Successful', 'View Transaction on Explorer', explorerUrl);
           onSuccessCallback && onSuccessCallback(explorerUrl);
           subscriber.complete();
@@ -416,7 +413,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [liveCommunityPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/crypto`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/crypto`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -427,7 +424,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/stocks`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/stocks`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -438,7 +435,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${getChainName()}/live/community`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/community`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {

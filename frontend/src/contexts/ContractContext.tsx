@@ -4,7 +4,7 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createPublicClient, http } from 'viem';
-import { useAccount, useBalance, useChains, useWalletClient } from 'wagmi';
+import { useConnection, useBalance, useChains, useWalletClient } from 'wagmi';
 
 export const CASTORA_ADDRESS_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
 export const CASTORA_ADDRESS_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
@@ -53,7 +53,7 @@ const ContractContext = createContext<ContractContextProps>({
 export const useContract = () => useContext(ContractContext);
 
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
-  const { address, isConnected, chain: currentChain } = useAccount();
+  const { address, isConnected, chain: currentChain } = useConnection();
   const { refetch: refetchBalance } = useBalance();
   const { open: connectWallet } = useWeb3Modal();
   const { toastError } = useToast();

@@ -3,11 +3,10 @@ import Wallet from '@/assets/wallet.svg?react';
 import { useFirebase } from '@/contexts';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Ripple } from 'primereact/ripple';
-import { useAccount } from 'wagmi';
 import { Web3Avatar } from './Web3Avatar';
-
+import {useConnection } from 'wagmi'
 export const ConnectWalletButton = () => {
-  const { address } = useAccount();
+  const {  address } = useConnection()
   const { recordEvent } = useFirebase();
   const { open: connectWallet } = useWeb3Modal();
 

@@ -1,6 +1,6 @@
 import { useToast } from '@/contexts/ToastContext';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
+import { useConnection, useDisconnect, useSignMessage } from 'wagmi';
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -17,7 +17,7 @@ interface AuthContextProps {
 export const AUTH_MESSAGE = 'authentication';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { address: wagmiAddr, connector } = useAccount();
+  const { address: wagmiAddr, connector } = useConnection();
   const { disconnect } = useDisconnect();
   const { signMessage } = useSignMessage();
   const { toastError } = useToast();

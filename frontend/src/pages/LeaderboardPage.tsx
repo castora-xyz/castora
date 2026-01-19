@@ -9,7 +9,7 @@ import { ColumnDef, createColumnHelper, getCoreRowModel, useReactTable } from '@
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo, useState } from 'react';
 import { Breathing } from 'react-shimmer';
-import { useAccount, useChains } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 const shortenAddress = (v: string) => `${v.substring(0, 6)}...${v.substring(v.length - 3)}`;
 
@@ -52,9 +52,8 @@ const columnHelper = createColumnHelper<LeaderboardRow>();
 export const LeaderboardPage = () => {
   const { entries, isLoading, hasError, refresh, lastUpdatedTime, mine, totalUsersCount } = useLeaderboard();
   const { address } = useAuth();
-  const { chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
-  const [explorerUrl, setExplorerUrl] = useState((currentChain ?? defaultChain).blockExplorers?.default.url);
+  const { chain: currentChain } = useConnection();
+  const [explorerUrl, setExplorerUrl] = useState(currentChain?.blockExplorers?.default.url);
 
   const addFillerToRows = (rows: LeaderboardRow[], rank: number, isGap: boolean, isPlaceholder: boolean) => {
     rows.push({
@@ -64,8 +63,8 @@ export const LeaderboardPage = () => {
   };
 
   useEffect(() => {
-    setExplorerUrl((currentChain ?? defaultChain).blockExplorers?.default.url);
-  }, [currentChain, defaultChain]);
+    setExplorerUrl(currentChain?.blockExplorers?.default.url);
+  }, [currentChain]);
 
   useEffect(() => {
     document.title = 'Leaderboard | Castora';

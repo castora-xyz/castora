@@ -8,7 +8,7 @@ import { Pool, UserCreatedPool } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi'
 
 export const ClaimCreateButton = ({
   pool: { poolId },
@@ -18,7 +18,7 @@ export const ClaimCreateButton = ({
   pool: Pool;
   userCreated: UserCreatedPool;
 }) => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection()
   const { recordEvent } = useFirebase();
   const { claimPoolCompletionFees } = usePools();
   const { fetchMyActivity, updateUnclaimed } = useMyCreateActivity();

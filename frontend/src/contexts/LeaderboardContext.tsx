@@ -2,8 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServer } from '@/contexts/ServerContext';
 import { LeaderboardEntry } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { useAccount, useChains } from 'wagmi';
-import { monadMainnet } from './chains';
+import { useConnection } from 'wagmi';
 interface LeaderboardContextProps {
   entries: LeaderboardEntry[];
   isLoading: boolean;
@@ -27,8 +26,7 @@ const LeaderboardContext = createContext<LeaderboardContextProps>({
 export const useLeaderboard = () => useContext(LeaderboardContext);
 
 export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
-  const { chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
+  const { chain: currentChain } = useConnection();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -38,16 +36,13 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
   const server = useServer();
   const { address } = useAuth();
 
-  const getChain = () => defaultChain ?? currentChain;
-  const getChainName = () => {
-    return { [monadMainnet.id]: 'monadmainnet' }[getChain().id];
-  };
+ 
 
   const fetchLeaderboard = async () => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await server.get(`/leaderboard/top`, { chain: getChainName() });
+      const data = await server.get(`/leaderboard/top`, { chain: currentChain?.name });
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -78,7 +73,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const data = await server.get(`/leaderboard/mine`, { chain: getChainName() });
+      const data = await server.get(`/leaderboard/mine`, { chain: currentChain?.name });
       if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);

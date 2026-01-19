@@ -6,12 +6,12 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
   const connection = new PriceServiceConnection('https://hermes.pyth.network');
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const { balance } = useContract();
   const navigate = useNavigate();
   const { open: connectWallet } = useWeb3Modal();

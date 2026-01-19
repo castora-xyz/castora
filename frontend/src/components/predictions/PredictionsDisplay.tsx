@@ -10,11 +10,10 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
 import { Breathing } from 'react-shimmer';
-import { useAccount, useChains } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export const PredictionsDisplay = ({ pool: { noOfPredictions, seeds, completionTime }, pool }: { pool: Pool }) => {
-  const { address, chain: currentChain } = useAccount();
-  const [defaultChain] = useChains();
+  const { address, chain: currentChain } = useConnection();
   const { now } = useCurrentTime();
   const paginators = usePaginators();
   const retrieve = usePredictions();
@@ -122,7 +121,7 @@ export const PredictionsDisplay = ({ pool: { noOfPredictions, seeds, completionT
                 className="rounded-2xl bg-surface-subtle p-4 flex justify-between items-center flex-wrap gap-4 mb-4"
               >
                 <a
-                  href={`${(currentChain ?? defaultChain).blockExplorers?.default.url}/address/${predicter}`}
+                  href={`${currentChain?.blockExplorers?.default.url}/address/${predicter}`}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="flex items-center text-xs text-text-caption hover:underline"

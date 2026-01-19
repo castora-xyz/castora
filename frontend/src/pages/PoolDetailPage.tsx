@@ -17,10 +17,10 @@ import { PriceServiceConnection } from '@pythnetwork/price-service-client';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export const PoolDetailPage = () => {
-  const { chain: currentChain } = useAccount();
+  const { chain: currentChain } = useConnection();
   const { now } = useCurrentTime();
   const { poolId } = useParams();
   const { isValidPoolId, fetchOne } = usePools();

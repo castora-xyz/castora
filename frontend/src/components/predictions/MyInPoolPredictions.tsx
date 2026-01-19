@@ -10,7 +10,7 @@ import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Breathing } from 'react-shimmer';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 
 export interface MyInPoolPredsRef {
   onPredict: (showLoading?: boolean) => Promise<void>;
@@ -22,7 +22,7 @@ interface MyInPoolPredsProps {
 
 export const MyInPoolPredictions = forwardRef<MyInPoolPredsRef, MyInPoolPredsProps>(
   ({ pool, pool: { seeds, completionTime } }, ref) => {
-    const { isConnected, address, chain: currentChain } = useAccount();
+    const { isConnected, address, chain: currentChain } = useConnection();
     const { readContract } = useContract();
     const { now } = useCurrentTime();
     const { fetchMyActivity } = useMyPredictActivity();

@@ -8,7 +8,7 @@ import { Pool, Prediction } from '@/schemas';
 import { Dialog } from 'primereact/dialog';
 import { Ripple } from 'primereact/ripple';
 import { useState } from 'react';
-import { useAccount } from 'wagmi';
+  import { useConnection } from 'wagmi';
 
 export const ClaimPredictButton = ({
   pool: {
@@ -24,7 +24,7 @@ export const ClaimPredictButton = ({
   prediction: Prediction;
   onCloseModal?: () => void;
 }) => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection()
   const { now } = useCurrentTime();
   const { recordEvent } = useFirebase();
   const { claimWinnings } = usePools();
