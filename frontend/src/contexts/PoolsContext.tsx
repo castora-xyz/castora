@@ -413,7 +413,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [liveCommunityPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/crypto`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/crypto`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -424,7 +424,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/stocks`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/stocks`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -435,7 +435,7 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name}/live/community`), (doc) => {
+    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/community`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {

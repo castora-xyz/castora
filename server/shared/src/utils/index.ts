@@ -7,6 +7,7 @@ export * from './jobs.js';
 export * from './leaderboard.js';
 export * from './logger.js';
 export * from './tokens.js';
+export { normalizeChain } from './contract.js';
 
 import 'dotenv/config';
 import { applicationDefault, initializeApp } from 'firebase-admin/app';

@@ -7,7 +7,7 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
   await queueJob({
     queueName: 'pool-syncer',
     jobName: 'sync-pools',
-    jobData: { chain: 'monadmainnet' },
+    jobData: { chain: 'monad' },
     repeat: { pattern: '10 0 0 * * *' }, // 10 secs every midnight
     jobId: 'sync-pools'
   });
@@ -15,7 +15,7 @@ import { unlistCommunityPool } from './unlist-community-pool.js';
   await queueJob({
     queueName: 'community-pools-checker',
     jobName: 'check-community-pools',
-    jobData: { chain: 'monadmainnet' },
+    jobData: { chain: 'monad' },
     repeat: { pattern: '*/15 * * * * *' }, // every 15 seconds
     jobId: 'check-community-pools'
   });

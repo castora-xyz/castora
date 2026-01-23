@@ -10,6 +10,13 @@ export const CASTORA_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1
 export const POOLS_MANAGER_MONAD: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
 export const CASTORA_GETTERS_MONAD: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
 
+export const normalizeChain = (chain: string): Chain => {
+  if (chain === 'monadmainnet') {
+    return 'monad';
+  }
+  return chain as Chain;
+};
+
 const monadMainnet = () => {
   if (!process.env.MONAD_MAINNET_RPC_URL) throw 'Set MONAD_MAINNET_RPC_URL in env';
 
@@ -27,94 +34,106 @@ const monadMainnet = () => {
   });
 };
 
-export const getConfig = (chain: Chain) =>
-  ({
-    monadmainnet: { chain: monadMainnet(), transport: http() }
-  }[chain]);
+export const getConfig = (chain: Chain | string) => {
+  const normalizedChain = normalizeChain(chain);
+  return {
+    monad: { chain: monadMainnet(), transport: http() }
+  }[normalizedChain];
+};
 
-export const getCastoraAddress = (chain: Chain) =>
-  ({
-    monadmainnet: CASTORA_MONAD
-  }[chain]);
+export const getCastoraAddress = (chain: Chain | string) => {
+  const normalizedChain = normalizeChain(chain);
+  return {
+    monad: CASTORA_MONAD
+  }[normalizedChain];
+};
 
-const getPoolsManagerAddress = (chain: Chain) =>
-  ({
-    monadmainnet: POOLS_MANAGER_MONAD
-  }[chain]);
+const getPoolsManagerAddress = (chain: Chain | string) => {
+  const normalizedChain = normalizeChain(chain);
+  return {
+    monad: POOLS_MANAGER_MONAD
+  }[normalizedChain];
+};
 
-const getAccount = (chain: Chain) => {
+const getAccount = (chain: Chain | string) => {
+  const normalizedChain = normalizeChain(chain);
   const adminMainnetKey = process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`;
   if (!adminMainnetKey) throw 'Set ADMIN_KEY_MONAD_MAINNET in env';
 
-  return privateKeyToAccount({ monadmainnet: adminMainnetKey }[chain]);
+  return privateKeyToAccount({ monad: adminMainnetKey }[normalizedChain]);
 };
 
-export const readCastoraContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
+export const readCastoraContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
+  const normalizedChain = normalizeChain(chain);
   try {
     // @ts-ignore
-    return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: getCastoraAddress(chain),
+    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
+      address: getCastoraAddress(normalizedChain),
       abi: castoraAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readCastoraContract call on chain: ${chain}, ${e}`);
+    logger.error(e, `Error at readCastoraContract call on chain: ${normalizedChain}, ${e}`);
     throw e;
   }
 };
 
-export const readGettersContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
+export const readGettersContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
+  const normalizedChain = normalizeChain(chain);
   try {
     // @ts-ignore
-    return await createPublicClient({ ...getConfig(chain) }).readContract({
+    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
       address: CASTORA_GETTERS_MONAD,
       abi: gettersAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readGettersContract call on chain: ${chain}, ${e}`);
+    logger.error(e, `Error at readGettersContract call on chain: ${normalizedChain}, ${e}`);
     throw e;
   }
 };
 
-export const readPoolsManagerContract = async (chain: Chain, functionName: any, args?: any): Promise<any> => {
+export const readPoolsManagerContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
+  const normalizedChain = normalizeChain(chain);
   try {
     // @ts-ignore
-    return await createPublicClient({ ...getConfig(chain) }).readContract({
-      address: getPoolsManagerAddress(chain),
+    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
+      address: getPoolsManagerAddress(normalizedChain),
       abi: poolsManagerAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readPoolsManagerContract call on chain: ${chain}, ${e}`);
+    logger.error(e, `Error at readPoolsManagerContract call on chain: ${normalizedChain}, ${e}`);
     throw e;
   }
 };
 
-const showBalance = async (chain: Chain, address: `0x${string}`) => {
-  const balance = await createPublicClient({ ...getConfig(chain) }).getBalance({
+const showBalance = async (chain: Chain | string, address: `0x${string}`) => {
+  const normalizedChain = normalizeChain(chain);
+  const balance = await createPublicClient({ ...getConfig(normalizedChain) }).getBalance({
     address
   });
-  const symbol = chain.includes('monad') ? 'MON' : 'ETH';
+  const symbol = normalizedChain.includes('monad') ? 'MON' : 'ETH';
   logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ${symbol}`}`);
   if (balance < 10e18) logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ${symbol}`}. Please top up.`);
   return balance;
 };
 
-export const writeContract = async (chain: Chain, functionName: any, args: any, errorContext: string) => {
+export const writeContract = async (chain: Chain | string, functionName: any, args: any, errorContext: string) => {
+  const normalizedChain = normalizeChain(chain);
   let outcome;
 
   try {
-    const account = getAccount(chain);
-    const config = getConfig(chain);
+    const account = getAccount(normalizedChain);
+    const config = getConfig(normalizedChain);
     const publicClient = createPublicClient({ ...config });
 
-    const prevBalance = await showBalance(chain, account.address);
+    const prevBalance = await showBalance(normalizedChain, account.address);
     const { result, request } = await publicClient.simulateContract({
-      address: getCastoraAddress(chain),
+      address: getCastoraAddress(normalizedChain),
       abi: castoraAbi,
       functionName,
       args,
@@ -130,9 +149,9 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     logger.info(receipt, 'Transaction Receipt');
 
-    const newBalance = await showBalance(chain, account.address);
+    const newBalance = await showBalance(normalizedChain, account.address);
     const balanceDiffs = formatEther(newBalance - prevBalance);
-    const symbol = chain.includes('monad') ? 'MON' : 'ETH';
+    const symbol = normalizedChain.includes('monad') ? 'MON' : 'ETH';
     logger.info(`Admin Balance Change: ${balanceDiffs} ${symbol}`);
   } catch (e) {
     if (Object.keys(e as any).includes('abi')) delete (e as any).abi;
@@ -141,7 +160,7 @@ export const writeContract = async (chain: Chain, functionName: any, args: any, 
     logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
 
     if (
-      chain === 'monadmainnet' &&
+      normalizedChain === 'monad' &&
       (`${e}`.includes('An existing transaction had higher priority') || `${e}`.includes('txpool not responding'))
     ) {
       // When these errors happen, the transaction actually went through because on the retry, the pool then exists

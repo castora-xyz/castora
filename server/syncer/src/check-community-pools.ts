@@ -3,6 +3,7 @@ import {
   firestore,
   Job,
   logger,
+  normalizeChain,
   queueJob,
   readGettersContract,
   readPoolsManagerContract,
@@ -22,11 +23,20 @@ const IDLE_LOG_INTERVAL_SECS = 20 * 60; // 20 minutes
  *      created community pools
  */
 export const checkCommunityPools = async (job: Job): Promise<void> => {
-  const { chain } = job.data;
+  const { chain: rawChain } = job.data;
+  const chain = normalizeChain(rawChain);
 
-  // Retrieve the last handled nth community pool from redis
   const redisKey = `last-handled-community-pool-index:chain-${chain}`;
+  const oldRedisKey = rawChain !== chain ? `last-handled-community-pool-index:chain-${rawChain}` : null;
   let lastHandledNthRaw = await redisClient.get(redisKey);
+  
+  if (!lastHandledNthRaw && oldRedisKey) {
+    lastHandledNthRaw = await redisClient.get(oldRedisKey);
+    if (lastHandledNthRaw) {
+      logger.info(`Found data with old Redis key "${oldRedisKey}", migrating to new key "${redisKey}"`);
+      await redisClient.set(redisKey, lastHandledNthRaw);
+    }
+  }
 
   if (!lastHandledNthRaw) {
     throw `No last handled nth community pool found in redis for chain: ${chain} in checkCommunityPools`;
@@ -52,7 +62,17 @@ export const checkCommunityPools = async (job: Job): Promise<void> => {
   }
 
   const lastIdleLogTimeKey = `community-pools-checker-last-idle-log-time:chain-${chain}`;
-  const lastIdleLogTimeRaw = await redisClient.get(lastIdleLogTimeKey);
+  const oldLastIdleLogTimeKey = rawChain !== chain ? `community-pools-checker-last-idle-log-time:chain-${rawChain}` : null;
+  let lastIdleLogTimeRaw = await redisClient.get(lastIdleLogTimeKey);
+  
+  if (!lastIdleLogTimeRaw && oldLastIdleLogTimeKey) {
+    lastIdleLogTimeRaw = await redisClient.get(oldLastIdleLogTimeKey);
+    if (lastIdleLogTimeRaw) {
+      logger.info(`Found data with old Redis key "${oldLastIdleLogTimeKey}", migrating to new key "${lastIdleLogTimeKey}"`);
+      await redisClient.set(lastIdleLogTimeKey, lastIdleLogTimeRaw);
+    }
+  }
+  
   const lastIdleLogTime = !lastIdleLogTimeRaw || isNaN(+lastIdleLogTimeRaw) ? 0 : +lastIdleLogTimeRaw;
   const now = Math.trunc(Date.now() / 1000);
   const shouldLogIdle = now - lastIdleLogTime >= IDLE_LOG_INTERVAL_SECS;

@@ -5,6 +5,7 @@ import {
   getLdbUserPrefix,
   Job,
   logger,
+  normalizeChain,
   redisClient,
   storage,
   updateLeaderboardLastUpdatedTime
@@ -18,7 +19,8 @@ import { Pool, Prediction } from './schemas.js';
  * @param job The job containing the pool to use for leaderboard update
  */
 export const updateLeaderboardFromPool = async (job: Job): Promise<void> => {
-  const { chain, poolId } = job.data;
+  const { chain: rawChain, poolId } = job.data;
+  const chain = normalizeChain(rawChain);
   logger.info(`\n\n\n Start processing job for poolId: ${poolId}, chain: ${chain}`);
 
   // Check that the pool has predictions on chain, otherwise end process.

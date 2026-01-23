@@ -1,4 +1,4 @@
-import { firestore, Job, logger } from '@castora/shared';
+import { firestore, Job, logger, normalizeChain } from '@castora/shared';
 import { createPool } from './create-pool.js';
 import { getPoolId } from './get-pool-id.js';
 import { getMainnetCryptoSeeds } from './get-pool-seeds.js';
@@ -9,7 +9,8 @@ import { getMainnetCryptoSeeds } from './get-pool-seeds.js';
  * @param job The job containing the chain to sync its pools.
  */
 export const syncPools = async (job: Job): Promise<void> => {
-  const { chain } = job.data;
+  const { chain: rawChain } = job.data;
+  const chain = normalizeChain(rawChain);
 
   logger.info(`Starting Sync for Live Crypto Pools on chain: ${chain}`);
   logger.info('First Pass Call, Main Sync');

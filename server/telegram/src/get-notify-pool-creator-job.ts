@@ -1,11 +1,12 @@
-import { FieldValue, firestore, Job, logger, storage } from '@castora/shared';
+import { FieldValue, firestore, Job, logger, normalizeChain, storage } from '@castora/shared';
 import { Bot } from 'grammy';
 import { Pool } from './schemas.js';
 import { notifyPoolCreator } from './telegram-notifiers.js';
 
 export const getNotifyPoolCreatorJob = (bot: Bot) => {
   return async (job: Job<any, any, string>) => {
-    const { poolId, chain } = job.data;
+    const { poolId, chain: rawChain } = job.data;
+    const chain = normalizeChain(rawChain);
     logger.info(`Start processing Pool Creator Telegram Notifier job for poolId: ${poolId}, chain: ${chain}`);
 
     // Fetch the pool from the archive

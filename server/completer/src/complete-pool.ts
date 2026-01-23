@@ -3,6 +3,7 @@ import {
   fetchPool,
   Job,
   logger,
+  normalizeChain,
   queueJob,
   readPoolsManagerContract
 } from '@castora/shared';
@@ -17,7 +18,8 @@ import { rearchivePool } from './rearchive-pool.js';
  * @returns A promise that resolves when the pool is completed.
  */
 export const completePool = async (job: Job): Promise<void> => {
-  const { chain, poolId } = job.data;
+  const { chain: rawChain, poolId } = job.data;
+  const chain = normalizeChain(rawChain);
   logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
   let pool = await fetchPool(chain, poolId);
   const { noOfPredictions, completionTime, seeds } = pool;

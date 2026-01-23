@@ -42,7 +42,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await server.get(`/leaderboard/top`, { chain: currentChain?.name });
+      const data = await server.get(`/leaderboard/top`, { chain: currentChain?.name.toLowerCase() ?? 'monad' });
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -73,7 +73,7 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const data = await server.get(`/leaderboard/mine`, { chain: currentChain?.name });
+      const data = await server.get(`/leaderboard/mine`, { chain: currentChain?.name.toLowerCase() ?? 'monad' });
       if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);

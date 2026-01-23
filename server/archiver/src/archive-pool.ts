@@ -1,4 +1,4 @@
-import { ArchivedPool, Chain, fetchPool, Job, logger, PoolSeeds, queueJob, storage } from '@castora/shared';
+import { ArchivedPool, Chain, fetchPool, Job, logger, normalizeChain, PoolSeeds, queueJob, storage } from '@castora/shared';
 import { fetchPredictions } from './fetch-predictions.js';
 
 const queueCompletionJob = async (poolId: any, chain: Chain, seeds: PoolSeeds): Promise<void> => {
@@ -25,7 +25,8 @@ const queueCompletionJob = async (poolId: any, chain: Chain, seeds: PoolSeeds): 
  * @returns A promise that resolves when the pool is archived.
  */
 export const archivePool = async (job: Job): Promise<void> => {
-  const { chain, poolId, shouldComplete } = job.data;
+  const { chain: rawChain, poolId, shouldComplete } = job.data;
+  const chain = normalizeChain(rawChain);
   logger.info(`Start processing job for poolId: ${poolId}, chain: ${chain}`);
 
   const pool = await fetchPool(chain, poolId);
