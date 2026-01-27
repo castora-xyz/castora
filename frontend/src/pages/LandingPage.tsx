@@ -10,14 +10,17 @@ import {
   PoolCardShimmer
 } from '@/components';
 import { usePools } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const LandingPage = () => {
   const { liveCryptoPools } = usePools();
-
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
   const [activePool, setActivePool] = useState<Pool | null>(null);
   const [upcomingPool, setUpcomingPool] = useState<Pool | null>(null);
 
@@ -64,7 +67,7 @@ export const LandingPage = () => {
       </p>
 
       <Link
-        to="/pools/crypto"
+        to={`/${chainName}/pools`}
         className="max-md:hidden mx-auto py-2 px-8 mb-20 rounded-full bg-primary-default border-2 border-primary-lighter font-medium md:text-xl lg:text-2xl text-white p-ripple"
       >
         Predict Now
@@ -149,7 +152,7 @@ export const LandingPage = () => {
         </p>
 
         <Link
-          to="/pools/crypto"
+          to={`/${chainName}/pools`}
           className="border-2 border-primary-lighter bg-white py-2 lg:py-3 px-6 lg:px-8 text-xl lg:text-2xl font-medium text-primary-darker rounded-full p-ripple"
         >
           Live Pools

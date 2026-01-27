@@ -1,13 +1,17 @@
 import Trophy from '@/assets/trophy.svg?react';
 import { SuccessIcon } from '@/components';
 import { useMyPredictActivity } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const LandingWinCard = () => {
   const { isFetching, myActivities } = useMyPredictActivity();
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
 
   const [pool, setPool] = useState<Pool | null>(null);
 
@@ -64,7 +68,7 @@ export const LandingWinCard = () => {
       )}
 
       <Link
-        to={pool ? `/pool/${pool.poolId}` : '/pools'}
+        to={pool ? `/${chainName}/pool/${pool.poolId}` : `/${chainName}/pools`}
         className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white inline-block text-center mt-auto"
       >
         {pool ? 'Go To Claim' : 'Predict Now'}

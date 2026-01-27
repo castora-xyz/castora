@@ -1,12 +1,16 @@
 import Coin3Fill from '@/assets/coin-3-fill.svg?react';
 import { SuccessIcon } from '@/components';
 import { useMyPredictActivity } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const LandingClaimCard = () => {
   const { isFetching, myActivities } = useMyPredictActivity();
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
   const [hasClaimed, setHasClaimed] = useState(false);
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export const LandingClaimCard = () => {
       {hasClaimed && <p className="mb-8">Predict More for More Winnings</p>}
 
       <Link
-        to="/pools"
+        to={`/${chainName}/pools`}
         className="w-full py-2 px-4 rounded-full font-medium p-ripple bg-primary-default text-white inline-block text-center mt-auto"
       >
         Predict Now

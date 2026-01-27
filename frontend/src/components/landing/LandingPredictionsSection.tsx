@@ -1,4 +1,5 @@
 import { MAX_BULK_PREDICTIONS, useContract } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool, landingPageDefaults } from '@/schemas';
 import { HermesClient } from '@pythnetwork/hermes-client';
 import { useAppKit } from '@reown/appkit/react';
@@ -11,10 +12,11 @@ import { useConnection } from 'wagmi';
 export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
   const client = new HermesClient('https://hermes.pyth.network', {});
 
-  const { isConnected } = useConnection();
+  const { isConnected, chain: currentChain } = useConnection();
   const { balance } = useContract();
   const navigate = useNavigate();
   const { open: connectWallet } = useAppKit();
+  const chainName = getChainName(currentChain);
 
   const [bulkCount, setBulkCount] = useState(2);
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -34,7 +36,7 @@ export const LandingPredictionsSection = ({ pool }: { pool: Pool | null }) => {
     if (!isConnected) return connectWallet();
     const val = predictionInput.current?.value;
     const toAppend = val ? `?prediction=${val}` : '';
-    navigate(pool ? `/pool/${pool.poolId}${toAppend}` : '/pools');
+    navigate(pool ? `/${chainName}/pool/${pool.poolId}${toAppend}` : `/${chainName}/pools`);
   };
 
   const nextHour = () => {

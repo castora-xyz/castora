@@ -1,14 +1,18 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownNumbers } from '@/components';
+import { getChainName } from '@/utils/config';
 import { landingPageDefaults, Pool } from '@/schemas';
 import { HermesClient } from '@pythnetwork/hermes-client';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   const client = new HermesClient('https://hermes.pyth.network', {});
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
 
   const [basePrice, setBasePrice] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -74,7 +78,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
   return (
     <div className="border border-border-default dark:border-surface-disabled p-8 bg-app-bg w-full rounded-[24px]">
       <div className="mb-8">
-        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">Building on Monad</p>
+        <p className="font-medium text-xs sm:text-base text-text-disabled text-right">Building on {chainName.charAt(0).toUpperCase() + chainName.slice(1)}</p>
         <p className="font-medium text-xs sm:text-base text-text-disabled text-right mb-2">Powered by PYTH</p>
 
         <div className="flex gap-2 sm:gap-3 items-start">
@@ -121,7 +125,7 @@ export const LandingHeroPoolCard = ({ pool }: { pool: Pool | null }) => {
         )}
 
         <Link
-          to={!!pool ? '/pool/' + pool.poolId : '/pools'}
+          to={!!pool ? `/${chainName}/pool/${pool.poolId}` : `/${chainName}/pools`}
           className="py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-lg text-white p-ripple self-end h-fit flex items-center justify-center max-sm:mt-8"
         >
           {!!pool ? 'Join Pool' : 'Live Pools'}
