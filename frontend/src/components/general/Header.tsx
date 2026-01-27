@@ -1,3 +1,4 @@
+import { getChainName } from '@/utils/config';
 import { Ripple } from 'primereact/ripple';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ConnectWalletButton } from './ConnectWalletButton';
@@ -10,7 +11,7 @@ export const Header = () => {
   const location = useLocation();
   const { chain: currentChain} = useConnection();
 
-  let chainName = currentChain?.name.toLowerCase() ?? 'monad';
+  const chainName = getChainName(currentChain);
   return (
     <header className="max-[414px]:px-4 xs:px-8 py-4 fixed top-0 left-0 right-0 z-30 border-b border-border-default dark:border-surface-subtle bg-app-bg h-16 sm:h-[72px]">
       <div className="flex items-center max-w-(--breakpoint-xl) mx-auto">

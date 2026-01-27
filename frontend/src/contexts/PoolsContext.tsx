@@ -1,4 +1,5 @@
 import { WriteContractStatus, useContract, useFirebase, useToast } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool, tokens } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
@@ -413,7 +414,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [liveCommunityPoolIds]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/crypto`), (doc) => {
+    const chainName = getChainName(currentChain);
+    return onSnapshot(doc(firestore, `/chains/${chainName}/live/crypto`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -424,7 +426,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/stocks`), (doc) => {
+    const chainName = getChainName(currentChain);
+    return onSnapshot(doc(firestore, `/chains/${chainName}/live/stocks`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
@@ -435,7 +438,8 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
   }, [currentChain]);
 
   useEffect(() => {
-    return onSnapshot(doc(firestore, `/chains/${currentChain?.name.toLowerCase() ?? 'monad'}/live/community`), (doc) => {
+    const chainName = getChainName(currentChain);
+    return onSnapshot(doc(firestore, `/chains/${chainName}/live/community`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {

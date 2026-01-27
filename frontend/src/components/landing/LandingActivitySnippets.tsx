@@ -1,5 +1,6 @@
 import { ActivityPredictCard } from '@/components';
-import { ActivityPredict, CASTORA_ADDRESS_MONAD, useMyPredictActivity } from '@/contexts';
+import { ActivityPredict, useMyPredictActivity } from '@/contexts';
+import { CASTORA_ADDRESS_MONAD } from '@/utils/config';
 import { Pool, PoolSeeds, Prediction } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

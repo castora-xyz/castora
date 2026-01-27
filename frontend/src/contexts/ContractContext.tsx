@@ -1,5 +1,6 @@
 import { useToast } from '@/contexts/ToastContext';
 import { castoraAbi, castoraGettersAbi, castoraPoolsManagerAbi, erc20Abi } from '@/contexts/abis';
+import { getChainAddresses, getChainName } from '@/utils/config';
 import { useAppKit } from '@reown/appkit/react';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -60,8 +61,20 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   const walletClient = useWalletClient();
 
   const [defaultChain] = useChains();
-  const getCastoraAddress = () => CASTORA_ADDRESS_MONAD;
-  const [castoraAddress, setCastoraAddress] = useState(CASTORA_ADDRESS_MONAD);
+  const getCastoraAddress = () => {
+    const chainName = getChainName(currentChain);
+    return getChainAddresses(chainName).castora;
+  };
+  const getPoolsManagerAddress = () => {
+    const chainName = getChainName(currentChain);
+    return getChainAddresses(chainName).poolsManager;
+  };
+  const getGettersAddress = () => {
+    const chainName = getChainName(currentChain);
+    return getChainAddresses(chainName).getters;
+  };
+  const [castoraAddress, setCastoraAddress] = useState(() => getCastoraAddress());
+  const [poolsManagerAddress, setPoolsManagerAddress] = useState(() => getPoolsManagerAddress());
 
   const publicClient = () =>
     createPublicClient({
@@ -164,7 +177,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     contract: ChoiceContract;
     onSuccessCallback?: (txHash: string) => void;
   }) => {
-    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+    const target = contract == 'castora' ? getCastoraAddress() : getPoolsManagerAddress();
     return write(token, erc20Abi, 'approve', [target, BigInt(amount)], undefined, onSuccessCallback);
   };
 
@@ -193,7 +206,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     if (!isConnected) return false;
     try {
-      const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+      const target = contract == 'castora' ? getCastoraAddress() : getPoolsManagerAddress();
       return Number(await read(token, erc20Abi, 'allowance', [address, target])) >= amount;
     } catch (e) {
       console.error(e);
@@ -212,8 +225,8 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     let target;
     if (contract == 'castora') target = getCastoraAddress();
-    else if (contract == 'pools-manager') target = POOLS_MANAGER_ADDRESS_MONAD;
-    else if (contract == 'getters') target = GETTERS_ADDRESS_MONAD;
+    else if (contract == 'pools-manager') target = getPoolsManagerAddress();
+    else if (contract == 'getters') target = getGettersAddress();
     else throw new Error('Invalid contract type');
 
     let abi;
@@ -238,13 +251,14 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
     value?: number | undefined;
     onSuccessCallback?: (txHash: string, result: any) => void;
   }) => {
-    const target = contract == 'castora' ? getCastoraAddress() : POOLS_MANAGER_ADDRESS_MONAD;
+    const target = contract == 'castora' ? getCastoraAddress() : getPoolsManagerAddress();
     const abi = contract == 'castora' ? castoraAbi : castoraPoolsManagerAbi;
     return write(target, abi, functionName, args, value, onSuccessCallback);
   };
 
   useEffect(() => {
     setCastoraAddress(getCastoraAddress());
+    setPoolsManagerAddress(getPoolsManagerAddress());
   }, [currentChain]);
 
   return (
@@ -253,7 +267,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         approve,
         balance,
         castoraAddress,
-        poolsManagerAddress: POOLS_MANAGER_ADDRESS_MONAD,
+        poolsManagerAddress,
         hasAllowance,
         readContract,
         writeContract

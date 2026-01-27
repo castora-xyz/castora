@@ -1,4 +1,4 @@
-import { CASTORA_ADDRESS_MONAD, CASTORA_ADDRESS_SEPOLIA } from '@/contexts';
+import { CASTORA_ADDRESS_MONAD, CASTORA_ADDRESS_SEPOLIA } from '@/utils/config';
 
 export const AAPL = '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357';
 export const BTC = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac6';

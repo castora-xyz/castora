@@ -13,6 +13,7 @@ import {
   PrivacyPage,
   TermsPage
 } from '@/pages';
+import { getChainName } from '@/utils/config';
 import { ReactNode, useEffect } from 'react';
 import {
   Navigate,
@@ -31,7 +32,7 @@ const Layout = ({ outlet }: { outlet: ReactNode }) => {
   const location = useLocation();
   const { chain: currentChain} = useConnection();
 
-  const chainName = currentChain?.name.toLowerCase() ?? 'monad';
+  const chainName = getChainName(currentChain);
   useEffect(() => {
     const names: { [key: string]: string } = {
       '/': 'Home',

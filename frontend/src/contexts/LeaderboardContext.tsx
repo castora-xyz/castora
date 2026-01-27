@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useServer } from '@/contexts/ServerContext';
+import { getChainName } from '@/utils/config';
 import { LeaderboardEntry } from '@/schemas';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { useConnection } from 'wagmi';
@@ -42,7 +43,8 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await server.get(`/leaderboard/top`, { chain: currentChain?.name.toLowerCase() ?? 'monad' });
+      const chainName = getChainName(currentChain);
+      const data = await server.get(`/leaderboard/top`, { chain: chainName });
       if (data) {
         setEntries(data.entries || []);
         setLastUpdatedTime(data.lastUpdatedTime || new Date().toISOString());
@@ -73,7 +75,8 @@ export const LeaderboardProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch from server if not in top
     try {
-      const data = await server.get(`/leaderboard/mine`, { chain: currentChain?.name.toLowerCase() ?? 'monad' });
+      const chainName = getChainName(currentChain);
+      const data = await server.get(`/leaderboard/mine`, { chain: chainName });
       if (data) setMine(data);
     } catch (error) {
       console.error('Failed to fetch my leaderboard:', error);
