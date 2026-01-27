@@ -1,8 +1,8 @@
 import { WriteContractStatus, useContract, useFirebase, useToast } from '@/contexts';
-import { getChainName } from '@/utils/config';
+import { CHAIN_CONFIG, getChainName } from '@/utils/config';
 import { Pool, tokens } from '@/schemas';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Observable } from 'rxjs';
 import { useConnection } from 'wagmi';
 
@@ -413,41 +413,150 @@ export const PoolsProvider = ({ children }: { children: ReactNode }) => {
     fetchLiveCommunityPools();
   }, [liveCommunityPoolIds]);
 
-  useEffect(() => {
-    const chainName = getChainName(currentChain);
-    return onSnapshot(doc(firestore, `/chains/${chainName}/live/crypto`), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setLiveCryptoPoolIds(data.poolIds);
-        }
-      }
+  const cryptoPoolIdsRef = useRef<Record<string, number[]>>({});
+  const stocksPoolIdsRef = useRef<Record<string, number[]>>({});
+  const communityPoolIdsRef = useRef<Record<string, number[]>>({});
+
+  const mergeAndSetPoolIds = (ref: React.MutableRefObject<Record<string, number[]>>, setter: (ids: number[]) => void) => {
+    const allIds: number[] = [];
+    Object.values(ref.current).forEach((ids) => {
+      allIds.push(...ids);
     });
-  }, [currentChain]);
+    const uniqueIds = [...new Set(allIds)].sort((a, b) => a - b);
+    setter(uniqueIds);
+  };
 
   useEffect(() => {
     const chainName = getChainName(currentChain);
-    return onSnapshot(doc(firestore, `/chains/${chainName}/live/stocks`), (doc) => {
+    const chainConfig = CHAIN_CONFIG[chainName];
+    const aliases = chainConfig?.aliases || [];
+    const unsubscribers: (() => void)[] = [];
+
+    cryptoPoolIdsRef.current = {};
+
+    const mainUnsub = onSnapshot(doc(firestore, `/chains/${chainName}/live/crypto`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setLiveStocksPoolIds(data.poolIds);
+          cryptoPoolIdsRef.current[chainName] = data.poolIds;
+          mergeAndSetPoolIds(cryptoPoolIdsRef, setLiveCryptoPoolIds);
         }
+      } else {
+        delete cryptoPoolIdsRef.current[chainName];
+        mergeAndSetPoolIds(cryptoPoolIdsRef, setLiveCryptoPoolIds);
       }
     });
-  }, [currentChain]);
+    unsubscribers.push(mainUnsub);
+
+    aliases.forEach((alias) => {
+      const aliasUnsub = onSnapshot(doc(firestore, `/chains/${alias}/live/crypto`), (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          if ('poolIds' in data && Array.isArray(data.poolIds)) {
+            cryptoPoolIdsRef.current[alias] = data.poolIds;
+            mergeAndSetPoolIds(cryptoPoolIdsRef, setLiveCryptoPoolIds);
+          }
+        } else {
+          delete cryptoPoolIdsRef.current[alias];
+          mergeAndSetPoolIds(cryptoPoolIdsRef, setLiveCryptoPoolIds);
+        }
+      });
+      unsubscribers.push(aliasUnsub);
+    });
+
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+      cryptoPoolIdsRef.current = {};
+    };
+  }, [currentChain, firestore]);
 
   useEffect(() => {
     const chainName = getChainName(currentChain);
-    return onSnapshot(doc(firestore, `/chains/${chainName}/live/community`), (doc) => {
+    const chainConfig = CHAIN_CONFIG[chainName];
+    const aliases = chainConfig?.aliases || [];
+    const unsubscribers: (() => void)[] = [];
+
+    stocksPoolIdsRef.current = {};
+
+    const mainUnsub = onSnapshot(doc(firestore, `/chains/${chainName}/live/stocks`), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         if ('poolIds' in data && Array.isArray(data.poolIds)) {
-          setLiveCommunityPoolIds(data.poolIds);
+          stocksPoolIdsRef.current[chainName] = data.poolIds;
+          mergeAndSetPoolIds(stocksPoolIdsRef, setLiveStocksPoolIds);
         }
+      } else {
+        delete stocksPoolIdsRef.current[chainName];
+        mergeAndSetPoolIds(stocksPoolIdsRef, setLiveStocksPoolIds);
       }
     });
-  }, [currentChain]);
+    unsubscribers.push(mainUnsub);
+
+    aliases.forEach((alias) => {
+      const aliasUnsub = onSnapshot(doc(firestore, `/chains/${alias}/live/stocks`), (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          if ('poolIds' in data && Array.isArray(data.poolIds)) {
+            stocksPoolIdsRef.current[alias] = data.poolIds;
+            mergeAndSetPoolIds(stocksPoolIdsRef, setLiveStocksPoolIds);
+          }
+        } else {
+          delete stocksPoolIdsRef.current[alias];
+          mergeAndSetPoolIds(stocksPoolIdsRef, setLiveStocksPoolIds);
+        }
+      });
+      unsubscribers.push(aliasUnsub);
+    });
+
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+      stocksPoolIdsRef.current = {};
+    };
+  }, [currentChain, firestore]);
+
+  useEffect(() => {
+    const chainName = getChainName(currentChain);
+    const chainConfig = CHAIN_CONFIG[chainName];
+    const aliases = chainConfig?.aliases || [];
+    const unsubscribers: (() => void)[] = [];
+
+    communityPoolIdsRef.current = {};
+
+    const mainUnsub = onSnapshot(doc(firestore, `/chains/${chainName}/live/community`), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if ('poolIds' in data && Array.isArray(data.poolIds)) {
+          communityPoolIdsRef.current[chainName] = data.poolIds;
+          mergeAndSetPoolIds(communityPoolIdsRef, setLiveCommunityPoolIds);
+        }
+      } else {
+        delete communityPoolIdsRef.current[chainName];
+        mergeAndSetPoolIds(communityPoolIdsRef, setLiveCommunityPoolIds);
+      }
+    });
+    unsubscribers.push(mainUnsub);
+
+    aliases.forEach((alias) => {
+      const aliasUnsub = onSnapshot(doc(firestore, `/chains/${alias}/live/community`), (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          if ('poolIds' in data && Array.isArray(data.poolIds)) {
+            communityPoolIdsRef.current[alias] = data.poolIds;
+            mergeAndSetPoolIds(communityPoolIdsRef, setLiveCommunityPoolIds);
+          }
+        } else {
+          delete communityPoolIdsRef.current[alias];
+          mergeAndSetPoolIds(communityPoolIdsRef, setLiveCommunityPoolIds);
+        }
+      });
+      unsubscribers.push(aliasUnsub);
+    });
+
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+      communityPoolIdsRef.current = {};
+    };
+  }, [currentChain, firestore]);
 
   return (
     <PoolsContext.Provider

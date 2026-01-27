@@ -1,8 +1,13 @@
+import { getChainName } from '@/utils/config';
 import { Ripple } from 'primereact/ripple';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const NotFoundPage = () => {
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
+
   useEffect(() => {
     document.title = 'Castora';
   }, []);
@@ -16,7 +21,7 @@ export const NotFoundPage = () => {
       </p>
       <Link
         className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
-        to="/pools"
+        to={`/${chainName}/pools`}
       >
         Predict Now
         <Ripple />

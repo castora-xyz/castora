@@ -7,6 +7,7 @@ import Wallet from '@/assets/wallet.svg?react';
 import { ActivityPredictCard, ClaimPredictButton, ClaimAllPredictButton, CountdownNumbers, MyActivityPageIntro, predictionsActivityType } from '@/components/general';
 import { rowsPerPageOptions, useCurrentTime, useMyPredictActivity } from '@/contexts';
 import { ActivityPredict } from '@/contexts/MyPredictActivityContext';
+import { normalizeChain } from '@/utils/config';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { useAppKit } from '@reown/appkit/react';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -14,7 +15,7 @@ import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import ms from 'ms';
 import { useConnection } from 'wagmi';
@@ -26,6 +27,8 @@ type PredictionTableRow = ActivityPredict & {
 const columnHelper = createColumnHelper<PredictionTableRow>();
 
 export const MyActivityPredictionsPage = () => {
+  const { chainName: chainNameParam } = useParams<{ chainName: string }>();
+  const chainName = normalizeChain(chainNameParam);
   const { isConnected } = useConnection();
   const location = useLocation();
   const { now } = useCurrentTime();
@@ -111,7 +114,7 @@ export const MyActivityPredictionsPage = () => {
         cell: (info) => {
           const poolId = info.getValue();
           return (
-            <Link to={`/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
+            <Link to={`/${chainName}/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
               <span className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
                 {poolId}
               </span>
@@ -272,7 +275,7 @@ export const MyActivityPredictionsPage = () => {
             Join Pools by Making Predictions.
           </p>
           <Link
-            to="/pools"
+            to={`/${chainName}/pools`}
             className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
             Predict Now

@@ -3,6 +3,7 @@ import LinkIcon from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import { CountdownNumbers, CreatePoolModal } from '@/components';
 import { allowedCreatorPredTokens, CreatePoolForm, useCurrentTime, useFirebase, useToast } from '@/contexts';
+import { normalizeChain } from '@/utils/config';
 import { tokens } from '@/schemas';
 import { useAppKit } from '@reown/appkit/react';
 import ms from 'ms';
@@ -13,7 +14,7 @@ import { Message } from 'primereact/message';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useConnection } from 'wagmi';
 
 const formDefaults: CreatePoolForm = {
@@ -42,6 +43,9 @@ const CountdownBadgePreview = ({ timestamp }: { timestamp: number }) => {
 };
 
 export const CreateCommunityPoolPage = () => {
+  const { chainName: chainNameParam } = useParams<{ chainName: string }>();
+  const navigate = useNavigate();
+  const normalizedChainName = normalizeChain(chainNameParam);
   const [isShowingModal, setIsShowingModal] = useState(false);
   const [showModalHeading, setShowModalHeading] = useState(true);
   const { isConnected } = useConnection();
@@ -80,6 +84,12 @@ export const CreateCommunityPoolPage = () => {
       label: `${token.name} - ${token.fullName}`,
       value: token.name
     }));
+
+  useEffect(() => {
+    if (chainNameParam && chainNameParam.toLowerCase() !== normalizedChainName.toLowerCase()) {
+      navigate(`/${normalizedChainName}/pools/create`, { replace: true });
+    }
+  }, [chainNameParam, normalizedChainName, navigate]);
 
   useEffect(() => {
     document.title = 'Create Pool | Castora';

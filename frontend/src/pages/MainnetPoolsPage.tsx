@@ -1,36 +1,55 @@
 import Timer from '@/assets/timer.svg?react';
 import { FilterCommunityPools, PoolCard, PoolCardShimmer } from '@/components';
 import { useFilterCommunityPools, usePools, usePoolsShimmer } from '@/contexts';
+import { getChainName, normalizeChain } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 
 export const MainnetPoolsPage = () => {
+  const { chainName: chainNameParam } = useParams<{ chainName: string }>();
+  const navigate = useNavigate();
+  const normalizedChainName = normalizeChain(chainNameParam);
+  const { chain: currentChain } = useConnection();
+  const currentChainName = getChainName(currentChain);
   const filters = useFilterCommunityPools();
   const { isFetchingLiveCrypto, liveCryptoPools, isFetchingLiveCommunity, liveCommunityPools } = usePools();
   const { shimmerCount } = usePoolsShimmer();
   const [filtered, setFiltered] = useState<Pool[]>([]);
 
   useEffect(() => {
-    setFiltered(
-      [...liveCryptoPools, ...liveCommunityPools].filter((p) =>
-        p.seeds.matchesFilterCommunity({
-          multipliers: filters.multipliers,
-          predictionTokens: filters.predictionTokens,
-          stakeTokens: filters.stakeTokens,
-          statuses: filters.statuses
-        })
-      )
-    );
+    if (chainNameParam && chainNameParam.toLowerCase() !== normalizedChainName.toLowerCase()) {
+      navigate(`/${normalizedChainName}/pools`, { replace: true });
+    }
+  }, [chainNameParam, normalizedChainName, navigate]);
+
+  useEffect(() => {
+    if (currentChainName === normalizedChainName) {
+      setFiltered(
+        [...liveCryptoPools, ...liveCommunityPools].filter((p) =>
+          p.seeds.matchesFilterCommunity({
+            multipliers: filters.multipliers,
+            predictionTokens: filters.predictionTokens,
+            stakeTokens: filters.stakeTokens,
+            statuses: filters.statuses
+          })
+        )
+      );
+    } else {
+      setFiltered([]);
+    }
   }, [
     filters.multipliers,
     filters.predictionTokens,
     filters.stakeTokens,
     filters.statuses,
     liveCryptoPools,
-    liveCommunityPools
+    liveCommunityPools,
+    currentChainName,
+    normalizedChainName
   ]);
 
   useEffect(() => {
@@ -48,7 +67,7 @@ export const MainnetPoolsPage = () => {
           <FilterCommunityPools />
 
           <Link
-            to="/pools/create"
+            to={`/${normalizedChainName}/pools/create`}
             className="hidden md:block ml-auto py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
             Create Pool
@@ -59,7 +78,7 @@ export const MainnetPoolsPage = () => {
           <div className="md:hidden flex justify-end mb-4">
             <Tooltip target=".create-pool" pt={{ root: { className: 'w-36' } }} />
             <Link
-              to="/pools/create"
+              to={`/${normalizedChainName}/pools/create`}
               className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-primary-default border-2 border-primary-lighter flex items-center justify-center shadow-lg p-ripple"
             >
               <span className="create-pool text-5xl text-white -mt-2.5" data-pr-tooltip="Create Pool">
@@ -73,7 +92,13 @@ export const MainnetPoolsPage = () => {
 
       <div className=" max-[414px]:px-4 px-8 pb-16">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-(--breakpoint-xl) mx-auto pt-4">
-          {isFetchingLiveCrypto || isFetchingLiveCommunity ? (
+          {currentChainName !== normalizedChainName ? (
+            <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12 w-full md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-28 md:px-20 md:gap-4 md:max-w-2xl md:text-center">
+              <p className="text-lg xs:text-2xl mb-8 max-md:max-w-sm">
+                Please switch your wallet to {normalizedChainName} to view pools on this chain.
+              </p>
+            </div>
+          ) : isFetchingLiveCrypto || isFetchingLiveCommunity ? (
             Array.from(Array(shimmerCount).keys()).map((i) => <PoolCardShimmer key={i} />)
           ) : (
             <>
@@ -82,7 +107,7 @@ export const MainnetPoolsPage = () => {
               ) : (
                 <div className="max-md:flex max-md:flex-col max-md:justify-center max-md:items-center max-md:grow max-md:text-center max-md:py-12  w-full md:border md:border-border-default md:dark:border-surface-subtle md:rounded-2xl md:py-28 md:px-20 md:gap-4 md:max-w-2xl md:text-center">
                   <p className="text-lg xs:text-2xl mb-8 max-md:max-w-sm">
-                    {liveCryptoPools.length === 0 ? 'Pools will show up in a bit' : 'Adjust Filters to view pools'}
+                    {liveCryptoPools.length === 0 && liveCommunityPools.length === 0 ? 'Pools will show up in a bit' : 'Adjust Filters to view pools'}
                   </p>
                 </div>
               )}
@@ -123,7 +148,7 @@ export const MainnetPoolsPage = () => {
                   <p className="text-center text-2xl mt-3 mb-6">Get Started Now</p>
                   <div className="flex justify-center mb-8">
                     <Link
-                      to="/pools/create"
+                      to={`/${normalizedChainName}/pools/create`}
                       className="py-2 px-6 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
                     >
                       Create Pool

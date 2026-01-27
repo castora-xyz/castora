@@ -15,6 +15,7 @@ import {
 } from '@/components';
 import { rowsPerPageOptions, useCurrentTime, useMyCreateActivity } from '@/contexts';
 import { ActivityCreate } from '@/contexts/MyCreateActivityContext';
+import { normalizeChain } from '@/utils/config';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useAppKit } from '@reown/appkit/react';
@@ -23,7 +24,7 @@ import { Paginator } from 'primereact/paginator';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
 import { useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Breathing } from 'react-shimmer';
 import { useConnection } from 'wagmi';
 
@@ -34,6 +35,8 @@ type CreatePoolTableRow = ActivityCreate & {
 const columnHelper = createColumnHelper<CreatePoolTableRow>();
 
 export const MyActivityCreatedPoolsPage = () => {
+  const { chainName: chainNameParam } = useParams<{ chainName: string }>();
+  const chainName = normalizeChain(chainNameParam);
   const { isConnected } = useConnection();
   const location = useLocation();
   const { now } = useCurrentTime();
@@ -119,7 +122,7 @@ export const MyActivityCreatedPoolsPage = () => {
           cell: (info) => {
             const poolId = info.getValue();
             return (
-              <Link to={`/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
+              <Link to={`/${chainName}/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
                 <span className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
                   {poolId}
                 </span>
@@ -300,7 +303,7 @@ export const MyActivityCreatedPoolsPage = () => {
             Pools that you have created will appear here. Create your first pool to get started!
           </p>
           <Link
-            to="/pools/create"
+            to={`/${chainName}/pools/create`}
             className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple"
           >
             Create Pool

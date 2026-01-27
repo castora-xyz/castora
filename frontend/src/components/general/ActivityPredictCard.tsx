@@ -3,11 +3,12 @@ import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
 import { ClaimPredictButton, CountdownNumbers } from '@/components';
 import { useCurrentTime } from '@/contexts';
+import { normalizeChain } from '@/utils/config';
 import { Pool, Prediction } from '@/schemas';
 import ms from 'ms';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 export const ActivityPredictCard = ({
   count,
@@ -23,6 +24,8 @@ export const ActivityPredictCard = ({
   isInLandingPage?: boolean;
 }) => {
   const location = useLocation();
+  const { chainName: chainNameParam } = useParams<{ chainName?: string }>();
+  const chainName = chainNameParam ? normalizeChain(chainNameParam) : 'monad';
   const { now } = useCurrentTime();
 
   return (
@@ -77,7 +80,7 @@ export const ActivityPredictCard = ({
               Pool ID: {poolId}
             </p>
           ) : (
-            <Link to={`/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
+            <Link to={`/${chainName}/pool/${poolId}`} className="p-ripple rounded-full" state={{ from: location }}>
               <p className="border border-primary-darker dark:border-primary-default text-primary-darker dark:text-primary-default py-1 px-3 rounded-full text-xs hover:underline">
                 Pool ID: {poolId}
               </p>

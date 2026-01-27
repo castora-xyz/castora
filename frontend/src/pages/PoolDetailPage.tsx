@@ -12,16 +12,20 @@ import {
 } from '@/components';
 import { useCurrentTime, usePools } from '@/contexts';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { getChainName, normalizeChain } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useConnection } from 'wagmi';
 
 export const PoolDetailPage = () => {
   const { chain: currentChain } = useConnection();
   const { now } = useCurrentTime();
-  const { poolId } = useParams();
+  const { chainName: chainNameParam, poolId } = useParams<{ chainName: string; poolId: string }>();
+  const navigate = useNavigate();
+  const normalizedChainName = normalizeChain(chainNameParam);
+  const currentChainName = getChainName(currentChain);
   const { isValidPoolId, fetchOne } = usePools();
 
   const myInPoolPredsRef = useRef<MyInPoolPredsRef>(null);
@@ -84,9 +88,13 @@ export const PoolDetailPage = () => {
   };
 
   useEffect(() => {
+    if (chainNameParam && chainNameParam.toLowerCase() !== normalizedChainName.toLowerCase()) {
+      navigate(`/${normalizedChainName}/pool/${poolId}`, { replace: true });
+    }
+  }, [chainNameParam, normalizedChainName, poolId, navigate]);
+
+  useEffect(() => {
     if (prevCurrentChain && currentChain && prevCurrentChain.name != currentChain.name) {
-      // Full-reloading the page if the user proactively changed the active chain
-      // to something different as the poolId might be something else
       window.location.reload();
     } else {
       setPrevCurrentChain(currentChain);

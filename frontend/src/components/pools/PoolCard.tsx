@@ -1,10 +1,11 @@
 import ArrowRight from '@/assets/arrow-right.svg?react';
 import { CountdownBadge } from '@/components';
 import { useCurrentTime } from '@/contexts';
+import { normalizeChain } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 export const PoolCard = ({
   pool,
@@ -16,6 +17,8 @@ export const PoolCard = ({
 }) => {
   const { now } = useCurrentTime();
   const location = useLocation();
+  const { chainName: chainNameParam } = useParams<{ chainName?: string }>();
+  const chainName = chainNameParam ? normalizeChain(chainNameParam) : 'monad';
 
   return (
     <div
@@ -129,7 +132,7 @@ export const PoolCard = ({
 
       <Link
         className="w-full mt-5 py-2 px-4 rounded-full font-medium border border-border-default dark:border-surface-subtle text-text-subtitle flex items-center justify-center p-ripple"
-        to={'/pool/' + poolId}
+        to={`/${chainName}/pool/${poolId}`}
         state={{ from: location }}
       >
         {seeds.status() === 'Open' ? 'Join ' : 'Open '}

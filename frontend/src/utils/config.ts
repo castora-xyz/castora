@@ -9,6 +9,7 @@ interface ChainConfig {
     poolsManager: `0x${string}`;
     getters: `0x${string}`;
   };
+  aliases?: string[];
 }
 
 export const config = createConfig({
@@ -36,6 +37,7 @@ export const CHAIN_CONFIG: Record<string, ChainConfig> = {
       poolsManager: '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE',
       getters: '0xf08959E66614027AE76303F4C5359eBfFd00Bc30',
     },
+    aliases: ['monadmainnet'],
   },
   megaethtestnet: {
     chain: megaethTestnet,
@@ -52,13 +54,18 @@ export const CHAIN_CONFIG: Record<string, ChainConfig> = {
 // Derive Chain type from config keys
 export type Chain = keyof typeof CHAIN_CONFIG;
 
-// Create lookup map: normalized name -> config key
 const chainNameToKey: Record<string, Chain> = {};
 for (const [key, config] of Object.entries(CHAIN_CONFIG)) {
   const normalizedKey = key.toLowerCase().replace(/\s/g, '');
   const normalizedName = config.chain.name.toLowerCase().replace(/\s/g, '');
   chainNameToKey[normalizedKey] = key as Chain;
   chainNameToKey[normalizedName] = key as Chain;
+  if (config.aliases) {
+    for (const alias of config.aliases) {
+      const normalizedAlias = alias.toLowerCase().replace(/\s/g, '');
+      chainNameToKey[normalizedAlias] = key as Chain;
+    }
+  }
 }
 
 /**

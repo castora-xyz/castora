@@ -4,13 +4,16 @@ import InfoCircle from '@/assets/info-circle.svg?react';
 import LinkIcon from '@/assets/link.svg?react';
 import Timer from '@/assets/timer.svg?react';
 import Trophy from '@/assets/trophy.svg?react';
+import { normalizeChain } from '@/utils/config';
 import { Pool } from '@/schemas';
 import { Ripple } from 'primereact/ripple';
 import { Tooltip } from 'primereact/tooltip';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { pool: Pool }) => {
   const location = useLocation();
+  const { chainName: chainNameParam } = useParams<{ chainName?: string }>();
+  const chainName = chainNameParam ? normalizeChain(chainNameParam) : 'monad';
 
   return (
     <div className="w-full pl-0 bg-app-bg p-6 text-sm max-w-(--breakpoint-xl) mx-auto flex flex-wrap gap-4 text-text-subtitle">
@@ -19,7 +22,7 @@ export const PoolDetailPageIntro = ({ pool, pool: { seeds, userCreated } }: { po
         <p id="backwards" data-pr-tooltip="Go Back" className="flex gap-2">
           <Link
             className="hover:underline p-ripple text-primary-default"
-            to={location.state?.from?.pathname ?? '/pools'}
+            to={location.state?.from?.pathname ?? `/${chainName}/pools`}
           >
             <span>Pools</span>
             <Ripple />
