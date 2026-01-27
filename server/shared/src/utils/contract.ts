@@ -1,133 +1,179 @@
 import 'dotenv/config';
-import { createPublicClient, createWalletClient, defineChain, formatEther, http } from 'viem';
+import { createPublicClient, createWalletClient, formatEther, http } from 'viem';
+import { monad, megaethTestnet, type Chain as ViemChain } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { castoraAbi, gettersAbi, poolsManagerAbi } from './abi.js';
-import { Chain } from './index.js';
 import { logger } from './logger.js';
 
 export const CASTORA_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D';
 export const CASTORA_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const POOLS_MANAGER_MONAD: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
 export const CASTORA_GETTERS_MONAD: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
-// TODO: Add actual addresses for megaethtestnet
-export const CASTORA_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
-export const POOLS_MANAGER_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
-export const CASTORA_GETTERS_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
+
+
+
+/**
+ * Chain configuration interface
+ * To add a new chain, simply add a new entry to CHAIN_CONFIG below
+ */
+interface ChainConfig {
+  chain: ViemChain;
+  addresses: {
+    castora: `0x${string}`;
+    poolsManager: `0x${string}`;
+    getters: `0x${string}`;
+  };
+  adminKeyEnvVar: string;
+  aliases?: string[]; // Alternative names that map to this chain (e.g., 'monadmainnet' -> 'monad')
+  
+}
+
+/**
+ * CHAIN CONFIGURATION
+ * 
+ * To add a new chain:
+ * 1. Import the chain from 'viem/chains'
+ * 2. Add a new entry here with all required fields
+ * 3. The Chain type will automatically include your new chain
+ * 4. Add the ADMIN_KEY_<CHAIN> environment variable
+ */
+export const CHAIN_CONFIG = {
+  monad: {
+    chain: monad,
+    addresses: {
+      castora: '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D',
+      poolsManager: '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE',
+      getters: '0xf08959E66614027AE76303F4C5359eBfFd00Bc30',
+    },
+    adminKeyEnvVar: 'ADMIN_KEY_MONAD_MAINNET',
+    aliases: ['monadmainnet'],
+  },
+  megaethtestnet: {
+    chain: megaethTestnet,
+    addresses: {
+      castora: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
+      poolsManager: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
+      getters: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
+    },
+    adminKeyEnvVar: 'ADMIN_KEY_MEGAETH_TESTNET',
+  },
+} as const;
+
+// Derive Chain type from config keys
+export type Chain = keyof typeof CHAIN_CONFIG;
+
+// Create reverse alias map for fast lookup
+const aliasToChain: Record<string, Chain> = {};
+for (const [chainId, config] of Object.entries(CHAIN_CONFIG)) {
+  aliasToChain[chainId] = chainId as Chain;
+  const chainConfig = config as ChainConfig;
+  if (chainConfig.aliases) {
+    for (const alias of chainConfig.aliases) {
+      aliasToChain[alias.toLowerCase()] = chainId as Chain;
+    }
+  }
+}
 
 export const normalizeChain = (chain: string): Chain => {
-  if (chain === 'monadmainnet') {
-    return 'monad';
+  const normalized = chain.toLowerCase();
+  const mappedChain = aliasToChain[normalized];
+  if (!mappedChain) {
+    throw new Error(`Unsupported chain: ${chain}. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
   }
-  return chain as Chain;
+  return mappedChain;
 };
 
-const monadMainnet = () => {
-  if (!process.env.MONAD_MAINNET_RPC_URL) throw 'Set MONAD_MAINNET_RPC_URL in env';
-
-  return defineChain({
-    id: 143,
-    name: 'Monad Mainnet',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Monad',
-      symbol: 'MON'
-    },
-    rpcUrls: {
-      default: { http: [process.env.MONAD_MAINNET_RPC_URL!] }
-    }
+// Initialize public clients for all chains
+const publicClients: Record<Chain, ReturnType<typeof createPublicClient>> = {} as Record<Chain, ReturnType<typeof createPublicClient>>;
+for (const [chainId, config] of Object.entries(CHAIN_CONFIG)) {
+  publicClients[chainId as Chain] = createPublicClient({
+    chain: config.chain,
+    transport: http(),
   });
-};
+}
 
-const megaEthTestnet = () => {
-  if (!process.env.MEGAETH_TESTNET_RPC_URL) throw 'Set MEGAETH_TESTNET_RPC_URL in env';
+// Chain objects for wallet client creation
+const chainObjects: Record<Chain, ViemChain> = {} as Record<Chain, ViemChain>;
+for (const [chainId, config] of Object.entries(CHAIN_CONFIG)) {
+  chainObjects[chainId as Chain] = config.chain;
+}
 
-  return defineChain({
-    id: 6343,
-    name: 'MegaETH Testnet',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Ether',
-      symbol: 'ETH'
-    },
-    rpcUrls: {
-      default: { http: [process.env.MEGAETH_TESTNET_RPC_URL!] }
-    }
-  });
-};
-
-export const getConfig = (chain: Chain | string) => {
+export const getPublicClient = (chain: Chain | string) => {
   const normalizedChain = normalizeChain(chain);
-  if (normalizedChain === 'monad') {
-    return { chain: monadMainnet(), transport: http() };
-  }
-  if (normalizedChain === 'megaethtestnet') {
-    return { chain: megaEthTestnet(), transport: http() };
-  }
-  throw new Error(`Unsupported chain: ${normalizedChain}`);
+  const client = publicClients[normalizedChain as Chain];
+  if (!client) throw new Error(`Unsupported chain: ${normalizedChain}`);
+  return client;
 };
+
+const getNativeCurrencySymbol = (chain: Chain | string): string => {
+  const normalizedChain = normalizeChain(chain);
+  const chainObj = chainObjects[normalizedChain as Chain];
+  if (!chainObj) throw new Error(`Unsupported chain: ${normalizedChain}`);
+  return chainObj.nativeCurrency.symbol;
+};
+
 
 export const getCastoraAddress = (chain: Chain | string): `0x${string}` => {
   const normalizedChain = normalizeChain(chain);
-  const addresses: Record<Chain, `0x${string}`> = {
-    monad: CASTORA_MONAD,
-    megaethtestnet: CASTORA_MEGAETH_TESTNET
-  };
-  return addresses[normalizedChain];
+  const address = CHAIN_CONFIG[normalizedChain].addresses.castora;
+  if (!address || address === '0x0000000000000000000000000000000000000000') {
+    throw new Error(`No Castora address configured for chain: ${normalizedChain}`);
+  }
+  return address;
 };
 
 const getPoolsManagerAddress = (chain: Chain | string): `0x${string}` => {
   const normalizedChain = normalizeChain(chain);
-  const addresses: Record<Chain, `0x${string}`> = {
-    monad: POOLS_MANAGER_MONAD,
-    megaethtestnet: POOLS_MANAGER_MEGAETH_TESTNET
-  };
-  return addresses[normalizedChain];
+  const address = CHAIN_CONFIG[normalizedChain].addresses.poolsManager;
+  if (!address || address === '0x0000000000000000000000000000000000000000') {
+    throw new Error(`No PoolsManager address configured for chain: ${normalizedChain}`);
+  }
+  return address;
 };
 
 const getAccount = (chain: Chain | string) => {
   const normalizedChain = normalizeChain(chain);
-  const adminKeys: Record<Chain, `0x${string}`> = {
-    monad: (process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`) || (() => { throw 'Set ADMIN_KEY_MONAD_MAINNET in env'; })(),
-    megaethtestnet: (process.env.ADMIN_KEY_MEGAETH_TESTNET as `0x${string}`) || (() => { throw 'Set ADMIN_KEY_MEGAETH_TESTNET in env'; })()
-  };
-  const adminKey = adminKeys[normalizedChain];
-  if (!adminKey) throw `Set ADMIN_KEY_${normalizedChain.toUpperCase().replace('-', '_')} in env`;
+  const config = CHAIN_CONFIG[normalizedChain];
+  const adminKey = process.env[config.adminKeyEnvVar] as `0x${string}` | undefined;
+  if (!adminKey) {
+    throw new Error(`Set ${config.adminKeyEnvVar} in env`);
+  }
   return privateKeyToAccount(adminKey);
 };
 
 export const readCastoraContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
   try {
-    const config = getConfig(normalizedChain);
+    const publicClient = getPublicClient(normalizedChain);
     // @ts-expect-error - viem type inference is too deep
-    return await createPublicClient(config).readContract({
+    return await publicClient.readContract({
       address: getCastoraAddress(normalizedChain),
       abi: castoraAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readCastoraContract call on chain: ${normalizedChain}, ${e}`);
+    logger.error(e, `Error at readCastoraContract call on chain: ${normalizedChain}`);
     throw e;
   }
 };
 
 export const readGettersContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
-  const gettersAddresses: Record<Chain, `0x${string}`> = {
-    monad: CASTORA_GETTERS_MONAD,
-    megaethtestnet: CASTORA_GETTERS_MEGAETH_TESTNET
-  };
+  const address = CHAIN_CONFIG[normalizedChain].addresses.getters;
+  if (!address || address === '0x0000000000000000000000000000000000000000') {
+    throw new Error(`No Getters address configured for chain: ${normalizedChain}`);
+  }
   try {
-    const config = getConfig(normalizedChain);
-    return await createPublicClient(config).readContract({
-      address: gettersAddresses[normalizedChain],
+    const publicClient = getPublicClient(normalizedChain);
+    return await publicClient.readContract({
+      address,
       abi: gettersAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readGettersContract call on chain: ${normalizedChain}, ${e}`);
+    logger.error(e, `Error at readGettersContract call on chain: ${normalizedChain}`);
     throw e;
   }
 };
@@ -135,29 +181,31 @@ export const readGettersContract = async (chain: Chain | string, functionName: a
 export const readPoolsManagerContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
   try {
-    const config = getConfig(normalizedChain);
+    const publicClient = getPublicClient(normalizedChain);
     // @ts-expect-error - viem type inference is too deep
-    return await createPublicClient(config).readContract({
+    return await publicClient.readContract({
       address: getPoolsManagerAddress(normalizedChain),
       abi: poolsManagerAbi,
       functionName,
       args
     });
   } catch (e) {
-    logger.error(e, `Error at readPoolsManagerContract call on chain: ${normalizedChain}, ${e}`);
+    logger.error(e, `Error at readPoolsManagerContract call on chain: ${normalizedChain}`);
     throw e;
   }
 };
 
 const showBalance = async (chain: Chain | string, address: `0x${string}`) => {
   const normalizedChain = normalizeChain(chain);
-  const config = getConfig(normalizedChain);
-  const balance = await createPublicClient(config).getBalance({
+  const publicClient = getPublicClient(normalizedChain);
+  const balance = await publicClient.getBalance({
     address
   });
-  const symbol = normalizedChain.includes('monad') ? 'MON' : 'ETH';
+  const symbol = getNativeCurrencySymbol(normalizedChain);
   logger.info(`Admin Balance (${address}): ${`${formatEther(balance)} ${symbol}`}`);
-  if (balance < 10e18) logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ${symbol}`}. Please top up.`);
+  // 1 ether = 1e18 wei, using BigInt for proper comparison
+  const oneEther = 10n ** 18n;
+  if (balance < oneEther) logger.warn(`Admin Balance is low: ${`${formatEther(balance)} ${symbol}`}. Please top up.`);
   return balance;
 };
 
@@ -167,8 +215,7 @@ export const writeContract = async (chain: Chain | string, functionName: any, ar
 
   try {
     const account = getAccount(normalizedChain);
-    const config = getConfig(normalizedChain);
-    const publicClient = createPublicClient(config);
+    const publicClient = getPublicClient(normalizedChain);
 
     const prevBalance = await showBalance(normalizedChain, account.address);
     const { result, request } = await publicClient.simulateContract({
@@ -180,7 +227,11 @@ export const writeContract = async (chain: Chain | string, functionName: any, ar
     });
 
     outcome = result;
-    const walletClient = createWalletClient({ ...config, account });
+    const walletClient = createWalletClient({
+      account,
+      chain: chainObjects[normalizedChain],
+      transport: http()
+    });
     const hash = await walletClient.writeContract(request);
 
     logger.info(`Transaction Hash: ${hash}`);
@@ -189,22 +240,24 @@ export const writeContract = async (chain: Chain | string, functionName: any, ar
     logger.info(receipt, 'Transaction Receipt');
 
     const newBalance = await showBalance(normalizedChain, account.address);
-    const balanceDiffs = formatEther(newBalance - prevBalance);
-    const symbol = normalizedChain.includes('monad') ? 'MON' : 'ETH';
-    logger.info(`Admin Balance Change: ${balanceDiffs} ${symbol}`);
+    const balanceDiff = newBalance - prevBalance;
+    const balanceDiffs = formatEther(balanceDiff < 0n ? -balanceDiff : balanceDiff);
+    const symbol = getNativeCurrencySymbol(normalizedChain);
+    const sign = balanceDiff < 0n ? '-' : '+';
+    logger.info(`Admin Balance Change: ${sign}${balanceDiffs} ${symbol}`);
   } catch (e) {
-    if (Object.keys(e as any).includes('abi')) delete (e as any).abi;
-    if (Object.keys(e as any).includes('args')) delete (e as any).args;
+    if (e && typeof e === 'object' && !Object.isFrozen(e)) {
+      if ('abi' in e) delete (e as any).abi;
+      if ('args' in e) delete (e as any).args;
+    }
 
-    logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}: ${e}`);
+    logger.error(e, `Error at writeContract call at ${errorContext} possible outcome ${outcome}`);
 
-    if (
-      normalizedChain === 'monad' &&
-      (`${e}`.includes('An existing transaction had higher priority') || `${e}`.includes('txpool not responding'))
-    ) {
-      // When these errors happen, the transaction actually went through because on the retry, the pool then exists
-      // already. However, we wait for mining to be sure before proceeding.
-      logger.info('Waiting 5 seconds to allow transaction to be mined ...');
+    // Check for retryable errors
+    const errorStr = `${e}`;
+    
+    if (errorStr.includes('An existing transaction had higher priority')) {
+      logger.info(`Waiting 5 seconds to allow transaction to be mined ...`);
       await new Promise((resolve) => setTimeout(resolve, 5000));
     } else {
       throw e;

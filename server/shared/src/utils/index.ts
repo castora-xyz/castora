@@ -7,15 +7,13 @@ export * from './jobs.js';
 export * from './leaderboard.js';
 export * from './logger.js';
 export * from './tokens.js';
-export { normalizeChain } from './contract.js';
+export { normalizeChain, type Chain } from './contract.js';
 
 import 'dotenv/config';
 import { applicationDefault, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-
-export type Chain = 'monad' | 'megaethtestnet';
 
 export const AUTH_MESSAGE = 'authentication';
 
