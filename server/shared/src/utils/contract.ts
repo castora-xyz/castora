@@ -9,6 +9,10 @@ export const CASTORA_MONAD: `0x${string}` = '0x9E1e6f277dF3f2cD150Ae1E08b05f45B3
 export const CASTORA_SEPOLIA: `0x${string}` = '0x294c2647d9f3eaca43a364859c6e6a1e0e582dbd';
 export const POOLS_MANAGER_MONAD: `0x${string}` = '0xF8f179Ab96165b61833F2930309bCE9c6aB281bE';
 export const CASTORA_GETTERS_MONAD: `0x${string}` = '0xf08959E66614027AE76303F4C5359eBfFd00Bc30';
+// TODO: Add actual addresses for megaethtestnet
+export const CASTORA_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
+export const POOLS_MANAGER_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
+export const CASTORA_GETTERS_MEGAETH_TESTNET: `0x${string}` = '0x0000000000000000000000000000000000000000';
 
 export const normalizeChain = (chain: string): Chain => {
   if (chain === 'monadmainnet') {
@@ -34,40 +38,69 @@ const monadMainnet = () => {
   });
 };
 
+const megaEthTestnet = () => {
+  if (!process.env.MEGAETH_TESTNET_RPC_URL) throw 'Set MEGAETH_TESTNET_RPC_URL in env';
+
+  return defineChain({
+    id: 6343,
+    name: 'MegaETH Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Ether',
+      symbol: 'ETH'
+    },
+    rpcUrls: {
+      default: { http: [process.env.MEGAETH_TESTNET_RPC_URL!] }
+    }
+  });
+};
+
 export const getConfig = (chain: Chain | string) => {
   const normalizedChain = normalizeChain(chain);
-  return {
-    monad: { chain: monadMainnet(), transport: http() }
-  }[normalizedChain];
+  if (normalizedChain === 'monad') {
+    return { chain: monadMainnet(), transport: http() };
+  }
+  if (normalizedChain === 'megaethtestnet') {
+    return { chain: megaEthTestnet(), transport: http() };
+  }
+  throw new Error(`Unsupported chain: ${normalizedChain}`);
 };
 
-export const getCastoraAddress = (chain: Chain | string) => {
+export const getCastoraAddress = (chain: Chain | string): `0x${string}` => {
   const normalizedChain = normalizeChain(chain);
-  return {
-    monad: CASTORA_MONAD
-  }[normalizedChain];
+  const addresses: Record<Chain, `0x${string}`> = {
+    monad: CASTORA_MONAD,
+    megaethtestnet: CASTORA_MEGAETH_TESTNET
+  };
+  return addresses[normalizedChain];
 };
 
-const getPoolsManagerAddress = (chain: Chain | string) => {
+const getPoolsManagerAddress = (chain: Chain | string): `0x${string}` => {
   const normalizedChain = normalizeChain(chain);
-  return {
-    monad: POOLS_MANAGER_MONAD
-  }[normalizedChain];
+  const addresses: Record<Chain, `0x${string}`> = {
+    monad: POOLS_MANAGER_MONAD,
+    megaethtestnet: POOLS_MANAGER_MEGAETH_TESTNET
+  };
+  return addresses[normalizedChain];
 };
 
 const getAccount = (chain: Chain | string) => {
   const normalizedChain = normalizeChain(chain);
-  const adminMainnetKey = process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`;
-  if (!adminMainnetKey) throw 'Set ADMIN_KEY_MONAD_MAINNET in env';
-
-  return privateKeyToAccount({ monad: adminMainnetKey }[normalizedChain]);
+  const adminKeys: Record<Chain, `0x${string}`> = {
+    monad: (process.env.ADMIN_KEY_MONAD_MAINNET as `0x${string}`) || (() => { throw 'Set ADMIN_KEY_MONAD_MAINNET in env'; })(),
+    megaethtestnet: (process.env.ADMIN_KEY_MEGAETH_TESTNET as `0x${string}`) || (() => { throw 'Set ADMIN_KEY_MEGAETH_TESTNET in env'; })()
+  };
+  const adminKey = adminKeys[normalizedChain];
+  if (!adminKey) throw `Set ADMIN_KEY_${normalizedChain.toUpperCase().replace('-', '_')} in env`;
+  return privateKeyToAccount(adminKey);
 };
 
 export const readCastoraContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
   try {
-    // @ts-ignore
-    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
+    const config = getConfig(normalizedChain);
+    // @ts-expect-error - viem type inference is too deep
+    return await createPublicClient(config).readContract({
       address: getCastoraAddress(normalizedChain),
       abi: castoraAbi,
       functionName,
@@ -81,10 +114,14 @@ export const readCastoraContract = async (chain: Chain | string, functionName: a
 
 export const readGettersContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
+  const gettersAddresses: Record<Chain, `0x${string}`> = {
+    monad: CASTORA_GETTERS_MONAD,
+    megaethtestnet: CASTORA_GETTERS_MEGAETH_TESTNET
+  };
   try {
-    // @ts-ignore
-    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
-      address: CASTORA_GETTERS_MONAD,
+    const config = getConfig(normalizedChain);
+    return await createPublicClient(config).readContract({
+      address: gettersAddresses[normalizedChain],
       abi: gettersAbi,
       functionName,
       args
@@ -98,8 +135,9 @@ export const readGettersContract = async (chain: Chain | string, functionName: a
 export const readPoolsManagerContract = async (chain: Chain | string, functionName: any, args?: any): Promise<any> => {
   const normalizedChain = normalizeChain(chain);
   try {
-    // @ts-ignore
-    return await createPublicClient({ ...getConfig(normalizedChain) }).readContract({
+    const config = getConfig(normalizedChain);
+    // @ts-expect-error - viem type inference is too deep
+    return await createPublicClient(config).readContract({
       address: getPoolsManagerAddress(normalizedChain),
       abi: poolsManagerAbi,
       functionName,
@@ -113,7 +151,8 @@ export const readPoolsManagerContract = async (chain: Chain | string, functionNa
 
 const showBalance = async (chain: Chain | string, address: `0x${string}`) => {
   const normalizedChain = normalizeChain(chain);
-  const balance = await createPublicClient({ ...getConfig(normalizedChain) }).getBalance({
+  const config = getConfig(normalizedChain);
+  const balance = await createPublicClient(config).getBalance({
     address
   });
   const symbol = normalizedChain.includes('monad') ? 'MON' : 'ETH';
@@ -129,7 +168,7 @@ export const writeContract = async (chain: Chain | string, functionName: any, ar
   try {
     const account = getAccount(normalizedChain);
     const config = getConfig(normalizedChain);
-    const publicClient = createPublicClient({ ...config });
+    const publicClient = createPublicClient(config);
 
     const prevBalance = await showBalance(normalizedChain, account.address);
     const { result, request } = await publicClient.simulateContract({
@@ -141,7 +180,7 @@ export const writeContract = async (chain: Chain | string, functionName: any, ar
     });
 
     outcome = result;
-    const walletClient = createWalletClient({ account, ...config });
+    const walletClient = createWalletClient({ ...config, account });
     const hash = await walletClient.writeContract(request);
 
     logger.info(`Transaction Hash: ${hash}`);

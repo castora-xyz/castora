@@ -1,5 +1,6 @@
-@import 'tailwindcss';
-@custom-variant dark (&:is(.dark *));
+@import "tailwindcss";
+
+@import 'primereact/resources/themes/saga-blue/theme.css';
 
 
 @layer base {
