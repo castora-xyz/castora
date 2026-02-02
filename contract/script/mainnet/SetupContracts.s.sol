@@ -69,16 +69,16 @@ contract SetupContracts is Script {
     // Setup contract relationships
     console.log('Setting up contract relationships...');
 
-    // Set Castora address in PoolsManager
-    poolsManager.setCastora(address(castora));
+    // // Set Castora address in PoolsManager
+    // poolsManager.setCastora(address(castora));
 
-    // Authorize Castora and PoolsManager to log activities
-    activities.setAuthorizedLogger(address(castora), true);
-    activities.setAuthorizedLogger(address(poolsManager), true);
+    // // Authorize Castora and PoolsManager to log activities
+    // activities.setAuthorizedLogger(address(castora), true);
+    // activities.setAuthorizedLogger(address(poolsManager), true);
 
-    // Grant admin roles
-    castora.grantAdminRole(admin);
-    castora.grantAdminRole(address(poolsManager));
+    // // Grant admin roles
+    // castora.grantAdminRole(admin);
+    // castora.grantAdminRole(address(poolsManager));
 
     console.log('All contracts deployed and configured successfully!');
     console.log('=== Deployment Summary ===');

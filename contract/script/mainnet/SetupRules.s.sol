@@ -7,14 +7,15 @@ import '../../src/CastoraPoolsRules.sol';
 
 contract SetupRules is Script {
   // Contract addresses
-  address constant CASTORA_ADDRESS = 0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D;
-  address constant CASTORA_POOLS_MANAGER_ADDRESS = 0xF8f179Ab96165b61833F2930309bCE9c6aB281bE;
-  address constant CASTORA_POOLS_RULES_ADDRESS = 0xfacA692BfeaFB4c6DCaF95a25E5CBCDB65d6eC41;
+  address constant CASTORA_ADDRESS = 0x642340764CE541c0181e835b6aB745563B83A40A;
+  address constant CASTORA_POOLS_MANAGER_ADDRESS = 0x01EB2851DF7b1adb656c2d1dd5ACdcd014542c59;
+  address constant CASTORA_POOLS_RULES_ADDRESS = 0x90E8D8c325A82B13767e18d666140ea2d740FD9b;
 
   // Prediction token addresses
   // Gotten via different methods when in testnet
-  address constant MON = CASTORA_ADDRESS; // Castora Contract Address as native token
-  address constant USDC = 0x754704Bc059F8C67012fEd69BC8A327a5aafb603; // Circle USD
+  address constant ETH_STAKE = CASTORA_ADDRESS; // Castora Contract Address as native token
+  // address constant MEGA = 0x28B7E77f82B25B95953825F1E3eA0E36c1c29861;
+  // address constant USDC = 0x754704Bc059F8C67012fEd69BC8A327a5aafb603; // Circle USD
   address constant BTC = 0x294C2647D9f3EacA43A364859c6E6a1E0E582DBD; // Bitcoin
   address constant ETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Ethereum
   address constant SOL = 0xD31a59c85aE9D8edEFeC411D448f90841571b89c; // Solana
@@ -27,13 +28,15 @@ contract SetupRules is Script {
   uint16 constant MLT10X = 1000; // 10x
 
   // Creation fee amount: 500 MON with 18 decimals
-  uint256 constant MON_CREATION_FEE = 500 * 1e18;
+  // uint256 constant MON_CREATION_FEE = 500 * 1e18;
+  uint256 constant ETH_STAKE_CREATION_FEE = 5 * 1e15;
 
   // Minimum stake amount: 100 MON with 18 decimals
-  uint256 constant MON_MIN_STAKE = 100 * 1e18;
+  // uint256 constant MON_MIN_STAKE = 100 * 1e18;
+  uint256 constant ETH_STAKE_MIN_STAKE = 5 * 1e15;
 
   // Minimum stake amount: 5 USDC with 6 decimals
-  uint256 constant USDC_MIN_STAKE = 5 * 1e6;
+  // uint256 constant USDC_MIN_STAKE = 5 * 1e6;
 
   function run() public {
     CastoraPoolsManager poolsManager = CastoraPoolsManager(payable(CASTORA_POOLS_MANAGER_ADDRESS));
@@ -44,19 +47,27 @@ contract SetupRules is Script {
     console.log('Setting up PoolsManager creation fees...');
 
     // Set creation fee for MON token
-    poolsManager.setCreationFees(MON, MON_CREATION_FEE);
-    console.log('Set creation fee for MON:', MON_CREATION_FEE);
+    // poolsManager.setCreationFees(MON, MON_CREATION_FEE);
+    // console.log('Set creation fee for MON:', MON_CREATION_FEE);
+
+    // Set creation fee for ETH_STAKE token
+    poolsManager.setCreationFees(ETH_STAKE, ETH_STAKE_CREATION_FEE);
+    console.log('Set creation fee for ETH_STAKE:', ETH_STAKE_CREATION_FEE);
 
     // ===== Setup PoolsRules =====
     console.log('Setting up PoolsRules...');
 
     // Allow MON as stake token with minimum amount
-    poolsRules.allowStakeToken(MON, MON_MIN_STAKE);
-    console.log('Allowed MON as stake token with minimum:', MON_MIN_STAKE);
+    // poolsRules.allowStakeToken(MON, MON_MIN_STAKE);
+    // console.log('Allowed MON as stake token with minimum:', MON_MIN_STAKE);
 
     // Allow USDC as stake token with minimum amount
-    poolsRules.allowStakeToken(USDC, USDC_MIN_STAKE);
-    console.log('Allowed USDC as stake token with minimum:', USDC_MIN_STAKE);
+    // poolsRules.allowStakeToken(USDC, USDC_MIN_STAKE);
+    // console.log('Allowed USDC as stake token with minimum:', USDC_MIN_STAKE);
+
+    // Allow MEGA as stake token with minimum amount
+    poolsRules.allowStakeToken(ETH_STAKE, ETH_STAKE_MIN_STAKE);
+    console.log('Allowed ETH_STAKE as stake token with minimum:', ETH_STAKE_MIN_STAKE);
 
     // Setup prediction tokens array
     address[] memory predictionTokens = new address[](3);
@@ -86,9 +97,11 @@ contract SetupRules is Script {
 
     console.log('PoolsRules and PoolsManager setup completed successfully!');
     console.log('=== Setup Summary ===');
-    console.log('MON creation fee:', MON_CREATION_FEE);
-    console.log('MON minimum stake:', MON_MIN_STAKE);
-    console.log('USDC minimum stake:', USDC_MIN_STAKE);
+    console.log('MEGA creation fee:', ETH_STAKE_CREATION_FEE);
+    console.log('MEGA minimum stake:', ETH_STAKE_MIN_STAKE);
+    // console.log('MON creation fee:', MON_CREATION_FEE);
+    // console.log('MON minimum stake:', MON_MIN_STAKE);
+    // console.log('USDC minimum stake:', USDC_MIN_STAKE);
     console.log('Prediction tokens: BTC, ETH, SOL');
     console.log('Pool multipliers: 2x, 3x, 4x, 5x, 10x');
 

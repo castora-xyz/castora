@@ -9,12 +9,20 @@ import '../../src/CastoraGetters.sol';
 import '../../src/CastoraPoolsManager.sol';
 import '../../src/CastoraPoolsRules.sol';
 
-contract SetupContracts is Script {
-  CastoraActivities public activities = CastoraActivities(0x83d063ACDe4C3E799F0F0162d36D8b0605081b6e);
-  Castora public castora = Castora(payable(0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D));
-  CastoraGetters public getters = CastoraGetters(0xf08959E66614027AE76303F4C5359eBfFd00Bc30);
-  CastoraPoolsManager public poolsManager = CastoraPoolsManager(payable(0xF8f179Ab96165b61833F2930309bCE9c6aB281bE));
-  CastoraPoolsRules public poolsRules = CastoraPoolsRules(0xfacA692BfeaFB4c6DCaF95a25E5CBCDB65d6eC41);
+contract SetupRelationships is Script {
+  // MONAD 
+  // CastoraActivities public activities = CastoraActivities(0x83d063ACDe4C3E799F0F0162d36D8b0605081b6e);
+  // Castora public castora = Castora(payable(0x9E1e6f277dF3f2cD150Ae1E08b05f45B3297bE6D));
+  // CastoraGetters public getters = CastoraGetters(0xf08959E66614027AE76303F4C5359eBfFd00Bc30);
+  // CastoraPoolsManager public poolsManager = CastoraPoolsManager(payable(0xF8f179Ab96165b61833F2930309bCE9c6aB281bE));
+  // CastoraPoolsRules public poolsRules = CastoraPoolsRules(0xfacA692BfeaFB4c6DCaF95a25E5CBCDB65d6eC41);
+
+  // MegaETH Testnet
+  CastoraActivities public activities = CastoraActivities(0x9C2e69CC66B299C91696Ab7075A6471E99D24a6e);
+  Castora public castora = Castora(payable(0x642340764CE541c0181e835b6aB745563B83A40A));
+  CastoraGetters public getters = CastoraGetters(0x241B77B951aC08743af5Cd7e9634B298Ecd3C61d);
+  CastoraPoolsManager public poolsManager = CastoraPoolsManager(payable(0x01EB2851DF7b1adb656c2d1dd5ACdcd014542c59));
+  CastoraPoolsRules public poolsRules = CastoraPoolsRules(0x90E8D8c325A82B13767e18d666140ea2d740FD9b);
   address public admin;
 
   function run() public {
