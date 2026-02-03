@@ -12,10 +12,10 @@ contract SetupRules is Script {
   address constant CASTORA_POOLS_RULES_ADDRESS = 0x90E8D8c325A82B13767e18d666140ea2d740FD9b;
 
   // Prediction token addresses
-  // Gotten via different methods when in testnet
   address constant ETH_STAKE = CASTORA_ADDRESS; // Castora Contract Address as native token
-  // address constant MEGA = 0x28B7E77f82B25B95953825F1E3eA0E36c1c29861;
+  address constant MEGA = 0x28B7E77f82B25B95953825F1E3eA0E36c1c29861;
   // address constant USDC = 0x754704Bc059F8C67012fEd69BC8A327a5aafb603; // Circle USD
+  // Gotten via different methods when in testnet
   address constant BTC = 0x294C2647D9f3EacA43A364859c6E6a1E0E582DBD; // Bitcoin
   address constant ETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Ethereum
   address constant SOL = 0xD31a59c85aE9D8edEFeC411D448f90841571b89c; // Solana
@@ -30,10 +30,12 @@ contract SetupRules is Script {
   // Creation fee amount: 500 MON with 18 decimals
   // uint256 constant MON_CREATION_FEE = 500 * 1e18;
   uint256 constant ETH_STAKE_CREATION_FEE = 5 * 1e15;
+  uint256 constant MEGA_CREATION_FEE = 1e18;
 
   // Minimum stake amount: 100 MON with 18 decimals
   // uint256 constant MON_MIN_STAKE = 100 * 1e18;
   uint256 constant ETH_STAKE_MIN_STAKE = 5 * 1e15;
+  uint256 constant MEGA_MIN_STAKE = 1e18;
 
   // Minimum stake amount: 5 USDC with 6 decimals
   // uint256 constant USDC_MIN_STAKE = 5 * 1e6;
@@ -54,6 +56,10 @@ contract SetupRules is Script {
     poolsManager.setCreationFees(ETH_STAKE, ETH_STAKE_CREATION_FEE);
     console.log('Set creation fee for ETH_STAKE:', ETH_STAKE_CREATION_FEE);
 
+    // Set creation fee for MEGA token
+    poolsManager.setCreationFees(MEGA, MEGA_CREATION_FEE);
+    console.log('Set creation fee for MEGA:', MEGA_CREATION_FEE);
+
     // ===== Setup PoolsRules =====
     console.log('Setting up PoolsRules...');
 
@@ -69,17 +75,22 @@ contract SetupRules is Script {
     poolsRules.allowStakeToken(ETH_STAKE, ETH_STAKE_MIN_STAKE);
     console.log('Allowed ETH_STAKE as stake token with minimum:', ETH_STAKE_MIN_STAKE);
 
+    // Allow MEGA as stake token with minimum amount
+    poolsRules.allowStakeToken(MEGA, MEGA_MIN_STAKE);
+    console.log('Allowed MEGA as stake token with minimum:', MEGA_MIN_STAKE);
+
     // Setup prediction tokens array
-    address[] memory predictionTokens = new address[](3);
+    address[] memory predictionTokens = new address[](4);
     predictionTokens[0] = BTC; // Bitcoin
     predictionTokens[1] = ETH; // Ethereum
     predictionTokens[2] = SOL; // Solana
+    predictionTokens[3] = MEGA; // MegaETH
 
     // Allow each prediction token
     for (uint256 i = 0; i < predictionTokens.length; i++) {
       poolsRules.updateAllowedPredictionToken(predictionTokens[i], true);
     }
-    console.log('Allowed prediction tokens: BTC, ETH, SOL');
+    console.log('Allowed prediction tokens: BTC, ETH, SOL, MEGA');
 
     // Setup pool multipliers array
     uint16[] memory multipliers = new uint16[](5);
@@ -97,12 +108,14 @@ contract SetupRules is Script {
 
     console.log('PoolsRules and PoolsManager setup completed successfully!');
     console.log('=== Setup Summary ===');
-    console.log('MEGA creation fee:', ETH_STAKE_CREATION_FEE);
-    console.log('MEGA minimum stake:', ETH_STAKE_MIN_STAKE);
+    console.log('MEGA creation fee:', MEGA_CREATION_FEE);
+    console.log('MEGA minimum stake:', MEGA_MIN_STAKE);
+    console.log('ETH_STAKE creation fee:', ETH_STAKE_CREATION_FEE);
+    console.log('ETH_STAKE minimum stake:', ETH_STAKE_MIN_STAKE);
     // console.log('MON creation fee:', MON_CREATION_FEE);
     // console.log('MON minimum stake:', MON_MIN_STAKE);
     // console.log('USDC minimum stake:', USDC_MIN_STAKE);
-    console.log('Prediction tokens: BTC, ETH, SOL');
+    console.log('Prediction tokens: BTC, ETH, SOL, MEGA');
     console.log('Pool multipliers: 2x, 3x, 4x, 5x, 10x');
 
     vm.stopBroadcast();
