@@ -27,7 +27,7 @@ export const MyActivityPagesMenu = ({ children, placement, chain }: { children: 
         {myActivityTypes.map(({ title, route }) => (
           <Link
             key={title}
-            to={`${chain}/${route}`}
+            to={`/${chain}${route}`}
             className="block px-5 py-3 hover:bg-surface-default"
             onClick={() => recordEvent('selected_my_activity_category', { category: title })}
           >

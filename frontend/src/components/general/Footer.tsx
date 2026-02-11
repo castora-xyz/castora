@@ -2,10 +2,14 @@ import Discord from '@/assets/discord.svg?react';
 import X from '@/assets/x.svg?react';
 import { Ripple } from 'primereact/ripple';
 import { Link, NavLink } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 import Castora from '/assets/castora.png';
+import { getChainName } from '@/utils/config';
 
 export const Footer = () => {
   const year = new Date().getFullYear();
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
   return (
     <footer
       id="footer"
@@ -52,28 +56,28 @@ export const Footer = () => {
             <h3 className="text-text-titles font-semibold text-base">Navigation</h3>
             <nav className="flex flex-col gap-3">
               <NavLink
-                to="/pools"
+                to={`/${chainName}/pools`}
                 className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
               >
                 <Ripple />
                 Pools
               </NavLink>
               <NavLink
-                to="/leaderboard"
+                to={`/${chainName}/leaderboard`}
                 className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
               >
                 <Ripple />
                 Leaderboard
               </NavLink>
               <NavLink
-                to="/activity/predictions"
+                to={`/${chainName}/activity/predictions`}
                 className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
               >
                 <Ripple />
                 My Activity
               </NavLink>
               <NavLink
-                to="/pools/create"
+                to={`/${chainName}/pools/create`}
                 className="text-text-subtitle hover:text-primary-darker dark:hover:text-primary-default transition-colors text-sm p-ripple"
               >
                 <Ripple />

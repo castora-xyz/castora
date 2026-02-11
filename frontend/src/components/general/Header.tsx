@@ -35,7 +35,7 @@ export const Header = () => {
           </PoolsPagesMenu> */}
 
           <NavLink
-            to={`${chainName}/pools`}
+            to={`/${chainName}/pools`}
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`
@@ -45,7 +45,7 @@ export const Header = () => {
             <Ripple />
           </NavLink>
           <NavLink
-            to={`${chainName}/leaderboard`}
+            to={`/${chainName}/leaderboard`}
             className={({ isActive }) =>
               'p-ripple py-1 px-4 lg:px-6 rounded-full ' +
               `${isActive ? 'text-primary-darker dark:text-primary-default' : ''}`

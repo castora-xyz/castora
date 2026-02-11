@@ -83,7 +83,7 @@ const router = createBrowserRouter(
         <Route path=":chainName/pools/create" element={<CreateCommunityPoolPage />} />
         <Route path=":chainName/pool/:poolId" element={<PoolDetailPage />} />
         <Route path=":chainName/leaderboard" element={<LeaderboardPage />} />
-        <Route path=":chainName/predictions" element={<Navigate to="/activity/predictions" />} />
+        <Route path=":chainName/predictions" element={<Navigate to="activity/predictions" replace />} />
         <Route path=":chainName/stocks" element={<LiveStocksPoolsPage />} />
         <Route path=":chainName/activity" element={<Navigate to="predictions" replace />} />
         <Route path=":chainName/activity/predictions" element={<MyActivityPredictionsPage />} />

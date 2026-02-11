@@ -20,7 +20,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useConnection } from 'wagmi';
 
 export const PoolDetailPage = () => {
-  const { chain: currentChain } = useConnection();
+  const { chain: currentChain, isConnected } = useConnection();
   const { now } = useCurrentTime();
   const { chainName: chainNameParam, poolId } = useParams<{ chainName: string; poolId: string }>();
   const navigate = useNavigate();
@@ -29,10 +29,22 @@ export const PoolDetailPage = () => {
   const { isValidPoolId, fetchOne } = usePools();
 
   const myInPoolPredsRef = useRef<MyInPoolPredsRef>(null);
+  const wasConnectedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [pool, setPool] = useState<Pool | null>(null);
-  const [prevCurrentChain, setPrevCurrentChain] = useState(currentChain);
+
+  // Redirect to landing when user disconnects or switches chain — pools are chain-specific
+  useEffect(() => {
+    if (isConnected) wasConnectedRef.current = true;
+
+    const disconnected = wasConnectedRef.current && !isConnected;
+    const chainMismatch = isConnected && currentChainName !== normalizedChainName;
+
+    if (disconnected || chainMismatch) {
+      navigate('/', { replace: true });
+    }
+  }, [isConnected, currentChainName, normalizedChainName, navigate]);
 
   const load = async (showLoading: boolean) => {
     setIsLoading(showLoading);
@@ -92,14 +104,6 @@ export const PoolDetailPage = () => {
       navigate(`/${normalizedChainName}/pool/${poolId}`, { replace: true });
     }
   }, [chainNameParam, normalizedChainName, poolId, navigate]);
-
-  useEffect(() => {
-    if (prevCurrentChain && currentChain && prevCurrentChain.name != currentChain.name) {
-      window.location.reload();
-    } else {
-      setPrevCurrentChain(currentChain);
-    }
-  }, [currentChain]);
 
   useEffect(() => {
     if (!!pool) document.title = `Pool ${pool.poolId} - Castora`;

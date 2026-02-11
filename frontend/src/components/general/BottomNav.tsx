@@ -3,10 +3,14 @@ import RectangleStack from '@/assets/rectangle-stack.svg?react';
 import Squares2x2 from '@/assets/squares-2x2.svg?react';
 import { Ripple } from 'primereact/ripple';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useConnection } from 'wagmi';
+import { getChainName } from '@/utils/config';
 import { MyActivityPagesMenu } from './MyActivityPagesMenu';
 
 export const BottomNav = () => {
   const location = useLocation();
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
 
   return (
     <nav
@@ -34,7 +38,7 @@ export const BottomNav = () => {
         </li> */}
         <li>
           <NavLink
-            to="/pools"
+            to={`/${chainName}/pools`}
             className={
               'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
               `${
@@ -51,7 +55,7 @@ export const BottomNav = () => {
         </li>
         <li>
           <NavLink
-            to="/leaderboard"
+            to={`/${chainName}/leaderboard`}
             className={
               'p-ripple p-2 rounded-md flex flex-col justify-center items-center ' +
               `${
@@ -67,7 +71,7 @@ export const BottomNav = () => {
           </NavLink>
         </li>
         <li>
-          <MyActivityPagesMenu placement="footer">
+          <MyActivityPagesMenu placement="footer" chain={chainName}>
             <button
               className={
                 'p-ripple py-2 px-4 rounded-md flex flex-col justify-center items-center ' +

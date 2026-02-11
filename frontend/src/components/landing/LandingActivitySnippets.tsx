@@ -1,12 +1,15 @@
 import { ActivityPredictCard } from '@/components';
 import { ActivityPredict, useMyPredictActivity } from '@/contexts';
-import { CASTORA_ADDRESS_MONAD } from '@/utils/config';
+import { CASTORA_ADDRESS_MONAD, getChainName } from '@/utils/config';
 import { Pool, PoolSeeds, Prediction } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useConnection } from 'wagmi';
 import { Breathing } from 'react-shimmer';
 
 export const LandingActivitySnippets = () => {
+  const { chain: currentChain } = useConnection();
+  const chainName = getChainName(currentChain);
   const { isFetching, myActivities, currentPage, rowsPerPage } = useMyPredictActivity();
 
   const [snippets, setSnippets] = useState<ActivityPredict[]>([]);
@@ -93,7 +96,7 @@ export const LandingActivitySnippets = () => {
           </>
         ) : (
           snippets.map(({ pool, prediction }, i) => (
-            <Link key={i} to="/activity/predictions">
+            <Link key={i} to={`/${chainName}/activity/predictions`}>
               <ActivityPredictCard
                 count={pool.poolId ? currentPage! * rowsPerPage + myActivities.length - i : 0}
                 key={i}
