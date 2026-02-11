@@ -278,7 +278,7 @@ export const CreateCommunityPoolPage = () => {
                 timeOnly={false}
                 showIcon
                 iconPos="right"
-                inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
+                inputClassName={`w-full p-3 rounded-md rounded-r-none bg-surface-subtle cursor-pointer border transition-colors ${
                   errors.windowCloseTime
                     ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:ring-2! focus:!ring-errors-default'
                     : 'border-border-default hover:border-primary-default focus:border-primary-default focus:ring-2! focus:!ring-primary-default'
@@ -333,7 +333,7 @@ export const CreateCommunityPoolPage = () => {
                 timeOnly={false}
                 showIcon
                 iconPos="right"
-                inputClassName={`w-full p-3 rounded-md bg-surface-subtle cursor-pointer border transition-colors ${
+                inputClassName={`w-full p-3 rounded-md rounded-r-none bg-surface-subtle cursor-pointer border transition-colors ${
                   errors.snapshotTime
                     ? 'border-errors-default hover:border-errors-default focus:border-errors-default focus:ring-2! focus:!ring-errors-default'
                     : 'border-border-default hover:border-primary-default focus:border-primary-default focus:ring-2! focus:!ring-primary-default'
