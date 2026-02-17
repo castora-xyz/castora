@@ -14,7 +14,7 @@ const getChainLogo = (chain?: Chain): string => {
   return '/assets/eth.png';
 };
 
-export const Web3Avatar = ({ address, className }: { address: string; className?: string }) => {
+export const Web3Avatar = ({ address: _address, className }: { address: string; className?: string }) => {
   const { chain } = useConnection();
   const chainLogo = getChainLogo(chain);
 

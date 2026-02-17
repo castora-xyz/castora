@@ -281,7 +281,7 @@ export const MyActivityCreatedPoolsPage = () => {
 
   return (
     <div className="w-full max-md:max-w-[600px] max-w-(--breakpoint-xl) mx-auto flex flex-col grow">
-      <MyActivityPageIntro myActivityType={createdPoolsActivityType} claimAll={<ClaimAllCreateButton />} />
+      <MyActivityPageIntro chain={chainName} myActivityType={createdPoolsActivityType} claimAll={<ClaimAllCreateButton />} />
 
       {!isConnected ? (
         <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">

@@ -241,6 +241,7 @@ export const MyActivityPredictionsPage = () => {
   return (
     <div className="w-full max-md:max-w-[584px] max-w-(--breakpoint-xl) mx-auto flex flex-col grow">
       <MyActivityPageIntro
+        chain={chainName}
         myActivityType={predictionsActivityType}
         claimAll={
           claimableActivities.length > 0 ? (
