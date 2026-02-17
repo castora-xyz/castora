@@ -1,6 +1,7 @@
 import { useContract } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool, Prediction } from '@/schemas';
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useConnection } from 'wagmi';
 
 export interface PredictionRecord {
@@ -46,6 +47,9 @@ export const useMyPredictActivity = () => useContext(MyPredictActivityContext);
 export const MyPredictActivityProvider = ({ children }: { children: ReactNode }) => {
   const { address, chain: currentChain } = useConnection();
   const { readContract } = useContract();
+  const chainRef = useRef(getChainName(currentChain));
+  chainRef.current = getChainName(currentChain);
+
   const [rowsPerPage, setRowsPerPage] = useState(
     Number(localStorage.getItem('myActivityPredictionsRowsPerPage')) || 100
   );
@@ -65,6 +69,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
 
   const updateActivityCount = async (showLoading = false) => {
     if (!address) return;
+    const chainAtStart = chainRef.current;
     // Only show loading if requested or if there is no previous data
     if (showLoading || noOfPredictions === null) setIsFetching(true);
 
@@ -74,6 +79,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
       args: [address]
     });
 
+    if (chainRef.current !== chainAtStart) return;
     if (stats) {
       if (noOfPredictions == Number(stats.noOfPredictions)) setIsFetching(false);
       setNoOfClaimable(Number(stats.noOfClaimableWinnings));
@@ -144,6 +150,7 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
 
     if (!noOfPredictions || page === null || !address) return;
 
+    const chainAtStart = chainRef.current;
     setIsFetching(true);
     let start = (page + 1) * rows - rows;
     const rawPredRecords = (await readContract({
@@ -152,6 +159,10 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
       args: [address, start, rows]
     })) as any;
 
+    if (chainRef.current !== chainAtStart) {
+      setIsFetching(false);
+      return;
+    }
     if (rawPredRecords) {
       const predActivities = await fetchActivitiesFromRecords(rawPredRecords);
       setMyActivities([...predActivities.reverse()]);
@@ -166,6 +177,10 @@ export const MyPredictActivityProvider = ({ children }: { children: ReactNode })
         functionName: 'userClaimableRecordsPaginated',
         args: [address, 0, noOfClaimable + 1]
       })) as any;
+      if (chainRef.current !== chainAtStart) {
+        setIsFetching(false);
+        return;
+      }
       if (rawClaimRecords) {
         const claimActivities = await fetchActivitiesFromRecords(rawClaimRecords);
         setClaimableActivities([...claimActivities.reverse()]);

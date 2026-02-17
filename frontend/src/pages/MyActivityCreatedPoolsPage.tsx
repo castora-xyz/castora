@@ -15,7 +15,7 @@ import {
 } from '@/components';
 import { rowsPerPageOptions, useCurrentTime, useMyCreateActivity } from '@/contexts';
 import { ActivityCreate } from '@/contexts/MyCreateActivityContext';
-import { normalizeChain } from '@/utils/config';
+import { getChainName, normalizeChain } from '@/utils/config';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useAppKit } from '@reown/appkit/react';
@@ -37,7 +37,9 @@ const columnHelper = createColumnHelper<CreatePoolTableRow>();
 export const MyActivityCreatedPoolsPage = () => {
   const { chainName: chainNameParam } = useParams<{ chainName: string }>();
   const chainName = normalizeChain(chainNameParam);
-  const { isConnected } = useConnection();
+  const { isConnected, chain: currentChain } = useConnection();
+  const connectedChainName = getChainName(currentChain);
+  const chainMismatch = isConnected && chainName !== connectedChainName;
   const location = useLocation();
   const { now } = useCurrentTime();
   const [view, setView] = useViewPreference('myCreatedPoolsView', 'grid');
@@ -270,7 +272,7 @@ export const MyActivityCreatedPoolsPage = () => {
           size: 120
         })
       ] as ColumnDef<CreatePoolTableRow>[],
-    [location, now]
+    [location, now, chainName]
   );
 
   const table = useReactTable({
@@ -293,6 +295,19 @@ export const MyActivityCreatedPoolsPage = () => {
             onClick={() => connectWallet()}
           >
             <span>Connect Wallet</span>
+            <Ripple />
+          </button>
+        </div>
+      ) : chainMismatch ? (
+        <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
+          <p className="text-lg mb-8">
+            Your wallet is on a different network. Switch your wallet to this chain to view your created pools here.
+          </p>
+          <button
+            className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple flex justify-center items-center"
+            onClick={() => connectWallet()}
+          >
+            <span>Switch network</span>
             <Ripple />
           </button>
         </div>

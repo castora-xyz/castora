@@ -1,6 +1,7 @@
 import { useContract } from '@/contexts';
+import { getChainName } from '@/utils/config';
 import { Pool, UserCreatedPool } from '@/schemas';
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useConnection } from 'wagmi';
 
 export interface ActivityCreate {
@@ -47,6 +48,9 @@ export const useMyCreateActivity = () => useContext(MyCreateActivityContext);
 export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) => {
   const { address, chain: currentChain } = useConnection();
   const { readContract } = useContract();
+  const chainRef = useRef(getChainName(currentChain));
+  chainRef.current = getChainName(currentChain);
+
   const [rowsPerPage, setRowsPerPage] = useState(Number(localStorage.getItem('myActivityCreationsRowsPerPage')) || 100);
 
   const getLastPage = (total: number) => {
@@ -66,18 +70,27 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
   const updateUnclaimed = async () => {
     if (!address) return;
 
+    const chainAtStart = chainRef.current;
     setIsFetchingUnclaimed(true);
     const poolIds = await readContract({
       contract: 'pools-manager',
       functionName: 'getUserClaimableFeesPoolIdsPaginated',
       args: [address, 0, 250]
     });
+    if (chainRef.current !== chainAtStart) {
+      setIsFetchingUnclaimed(false);
+      return;
+    }
     if (poolIds) {
       const raws = await readContract({
         contract: 'pools-manager',
         functionName: 'getUserCreatedPools',
         args: [poolIds]
       });
+      if (chainRef.current !== chainAtStart) {
+        setIsFetchingUnclaimed(false);
+        return;
+      }
       if (raws) {
         setMyUnclaimedPoolIds(poolIds.map((pI: any) => Number(pI)));
         setMyUnclaimedUserCreateds(raws.map((u: any) => new UserCreatedPool(u)));
@@ -94,6 +107,7 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
 
   const updateActivityCount = async (showLoading = false) => {
     if (!address) return;
+    const chainAtStart = chainRef.current;
     // Only show loading if requested or if there is no previous data
     if (showLoading || noOfPoolsCreated === null) setIsFetching(true);
 
@@ -102,6 +116,7 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
       functionName: 'getUserStats',
       args: [address]
     });
+    if (chainRef.current !== chainAtStart) return;
     if (raw !== null) {
       if (noOfPoolsCreated == Number(raw.noOfPoolsCreated)) setIsFetching(false);
       setNoOfPoolsCreated(Number(raw.noOfPoolsCreated));
@@ -124,6 +139,7 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
 
     if (!noOfPoolsCreated || page === null || !address) return;
 
+    const chainAtStart = chainRef.current;
     setIsFetching(true);
     let start = (page + 1) * rows - rows;
     const poolIds = await readContract({
@@ -131,6 +147,10 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
       functionName: 'getUserCreatedPoolIdsPaginated',
       args: [address, start, rows]
     });
+    if (chainRef.current !== chainAtStart) {
+      setIsFetching(false);
+      return;
+    }
     if (poolIds) {
       const raw1 = await readContract({
         contract: 'getters',
@@ -142,6 +162,10 @@ export const MyCreateActivityProvider = ({ children }: { children: ReactNode }) 
         functionName: 'getUserCreatedPools',
         args: [poolIds]
       });
+      if (chainRef.current !== chainAtStart) {
+        setIsFetching(false);
+        return;
+      }
       if (raw1 && raw2) {
         let activities: ActivityCreate[] = [];
         for (let i = 0; i < poolIds.length; i++) {

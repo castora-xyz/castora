@@ -7,7 +7,7 @@ import Wallet from '@/assets/wallet.svg?react';
 import { ActivityPredictCard, ClaimPredictButton, ClaimAllPredictButton, CountdownNumbers, MyActivityPageIntro, predictionsActivityType } from '@/components/general';
 import { rowsPerPageOptions, useCurrentTime, useMyPredictActivity } from '@/contexts';
 import { ActivityPredict } from '@/contexts/MyPredictActivityContext';
-import { normalizeChain } from '@/utils/config';
+import { getChainName, normalizeChain } from '@/utils/config';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { useAppKit } from '@reown/appkit/react';
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -29,7 +29,9 @@ const columnHelper = createColumnHelper<PredictionTableRow>();
 export const MyActivityPredictionsPage = () => {
   const { chainName: chainNameParam } = useParams<{ chainName: string }>();
   const chainName = normalizeChain(chainNameParam);
-  const { isConnected } = useConnection();
+  const { isConnected, chain: currentChain } = useConnection();
+  const connectedChainName = getChainName(currentChain);
+  const chainMismatch = isConnected && chainName !== connectedChainName;
   const location = useLocation();
   const { now } = useCurrentTime();
   const [view, setView] = useViewPreference('myPredictionsView', 'grid');
@@ -229,7 +231,7 @@ export const MyActivityPredictionsPage = () => {
         size: 120
       })
       ] as ColumnDef<PredictionTableRow>[],
-    [location, now]
+    [location, now, chainName]
   );
 
   const table = useReactTable({
@@ -264,6 +266,20 @@ export const MyActivityPredictionsPage = () => {
           >
             <Wallet className="mr-2 w-5 h-5 stroke-white" />
             <span>Connect Wallet</span>
+            <Ripple />
+          </button>
+        </div>
+      ) : chainMismatch ? (
+        <div className="max-sm:flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:grow max-sm:text-center max-sm:py-12 sm:border sm:border-border-default sm:dark:border-surface-subtle sm:rounded-2xl sm:py-16 sm:px-16 md:px-4 lg:px-8 sm:gap-4 sm:text-center md:max-w-[600px]">
+          <p className="text-lg mb-8">
+            Your wallet is on a different network. Switch your wallet to this chain to view your predictions here.
+          </p>
+          <button
+            className="mx-auto py-2 px-8 rounded-full bg-primary-default border-2 border-primary-lighter font-medium text-white p-ripple flex justify-center items-center"
+            onClick={() => connectWallet()}
+          >
+            <Wallet className="mr-2 w-5 h-5 stroke-white" />
+            <span>Switch network</span>
             <Ripple />
           </button>
         </div>

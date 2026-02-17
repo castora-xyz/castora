@@ -42,9 +42,9 @@ export const CHAIN_CONFIG: Record<string, ChainConfig> = {
   megaethtestnet: {
     chain: megaethTestnet,
     addresses: {
-      castora: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
-      poolsManager: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
-      getters: '0x0000000000000000000000000000000000000000', // TODO: Add actual address
+      castora: '0x642340764CE541c0181e835b6aB745563B83A40A', 
+      poolsManager: '0x01EB2851DF7b1adb656c2d1dd5ACdcd014542c59', 
+      getters: '0x241B77B951aC08743af5Cd7e9634B298Ecd3C61d', 
     },
   },
 };
