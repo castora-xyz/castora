@@ -5,11 +5,11 @@ import { Web3Avatar } from '@/components';
 import { useAuth, useLeaderboard } from '@/contexts';
 import { formatTime } from '@/contexts/format-time';
 import { LeaderboardEntry } from '@/schemas';
+import { CHAIN_CONFIG } from '@/utils/config';
 import { ColumnDef, createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Tooltip } from 'primereact/tooltip';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Breathing } from 'react-shimmer';
-import { useConnection } from 'wagmi';
 
 const shortenAddress = (v: string) => `${v.substring(0, 6)}...${v.substring(v.length - 3)}`;
 
@@ -50,10 +50,9 @@ type LeaderboardRow = LeaderboardEntry & {
 const columnHelper = createColumnHelper<LeaderboardRow>();
 
 export const LeaderboardPage = () => {
-  const { entries, isLoading, hasError, refresh, lastUpdatedTime, mine, totalUsersCount } = useLeaderboard();
+  const { entries, isLoading, hasError, refresh, lastUpdatedTime, mine, totalUsersCount, chain } = useLeaderboard();
   const { address } = useAuth();
-  const { chain: currentChain } = useConnection();
-  const [explorerUrl, setExplorerUrl] = useState(currentChain?.blockExplorers?.default.url);
+  const explorerUrl = CHAIN_CONFIG[chain]?.chain?.blockExplorers?.default?.url;
 
   const addFillerToRows = (rows: LeaderboardRow[], rank: number, isGap: boolean, isPlaceholder: boolean) => {
     rows.push({
@@ -61,10 +60,6 @@ export const LeaderboardPage = () => {
       ...{ winnings: 0, predictions: 0, rank, winRate: '', netProfit: 0, isGap, isPlaceholder }
     });
   };
-
-  useEffect(() => {
-    setExplorerUrl(currentChain?.blockExplorers?.default.url);
-  }, [currentChain]);
 
   useEffect(() => {
     document.title = 'Leaderboard | Castora';

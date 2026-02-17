@@ -11,19 +11,23 @@ const isChain = (chain: any): chain is Chain => {
 };
 
 export const validateChain = async ({ headers }: Request, res: Response, next: NextFunction) => {
-  let { chain } = headers;
+  const { chain } = headers;
   let message = '';
-  if (!chain) message = 'Provide valid chain in headers.';
-  const normalizedChain = chain ? normalizeChain(String(chain).toLowerCase()) : null;
-  if (!normalizedChain || !isChain(normalizedChain)) {
-    message = `Unsupported chain: ${chain}`;
-  }
-  if (message) {
-    logger.info('Error at validating chain ...');
-    logger.info(message);
-    res.status(400).json({ success: false, message });
+  if (!chain) {
+    message = 'Provide valid chain in headers.';
   } else {
-    res.locals.chain = normalizedChain;
-    next();
+    try {
+      const normalizedChain = normalizeChain(String(chain).toLowerCase());
+      if (!isChain(normalizedChain)) message = `Unsupported chain: ${chain}`;
+      else {
+        res.locals.chain = normalizedChain;
+        return next();
+      }
+    } catch {
+      message = `Unsupported chain: ${chain}`;
+    }
   }
+  logger.info('Error at validating chain ...');
+  logger.info(message);
+  res.status(400).json({ success: false, message });
 };

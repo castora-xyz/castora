@@ -30,13 +30,9 @@ export const getLeaderboard = async (chain: Chain) => {
 
   // Otherwise cache a new leaderboard and return it
   logger.info('Fetching Leaderboard from Firestore ... ');
-  const {
-    leaderboard: {
-      lastUpdatedTime: {
-        chains: { [chain]: lastUpdatedTimestamp }
-      }
-    }
-  } = (await firestore.doc('/counts/counts').get()).data() as any;
+  const countsData = (await firestore.doc('/counts/counts').get()).data() as any;
+  const lastUpdatedTimestamp =
+    countsData?.leaderboard?.lastUpdatedTime?.chains?.[chain] ?? countsData?.leaderboard?.lastUpdatedTime?.mainnet;
 
   const snapshot = await firestore
     .collection('users')
@@ -65,7 +61,7 @@ export const getLeaderboard = async (chain: Chain) => {
 
   const result = {
     entries,
-    lastUpdatedTime: lastUpdatedTimestamp?.toDate() ?? new Date(),
+    lastUpdatedTime: lastUpdatedTimestamp?.toDate?.() ?? new Date(),
     totalUsersCount
   };
 
